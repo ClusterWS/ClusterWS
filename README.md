@@ -12,8 +12,7 @@ ClusterWS is developing in TypeScript and compiling down to es5 modules which ar
 One of the main feathers of ClusterWS is light PubSub system. Everyone who subscribed to particular channel will get message which was published to
 this channel. Every socket, client, user can subscribe to channels.
 
-### Important to notice this library is under development and not ready for use yet. The library will be publish to NPM when
-ClusterWS JavaScript client will be completed.
+### Important to notice this library is under development and not ready for use yet. The library will be publish to NPM when ClusterWS JavaScript client will be completed.
 
 After ClusterWS Javascript client  we are going to develop proper IOS (Swift) and Android (Java) libraries.
 
