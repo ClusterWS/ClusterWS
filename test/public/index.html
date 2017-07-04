@@ -1,0 +1,57 @@
+<html>
+<head></head>
+<body>
+<h1>Hello world</h1>
+<button onclick="myFunction()" id="publish">Publish</button>
+<button onclick="mySybscribe()">Subscribe</button>
+<script>
+    //    setInterval(function(){
+    var ws = new WebSocket("ws://localhost:3000/");
+    var id = 0;
+    ws.onmessage = function (data) {
+        var date = new Date();
+        console.log(date.getMinutes() + ":"+date.getSeconds()+ ":"+ date.getMilliseconds());
+        console.log(data.data);
+
+        var decodedData = JSON.parse(data.data);
+        if (decodedData.event === 'hello') {
+            var msg = {
+                event: 'iamworker',
+                data: 'It is so cool that it works'
+            };
+            ws.send(JSON.stringify(msg));
+        }
+    };
+    ws.onclose= function(code, message){
+        console.log(code, message);
+    };
+    function myFunction() {
+       var interval = setInterval(function(){
+            var msg = {
+                action: 'publish',
+                channel: 'food',
+                data: {id: id}
+            };
+            ws.send(JSON.stringify(msg));
+            if(id > 1000){
+                clearInterval(interval);
+                id = 0;
+            }
+            id++;
+        }, 0)
+
+//            ws.send('publish');
+    }
+    function mySybscribe(){
+        var msg = {
+            event: 'subscribe',
+            channel: 'user'
+        };
+        ws.send(JSON.stringify(msg));
+    }
+    //    }, 1000);
+
+
+</script>
+</body>
+</html>

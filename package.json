@@ -1,0 +1,31 @@
+{
+  "name": "clusterws",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run build && npm run boot",
+    "boot": "node test/server.js",
+    "build": "gulp"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/graceful-fs": "^2.0.29",
+    "@types/json-socket": "^0.1.15",
+    "@types/node": "^8.0.5",
+    "@types/shortid": "0.0.29",
+    "@types/uws": "^0.13.0",
+    "gulp": "^3.9.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-typescript": "^3.1.7",
+    "gulp-uglify": "^3.0.0",
+    "ts-loader": "^2.2.1",
+    "typescript": "^2.4.1"
+  },
+  "dependencies": {
+    "eventemitter3": "^2.0.3",
+    "json-socket": "^0.3.0",
+    "uws": "^8.14.0"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "clusterws",
+  "version": "0.0.1",
+  "description": "Minimalistic node js library which allow to run node js cluster with WebSocket (UWS)",
+  "main": "index.js",
+  "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "websocket",
+    "socket",
+    "cluster",
+    "clusters",
+    "nodejs",
+    "websocketcluster"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heroku/node-js-sample"
+  },
+  "dependencies": {
+    "eventemitter3": "^2.0.3",
+    "json-socket": "^0.3.0",
+    "uws": "^8.14.0"
+  }
+}
