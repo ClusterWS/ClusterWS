@@ -1,15 +1,31 @@
 {
   "name": "clusterws",
   "version": "0.0.1",
-  "description": "",
+  "description": "ClusterWS - minimalistic node js library which allows easily scale WebSocket(uWS - on of the fastest WebSocket libraries) between node clusters and utilize all available CPU",
   "main": "index.js",
+  "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
     "start": "npm run build && npm run boot",
     "boot": "node test/server.js",
     "build": "gulp"
   },
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "websocket",
+    "socket",
+    "cluster",
+    "nodejs",
+    "websocketcluster",
+    "clusterws",
+    "js",
+    "scale",
+    "library"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/goriunov/ClusterWS"
+  },
   "devDependencies": {
     "@types/json-socket": "^0.1.15",
     "@types/node": "^8.0.5",
