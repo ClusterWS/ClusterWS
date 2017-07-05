@@ -15,10 +15,10 @@
 
         var decodedData = JSON.parse(data.data);
         if (decodedData.event === 'hello') {
-            var msg = {
-                event: 'iamworker',
-                data: 'It is so cool that it works'
-            };
+//            var msg = {
+//                event: 'iamworker',
+//                data: 'It is so cool that it works'
+//            };
             ws.send(JSON.stringify(msg));
         }
     };

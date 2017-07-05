@@ -20,6 +20,13 @@ class PublishMessage {
     }
 }
 
+class SystemMessage {
+    action: string = 'sys';
+
+    constructor(public event: string, public data?: any){}
+}
+
+
 class BrokerMessage {
     constructor(public channel: string, public data?: any) {}
 }
@@ -36,7 +43,11 @@ export class MessageFactory {
         return JSON.stringify(new PublishMessage(channel, data));
     }
     // Bind brokerMessage event with Broker Messages class
-    static  brokerMessage(channel: string, data?: any){
+    static brokerMessage(channel: string, data?: any){
         return JSON.stringify(new BrokerMessage(channel, data));
+    }
+
+    static systemMessage(event: string, data?: any){
+        return JSON.stringify(new SystemMessage(event, data));
     }
 }

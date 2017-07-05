@@ -35,7 +35,7 @@ export class Worker {
             // Create new Socket
             let socket = new Socket(_socket, this);
             // Emit event to the user
-            this.emit('connection', socket);
+            this.emit('connect', socket);
         });
 
         // Make WebSocket server available for user with some bounds
@@ -64,9 +64,7 @@ export class Worker {
     // Unsubscribe event from Event emitter
     // TODO: Remove unsubscribe event from the access of user
     unsubscribe(event: string, fn: ListenerFn, context?: string) {
-        console.log(this.eventEmitter.listeners(event));
         this.eventEmitter.removeListener(event, fn, context);
-        console.log(this.eventEmitter.listeners(event));
     }
 
     // Connect broker socket

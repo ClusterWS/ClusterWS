@@ -1,0 +1,26 @@
+{
+  "name": "websocket-node-cluster",
+  "version": "0.0.1",
+  "description": "Minimalistic node js websocket cluster which allow easily run node js with uws",
+  "main": "index.js",
+  "author": "Dmitrii Goriunov",
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "websocket",
+    "socket",
+    "cluster",
+    "clusters",
+    "nodejs",
+    "socketcluster"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heroku/node-js-sample"
+  },
+  "dependencies": {
+    "eventemitter3": "^2.0.3",
+    "shortid": "^2.2.8",
+    "uws": "^8.14.0"
+  }
+}

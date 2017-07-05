@@ -11,8 +11,6 @@ export class Socket {
         this.events = {};
         this.channels = {};
 
-        console.log(this.server.id);
-
         this.channels['food'] = (data: any) => {
             this.send('food', data, 'publish');
         };
@@ -35,23 +33,25 @@ export class Socket {
             if (msg.action === 'publish') {
                 if (this.channels[msg.channel]) server.webSocketServer.publish(msg.channel, msg.data);
             }
-            if (msg.action === 'subscribe') {
-                this.channels[msg.channel] = (data: any) => {
-                    this.send(msg.channel, data, 'publish');
+            if (msg.action === 'sys') {
+                if (msg.event === 'subscribe') {
+                    this.channels[msg.data] = (data: any) => {
+                        this.send(msg.data, data, 'publish');
+                    };
                 }
-            }
-            if (msg.action === 'unsubscribe') {
-                if (this.channels[msg.channel]) {
-                    this.channels[msg.channel] = null;
-                    delete this.channels[msg.channel];
+                if (msg.event === 'unsubscribe') {
+                    if (this.channels[msg.data]) {
+                        this.channels[msg.data] = null;
+                        delete this.channels[msg.data];
+                    }
                 }
             }
         });
 
 
-        _socket.on('close', (code?: number, message?: any) => {
-            let fn: any = this.events['close'];
-            if (fn) fn(code, message);
+        _socket.on('close', (code?: number, msg?: any) => {
+            let fn: any = this.events['disconnect'];
+            if (fn) fn(code, msg);
 
             this.server.unsubscribe('publish', this.publishListener);
 
