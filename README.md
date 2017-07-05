@@ -12,6 +12,8 @@ this channel. Every socket, client, user can subscribe to channels.
 
 ### Important to notice this library is under development and not ready for use yet. The library will be publish to NPM when ClusterWS JavaScript client will be completed.
 
+[JavaScript Client](https://github.com/goriunov/ClusterWS-Client-JS)
+
 After ClusterWS Javascript client  we are going to develop proper IOS (Swift) and Android (Java) libraries.
 
 
