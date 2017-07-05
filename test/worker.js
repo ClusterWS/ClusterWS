@@ -21,7 +21,8 @@ module.exports = function(worker){
        webSocketServer.publish('food', undefined);
        webSocketServer.publish('food', Number(2));
        webSocketServer.publish('food', 1);
-
+        ;
+       //
        // socket.send('hello');
        // socket.send('hello', {object: 'I am object', bool: true, numb: 2, undefinedVar: undefined, myNull: null, arr: [2,3,4,5] , some:{here:true}});
        // socket.send('hello', null);

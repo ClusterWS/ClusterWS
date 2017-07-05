@@ -1,11 +1,9 @@
 # ClusterWS (Node Cluster WebSocket)
 
 This library was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) please have a look at that if you need more functionality then
-this library provides (or you can leave feather request), but our concentrate is simplicity and minimalism and will not implement feathers
-if it is not really needed.
+this library provides (or you can leave feather request).
 
-ClusterWS is small size library which allow easily scale [uWS](https://github.com/uNetworking/uWebSockets)(one of the fastest WebSocket libraries)
-between node js clusters and utilize all computer CPU.
+ClusterWS - minimalistic node js library which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- on of the fastest WebSocket libraries) between node clusters and utilize all available CPU
 
 ClusterWS is developing in TypeScript and compiling down to es5 modules which are going to be published in npm.
 
