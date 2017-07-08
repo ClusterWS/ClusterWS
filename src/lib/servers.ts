@@ -42,7 +42,6 @@ if (cluster.isMaster) {
             // Fork Broker
             cluster.fork().send(new ProcessMessages('initBroker', message.data));
             // Fork all workers
-            // TODO: Use async function to create worker!
             for (let i: number = 0; i < message.data.workers; i++) {
                 launchWorker(i);
             }
@@ -71,7 +70,6 @@ if (cluster.isMaster) {
     });
 
     // If some error happened in the worker or broker then console log the error and close worker process
-    // TODO: Make sever id for broker
     process.on('uncaughtException', (err: any) => {
         if (!server.id) server.id = 'BR';
         console.error('\x1b[31m%s\x1b[0m', server.is + ' ' + server.id + ', PID ' + process.pid + '\n' + err + '\n');

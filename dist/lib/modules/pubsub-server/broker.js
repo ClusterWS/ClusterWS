@@ -28,6 +28,9 @@ var Broker = (function () {
                 _this.servers[socket.id] = null;
                 _this.servers.splice(socket.id, 1);
             });
+            socket.on('error', function (err) {
+                console.log(err);
+            });
         });
     }
     Broker.prototype.broadcast = function (id, msg) {

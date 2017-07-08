@@ -31,14 +31,14 @@ var Worker = (function () {
             _this.emit('publish', { channel: channel, data: data });
         };
     }
+    Worker.prototype._unsubscribe = function (event, fn, context) {
+        this.eventEmitter.removeListener(event, fn, context);
+    };
     Worker.prototype.on = function (event, fn, context) {
         this.eventEmitter.on(event, fn, context);
     };
     Worker.prototype.emit = function (event, data) {
         this.eventEmitter.emit(event, data);
-    };
-    Worker.prototype.unsubscribe = function (event, fn, context) {
-        this.eventEmitter.removeListener(event, fn, context);
     };
     Worker.prototype.connectBroker = function () {
         var _this = this;

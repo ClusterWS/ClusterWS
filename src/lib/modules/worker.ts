@@ -51,6 +51,11 @@ export class Worker {
         }
     }
 
+    // Unsubscribe event from Event emitter
+    _unsubscribe(event: string, fn: ListenerFn, context?: string) {
+        this.eventEmitter.removeListener(event, fn, context);
+    }
+
     // Make user be able use on event on the server variable
     on(event: string, fn: ListenerFn, context?: string) {
         this.eventEmitter.on(event, fn, context);
@@ -59,12 +64,6 @@ export class Worker {
     // Make user be able use emit event on the server variable
     emit(event: string, data?: any) {
         this.eventEmitter.emit(event, data);
-    }
-
-    // Unsubscribe event from Event emitter
-    // TODO: Remove unsubscribe event from the access of user
-    unsubscribe(event: string, fn: ListenerFn, context?: string) {
-        this.eventEmitter.removeListener(event, fn, context);
     }
 
     // Connect broker socket

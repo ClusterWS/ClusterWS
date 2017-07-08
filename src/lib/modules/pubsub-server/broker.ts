@@ -32,6 +32,9 @@ export class Broker {
                 this.servers[socket.id] = null;
                 this.servers.splice(socket.id, 1);
             });
+            socket.on('error', (err: any)=> {
+               console.log(err);
+            });
         });
     }
 

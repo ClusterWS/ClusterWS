@@ -8,9 +8,6 @@ var Socket = (function () {
         this.server = server;
         this.events = {};
         this.channels = {};
-        this.channels['food'] = function (data) {
-            _this.send('food', data, 'publish');
-        };
         this.publishListener = function (msg) {
             var exFn = _this.channels[msg.channel];
             if (exFn)
@@ -46,7 +43,7 @@ var Socket = (function () {
             var fn = _this.events['disconnect'];
             if (fn)
                 fn(code, msg);
-            _this.server.unsubscribe('publish', _this.publishListener);
+            _this.server._unsubscribe('publish', _this.publishListener);
             for (var key in _this.channels) {
                 if (_this.channels.hasOwnProperty(key)) {
                     _this.channels[key] = null;

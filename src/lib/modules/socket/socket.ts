@@ -11,10 +11,6 @@ export class Socket {
         this.events = {};
         this.channels = {};
 
-        this.channels['food'] = (data: any) => {
-            this.send('food', data, 'publish');
-        };
-
         this.publishListener = (msg: any) => {
             let exFn = this.channels[msg.channel];
             if (exFn) exFn(msg.data);
@@ -53,7 +49,7 @@ export class Socket {
             let fn: any = this.events['disconnect'];
             if (fn) fn(code, msg);
 
-            this.server.unsubscribe('publish', this.publishListener);
+            this.server._unsubscribe('publish', this.publishListener);
 
             for (let key in this.channels) {
                 if (this.channels.hasOwnProperty(key)) {
