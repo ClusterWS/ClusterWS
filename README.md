@@ -1,5 +1,7 @@
 # ClusterWS (Node Cluster WebSocket)
 
+[![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
+
 *I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this library*
 
 This is a **Beta Version** that is why library may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
