@@ -46,7 +46,9 @@ All possible options:
 
     restartWorkerOnFail: if you need to restart workers on faults default is false,
 
-    brokerPort: port on which broker will communicate (change it only if default port is busy) default is 9346
+    brokerPort: port on which broker will communicate (change it only if default port is busy) default is 9346,
+
+    pingPongInterval: time between which will be send ping to the client in ms default is 20000 (20s)
 }
 ```
 
