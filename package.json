@@ -8,6 +8,7 @@
     "start": "npm run build && npm run boot",
     "boot": "node test/server.js",
     "build": "gulp && gulp clone",
+    "build:publish": "npm run build && cd dist && npm publish && cd ../..",
     "changelog": "cross-env NODE_ENV=...0.0.9 node information/changelog.js"
   },
   "license": "MIT",
