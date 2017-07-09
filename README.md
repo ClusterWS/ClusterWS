@@ -1,6 +1,6 @@
 # ClusterWS (Node Cluster WebSocket)
 
-*To create this library I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster)*
+*I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this library*
 
 This is a **Beta Version** that is why library may lack some important feathers :) . You can see main changes in [HERE](./information/CHANGELOG.md).
 
