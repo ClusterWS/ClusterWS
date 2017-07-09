@@ -2,7 +2,7 @@
 
 *I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this library*
 
-This is a **Beta Version** that is why library may lack some important feathers :) . You can see main changes in [HERE](./information/CHANGELOG.md).
+This is a **Beta Version** that is why library may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
 
 ClusterWS - minimalistic node js http and real-time library which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU
 

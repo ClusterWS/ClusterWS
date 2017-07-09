@@ -7,7 +7,8 @@ interface Configurations {
     brokerPort: number,
     workers: number,
     workerPath: string,
-    restartWorkerOnFail: boolean
+    restartWorkerOnFail: boolean,
+    pingPongInterval: number
 }
 // Main function
 export class ClusterWS {
@@ -23,6 +24,7 @@ export class ClusterWS {
             this.configuration.workers,
             this.configuration.workerPath,
             this.configuration.restartWorkerOnFail,
-            this.configuration.brokerPort)));
+            this.configuration.brokerPort,
+            this.configuration.pingPongInterval)));
     }
 }

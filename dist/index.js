@@ -8,7 +8,7 @@ var ClusterWS = (function () {
         this.configuration = configuration;
         this.configuration = this.configuration || {};
         var servers = child_process_1.fork(__dirname + '/lib/servers');
-        servers.send(new messages_1.ProcessMessages('init', new options_1.Options(this.configuration.port, this.configuration.workers, this.configuration.workerPath, this.configuration.restartWorkerOnFail, this.configuration.brokerPort)));
+        servers.send(new messages_1.ProcessMessages('init', new options_1.Options(this.configuration.port, this.configuration.workers, this.configuration.workerPath, this.configuration.restartWorkerOnFail, this.configuration.brokerPort, this.configuration.pingPongInterval)));
     }
     return ClusterWS;
 }());

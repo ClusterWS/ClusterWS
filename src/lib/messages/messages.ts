@@ -20,8 +20,8 @@ class PublishMessage {
     }
 }
 
-class SystemMessage {
-    action: string = 'sys';
+class InternalMessage {
+    action: string = 'internal';
 
     constructor(public event: string, public data?: any){}
 }
@@ -47,7 +47,7 @@ export class MessageFactory {
         return JSON.stringify(new BrokerMessage(channel, data));
     }
 
-    static systemMessage(event: string, data?: any){
-        return JSON.stringify(new SystemMessage(event, data));
+    static internalMessage(event: string, data?: any){
+        return JSON.stringify(new InternalMessage(event, data));
     }
 }

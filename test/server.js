@@ -5,5 +5,6 @@ var cws = new clusterWS({
     workers: 2,
     port: 3000,
     restartWorkerOnFail: false,
-    brokerPort: 9346
+    brokerPort: 9346,
+    pingPongInterval: 5000
 });

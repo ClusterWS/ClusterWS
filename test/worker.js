@@ -22,19 +22,10 @@ module.exports = function(worker){
        // webSocketServer.publish('food', Number(2));
        // webSocketServer.publish('food', 1);
 
-        socket.on('hello', function(){
-            console.log();
-        })
-
-        socket.on('hello', function(){
-            console.log();
-        })
-
-        socket.on('hello', function(){
-            console.log();
+        socket.on('disconnect', function (code, reason){
         })
        //
-       // socket.send('hello');
+       socket.send('hello', [1,2,3,4]);
        // socket.send('hello', {object: 'I am object', bool: true, numb: 2, undefinedVar: undefined, myNull: null, arr: [2,3,4,5] , some:{here:true}});
        // socket.send('hello', null);
        // socket.send('hello', true);
