@@ -21,11 +21,13 @@ Use npm : `npm i --save clusterws`
 
 To be able to run this library you have to create 2 files. First one is `'server.js'` (name it as you wish) with:
 
-    var ClusterWS = require('clusterws').ClusterWS;
+```js
+var ClusterWS = require('clusterws').ClusterWS;
 
-    var cws = new ClusterWS({ workerPath: __dirname + '/worker.js' });
+var cws = new ClusterWS({ workerPath: __dirname + '/worker.js' });
+```
 
-    * It is mandatory to provide path to the worker
+It is mandatory to provide path to the worker
 
 
 All possible options:
