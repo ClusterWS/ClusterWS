@@ -1,6 +1,5 @@
-# 0.0.3
+# 0.0.8
  
-## New features 
+## Other 
  
-* **new:**  Added changelog generator
- 
+*  Added change log, updated README
