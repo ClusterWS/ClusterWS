@@ -1,5 +1,5 @@
 # ClusterWS (Node Cluster WebSocket)
-*"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this library"*
+*"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this framework"*
 
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 
