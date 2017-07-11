@@ -1,17 +1,18 @@
 import {Socket, connect} from 'net';
+import {EventEmitter} from '../eventEmitter/eventEmitter';
 
 /**
  * Logic for this TcpSocket was taken from: https://github.com/smmoosavi/jsonsocket.
- *
  * Simple helper to send and get data trough node js tcp socket.
  */
 
 export class TcpSocket {
     socket: Socket;
-    events: any = [];
     dataBuffer: string = '';
+    eventEmitter: EventEmitter;
 
     constructor(public port: any, public host?: string) {
+        this.eventEmitter = new EventEmitter();
         if (port instanceof Socket) {
             this.socket = port;
         } else {
@@ -31,7 +32,7 @@ export class TcpSocket {
             }
             this.emit('message', this.dataBuffer + str.slice(0, i));
             let nextPart = i + 1;
-            while( (i = data.indexOf('\n', nextPart)) !== -1){
+            while ((i = data.indexOf('\n', nextPart)) !== -1) {
                 this.emit('message', str.slice(nextPart, i));
                 nextPart = i + 1;
             }
@@ -47,16 +48,25 @@ export class TcpSocket {
         });
     }
 
+    /**
+     * Send data through tpc socket with '\n' symbol.
+     * '\n' needed for proper parsing of the data
+     */
     send(data: any) {
         this.socket.write(data + '\n');
     }
 
+    /**
+     * Allow to listen on events from outside of this file
+     */
     on(event: string, fn: any) {
-        this.events[event] = fn;
+        this.eventEmitter.on(event, fn);
     }
 
+    /**
+     * Emit event out of this file
+     */
     emit(event: string, data?: any) {
-        if (this.events[event]) this.events[event](data);
-        return;
+       this.eventEmitter.emit(event, data);
     }
 }

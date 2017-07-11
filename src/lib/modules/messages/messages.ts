@@ -4,6 +4,8 @@
  * class ProcessMessages : is used for communication between
  * master and workers.
  *
+ * class ProcessErrors : is used for building error messages.
+ *
  * class EmitMessage : is used for sending emit messages trough
  * WebSocket to the client
  *

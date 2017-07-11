@@ -28,7 +28,7 @@ var Broker = (function () {
                 console.log('socket disconnected');
             });
             socket.on('error', function (err) {
-                process.send(messages_1.MessageFactory.processMessages('error', messages_1.MessageFactory.processErrors(err, 'Broker', process.pid)));
+                process.send(messages_1.MessageFactory.processMessages('error', messages_1.MessageFactory.processErrors(err.toString(), 'Broker', process.pid)));
             });
         });
     }

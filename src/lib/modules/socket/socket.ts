@@ -54,7 +54,7 @@ export class Socket {
             // Pub Sub functions
             if (msg.action === 'publish') {
                 if (this.channels[msg.channel]){
-                    this.server.webSocketServer.publish(msg.channel, msg.data);
+                    this.server.webSocketServer.publish(msg.channel, msg.data, false);
                     this.publishListener(msg);
                 }
                 return;

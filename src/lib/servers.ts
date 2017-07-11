@@ -29,12 +29,11 @@ if (cluster.isMaster) {
 
     /**
      * Listen on messages from Broker and Workers
-     *
      * if type is error, display message to the console with red color
      *
      */
 
-    const handleWorkersMessages = (server: any) => {
+    const handleChildMessages = (server: any) => {
         server.on('message', (message: ProcessMessages) => {
             if(message.type === 'error'){
                 console.error('\x1b[31m%s\x1b[0m', message.data.is + ' ' + ', PID ' + message.data.pid + '\n' + message.data.err + '\n');
@@ -64,7 +63,7 @@ if (cluster.isMaster) {
                 launchWorker(i);
             }
         });
-        handleWorkersMessages(worker);
+        handleChildMessages(worker);
         worker.send(initWorkerMsg);
     };
 
@@ -85,7 +84,7 @@ if (cluster.isMaster) {
             initWorkerMsg = MessageFactory.processMessages('initWorker', message.data);
 
             broker = cluster.fork();
-            handleWorkersMessages(broker);
+            handleChildMessages(broker);
             broker.send(MessageFactory.processMessages('initBroker', message.data));
 
             for (let i: number = 0; i < message.data.workers; i++) {

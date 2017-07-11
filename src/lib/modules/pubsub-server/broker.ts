@@ -50,6 +50,9 @@ export class Broker {
         });
     }
 
+    /**
+     * Broadcast message to all workers except one from which it was sent.
+     */
     broadcast(id: number, msg: any) {
         for (let i: number = 0, len = this.servers.length; i < len; i++) {
             if (id !== i) {

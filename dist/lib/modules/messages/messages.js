@@ -64,7 +64,7 @@ var MessageFactory = (function () {
         return JSON.stringify(new InternalMessage(event, data));
     };
     MessageFactory.processErrors = function (err, is, pid) {
-        return JSON.stringify(new ProcessErrors(err, is, pid));
+        return new ProcessErrors(err, is, pid);
     };
     MessageFactory.processMessages = function (type, data) {
         return new ProcessMessages(type, data);
