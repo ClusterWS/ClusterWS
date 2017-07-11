@@ -42,7 +42,6 @@ var Worker = (function () {
         var _this = this;
         this.broker = new tcp_socket_1.TcpSocket(this.options.brokerPort, '127.0.0.1');
         this.broker.on('message', function (msg) {
-            console.log(msg);
             if (msg === '_0')
                 return _this.broker.send('_1');
             _this.emit('publish', JSON.parse(msg));

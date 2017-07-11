@@ -8,6 +8,14 @@ if (cluster.isMaster) {
     var broker_2;
     var workers_1;
     var initWorkerMsg_1;
+    var handleWorkersMessages_1 = function (server) {
+        server.on('message', function (message) {
+            if (message.type === 'error') {
+                var data = JSON.parse(message.data);
+                console.error('\x1b[31m%s\x1b[0m', data.is + ', PID ' + data.pid + '\n' + data.err + '\n');
+            }
+        });
+    };
     var launchWorker_1 = function (i) {
         var worker = workers_1[i] = cluster.fork();
         initWorkerMsg_1.data.id = i;
@@ -17,6 +25,7 @@ if (cluster.isMaster) {
                 launchWorker_1(i);
             }
         });
+        handleWorkersMessages_1(worker);
         worker.send(initWorkerMsg_1);
     };
     process.on('message', function (message) {
@@ -24,7 +33,9 @@ if (cluster.isMaster) {
             console.log('\x1b[36m%s\x1b[0m', '>>> Master on: ' + message.data.port + ', PID ' + process.pid);
             workers_1 = new Array(message.data.workers);
             initWorkerMsg_1 = messages_1.MessageFactory.processMessages('initWorker', message.data);
-            broker_2 = cluster.fork().send(messages_1.MessageFactory.processMessages('initBroker', message.data));
+            broker_2 = cluster.fork();
+            handleWorkersMessages_1(broker_2);
+            broker_2.send(messages_1.MessageFactory.processMessages('initBroker', message.data));
             for (var i = 0; i < message.data.workers; i++) {
                 launchWorker_1(i);
             }
@@ -44,10 +55,11 @@ else {
             server_1.is = 'Broker';
         }
     });
+    setTimeout(function () {
+        sjjj();
+    }, 10000);
     process.on('uncaughtException', function (err) {
-        if (!server_1.id)
-            server_1.id = 'BR';
-        console.error('\x1b[31m%s\x1b[0m', server_1.is + ' ' + server_1.id + ', PID ' + process.pid + '\n' + err + '\n');
+        process.send(messages_1.MessageFactory.processMessages('error', messages_1.MessageFactory.processErrors(err.toString(), server_1.is, process.pid)));
         process.exit();
     });
 }

@@ -19,12 +19,28 @@ import {Broker} from './modules/pubsub-server/broker';
  * so it is commented and used only for tests.
  *
  */
+declare let process:any;
 
 if (cluster.isMaster) {
 
     let broker: any;
     let workers: Array<any>;
     let initWorkerMsg: ProcessMessages;
+
+    /**
+     * Listen on messages from Broker and Workers
+     *
+     * if type is error, display message to the console with red color
+     *
+     */
+
+    const handleWorkersMessages = (server: any) => {
+        server.on('message', (message: ProcessMessages) => {
+            if(message.type === 'error'){
+                console.error('\x1b[31m%s\x1b[0m', message.data.is + ' ' + ', PID ' + message.data.pid + '\n' + message.data.err + '\n');
+            }
+        });
+    };
 
     /**
      * Fork worker, save it in array of
@@ -37,6 +53,7 @@ if (cluster.isMaster) {
      * restart worker.
      *
      */
+
     const launchWorker = (i: number) => {
         let worker: any = workers[i] = cluster.fork();
         initWorkerMsg.data.id = i;
@@ -47,7 +64,7 @@ if (cluster.isMaster) {
                 launchWorker(i);
             }
         });
-
+        handleWorkersMessages(worker);
         worker.send(initWorkerMsg);
     };
 
@@ -67,13 +84,16 @@ if (cluster.isMaster) {
             workers = new Array(message.data.workers);
             initWorkerMsg = MessageFactory.processMessages('initWorker', message.data);
 
-            broker = cluster.fork().send(MessageFactory.processMessages('initBroker', message.data));
+            broker = cluster.fork();
+            handleWorkersMessages(broker);
+            broker.send(MessageFactory.processMessages('initBroker', message.data));
 
             for (let i: number = 0; i < message.data.workers; i++) {
                 launchWorker(i);
             }
         }
     });
+
 
 } else {
 
@@ -105,12 +125,9 @@ if (cluster.isMaster) {
      *
      * on each error worker process will be exited.
      *
-     * TODO: make scope errors.
-     *
      */
     process.on('uncaughtException', (err: any) => {
-        if (!server.id) server.id = 'BR';
-        console.error('\x1b[31m%s\x1b[0m', server.is + ' ' + server.id + ', PID ' + process.pid + '\n' + err + '\n');
+        process.send(MessageFactory.processMessages('error',MessageFactory.processErrors(err.toString(), server.is, process.pid)));
         process.exit();
     });
 }

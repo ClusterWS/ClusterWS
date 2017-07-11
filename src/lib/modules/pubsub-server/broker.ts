@@ -1,6 +1,7 @@
 import * as net from 'net';
 import {Options} from '../../options';
 import {TcpSocket} from './tcp-socket';
+import {MessageFactory} from '../messages/messages';
 
 /**
  * Broker is using to communicate between workers and pass big amount
@@ -11,6 +12,7 @@ import {TcpSocket} from './tcp-socket';
  * .listen start to listen on all connections from port which was passed
  * in options
  */
+declare let process: any;
 
 export class Broker {
     servers: any = [];
@@ -21,7 +23,7 @@ export class Broker {
 
         this.brokerServer = net.createServer();
         this.brokerServer.listen(this.options.brokerPort);
-        //
+
         this.brokerServer.on('connection', (socket: any) => {
             socket = new TcpSocket(socket);
 
@@ -43,7 +45,7 @@ export class Broker {
             });
 
             socket.on('error', (err: any) => {
-                console.log(err);
+                process.send(MessageFactory.processMessages('error', MessageFactory.processErrors(err.toString(), 'Broker', process.pid)));
             });
         });
     }
@@ -51,7 +53,7 @@ export class Broker {
     broadcast(id: number, msg: any) {
         for (let i: number = 0, len = this.servers.length; i < len; i++) {
             if (id !== i) {
-                this.servers[i].send(msg)
+                this.servers[i].send(msg);
             }
         }
     }

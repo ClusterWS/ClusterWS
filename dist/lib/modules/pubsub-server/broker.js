@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var net = require("net");
 var tcp_socket_1 = require("./tcp-socket");
+var messages_1 = require("../messages/messages");
 var Broker = (function () {
     function Broker(options) {
         var _this = this;
@@ -27,7 +28,7 @@ var Broker = (function () {
                 console.log('socket disconnected');
             });
             socket.on('error', function (err) {
-                console.log(err);
+                process.send(messages_1.MessageFactory.processMessages('error', messages_1.MessageFactory.processErrors(err, 'Broker', process.pid)));
             });
         });
     }

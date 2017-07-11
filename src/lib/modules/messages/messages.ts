@@ -25,6 +25,11 @@ export class ProcessMessages {
     }
 }
 
+export class ProcessErrors {
+    constructor(public err: string, public is: string, public pid: number) {
+    }
+}
+
 class EmitMessage {
     action: string = 'emit';
 
@@ -69,8 +74,11 @@ export class MessageFactory {
     static internalMessage(event: string, data?: any) {
         return JSON.stringify(new InternalMessage(event, data));
     }
-
+    static processErrors(err: any, is:string, pid: number){
+        return new ProcessErrors(err, is, pid);
+    }
     static processMessages(type: string, data?: any) {
         return new ProcessMessages(type, data);
     }
+
 }

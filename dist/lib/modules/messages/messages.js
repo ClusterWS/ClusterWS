@@ -8,6 +8,15 @@ var ProcessMessages = (function () {
     return ProcessMessages;
 }());
 exports.ProcessMessages = ProcessMessages;
+var ProcessErrors = (function () {
+    function ProcessErrors(err, is, pid) {
+        this.err = err;
+        this.is = is;
+        this.pid = pid;
+    }
+    return ProcessErrors;
+}());
+exports.ProcessErrors = ProcessErrors;
 var EmitMessage = (function () {
     function EmitMessage(event, data) {
         this.event = event;
@@ -53,6 +62,9 @@ var MessageFactory = (function () {
     };
     MessageFactory.internalMessage = function (event, data) {
         return JSON.stringify(new InternalMessage(event, data));
+    };
+    MessageFactory.processErrors = function (err, is, pid) {
+        return JSON.stringify(new ProcessErrors(err, is, pid));
     };
     MessageFactory.processMessages = function (type, data) {
         return new ProcessMessages(type, data);
