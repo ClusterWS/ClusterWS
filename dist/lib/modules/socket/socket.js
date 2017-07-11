@@ -37,7 +37,7 @@ var Socket = (function () {
             }
             if (msg.action === 'publish') {
                 if (_this.channels[msg.channel]) {
-                    _this.server.webSocketServer.publish(msg.channel, msg.data);
+                    _this.server.webSocketServer.publish(msg.channel, msg.data, false);
                     _this.publishListener(msg);
                 }
                 return;

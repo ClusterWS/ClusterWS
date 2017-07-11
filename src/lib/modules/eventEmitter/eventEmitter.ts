@@ -23,13 +23,9 @@ export class EventEmitter {
     removeListener(event: string, listener: any) {
         if (this._events[event]) {
             let len = this._events[event].length;
-            let i = 0;
-            while (i < len) {
-                if (this._events[event][i] === listener) {
-                    this._events[event].splice(i, 1);
-                    len--;
-                } else {
-                    i++;
+            while (len--) {
+                if (this._events[event][len] === listener) {
+                    this._events[event].splice(len, 1);
                 }
             }
         }

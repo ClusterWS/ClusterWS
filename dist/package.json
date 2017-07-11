@@ -22,7 +22,6 @@
     "url": "https://github.com/goriunov/ClusterWS"
   },
   "dependencies": {
-    "eventemitter3": "^2.0.3",
     "uws": "^8.14.0"
   }
 }

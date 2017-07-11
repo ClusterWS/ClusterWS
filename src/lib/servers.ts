@@ -3,6 +3,8 @@ import {ProcessMessages, MessageFactory} from './modules/messages/messages';
 import {Worker} from './modules/worker';
 import {Broker} from './modules/pubsub-server/broker';
 
+import {Options} from './options';
+
 /**
  * Creates MasterProcess and fork node js clusters
  * amount of clusters provided by options,
@@ -19,114 +21,109 @@ import {Broker} from './modules/pubsub-server/broker';
  * so it is commented and used only for tests.
  *
  */
-declare let process:any;
+declare let process: any;
 
-if (cluster.isMaster) {
+export function Servers(options: Options) {
+    if (cluster.isMaster) {
 
-    let broker: any;
-    let workers: Array<any>;
-    let initWorkerMsg: ProcessMessages;
+        let broker: any;
+        let workers: Array<any>;
+        let initWorkerMsg: ProcessMessages;
 
-    /**
-     * Listen on messages from Broker and Workers
-     * if type is error, display message to the console with red color
-     *
-     */
+        /**
+         * Listen on messages from Broker and Workers
+         * if type is error, display message to the console with red color
+         *
+         */
 
-    const handleChildMessages = (server: any) => {
-        server.on('message', (message: ProcessMessages) => {
-            if(message.type === 'error'){
-                console.error('\x1b[31m%s\x1b[0m', message.data.is + ' ' + ', PID ' + message.data.pid + '\n' + message.data.err + '\n');
+        const handleChildMessages = (server: any) => {
+            server.on('message', (message: ProcessMessages) => {
+                if (message.type === 'error') {
+                    console.error('\x1b[31m%s\x1b[0m', message.data.is + ' ' + ', PID ' + message.data.pid + '\n' + message.data.err + '\n');
+                }
+            });
+        };
+
+        /**
+         * Fork worker, save it in array of
+         * workers modify, message and send it
+         * to the worker.
+         *
+         * worker.on('exit') is listening on exit
+         * from the worker and if option
+         * restartWorkerOnFail is true then
+         * restart worker.
+         *
+         */
+
+        const launchWorker = (i: number) => {
+            let worker: any = workers[i] = cluster.fork();
+            initWorkerMsg.data.id = i;
+
+            worker.on('exit', () => {
+                if (options.restartWorkerOnFail) {
+                    console.log('\x1b[33m%s\x1b[0m', 'Restarting worker on fail ' + initWorkerMsg.data.id);
+                    launchWorker(i);
+                }
+            });
+            handleChildMessages(worker);
+            worker.send(initWorkerMsg);
+        };
+
+        /**
+         * Create broker, and run workers fork
+         *
+         * Also print to console that master process is
+         * running.
+         *
+         */
+        console.log('\x1b[36m%s\x1b[0m', '>>> Master on: ' + options.port + ', PID ' + process.pid);
+
+        workers = new Array(options.workers);
+        initWorkerMsg = MessageFactory.processMessages('initWorker', options);
+
+        broker = cluster.fork();
+        handleChildMessages(broker);
+        broker.send(MessageFactory.processMessages('initBroker', options));
+
+        for (let i: number = 0; i < options.workers; i++) {
+            launchWorker(i);
+        }
+
+    } else {
+
+        let server: any;
+
+        /**
+         * process.in('message') is listening on all messages from master process.
+         * it checks the type of message if message is initWorker then create new
+         * worker . if message type is initBroker then create broker.
+         *
+         * Also each worker connect worker file which provided by user
+         *
+         */
+        process.on('message', (message: ProcessMessages) => {
+            if (message.type === 'initWorker') {
+                server = new Worker(message.data);
+                server.is = 'Worker';
+                require(message.data.pathToWorker)(server);
+            }
+            if (message.type === 'initBroker') {
+                server = new Broker(message.data);
+                server.is = 'Broker';
             }
         });
-    };
 
-    /**
-     * Fork worker, save it in array of
-     * workers modify, message and send it
-     * to the worker.
-     *
-     * worker.on('exit') is listening on exit
-     * from the worker and if option
-     * restartWorkerOnFail is true then
-     * restart worker.
-     *
-     */
-
-    const launchWorker = (i: number) => {
-        let worker: any = workers[i] = cluster.fork();
-        initWorkerMsg.data.id = i;
-
-        worker.on('exit', () => {
-            if (initWorkerMsg.data.restartWorkerOnFail) {
-                console.log('\x1b[33m%s\x1b[0m', 'Restarting worker on fail ' + initWorkerMsg.data.id);
-                launchWorker(i);
-            }
+        /**
+         * process.on('uncaughtException') listens on all errors in workers or broker
+         * and print it to console.
+         *
+         * on each error worker process will be exited.
+         *
+         */
+        process.on('uncaughtException', (err: any) => {
+            process.send(MessageFactory.processMessages('error', MessageFactory.processErrors(err.toString(), server.is, process.pid)));
+            process.exit();
         });
-        handleChildMessages(worker);
-        worker.send(initWorkerMsg);
-    };
-
-    /**
-     * process.on('message') is listening on message from the master
-     * process. If message.type is init then fork broker and
-     * preallocate space in array for workers.
-     *
-     * Also print to console that master process is
-     * running. And run loop to fork workers.
-     *
-     */
-    process.on('message', (message: ProcessMessages) => {
-        if (message.type === 'init') {
-            console.log('\x1b[36m%s\x1b[0m', '>>> Master on: ' + message.data.port + ', PID ' + process.pid);
-
-            workers = new Array(message.data.workers);
-            initWorkerMsg = MessageFactory.processMessages('initWorker', message.data);
-
-            broker = cluster.fork();
-            handleChildMessages(broker);
-            broker.send(MessageFactory.processMessages('initBroker', message.data));
-
-            for (let i: number = 0; i < message.data.workers; i++) {
-                launchWorker(i);
-            }
-        }
-    });
-
-
-} else {
-
-    let server: any;
-
-    /**
-     * process.in('message') is listening on all messages from master process.
-     * it checks the type of message if message is initWorker then create new
-     * worker . if message type is initBroker then create broker.
-     *
-     * Also each worker connect worker file which provided by user
-     *
-     */
-    process.on('message', (message: ProcessMessages) => {
-        if (message.type === 'initWorker') {
-            server = new Worker(message.data);
-            server.is = 'Worker';
-            require(message.data.pathToWorker)(server);
-        }
-        if (message.type === 'initBroker') {
-            server = new Broker(message.data);
-            server.is = 'Broker';
-        }
-    });
-
-    /**
-     * process.on('uncaughtException') listens on all errors in workers or broker
-     * and print it to console.
-     *
-     * on each error worker process will be exited.
-     *
-     */
-    process.on('uncaughtException', (err: any) => {
-        process.send(MessageFactory.processMessages('error',MessageFactory.processErrors(err.toString(), server.is, process.pid)));
-        process.exit();
-    });
+    }
 }

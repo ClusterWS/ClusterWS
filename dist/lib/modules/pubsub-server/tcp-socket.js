@@ -1,13 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var net_1 = require("net");
+var eventEmitter_1 = require("../eventEmitter/eventEmitter");
 var TcpSocket = (function () {
     function TcpSocket(port, host) {
         var _this = this;
         this.port = port;
         this.host = host;
-        this.events = [];
         this.dataBuffer = '';
+        this.eventEmitter = new eventEmitter_1.EventEmitter();
         if (port instanceof net_1.Socket) {
             this.socket = port;
         }
@@ -43,12 +44,10 @@ var TcpSocket = (function () {
         this.socket.write(data + '\n');
     };
     TcpSocket.prototype.on = function (event, fn) {
-        this.events[event] = fn;
+        this.eventEmitter.on(event, fn);
     };
     TcpSocket.prototype.emit = function (event, data) {
-        if (this.events[event])
-            this.events[event](data);
-        return;
+        this.eventEmitter.emit(event, data);
     };
     return TcpSocket;
 }());

@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var http = require("http");
 var WebSocket = require("uws");
-var tcp_socket_1 = require("./pubsub-server/tcp-socket");
-var http_1 = require("http");
-var eventEmitter_1 = require("./eventEmitter/eventEmitter");
 var socket_1 = require("./socket/socket");
+var tcp_socket_1 = require("./pubsub-server/tcp-socket");
+var eventEmitter_1 = require("./eventEmitter/eventEmitter");
 var messages_1 = require("./messages/messages");
 var Worker = (function () {
     function Worker(options) {
@@ -41,7 +41,7 @@ var Worker = (function () {
     };
     Worker.prototype._connectHttpServer = function () {
         var _this = this;
-        this.httpServer = http_1.createServer();
+        this.httpServer = http.createServer();
         this.httpServer.listen(this.options.port, function () {
             console.log('\x1b[36m%s\x1b[0m', '          Worker: ' + _this.options.id + ', PID ' + process.pid);
         });
@@ -57,8 +57,11 @@ var Worker = (function () {
         this.webSocketServer.on = function (event, fn) {
             _this.on(event, fn);
         };
-        this.webSocketServer.publish = function (channel, data) {
+        this.webSocketServer.publish = function (channel, data, emitPublish) {
             _this.broker.send(messages_1.MessageFactory.brokerMessage(channel, data));
+            if (!emitPublish && emitPublish !== false) {
+                _this.emit('publish', { channel: channel, data: data });
+            }
         };
     };
     return Worker;
