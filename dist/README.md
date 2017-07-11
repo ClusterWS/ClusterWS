@@ -1,12 +1,13 @@
 # ClusterWS (Node Cluster WebSocket)
+*"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this framework"*
 
-*I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this library*
+[![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 
-This is a **Beta Version** that is why library may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
+This is a **Beta Version** that is why framework may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
 
-ClusterWS - minimalistic node js http and real-time library which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU
+ClusterWS - minimalistic node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
 
-ClusterWS is developing in TypeScript and compiling down to es5. All development code you can find in `src/` folder and compiled code in `dist/` folder.
+ClusterWS has been written in TypeScript and compiling down to es5. All development code you can find in `src/` folder and compiled code in `dist/` folder.
 
 ### ClusterWS client libraries:
 
@@ -19,17 +20,17 @@ ClusterWS is developing in TypeScript and compiling down to es5. All development
 Use npm :
 
 ```js
-npm i --save clusterws
+npm install --save clusterws
 ```
 
 ### Configuration
 
-To be able to run this library you have to create 2 files. First one is `'server.js'` (you can name it as you wish) with:
+To be able to run this framework you have to create 2 files. First one is `'server.js'` (you can name it as you wish) with:
 
 ```js
 var ClusterWS = require('clusterws').ClusterWS;
 
-var cws = new ClusterWS({ workerPath: __dirname + '/worker.js' });
+var cws = new ClusterWS({ pathToWorker: __dirname + '/worker.js' });
 ```
 
 It is mandatory to provide path to the worker
@@ -38,7 +39,7 @@ All possible options:
 
 ```js
 {
-    workerPath: path to the worker file (!mandatory to provide),
+    pathToWorker: path to the worker file (!mandatory to provide),
 
     workers: number of the workers default is 1,
 
@@ -46,17 +47,20 @@ All possible options:
 
     restartWorkerOnFail: if you need to restart workers on faults default is false,
 
-    brokerPort: port on which broker will communicate (change it only if default port is busy) default is 9346
+    brokerPort: port on which broker will communicate (change it only if default port is busy) default is 9346,
+
+    pingPongInterval: time between which will be send ping to the client in ms default is 20000 (20s)
 }
 ```
 
-Second file is `'worker.js'` (also may name as you wish but do not forget to change workerPath) with:
+Second file is `'worker.js'` (also may name as you wish but do not forget to change workerPath) all server log should be here with:
 
-For http handler i am going to use `'express'`. So you need to run `npm i --save express`
+For http handler i am going to use `'express'`. So you need to run `npm install --save express`
 
 ```js
 var express = require('express');
 
+// You have to export function from this file
 module.exports = function(worker){
     var httpServer = worker.httpServer;
     var webSocketServer = worker.webSocketServer;
@@ -69,7 +73,7 @@ module.exports = function(worker){
     httpServer.on('request',  app)
 
     webSocketServer.on('connect', function(socket){
-        // Here write all logic with socket
+        // Here write all logic for socket
     });
 }
 ```

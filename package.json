@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "eventemitter3": "^2.0.3",
-    "json-socket": "^0.3.0",
     "uws": "^8.14.0"
   }
 }

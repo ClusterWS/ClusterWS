@@ -1,30 +1,27 @@
 import {fork} from 'child_process';
-import {ProcessMessages} from './lib/messages/messages';
-import {Options} from './lib/options';
+import {MessageFactory} from './lib/modules/messages/messages';
+import {Options, Configurations} from './lib/options';
 
-interface Configurations {
-    port: number,
-    brokerPort: number,
-    workers: number,
-    workerPath: string,
-    restartWorkerOnFail: boolean,
-    pingPongInterval: number
-}
-// Main function
+/**
+ * Main file which get configurations from the user,
+ * fork new chile process and pass options
+ * to the servers (child process) file.
+ *
+ * If configurations is not provided then make
+ * it empty object.
+ *
+ */
+
 export class ClusterWS {
-    // constructor an object
-    constructor(public configuration: Configurations) {
-        // Make sure that configuration exist as object
-        this.configuration = this.configuration || {};
-        // Create server
-        const servers = fork(__dirname + '/lib/servers');
-        // Pass options to the server
-        servers.send(new ProcessMessages('init', new Options(
-            this.configuration.port,
-            this.configuration.workers,
-            this.configuration.workerPath,
-            this.configuration.restartWorkerOnFail,
-            this.configuration.brokerPort,
-            this.configuration.pingPongInterval)));
+    servers: any;
+    options: Options;
+
+    constructor(public configurations: Configurations) {
+        this.configurations = this.configurations || {};
+        this.options = new Options(configurations);
+
+        this.servers = fork(__dirname + '/lib/servers');
+
+        this.servers.send(MessageFactory.processMessages('init', this.options));
     }
 }

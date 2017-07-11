@@ -30,7 +30,7 @@ To be able to run this framework you have to create 2 files. First one is `'serv
 ```js
 var ClusterWS = require('clusterws').ClusterWS;
 
-var cws = new ClusterWS({ workerPath: __dirname + '/worker.js' });
+var cws = new ClusterWS({ pathToWorker: __dirname + '/worker.js' });
 ```
 
 It is mandatory to provide path to the worker
@@ -39,7 +39,7 @@ All possible options:
 
 ```js
 {
-    workerPath: path to the worker file (!mandatory to provide),
+    pathToWorker: path to the worker file (!mandatory to provide),
 
     workers: number of the workers default is 1,
 

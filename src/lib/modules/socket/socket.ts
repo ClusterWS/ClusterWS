@@ -1,5 +1,5 @@
 import * as WebSocket from 'uws';
-import {MessageFactory} from '../../messages/messages';
+import {MessageFactory} from '../messages/messages';
 import {Worker} from '../worker';
 
 export class Socket {
@@ -53,7 +53,10 @@ export class Socket {
 
             // Pub Sub functions
             if (msg.action === 'publish') {
-                if (this.channels[msg.channel]) this.server.webSocketServer.publish(msg.channel, msg.data);
+                if (this.channels[msg.channel]){
+                    this.server.webSocketServer.publish(msg.channel, msg.data);
+                    this.publishListener(msg);
+                }
                 return;
             }
             if (msg.action === 'internal') {

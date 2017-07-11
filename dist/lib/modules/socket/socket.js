@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var messages_1 = require("../../messages/messages");
+var messages_1 = require("../messages/messages");
 var Socket = (function () {
     function Socket(_socket, server) {
         var _this = this;
@@ -36,8 +36,10 @@ var Socket = (function () {
                 return;
             }
             if (msg.action === 'publish') {
-                if (_this.channels[msg.channel])
+                if (_this.channels[msg.channel]) {
                     _this.server.webSocketServer.publish(msg.channel, msg.data);
+                    _this.publishListener(msg);
+                }
                 return;
             }
             if (msg.action === 'internal') {

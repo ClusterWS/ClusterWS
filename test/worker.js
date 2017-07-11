@@ -21,6 +21,7 @@ module.exports = function(worker){
        // webSocketServer.publish('food', undefined);
        // webSocketServer.publish('food', Number(2));
        // webSocketServer.publish('food', 1);
+       // webSocketServer.publish('food', 1);
 
         socket.on('disconnect', function (code, reason){
         })

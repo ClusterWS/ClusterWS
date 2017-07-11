@@ -1,13 +1,10 @@
 import * as WebSocket from 'uws';
-import * as net from 'net';
-
-import JsonSocket = require( "json-socket");
-
+import { TcpSocket } from './pubsub-server/tcp-socket';
 import {createServer} from 'http';
 import {EventEmitter, ListenerFn} from 'eventemitter3';
 import {Options} from '../options';
 import {Socket} from './socket/socket';
-import {MessageFactory} from '../messages/messages';
+import {MessageFactory} from './messages/messages';
 
 
 
@@ -46,8 +43,7 @@ export class Worker {
         };
         // Make available publish event to the client
         this.webSocketServer.publish = (channel: string, data?: any) => {
-            this.broker.sendMessage(MessageFactory.brokerMessage(channel, data));
-            this.emit('publish', {channel: channel, data: data});
+            this.broker.send(MessageFactory.brokerMessage(channel, data));
         }
     }
 
@@ -68,18 +64,15 @@ export class Worker {
 
     // Connect broker socket
     connectBroker() {
-        // Create connection to the broker
-        this.broker = new JsonSocket(new net.Socket());
-        this.broker.connect(this.options.brokerPort, '127.0.0.1');
-        // Listen on the messages from the broker
-        this.broker.on('message', (msg: any) => {
-            if (msg === '_0') return this.broker.sendMessage('_1');
+        this.broker = new TcpSocket(this.options.brokerPort, '127.0.0.1');
+
+        this.broker.on('message', (msg: any)=>{
+            if (msg === '_0') return this.broker.send('_1');
             this.emit('publish', JSON.parse(msg));
         });
-        // Listen on event close and try to reconnect if it has disconnected
-        // TODO: make reconnection better
-        this.broker.on('close', () => {
-            this.connectBroker();
+
+        this.broker.on('disconnect', ()=>{
+            console.log('Broker disconnected');
         });
     }
 }

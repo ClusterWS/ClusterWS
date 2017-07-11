@@ -1,12 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var WebSocket = require("uws");
-var net = require("net");
-var JsonSocket = require("json-socket");
+var tcp_socket_1 = require("./pubsub-server/tcp-socket");
 var http_1 = require("http");
 var eventemitter3_1 = require("eventemitter3");
 var socket_1 = require("./socket/socket");
-var messages_1 = require("../messages/messages");
+var messages_1 = require("./messages/messages");
 var Worker = (function () {
     function Worker(options) {
         var _this = this;
@@ -27,8 +26,7 @@ var Worker = (function () {
             _this.on(event, fn, context);
         };
         this.webSocketServer.publish = function (channel, data) {
-            _this.broker.sendMessage(messages_1.MessageFactory.brokerMessage(channel, data));
-            _this.emit('publish', { channel: channel, data: data });
+            _this.broker.send(messages_1.MessageFactory.brokerMessage(channel, data));
         };
     }
     Worker.prototype._unsubscribe = function (event, fn, context) {
@@ -42,15 +40,15 @@ var Worker = (function () {
     };
     Worker.prototype.connectBroker = function () {
         var _this = this;
-        this.broker = new JsonSocket(new net.Socket());
-        this.broker.connect(this.options.brokerPort, '127.0.0.1');
+        this.broker = new tcp_socket_1.TcpSocket(this.options.brokerPort, '127.0.0.1');
         this.broker.on('message', function (msg) {
+            console.log(msg);
             if (msg === '_0')
-                return _this.broker.sendMessage('_1');
+                return _this.broker.send('_1');
             _this.emit('publish', JSON.parse(msg));
         });
-        this.broker.on('close', function () {
-            _this.connectBroker();
+        this.broker.on('disconnect', function () {
+            console.log('Broker disconnected');
         });
     };
     return Worker;
