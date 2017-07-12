@@ -9,7 +9,8 @@
 
 ## Changes
 
-* **chg** Less memory usage by removing one child process fork
+* **chg** Less memory usage by removing one child process fork.
+* **chg** Rename `workerPath` to `pathToWorker`.
 
 ## Other 
 
