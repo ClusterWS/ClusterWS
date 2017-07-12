@@ -6,8 +6,6 @@
     "module": "commonjs",
     /* Redirect output structure to the directory. */
     "outDir": "./dist",
-    /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
-    "rootDir": "./src",
     /* Do not emit comments to output. */
     "removeComments": true,
     /* Enable all strict type-checking options. */

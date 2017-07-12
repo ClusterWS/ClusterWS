@@ -5,11 +5,12 @@
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
-    "start": "npm run build && npm run boot",
+    "start": "npm run build:dev && npm run boot",
     "boot": "node test/server.js",
-    "build": "gulp && gulp clone",
-    "build:publish": "npm run build && cd dist && npm publish && cd ../..",
-    "changelog": "cross-env NODE_ENV=...0.0.10 node information/changelog.js"
+    "build:prod": "webpack",
+    "build:dev": "cross-env WEBPACK_ENV=debug webpack",
+    "build:publish": "npm run build:prod && cd dist && npm publish && cd ..",
+    "build:changelog": "cross-env NODE_ENV=...0.0.10 node information/changelog.js"
   },
   "license": "MIT",
   "keywords": [
@@ -22,22 +23,22 @@
     "clusterws",
     "js",
     "scale",
-    "library"
+    "framework"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/goriunov/ClusterWS"
   },
   "devDependencies": {
-    "@types/json-socket": "^0.1.15",
     "@types/node": "^8.0.5",
     "@types/uws": "^0.13.0",
+    "copy-pkg-json-webpack-plugin": "0.0.29",
+    "copy-webpack-plugin": "^4.0.1",
     "cross-env": "^5.0.1",
-    "gulp": "^3.9.1",
-    "gulp-json-editor": "^2.2.1",
-    "gulp-typescript": "^3.1.7",
     "ts-loader": "^2.2.1",
-    "typescript": "^2.4.1"
+    "typescript": "^2.4.1",
+    "webpack": "^3.1.0",
+    "webpack-fail-plugin": "^1.0.6"
   },
   "dependencies": {
     "uws": "^8.14.0"

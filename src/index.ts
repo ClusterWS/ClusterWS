@@ -1,4 +1,3 @@
-
 import {Options, Configurations} from './lib/options';
 import {Servers} from './lib/servers';
 
@@ -9,9 +8,7 @@ import {Servers} from './lib/servers';
  *
  * If configurations is not provided then make
  * it empty object.
- *
  */
-
 export class ClusterWS {
     servers: any;
     options: Options;

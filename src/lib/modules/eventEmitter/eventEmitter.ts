@@ -1,6 +1,8 @@
 export class EventEmitter {
     _events: any = {};
-    constructor() {}
+
+    constructor() {
+    }
 
     on(event: string, listener: any) {
         if (!listener) throw 'Function must be provided';
@@ -10,11 +12,11 @@ export class EventEmitter {
         return this._events[event].push(listener);
     }
 
-    emit(event: string, data?: any) {
+    emit(event: string, data?: any, param2?: any, param3?: any) {
         if (this._events[event]) {
             for (let i = 0, len = this._events[event].length; i < len; i++) {
-                if(typeof this._events[event][i] === 'function') {
-                    this._events[event][i].call(this, data);
+                if (typeof this._events[event][i] === 'function') {
+                    this._events[event][i].call(this, data, param2, param3);
                 }
             }
         }
@@ -30,5 +32,25 @@ export class EventEmitter {
             }
         }
         return;
+    }
+
+    removeEvent(event: string) {
+        if (this._events[event]) {
+            this._events[event] = null;
+            delete this._events[event];
+        }
+    }
+
+    removeAllEvents() {
+        for (let key in this._events) {
+            if (this._events.hasOwnProperty(key)) {
+                this._events[key] = null;
+                delete this._events[key];
+            }
+        }
+    }
+
+    exist(event: string) {
+        return this._events[event]
     }
 }

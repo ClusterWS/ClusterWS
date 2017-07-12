@@ -9,7 +9,8 @@ socket.on('connect', function(){
     console.log('Connected to the socket');
     channel = socket.subscribe('home').watch(function(data){
         console.log(data);
-    }).publish(' I am home');
+    }).publish('I am home');
+    // socket.disconnect(1000, 'I am best');
 });
 
 socket.on('hello', function(data){
@@ -19,6 +20,8 @@ socket.on('hello', function(data){
 socket.on('disconnect', function(code, message){
     console.log('In index:', code, message);
 });
+
+
 
 
 

@@ -24,7 +24,7 @@ export interface Configurations {
     workers?: number,
     brokerPort?: number,
     pathToWorker: string,
-    pingPongInterval?: number
+    pingInterval?: number
     restartWorkerOnFail?: boolean,
 }
 
@@ -34,7 +34,7 @@ export class Options {
     workers: number;
     brokerPort: number;
     pathToWorker: string;
-    pingPongInterval: number;
+    pingInterval: number;
     restartWorkerOnFail: boolean;
 
     constructor(configurations: Configurations) {
@@ -47,7 +47,7 @@ export class Options {
         this.workers = configurations.workers || 1;
         this.brokerPort = configurations.brokerPort || 9346;
         this.pathToWorker = resolve(configurations.pathToWorker);
-        this.pingPongInterval = configurations.pingPongInterval || 20000;
+        this.pingInterval = configurations.pingInterval || 20000;
         this.restartWorkerOnFail = configurations.restartWorkerOnFail || false;
 
     }

@@ -183,9 +183,8 @@ var ClusterWS = (function () {
             return _this._execEventFn('error', msg);
         };
         this.webSocket.onmessage = function (msg) {
-            console.log(msg.data);
             if (msg.data === '_0') {
-                _this.pingPong--;
+                _this.pingPong = 0;
                 return _this.webSocket.send('_1');
             }
             msg = JSON.parse(msg.data);
@@ -199,10 +198,10 @@ var ClusterWS = (function () {
                 if (msg.event === 'config') {
                     _this.pingTimeOut = setInterval(function () {
                         if (_this.pingPong >= 2) {
-                            return _this.disconnect(1000, 'Did not get ping');
+                            return _this.disconnect(3001, 'Did not get ping');
                         }
                         return _this.pingPong++;
-                    }, msg.data.ping);
+                    }, msg.data.pingInterval);
                     return;
                 }
             }

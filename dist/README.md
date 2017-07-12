@@ -49,7 +49,7 @@ All possible options:
 
     brokerPort: port on which broker will communicate (change it only if default port is busy) default is 9346,
 
-    pingPongInterval: time between which will be send ping to the client in ms default is 20000 (20s)
+    pingInterval: time between which will be send ping to the client in ms default is 20000 (20s)
 }
 ```
 

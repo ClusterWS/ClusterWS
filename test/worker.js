@@ -23,8 +23,7 @@ module.exports = function(worker){
        // webSocketServer.publish('food', 1);
        // webSocketServer.publish('food', 1);
 
-        socket.on('disconnect', function (code, reason){
-        })
+        socket.on('disconnect', function (code, reason){});
        //
        socket.send('hello', [1,2,3,4]);
        // socket.send('hello', {object: 'I am object', bool: true, numb: 2, undefinedVar: undefined, myNull: null, arr: [2,3,4,5] , some:{here:true}});

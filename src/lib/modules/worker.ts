@@ -116,11 +116,9 @@ export class Worker {
             this.on(event, fn);
         };
 
-        this.webSocketServer.publish = (channel: string, data?: any, emitPublish?: boolean) => {
+        this.webSocketServer.publish = (channel: string, data?: any) => {
             this.broker.send(MessageFactory.brokerMessage(channel, data));
-            if (!emitPublish && emitPublish !== false) {
-                this.emit('publish', {channel: channel, data: data});
-            }
+            this.emit('publish', {channel: channel, data: data});
         }
     }
 }
