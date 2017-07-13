@@ -39,17 +39,17 @@ All possible options:
 
 ```js
 {
-    pathToWorker: path to the worker file (!mandatory to provide),
+    pathToWorker: 'path to the worker file {__dirname + string} (!mandatory to provide)',
 
-    workers: number of the workers default is 1,
+    workers: 'number of the workers {number} default is 1',
 
-    port: port on which main process will listen default is 3000,
+    port: 'port on which main process will listen {number} default is 3000',
 
-    restartWorkerOnFail: if you need to restart workers on faults default is false,
+    restartWorkerOnFail: 'if you need to restart workers on error {bool} default is false',
 
-    brokerPort: port on which broker will communicate (change it only if default port is busy) default is 9346,
+    brokerPort: 'port on which broker will communicate (change it only if default port is busy) {number} default is 9346',
 
-    pingInterval: time between which will be send ping to the client in ms default is 20000 (20s)
+    pingInterval: 'time between which will be send ping to the client in ms {number} default is 20000 (20s)'
 }
 ```
 
