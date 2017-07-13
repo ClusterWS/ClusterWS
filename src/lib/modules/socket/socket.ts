@@ -113,7 +113,7 @@ export class Socket {
             try {
                 msg = JSON.parse(msg);
             } catch (e) {
-                this.disconnect(1007);
+                return this.disconnect(1007);
             }
 
             switch (msg.action) {
