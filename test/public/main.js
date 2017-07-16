@@ -22,9 +22,6 @@ socket.on('disconnect', function(code, message){
 });
 
 
-
-
-
 function myFunction() {
     channel.publish({place:'Home'});
 }

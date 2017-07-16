@@ -1,7 +1,9 @@
 import * as net from 'net';
+
 import {Options} from '../../options';
 import {TcpSocket} from './tcp-socket';
-import {MessageFactory} from '../messages/messages';
+
+declare let process: any;
 
 /**
  * Broker is using to communicate between workers and pass big amount
@@ -12,10 +14,8 @@ import {MessageFactory} from '../messages/messages';
  * .listen start to listen on all connections from port which was passed
  * in options
  */
-declare let process: any;
-
 export class Broker {
-    servers: any = [];
+    servers: TcpSocket[] = [];
     brokerServer: any;
 
     constructor(public options: Options) {
@@ -45,7 +45,7 @@ export class Broker {
             });
 
             socket.on('error', (err: any) => {
-                process.send(MessageFactory.processMessages('error', MessageFactory.processErrors(err.toString(), 'Broker', process.pid)));
+                console.error('\x1b[31m%s\x1b[0m', 'Broker' + ', PID ' + process.pid + '\n' + err + '\n');
             });
         });
     }

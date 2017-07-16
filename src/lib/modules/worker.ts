@@ -16,43 +16,22 @@ import {MessageFactory} from './messages/messages';
 
 declare let process: any;
 
-export class Worker {
+export class Worker extends EventEmitter{
 
     id: number;
     broker: any;
     httpServer: any;
     webSocketServer: any;
-    eventEmitter: EventEmitter;
 
     constructor(public options: Options) {
+        super();
         this.id = this.options.id;
-        this.eventEmitter = new EventEmitter();
 
         this._connectBroker();
         this._connectHttpServer();
         this._connectWebSocketServer();
     }
 
-    /**
-     * Bind eventEmitter's 'on' function with worker 'on' function.
-     */
-    on(event: string, fn: any) {
-        this.eventEmitter.on(event, fn);
-    }
-
-    /**
-     * Bind eventEmitter's 'emit' function with worker 'emit' function.
-     */
-    emit(event: string, data?: any) {
-        this.eventEmitter.emit(event, data);
-    }
-
-    /**
-     * Bind eventEmitter's 'removeListener' function with worker '_unsubscribe' function.
-     */
-    _unsubscribe(event: string, fn: any) {
-        this.eventEmitter.removeListener(event, fn);
-    }
 
     /**
      * Establish communication between
@@ -72,10 +51,10 @@ export class Worker {
             this.emit('publish', JSON.parse(msg));
         });
         this.broker.on('disconnect', () => {
-            console.log('Broker disconnected');
+            console.log('\x1b[31m%s\x1b[0m', 'Broker has been disconnected');
         });
         this.broker.on('error', (err: any) => {
-            process.send(MessageFactory.processMessages('error', MessageFactory.processErrors(err.toString(), 'Worker', process.pid)));
+            console.log('\x1b[31m%s\x1b[0m', 'Worker' + ', PID ' + process.pid + '\n' + err + '\n');
         })
     }
 

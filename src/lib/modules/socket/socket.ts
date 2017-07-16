@@ -162,7 +162,7 @@ export class Socket {
             this.eventsEmitter.emit('disconnect', code, msg);
 
             clearInterval(this.pingPongInterval);
-            this.server._unsubscribe('publish', this.publishListener);
+            this.server.removeListener('publish', this.publishListener);
 
             this.eventsEmitter.removeAllEvents();
             this.channelsEmitter.removeAllEvents();

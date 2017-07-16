@@ -1,8 +1,9 @@
 import * as cluster from 'cluster';
-import {ProcessMessages, MessageFactory} from './modules/messages/messages';
+
 import {Worker} from './modules/worker';
 import {Broker} from './modules/pubsub-server/broker';
 import {Options} from './options';
+import {ProcessMessages, MessageFactory} from './modules/messages/messages';
 
 /**
  * Creates MasterProcess and fork node js clusters
@@ -18,7 +19,6 @@ import {Options} from './options';
  * This ^ code is used to divide connected users in different
  * workers, but it does not work well with TypeScript error check
  * so it is commented and used only for tests.
- *
  */
 declare let process: any;
 
@@ -33,19 +33,6 @@ export function Servers(options: Options) {
          * running.
          */
         console.log('\x1b[36m%s\x1b[0m', '>>> Master on: ' + options.port + ', PID ' + process.pid);
-
-        /**
-         * Listen on messages from Broker and Workers
-         * if type is error, display message to the console with red color
-         *
-         */
-        const handleChildMessages = (server: any) => {
-            server.on('message', (message: ProcessMessages) => {
-                if (message.type === 'error') {
-                    console.error('\x1b[31m%s\x1b[0m', message.data.is + ', PID ' + message.data.pid + '\n' + message.data.err + '\n');
-                }
-            });
-        };
 
         /**
          * Fork worker, save it in array of
@@ -68,22 +55,20 @@ export function Servers(options: Options) {
                     launchWorker(i);
                 }
             });
-            handleChildMessages(worker);
             worker.send(initWorkerMsg);
         };
+
+        /**
+         * Fork broker and send init message to the broker process
+         */
+        broker = cluster.fork();
+        broker.send(MessageFactory.processMessages('initBroker', options));
 
         /**
          * Preallocate worker array and create worker message
          */
         workers = new Array(options.workers);
         initWorkerMsg = MessageFactory.processMessages('initWorker', options);
-
-        /**
-         * Fork broker and send init message to the broker process
-         */
-        broker = cluster.fork();
-        handleChildMessages(broker);
-        broker.send(MessageFactory.processMessages('initBroker', options));
 
         /**
          * Launch all workers
@@ -106,15 +91,14 @@ export function Servers(options: Options) {
      *
      */
     process.on('message', (message: ProcessMessages) => {
-        if (message.type === 'initWorker') {
-            server = new Worker(message.data);
-            server.is = 'Worker';
-
-            eval('require')(message.data.pathToWorker)(server);
-        }
         if (message.type === 'initBroker') {
             server = new Broker(message.data);
             server.is = 'Broker';
+        }
+        if (message.type === 'initWorker') {
+            server = new Worker(message.data);
+            server.is = 'Worker';
+            eval('require')(message.data.pathToWorker).Worker(server);
         }
     });
 
@@ -126,7 +110,7 @@ export function Servers(options: Options) {
      *
      */
     process.on('uncaughtException', (err: any) => {
-        process.send(MessageFactory.processMessages('error', MessageFactory.processErrors(err.toString(), server.is, process.pid)));
+        console.log('\x1b[31m%s\x1b[0m', server.is + ', PID ' + process.pid + '\n' + err + '\n');
         process.exit();
     });
 }
