@@ -1,5 +1,3 @@
-import {resolve} from 'path';
-
 /**
  * Creates options object from
  * configurations provided by user.
@@ -18,27 +16,31 @@ import {resolve} from 'path';
 
 export interface Configurations {
     port?: number,
+    worker?: any
     workers?: number,
     brokerPort?: number,
-    pathToWorker: string,
     pingInterval?: number
     restartWorkerOnFail?: boolean,
+
 }
 
 export class Options {
     id: number;
     port: number;
+    worker: any;
     workers: number;
     brokerPort: number;
-    pathToWorker: string;
     pingInterval: number;
     restartWorkerOnFail: boolean;
 
     constructor(configurations: Configurations) {
+        if (!configurations.worker) {
+            throw '\n\x1b[31mWorker function must be provided\x1b[0m';
+        }
         this.port = configurations.port || 3000;
+        this.worker = configurations.worker;
         this.workers = configurations.workers || 1;
         this.brokerPort = configurations.brokerPort || 9346;
-        this.pathToWorker = resolve(configurations.pathToWorker);
         this.pingInterval = configurations.pingInterval || 20000;
         this.restartWorkerOnFail = configurations.restartWorkerOnFail || false;
     }

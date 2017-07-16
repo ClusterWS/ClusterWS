@@ -1,29 +1,24 @@
-var ClusterWS = require('../dist/index').ClusterWS;
-var express = require('express');
 var path = require('path');
+var express = require('express');
+var ClusterWS = require('../dist/index').ClusterWS;
 
 var cws = new ClusterWS({
-    workers: 2,
+    worker: Worker,
     port: 3000,
-    restartWorkerOnFail: false,
-    pingPongInterval: 5000
+    workers: 2,
+    restartWorkerOnFail: false
 });
 
 
-module.exports.Worker = function (worker) {
-    var httpServer = worker.httpServer;
-    var webSocketServer = worker.webSocketServer;
-
+function Worker() {
     var app = express();
     app.use('/', express.static(path.join(__dirname + '/public')));
 
-    httpServer.on('request', app);
-
-    webSocketServer.on('connect', function (socket) {
+    this.httpServer.on('request', app);
+    this.webSocketServer.on('connect', function (socket) {
 
         socket.on('disconnect', function (code, reason) {
         });
-
         socket.send('hello', 'I am in the right place');
     });
 }

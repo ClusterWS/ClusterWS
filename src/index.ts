@@ -1,6 +1,7 @@
+import * as cluster from 'cluster';
 
-import {getPath} from './lib/utils/getPath';
-import {Servers} from './lib/servers';
+import {processMaster} from './lib/processMaster';
+import {processWorker} from './lib/processWorker';
 import {Options, Configurations} from './lib/options';
 
 /**
@@ -17,19 +18,20 @@ import {Options, Configurations} from './lib/options';
  */
 export class ClusterWS {
     private static _instance: ClusterWS;
-
-    servers: any;
     options: Options;
 
-    constructor(configurations: Configurations) {
+    constructor(public configurations: Configurations) {
         if (ClusterWS._instance) return;
         ClusterWS._instance = this;
 
-        configurations.pathToWorker = getPath()[1].getFileName();
-        configurations = configurations || {};
+        this.configurations = this.configurations || {};
+        this.options = new Options(this.configurations);
 
-        this.options = new Options(configurations);
-        this.servers = Servers(this.options);
+        if (cluster.isMaster) {
+            processMaster(this.options);
+        } else {
+            processWorker(this.options);
+        }
     }
 }
 
