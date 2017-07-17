@@ -1,20 +1,17 @@
-import * as cluster from 'cluster';
-
-import {processMaster} from './lib/processMaster';
-import {processWorker} from './lib/processWorker';
-import {Options, Configurations} from './lib/options';
+import { isMaster } from 'cluster';
+import { processMaster } from './lib/processMaster';
+import { processWorker } from './lib/processWorker';
+import { Options, Configurations } from './lib/options';
 
 /**
  * Main file which get configurations from the user,
  * check them and pass it
- * to the servers function.
+ * to the worker and master
  *
  * If configurations is not provided then make
  * it empty object.
  *
- * Gets path to the user server.js file
- *
- * If instance already exist so do nothing
+ * If instance already existdo nothing
  */
 export class ClusterWS {
     private static _instance: ClusterWS;
@@ -27,7 +24,7 @@ export class ClusterWS {
         this.configurations = this.configurations || {};
         this.options = new Options(this.configurations);
 
-        if (cluster.isMaster) {
+        if (isMaster) {
             processMaster(this.options);
         } else {
             processWorker(this.options);

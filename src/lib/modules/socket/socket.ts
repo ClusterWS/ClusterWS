@@ -1,8 +1,8 @@
 import * as WebSocket from 'uws';
 
-import {MessageFactory} from '../messages/messages';
-import {Worker} from '../worker';
-import {EventEmitter} from '../eventEmitter/eventEmitter';
+import { MessageFactory } from '../messages/messages';
+import { Worker } from '../worker';
+import { EventEmitter } from '../eventEmitter/eventEmitter';
 
 /**
  *
@@ -23,6 +23,7 @@ export class Socket {
     constructor(public _socket: WebSocket, public server: Worker) {
         this.eventsEmitter = new EventEmitter();
         this.channelsEmitter = new EventEmitter();
+
         this._runPing();
         this._connectPublishEvent();
         this._listenOnMessages();
@@ -71,7 +72,7 @@ export class Socket {
      * it will disconnect socket.
      */
     _runPing() {
-        this.send('config', {pingInterval: this.server.options.pingInterval}, 'internal');
+        this.send('config', { pingInterval: this.server.options.pingInterval }, 'internal');
 
         this.pingPongInterval = setInterval(() => {
             if (this.missedPing >= 2) {

@@ -1,11 +1,15 @@
 # ClusterWS (Node Cluster WebSocket)
-*"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this framework"*
+<!-- *"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this framework"* -->
+
+ClusterWS - minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
+
+![](./information/gifts/main.gif)
+
 
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 
 This is a **Beta Version** that is why framework may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
 
-ClusterWS - minimalistic node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
 
 ClusterWS has been written in TypeScript and compiling down to es5. All development code you can find in `src/` folder and compiled code in `dist/` folder.
 
@@ -115,8 +119,6 @@ webSocketServer.publish('channel name', data);
 ```
 
 `data` can be any type you want.
-
-Still a lot of things to do.
 
 ## Happy codding !!! :sunglasses:
 

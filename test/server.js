@@ -16,7 +16,7 @@ function Worker() {
 
     this.httpServer.on('request', app);
     this.webSocketServer.on('connect', function (socket) {
-
+       
         socket.on('disconnect', function (code, reason) {
         });
         socket.send('hello', 'I am in the right place');

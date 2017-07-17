@@ -1,5 +1,5 @@
-import {EventEmitter} from '../eventEmitter/eventEmitter';
-import {Socket, connect} from 'net';
+import { EventEmitter } from '../eventEmitter/eventEmitter';
+import { Socket, connect } from 'net';
 
 /**
  * Simple helper to send and get data trough node js tcp socket.

@@ -1,1 +1,680 @@
-module.exports=function(e){function t(r){if(n[r])return n[r].exports;var o=n[r]={i:r,l:!1,exports:{}};return e[r].call(o.exports,o,o.exports,t),o.l=!0,o.exports}var n={};return t.m=e,t.c=n,t.d=function(e,n,r){t.o(e,n)||Object.defineProperty(e,n,{configurable:!1,enumerable:!0,get:r})},t.n=function(e){var n=e&&e.__esModule?function(){return e.default}:function(){return e};return t.d(n,"a",n),n},t.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},t.p="",t(t.s=5)}([function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=function(){function e(e,t){this.type=e,this.data=t}return e}();t.ProcessMessages=r;var o=function(){function e(e,t,n){this.err=e,this.is=t,this.pid=n}return e}();t.ProcessErrors=o;var s=function(){function e(e,t){this.event=e,this.data=t,this.action="emit"}return e}(),i=function(){function e(e,t){this.channel=e,this.data=t,this.action="publish"}return e}(),c=function(){function e(e,t){this.event=e,this.data=t,this.action="internal"}return e}(),u=function(){function e(e,t){this.channel=e,this.data=t}return e}(),a=function(){function e(){}return e.emitMessage=function(e,t){return JSON.stringify(new s(e,t))},e.publishMessage=function(e,t){return JSON.stringify(new i(e,t))},e.brokerMessage=function(e,t){return JSON.stringify(new u(e,t))},e.internalMessage=function(e,t){return JSON.stringify(new c(e,t))},e.processErrors=function(e,t,n){return new o(e,t,n)},e.processMessages=function(e,t){return new r(e,t)},e}();t.MessageFactory=a},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=function(){function e(){this._events={}}return e.prototype.on=function(e,t){if(!t)throw"Function must be provided";return this._events[e]||(this._events[e]=[]),this._events[e].push(t)},e.prototype.emit=function(e,t,n,r){if(this._events[e])for(var o=0,s=this._events[e].length;o<s;o++)"function"==typeof this._events[e][o]&&this._events[e][o].call(this,t,n,r)},e.prototype.removeListener=function(e,t){if(this._events[e])for(var n=this._events[e].length;n--;)this._events[e][n]===t&&this._events[e].splice(n,1)},e.prototype.removeEvent=function(e){this._events[e]&&(this._events[e]=null,delete this._events[e])},e.prototype.removeAllEvents=function(){for(var e in this._events)this._events.hasOwnProperty(e)&&(this._events[e]=null,delete this._events[e])},e.prototype.exist=function(e){return this._events[e]},e}();t.EventEmitter=r},function(e,t){e.exports=require("cluster")},function(e,t,n){"use strict";var r=this&&this.__extends||function(){var e=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(e,t){e.__proto__=t}||function(e,t){for(var n in t)t.hasOwnProperty(n)&&(e[n]=t[n])};return function(t,n){function r(){this.constructor=t}e(t,n),t.prototype=null===n?Object.create(n):(r.prototype=n.prototype,new r)}}();Object.defineProperty(t,"__esModule",{value:!0});var o=n(1),s=n(4),i=function(e){function t(t,n){var r=e.call(this)||this;return r.port=t,r.host=n,r.dataBuffer="",t instanceof s.Socket?r.socket=t:r.socket=s.connect(t,n),r.socket.on("connect",function(){r.emit("connect")}),r.socket.on("data",function(e){var t=e.toString(),n=t.indexOf("\n");if(-1===n)return void(r.dataBuffer+=t);r.emit("message",r.dataBuffer+t.slice(0,n));for(var o=n+1;-1!==(n=e.indexOf("\n",o));)r.emit("message",t.slice(o,n)),o=n+1;r.dataBuffer=t.slice(o)}),r.socket.on("end",function(){r.emit("disconnect")}),r.socket.on("error",function(e){r.emit("error",e)}),r}return r(t,e),t.prototype.send=function(e){this.socket.write(e+"\n")},t}(o.EventEmitter);t.TcpSocket=i},function(e,t){e.exports=require("net")},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(2),o=n(6),s=n(7),i=n(13),c=function(){function e(t){this.configurations=t,e._instance||(e._instance=this,this.configurations=this.configurations||{},this.options=new i.Options(this.configurations),r.isMaster?o.processMaster(this.options):s.processWorker(this.options))}return e}();t.ClusterWS=c},function(e,t,n){"use strict";function r(e){var t,n;console.log("[36m%s[0m",">>> Master on: "+e.port+", PID "+process.pid);var r=function(t){var i=n[t]=o.fork();i.on("exit",function(){e.restartWorkerOnFail&&(console.log("[33m%s[0m","Restarting worker "+t+" on fail "),r(t))}),i.send(s.MessageFactory.processMessages("initWorker",t))};t=o.fork(),t.send(s.MessageFactory.processMessages("initBroker")),n=new Array(e.workers);for(var i=0;i<e.workers;i++)r(i)}Object.defineProperty(t,"__esModule",{value:!0});var o=n(2),s=n(0);t.processMaster=r},function(e,t,n){"use strict";function r(e){var t;process.on("message",function(n){"initBroker"===n.type&&(t=new s.Broker(e),t.is="Broker"),"initWorker"===n.type&&(e.id=n.data,t=new o.Worker(e),t.is="Worker",e.worker.call(t))}),process.on("uncaughtException",function(e){console.log("[31m%s[0m",t.is+", PID "+process.pid+"\n"+e+"\n"),process.exit()})}Object.defineProperty(t,"__esModule",{value:!0});var o=n(8),s=n(12);t.processWorker=r},function(e,t,n){"use strict";var r=this&&this.__extends||function(){var e=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(e,t){e.__proto__=t}||function(e,t){for(var n in t)t.hasOwnProperty(n)&&(e[n]=t[n])};return function(t,n){function r(){this.constructor=t}e(t,n),t.prototype=null===n?Object.create(n):(r.prototype=n.prototype,new r)}}();Object.defineProperty(t,"__esModule",{value:!0});var o=n(9),s=n(10),i=n(11),c=n(3),u=n(1),a=n(0),p=function(e){function t(t){var n=e.call(this)||this;return n.options=t,n.id=n.options.id,n._connectBroker(),n._connectHttpServer(),n._connectWebSocketServer(),n}return r(t,e),t.prototype._connectBroker=function(){var e=this;this.broker=new c.TcpSocket(this.options.brokerPort,"127.0.0.1"),this.broker.on("message",function(t){if("_0"===t)return e.broker.send("_1");e.emit("publish",JSON.parse(t))}),this.broker.on("disconnect",function(){console.log("[31m%s[0m","Broker has been disconnected")}),this.broker.on("error",function(e){console.log("[31m%s[0m","Worker, PID "+process.pid+"\n"+e+"\n")})},t.prototype._connectHttpServer=function(){var e=this;this.httpServer=o.createServer(),this.httpServer.listen(this.options.port,function(){console.log("[36m%s[0m","          Worker: "+e.options.id+", PID "+process.pid)})},t.prototype._connectWebSocketServer=function(){var e=this,t=new s.Server({server:this.httpServer});t.on("connection",function(t){var n=new i.Socket(t,e);e.emit("connect",n)}),this.webSocketServer=t,this.webSocketServer.on=function(t,n){e.on(t,n)},this.webSocketServer.publish=function(t,n){e.broker.send(a.MessageFactory.brokerMessage(t,n)),e.emit("publish",{channel:t,data:n})}},t}(u.EventEmitter);t.Worker=p},function(e,t){e.exports=require("http")},function(e,t){e.exports=require("uws")},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(0),o=n(1),s=function(){function e(e,t){this._socket=e,this.server=t,this.missedPing=0,this.eventsEmitter=new o.EventEmitter,this.channelsEmitter=new o.EventEmitter,this._runPing(),this._connectPublishEvent(),this._listenOnMessages(),this._listenOnError(),this._listenOnClose()}return e.prototype.on=function(e,t){this.eventsEmitter.on(e,t)},e.prototype.send=function(e,t,n){switch(n){case"ping":this._socket.send(e);break;case"internal":this._socket.send(r.MessageFactory.internalMessage(e,t));break;case"publish":this._socket.send(r.MessageFactory.publishMessage(e,t));break;default:this._socket.send(r.MessageFactory.emitMessage(e,t))}},e.prototype.disconnect=function(e,t){return this._socket.close(e,t)},e.prototype._runPing=function(){var e=this;this.send("config",{pingInterval:this.server.options.pingInterval},"internal"),this.pingPongInterval=setInterval(function(){if(e.missedPing>=2)return e.disconnect(3001,"Did not get pong");e.send("_0",null,"ping"),e.missedPing++},this.server.options.pingInterval)},e.prototype._connectPublishEvent=function(){var e=this;this.publishListener=function(t){e.channelsEmitter.emit(t.channel,t.data)},this.server.on("publish",this.publishListener)},e.prototype._listenOnMessages=function(){var e=this;this._socket.on("message",function(t){if("_1"===t)return e.missedPing=0;try{t=JSON.parse(t)}catch(t){return e.disconnect(1007)}switch(t.action){case"emit":e.eventsEmitter.emit(t.event,t.data);break;case"publish":e.channelsEmitter.exist(t.channel)&&e.server.webSocketServer.publish(t.channel,t.data);break;case"internal":"subscribe"===t.event&&e.channelsEmitter.on(t.data,function(n){e.send(t.data,n,"publish")}),"unsubscribe"===t.event&&e.channelsEmitter.removeEvent(t.data)}})},e.prototype._listenOnError=function(){var e=this;this._socket.on("error",function(t){e.eventsEmitter.emit("error",t)})},e.prototype._listenOnClose=function(){var e=this;this._socket.on("close",function(t,n){e.eventsEmitter.emit("disconnect",t,n),clearInterval(e.pingPongInterval),e.server.removeListener("publish",e.publishListener),e.eventsEmitter.removeAllEvents(),e.channelsEmitter.removeAllEvents();for(var r in e)e.hasOwnProperty(r)&&(e[r]=null,delete e[r])})},e}();t.Socket=s},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(4),o=n(3),s=function(){function e(e){var t=this;this.options=e,this.servers=[],console.log("[36m%s[0m",">>> Broker on: "+this.options.brokerPort+", PID "+process.pid),this.brokerServer=r.createServer(),this.brokerServer.listen(this.options.brokerPort),this.brokerServer.on("connection",function(e){e=new o.TcpSocket(e);var n=t.servers.length;e.id=n,e.pingInterval=setInterval(function(){e.send("_0")},5e3),t.servers[n]=e,e.on("message",function(n){"_1"!==n&&t.broadcast(e.id,n)}),e.on("disconnect",function(){console.log("socket disconnected")}),e.on("error",function(e){console.error("[31m%s[0m","Broker, PID "+process.pid+"\n"+e+"\n")})})}return e.prototype.broadcast=function(e,t){for(var n=0,r=this.servers.length;n<r;n++)e!==n&&this.servers[n].send(t)},e}();t.Broker=s},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=function(){function e(e){if(!e.worker)throw"\n[31mWorker function must be provided[0m";this.port=e.port||3e3,this.worker=e.worker,this.workers=e.workers||1,this.brokerPort=e.brokerPort||9346,this.pingInterval=e.pingInterval||2e4,this.restartWorkerOnFail=e.restartWorkerOnFail||!1}return e}();t.Options=r}]);
+module.exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var ProcessMessages = (function () {
+    function ProcessMessages(type, data) {
+        this.type = type;
+        this.data = data;
+    }
+    return ProcessMessages;
+}());
+exports.ProcessMessages = ProcessMessages;
+var ProcessErrors = (function () {
+    function ProcessErrors(err, is, pid) {
+        this.err = err;
+        this.is = is;
+        this.pid = pid;
+    }
+    return ProcessErrors;
+}());
+exports.ProcessErrors = ProcessErrors;
+var EmitMessage = (function () {
+    function EmitMessage(event, data) {
+        this.event = event;
+        this.data = data;
+        this.action = 'emit';
+    }
+    return EmitMessage;
+}());
+var PublishMessage = (function () {
+    function PublishMessage(channel, data) {
+        this.channel = channel;
+        this.data = data;
+        this.action = 'publish';
+    }
+    return PublishMessage;
+}());
+var InternalMessage = (function () {
+    function InternalMessage(event, data) {
+        this.event = event;
+        this.data = data;
+        this.action = 'internal';
+    }
+    return InternalMessage;
+}());
+var BrokerMessage = (function () {
+    function BrokerMessage(channel, data) {
+        this.channel = channel;
+        this.data = data;
+    }
+    return BrokerMessage;
+}());
+var MessageFactory = (function () {
+    function MessageFactory() {
+    }
+    MessageFactory.emitMessage = function (event, data) {
+        return JSON.stringify(new EmitMessage(event, data));
+    };
+    MessageFactory.publishMessage = function (channel, data) {
+        return JSON.stringify(new PublishMessage(channel, data));
+    };
+    MessageFactory.brokerMessage = function (channel, data) {
+        return JSON.stringify(new BrokerMessage(channel, data));
+    };
+    MessageFactory.internalMessage = function (event, data) {
+        return JSON.stringify(new InternalMessage(event, data));
+    };
+    MessageFactory.processErrors = function (err, is, pid) {
+        return new ProcessErrors(err, is, pid);
+    };
+    MessageFactory.processMessages = function (type, data) {
+        return new ProcessMessages(type, data);
+    };
+    return MessageFactory;
+}());
+exports.MessageFactory = MessageFactory;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var EventEmitter = (function () {
+    function EventEmitter() {
+        this._events = {};
+    }
+    EventEmitter.prototype.on = function (event, listener) {
+        if (!listener && typeof listener === 'function')
+            throw 'Function must be provided';
+        this._events[event] = this._events[event] || [];
+        this._events[event].push(listener);
+    };
+    EventEmitter.prototype.emit = function (event) {
+        var rest = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            rest[_i - 1] = arguments[_i];
+        }
+        if (this.exist(event)) {
+            for (var i = 0, len = this._events[event].length; i < len; i++) {
+                this._events[event][i].apply(this, rest);
+            }
+        }
+    };
+    EventEmitter.prototype.removeListener = function (event, listener) {
+        if (this.exist(event)) {
+            var len = this._events[event].length;
+            while (len--) {
+                if (this._events[event][len] === listener) {
+                    this._events[event].splice(len, 1);
+                }
+            }
+        }
+        return;
+    };
+    EventEmitter.prototype.removeEvent = function (event) {
+        if (this.exist(event)) {
+            this._events[event] = null;
+            delete this._events[event];
+        }
+    };
+    EventEmitter.prototype.removeAllEvents = function () {
+        console.log(this._events);
+        for (var key in this._events) {
+            if (this._events.hasOwnProperty(key)) {
+                this._events[key] = null;
+                delete this._events[key];
+            }
+        }
+        console.log(this._events);
+    };
+    EventEmitter.prototype.exist = function (event) {
+        return this._events[event];
+    };
+    return EventEmitter;
+}());
+exports.EventEmitter = EventEmitter;
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+module.exports = require("cluster");
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var eventEmitter_1 = __webpack_require__(1);
+var net_1 = __webpack_require__(4);
+var TcpSocket = (function (_super) {
+    __extends(TcpSocket, _super);
+    function TcpSocket(port, host) {
+        var _this = _super.call(this) || this;
+        _this.port = port;
+        _this.host = host;
+        _this.dataBuffer = '';
+        if (port instanceof net_1.Socket) {
+            _this.socket = port;
+        }
+        else {
+            _this.socket = net_1.connect(port, host);
+        }
+        _this.socket.on('connect', function () {
+            _this.emit('connect');
+        });
+        _this.socket.on('data', function (data) {
+            var str = data.toString();
+            var i = str.indexOf('\n');
+            if (i === -1) {
+                _this.dataBuffer += str;
+                return;
+            }
+            _this.emit('message', _this.dataBuffer + str.slice(0, i));
+            var nextPart = i + 1;
+            while ((i = data.indexOf('\n', nextPart)) !== -1) {
+                _this.emit('message', str.slice(nextPart, i));
+                nextPart = i + 1;
+            }
+            _this.dataBuffer = str.slice(nextPart);
+        });
+        _this.socket.on('end', function () {
+            _this.emit('disconnect');
+        });
+        _this.socket.on('error', function (err) {
+            _this.emit('error', err);
+        });
+        return _this;
+    }
+    TcpSocket.prototype.send = function (data) {
+        this.socket.write(data + '\n');
+    };
+    return TcpSocket;
+}(eventEmitter_1.EventEmitter));
+exports.TcpSocket = TcpSocket;
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+module.exports = require("net");
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var cluster_1 = __webpack_require__(2);
+var processMaster_1 = __webpack_require__(6);
+var processWorker_1 = __webpack_require__(7);
+var options_1 = __webpack_require__(13);
+var ClusterWS = (function () {
+    function ClusterWS(configurations) {
+        this.configurations = configurations;
+        if (ClusterWS._instance)
+            return;
+        ClusterWS._instance = this;
+        this.configurations = this.configurations || {};
+        this.options = new options_1.Options(this.configurations);
+        if (cluster_1.isMaster) {
+            processMaster_1.processMaster(this.options);
+        }
+        else {
+            processWorker_1.processWorker(this.options);
+        }
+    }
+    return ClusterWS;
+}());
+exports.ClusterWS = ClusterWS;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var cluster_1 = __webpack_require__(2);
+var messages_1 = __webpack_require__(0);
+function processMaster(options) {
+    var broker;
+    var workers;
+    console.log('\x1b[36m%s\x1b[0m', '>>> Master on: ' + options.port + ', PID ' + process.pid);
+    var launchWorker = function (i) {
+        var worker = workers[i] = cluster_1.fork();
+        worker.on('exit', function () {
+            if (options.restartWorkerOnFail) {
+                console.log('\x1b[33m%s\x1b[0m', 'Restarting worker ' + i + ' on fail ');
+                launchWorker(i);
+            }
+        });
+        worker.send(messages_1.MessageFactory.processMessages('initWorker', i));
+    };
+    broker = cluster_1.fork();
+    broker.send(messages_1.MessageFactory.processMessages('initBroker'));
+    workers = new Array(options.workers);
+    for (var i = 0; i < options.workers; i++) {
+        launchWorker(i);
+    }
+}
+exports.processMaster = processMaster;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var worker_1 = __webpack_require__(8);
+var broker_1 = __webpack_require__(12);
+function processWorker(options) {
+    var server;
+    process.on('message', function (message) {
+        switch (message.type) {
+            case 'initBroker':
+                server = new broker_1.Broker(options);
+                server.is = 'Broker';
+                break;
+            case 'initWorker':
+                options.id = message.data;
+                server = new worker_1.Worker(options);
+                server.is = 'Worker';
+                options.worker.call(server);
+                break;
+            default: break;
+        }
+    });
+    process.on('uncaughtException', function (err) {
+        console.log('\x1b[31m%s\x1b[0m', server.is + ', PID ' + process.pid + '\n' + err.stack);
+        process.exit();
+    });
+}
+exports.processWorker = processWorker;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var WebSocket = __webpack_require__(9);
+var socket_1 = __webpack_require__(10);
+var tcp_socket_1 = __webpack_require__(3);
+var eventEmitter_1 = __webpack_require__(1);
+var messages_1 = __webpack_require__(0);
+var http_1 = __webpack_require__(11);
+var Worker = (function (_super) {
+    __extends(Worker, _super);
+    function Worker(options) {
+        var _this = _super.call(this) || this;
+        _this.options = options;
+        _this.id = _this.options.id;
+        Worker._connectBroker(_this);
+        Worker._connectHttpServer(_this);
+        Worker._connectWebSocketServer(_this);
+        return _this;
+    }
+    Worker._connectBroker = function (self) {
+        self.broker = new tcp_socket_1.TcpSocket(self.options.brokerPort, '127.0.0.1');
+        self.broker.on('message', function (msg) {
+            if (msg === '_0')
+                return self.broker.send('_1');
+            self.emit('publish', JSON.parse(msg));
+        });
+        self.broker.on('disconnect', function () {
+            console.log('\x1b[31m%s\x1b[0m', 'Broker has been disconnected');
+        });
+        self.broker.on('error', function (err) {
+            console.log('\x1b[31m%s\x1b[0m', 'Worker' + ', PID ' + process.pid + '\n' + err);
+        });
+    };
+    Worker._connectHttpServer = function (self) {
+        self.httpServer = http_1.createServer();
+        self.httpServer.listen(self.options.port, function () {
+            console.log('\x1b[36m%s\x1b[0m', '          Worker: ' + self.options.id + ', PID ' + process.pid);
+        });
+    };
+    Worker._connectWebSocketServer = function (self) {
+        var webSocketServer = new WebSocket.Server({ server: self.httpServer });
+        webSocketServer.on('connection', function (_socket) {
+            var socket = new socket_1.Socket(_socket, self);
+            self.emit('connect', socket);
+        });
+        self.webSocketServer = webSocketServer;
+        self.webSocketServer.on = function (event, fn) {
+            self.on(event, fn);
+        };
+        self.webSocketServer.publish = function (channel, data) {
+            self.broker.send(messages_1.MessageFactory.brokerMessage(channel, data));
+            self.emit('publish', { channel: channel, data: data });
+        };
+    };
+    return Worker;
+}(eventEmitter_1.EventEmitter));
+exports.Worker = Worker;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
+
+module.exports = require("uws");
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var messages_1 = __webpack_require__(0);
+var eventEmitter_1 = __webpack_require__(1);
+var Socket = (function () {
+    function Socket(_socket, server) {
+        var _this = this;
+        this._socket = _socket;
+        this.server = server;
+        this.missedPing = 0;
+        this.eventsEmitter = new eventEmitter_1.EventEmitter();
+        this.channelsEmitter = new eventEmitter_1.EventEmitter();
+        this.channelsEmitter.on('one', function (data) {
+            _this.send('one', data, 'publish');
+        });
+        this.channelsEmitter.on('two', function (data) {
+            _this.send('two', data, 'publish');
+        });
+        this._runPing();
+        this._connectPublishEvent();
+        this._listenOnMessages();
+        this._listenOnError();
+        this._listenOnClose();
+    }
+    Socket.prototype.on = function (event, fn) {
+        this.eventsEmitter.on(event, fn);
+    };
+    Socket.prototype.send = function (event, data, type) {
+        switch (type) {
+            case 'ping':
+                this._socket.send(event);
+                break;
+            case 'internal':
+                this._socket.send(messages_1.MessageFactory.internalMessage(event, data));
+                break;
+            case 'publish':
+                this._socket.send(messages_1.MessageFactory.publishMessage(event, data));
+                break;
+            default:
+                this._socket.send(messages_1.MessageFactory.emitMessage(event, data));
+                break;
+        }
+    };
+    Socket.prototype.disconnect = function (code, message) {
+        return this._socket.close(code, message);
+    };
+    Socket.prototype._runPing = function () {
+        var _this = this;
+        this.send('config', { pingInterval: this.server.options.pingInterval }, 'internal');
+        this.pingPongInterval = setInterval(function () {
+            if (_this.missedPing >= 2) {
+                return _this.disconnect(3001, 'Did not get pong');
+            }
+            _this.send('_0', null, 'ping');
+            _this.missedPing++;
+        }, this.server.options.pingInterval);
+    };
+    Socket.prototype._connectPublishEvent = function () {
+        var _this = this;
+        this.publishListener = function (msg) {
+            _this.channelsEmitter.emit(msg.channel, msg.data);
+        };
+        this.server.on('publish', this.publishListener);
+    };
+    Socket.prototype._listenOnMessages = function () {
+        var _this = this;
+        this._socket.on('message', function (msg) {
+            if (msg === '_1') {
+                return _this.missedPing = 0;
+            }
+            try {
+                msg = JSON.parse(msg);
+            }
+            catch (e) {
+                return _this.disconnect(1007);
+            }
+            switch (msg.action) {
+                case 'emit':
+                    _this.eventsEmitter.emit(msg.event, msg.data);
+                    break;
+                case 'publish':
+                    if (_this.channelsEmitter.exist(msg.channel))
+                        _this.server.webSocketServer.publish(msg.channel, msg.data);
+                    break;
+                case 'internal':
+                    if (msg.event === 'subscribe') {
+                        _this.channelsEmitter.on(msg.data, function (data) {
+                            _this.send(msg.data, data, 'publish');
+                        });
+                        setTimeout(function () {
+                            _this.channelsEmitter.removeAllEvents();
+                        }, 5000);
+                    }
+                    if (msg.event === 'unsubscribe') {
+                        _this.channelsEmitter.removeEvent(msg.data);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        });
+    };
+    Socket.prototype._listenOnError = function () {
+        var _this = this;
+        this._socket.on('error', function (err) {
+            _this.eventsEmitter.emit('error', err);
+        });
+    };
+    Socket.prototype._listenOnClose = function () {
+        var _this = this;
+        this._socket.on('close', function (code, msg) {
+            _this.eventsEmitter.emit('disconnect', code, msg);
+            clearInterval(_this.pingPongInterval);
+            _this.server.removeListener('publish', _this.publishListener);
+            _this.eventsEmitter.removeAllEvents();
+            _this.channelsEmitter.removeAllEvents();
+            for (var key in _this) {
+                if (_this.hasOwnProperty(key)) {
+                    _this[key] = null;
+                    delete _this[key];
+                }
+            }
+        });
+    };
+    return Socket;
+}());
+exports.Socket = Socket;
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+module.exports = require("http");
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var tcp_socket_1 = __webpack_require__(3);
+var net_1 = __webpack_require__(4);
+var Broker = (function () {
+    function Broker(options) {
+        var _this = this;
+        this.options = options;
+        this.servers = [];
+        console.log('\x1b[36m%s\x1b[0m', '>>> Broker on: ' + this.options.brokerPort + ', PID ' + process.pid);
+        this.brokerServer = net_1.createServer(function (socket) {
+            socket = new tcp_socket_1.TcpSocket(socket);
+            var length = _this.servers.length;
+            socket.id = length;
+            socket.pingInterval = setInterval(function () {
+                socket.send('_0');
+            }, 20000);
+            _this.servers[length] = socket;
+            socket.on('message', function (msg) {
+                if (msg === '_1')
+                    return;
+                _this.broadcast(socket.id, msg);
+            });
+            socket.on('disconnect', function () {
+                console.log('socket disconnected');
+            });
+            socket.on('error', function (err) {
+                console.error('\x1b[31m%s\x1b[0m', 'Broker' + ', PID ' + process.pid + '\n' + err + '\n');
+            });
+        });
+        this.brokerServer.listen(this.options.brokerPort);
+    }
+    Broker.prototype.broadcast = function (id, msg) {
+        for (var i = 0, len = this.servers.length; i < len; i++) {
+            if (id !== i)
+                this.servers[i].send(msg);
+        }
+    };
+    return Broker;
+}());
+exports.Broker = Broker;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Options = (function () {
+    function Options(configurations) {
+        if (!configurations.worker) {
+            throw '\n\x1b[31mWorker function must be provided\x1b[0m';
+        }
+        this.port = configurations.port || 3000;
+        this.worker = configurations.worker;
+        this.workers = configurations.workers || 1;
+        this.brokerPort = configurations.brokerPort || 9346;
+        this.pingInterval = configurations.pingInterval || 20000;
+        this.restartWorkerOnFail = configurations.restartWorkerOnFail || false;
+    }
+    return Options;
+}());
+exports.Options = Options;
+
+
+/***/ })
+/******/ ]);
