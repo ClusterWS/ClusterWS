@@ -1,19 +1,22 @@
 # ClusterWS (Node Cluster WebSocket)
-*"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this framework"*
-
+<!-- *"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this framework"* -->
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
+
+ClusterWS - minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
+
+![](./information/gifts/main.gif)
+
 
 This is a **Beta Version** that is why framework may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
 
-ClusterWS - minimalistic node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
 
 ClusterWS has been written in TypeScript and compiling down to es5. All development code you can find in `src/` folder and compiled code in `dist/` folder.
 
 ### ClusterWS client libraries:
 
 1. [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
-2. Swift IOS(coming after all main features will be implemented)
-3. Java Android(coming after all main features will be implemented)
+2. Swift IOS (coming after all main features will be implemented)
+3. Java Android (coming after all main features will be implemented)
 
 ### Installation:
 
@@ -43,7 +46,7 @@ All possible options:
 
     workers: 'number of the workers {number} default is 1',
 
-    port: 'port on which main process will listen {number} default is 3000',
+    port: 'port on which main process will listen {number} default is 80',
 
     restartWorkerOnFail: 'if you need to restart workers on error {bool} default is false',
 
@@ -72,7 +75,7 @@ module.exports = function(worker){
 
     httpServer.on('request',  app)
 
-    webSocketServer.on('connect', function(socket){
+    webSocketServer.on('connection', function(socket){
         // Here write all logic for socket
     });
 }
@@ -92,7 +95,7 @@ You can listen on any event which you emit from the client also you can listen o
 
 Data which you get in `function(data)` it what you send with event, you can send any type of data.
 
-**Reserved events**: `'connect'`, `'error'`, `'disconnect'`.
+**Reserved events**: `'connection'`, `'error'`, `'disconnect'`.
 
 ### Emit an event to the client:
 
@@ -104,7 +107,7 @@ socket.send('event name', data);
 
 `data` can be any type you want.
 
-**Never emit reserved events**: `'connect'`, `'error'`, `'disconnect'`.
+**Never emit reserved events**: `'connection'`, `'error'`, `'disconnect'`.
 
 ### Pub/Sub communication:
 
@@ -115,8 +118,6 @@ webSocketServer.publish('channel name', data);
 ```
 
 `data` can be any type you want.
-
-Still a lot of things to do.
 
 ## Happy codding !!! :sunglasses:
 

@@ -41,7 +41,7 @@ export class Broker {
             });
 
             socket.on('error', (err: any) => {
-                console.error('\x1b[31m%s\x1b[0m', 'Broker' + ', PID ' + process.pid + '\n' + err + '\n');
+                console.error('\x1b[31m%s\x1b[0m', 'Broker' + ', PID ' + process.pid + '\n' + err.stack + '\n');
             });
         });
         this.brokerServer.listen(this.options.brokerPort);

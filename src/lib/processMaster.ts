@@ -1,6 +1,6 @@
 import { fork } from 'cluster';
 import { Options } from './options';
-import { MessageFactory } from './modules/messages/messages';
+import { MessageFactory, ProcessMessages } from './modules/messages/messages';
 import * as cluster from 'cluster';
 
 /**
@@ -12,7 +12,7 @@ export function processMaster(options: Options) {
 
     let broker: any;
     let workers: any[];
-    
+
     /**
      * Print to console that master process is
      * running.
@@ -32,6 +32,7 @@ export function processMaster(options: Options) {
                 launchWorker(i);
             }
         });
+
         worker.send(MessageFactory.processMessages('initWorker', i));
     };
 

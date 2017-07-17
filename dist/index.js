@@ -191,14 +191,12 @@ var EventEmitter = (function () {
         }
     };
     EventEmitter.prototype.removeAllEvents = function () {
-        console.log(this._events);
         for (var key in this._events) {
             if (this._events.hasOwnProperty(key)) {
                 this._events[key] = null;
                 delete this._events[key];
             }
         }
-        console.log(this._events);
     };
     EventEmitter.prototype.exist = function (event) {
         return this._events[event];
@@ -296,7 +294,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var cluster_1 = __webpack_require__(2);
 var processMaster_1 = __webpack_require__(6);
 var processWorker_1 = __webpack_require__(7);
-var options_1 = __webpack_require__(13);
+var options_1 = __webpack_require__(17);
 var ClusterWS = (function () {
     function ClusterWS(configurations) {
         this.configurations = configurations;
@@ -358,7 +356,7 @@ exports.processMaster = processMaster;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var worker_1 = __webpack_require__(8);
-var broker_1 = __webpack_require__(12);
+var broker_1 = __webpack_require__(16);
 function processWorker(options) {
     var server;
     process.on('message', function (message) {
@@ -377,7 +375,7 @@ function processWorker(options) {
         }
     });
     process.on('uncaughtException', function (err) {
-        console.log('\x1b[31m%s\x1b[0m', server.is + ', PID ' + process.pid + '\n' + err.stack);
+        console.log('\x1b[31m%s\x1b[0m', server.is + ', PID ' + process.pid + '\n' + err.stack + '\n');
         process.exit();
     });
 }
@@ -406,7 +404,7 @@ var socket_1 = __webpack_require__(10);
 var tcp_socket_1 = __webpack_require__(3);
 var eventEmitter_1 = __webpack_require__(1);
 var messages_1 = __webpack_require__(0);
-var http_1 = __webpack_require__(11);
+var http_1 = __webpack_require__(15);
 var Worker = (function (_super) {
     __extends(Worker, _super);
     function Worker(options) {
@@ -429,7 +427,7 @@ var Worker = (function (_super) {
             console.log('\x1b[31m%s\x1b[0m', 'Broker has been disconnected');
         });
         self.broker.on('error', function (err) {
-            console.log('\x1b[31m%s\x1b[0m', 'Worker' + ', PID ' + process.pid + '\n' + err);
+            console.log('\x1b[31m%s\x1b[0m', 'Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n');
         });
     };
     Worker._connectHttpServer = function (self) {
@@ -442,7 +440,7 @@ var Worker = (function (_super) {
         var webSocketServer = new WebSocket.Server({ server: self.httpServer });
         webSocketServer.on('connection', function (_socket) {
             var socket = new socket_1.Socket(_socket, self);
-            self.emit('connect', socket);
+            self.emit('connection', socket);
         });
         self.webSocketServer = webSocketServer;
         self.webSocketServer.on = function (event, fn) {
@@ -471,8 +469,12 @@ module.exports = require("uws");
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var messages_1 = __webpack_require__(0);
 var eventEmitter_1 = __webpack_require__(1);
+var messages_1 = __webpack_require__(0);
+var socketPing_1 = __webpack_require__(11);
+var socketMessage_1 = __webpack_require__(12);
+var socketClose_1 = __webpack_require__(13);
+var socketError_1 = __webpack_require__(14);
 var Socket = (function () {
     function Socket(_socket, server) {
         var _this = this;
@@ -481,20 +483,18 @@ var Socket = (function () {
         this.missedPing = 0;
         this.eventsEmitter = new eventEmitter_1.EventEmitter();
         this.channelsEmitter = new eventEmitter_1.EventEmitter();
-        this.channelsEmitter.on('one', function (data) {
-            _this.send('one', data, 'publish');
-        });
-        this.channelsEmitter.on('two', function (data) {
-            _this.send('two', data, 'publish');
-        });
-        this._runPing();
-        this._connectPublishEvent();
-        this._listenOnMessages();
-        this._listenOnError();
-        this._listenOnClose();
+        this.publishListener = function (msg) {
+            _this.channelsEmitter.emit(msg.channel, msg.data);
+        };
+        this.server.on('publish', this.publishListener);
+        socketPing_1.socketPing(this);
+        socketMessage_1.socketMessage(this);
+        socketError_1.socketError(this);
+        socketClose_1.socketClose(this);
     }
     Socket.prototype.on = function (event, fn) {
-        this.eventsEmitter.on(event, fn);
+        if (!this.eventsEmitter.exist(event))
+            this.eventsEmitter.on(event, fn);
     };
     Socket.prototype.send = function (event, data, type) {
         switch (type) {
@@ -515,84 +515,6 @@ var Socket = (function () {
     Socket.prototype.disconnect = function (code, message) {
         return this._socket.close(code, message);
     };
-    Socket.prototype._runPing = function () {
-        var _this = this;
-        this.send('config', { pingInterval: this.server.options.pingInterval }, 'internal');
-        this.pingPongInterval = setInterval(function () {
-            if (_this.missedPing >= 2) {
-                return _this.disconnect(3001, 'Did not get pong');
-            }
-            _this.send('_0', null, 'ping');
-            _this.missedPing++;
-        }, this.server.options.pingInterval);
-    };
-    Socket.prototype._connectPublishEvent = function () {
-        var _this = this;
-        this.publishListener = function (msg) {
-            _this.channelsEmitter.emit(msg.channel, msg.data);
-        };
-        this.server.on('publish', this.publishListener);
-    };
-    Socket.prototype._listenOnMessages = function () {
-        var _this = this;
-        this._socket.on('message', function (msg) {
-            if (msg === '_1') {
-                return _this.missedPing = 0;
-            }
-            try {
-                msg = JSON.parse(msg);
-            }
-            catch (e) {
-                return _this.disconnect(1007);
-            }
-            switch (msg.action) {
-                case 'emit':
-                    _this.eventsEmitter.emit(msg.event, msg.data);
-                    break;
-                case 'publish':
-                    if (_this.channelsEmitter.exist(msg.channel))
-                        _this.server.webSocketServer.publish(msg.channel, msg.data);
-                    break;
-                case 'internal':
-                    if (msg.event === 'subscribe') {
-                        _this.channelsEmitter.on(msg.data, function (data) {
-                            _this.send(msg.data, data, 'publish');
-                        });
-                        setTimeout(function () {
-                            _this.channelsEmitter.removeAllEvents();
-                        }, 5000);
-                    }
-                    if (msg.event === 'unsubscribe') {
-                        _this.channelsEmitter.removeEvent(msg.data);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        });
-    };
-    Socket.prototype._listenOnError = function () {
-        var _this = this;
-        this._socket.on('error', function (err) {
-            _this.eventsEmitter.emit('error', err);
-        });
-    };
-    Socket.prototype._listenOnClose = function () {
-        var _this = this;
-        this._socket.on('close', function (code, msg) {
-            _this.eventsEmitter.emit('disconnect', code, msg);
-            clearInterval(_this.pingPongInterval);
-            _this.server.removeListener('publish', _this.publishListener);
-            _this.eventsEmitter.removeAllEvents();
-            _this.channelsEmitter.removeAllEvents();
-            for (var key in _this) {
-                if (_this.hasOwnProperty(key)) {
-                    _this[key] = null;
-                    delete _this[key];
-                }
-            }
-        });
-    };
     return Socket;
 }());
 exports.Socket = Socket;
@@ -600,12 +522,115 @@ exports.Socket = Socket;
 
 /***/ }),
 /* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function socketPing(self) {
+    self.send('config', { pingInterval: self.server.options.pingInterval }, 'internal');
+    self.pingPongInterval = setInterval(function () {
+        if (self.missedPing >= 2) {
+            return self.disconnect(3001, 'No pongs');
+        }
+        self.send('_0', null, 'ping');
+        self.missedPing++;
+    }, self.server.options.pingInterval);
+}
+exports.socketPing = socketPing;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function socketMessage(self) {
+    self._socket.on('message', function (msg) {
+        if (msg === '_1') {
+            return self.missedPing = 0;
+        }
+        try {
+            msg = JSON.parse(msg);
+        }
+        catch (e) {
+            return self.disconnect(1007);
+        }
+        switch (msg.action) {
+            case 'emit':
+                self.eventsEmitter.emit(msg.event, msg.data);
+                break;
+            case 'publish':
+                if (self.channelsEmitter.exist(msg.channel))
+                    self.server.webSocketServer.publish(msg.channel, msg.data);
+                break;
+            case 'internal':
+                if (msg.event === 'subscribe') {
+                    self.channelsEmitter.on(msg.data, function (data) {
+                        self.send(msg.data, data, 'publish');
+                    });
+                }
+                if (msg.event === 'unsubscribe') {
+                    self.channelsEmitter.removeEvent(msg.data);
+                }
+                break;
+            default: break;
+        }
+    });
+}
+exports.socketMessage = socketMessage;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function socketClose(self) {
+    self._socket.on('close', function (code, msg) {
+        self.eventsEmitter.emit('disconnect', code, msg);
+        clearInterval(self.pingPongInterval);
+        self.server.removeListener('publish', self.publishListener);
+        self.eventsEmitter.removeAllEvents();
+        self.channelsEmitter.removeAllEvents();
+        for (var key in self) {
+            if (self.hasOwnProperty(key)) {
+                self[key] = null;
+                delete self[key];
+            }
+        }
+    });
+}
+exports.socketClose = socketClose;
+
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function socketError(self) {
+    self._socket.on('error', function (err) {
+        self.eventsEmitter.emit('error', err);
+    });
+}
+exports.socketError = socketError;
+
+
+/***/ }),
+/* 15 */
 /***/ (function(module, exports) {
 
 module.exports = require("http");
 
 /***/ }),
-/* 12 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -636,7 +661,7 @@ var Broker = (function () {
                 console.log('socket disconnected');
             });
             socket.on('error', function (err) {
-                console.error('\x1b[31m%s\x1b[0m', 'Broker' + ', PID ' + process.pid + '\n' + err + '\n');
+                console.error('\x1b[31m%s\x1b[0m', 'Broker' + ', PID ' + process.pid + '\n' + err.stack + '\n');
             });
         });
         this.brokerServer.listen(this.options.brokerPort);
@@ -653,7 +678,7 @@ exports.Broker = Broker;
 
 
 /***/ }),
-/* 13 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -664,7 +689,7 @@ var Options = (function () {
         if (!configurations.worker) {
             throw '\n\x1b[31mWorker function must be provided\x1b[0m';
         }
-        this.port = configurations.port || 3000;
+        this.port = configurations.port || 80;
         this.worker = configurations.worker;
         this.workers = configurations.workers || 1;
         this.brokerPort = configurations.brokerPort || 9346;

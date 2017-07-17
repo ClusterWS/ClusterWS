@@ -1,11 +1,11 @@
 import * as WebSocket from 'uws';
 
-import {Socket} from './socket/socket';
-import {Options} from '../options';
-import {TcpSocket} from './pubsub-server/tcp-socket';
-import {EventEmitter} from './eventEmitter/eventEmitter';
-import {MessageFactory} from './messages/messages';
-import {Server, createServer} from 'http';
+import { Socket } from './socket/socket';
+import { Options } from '../options';
+import { TcpSocket } from './pubsub-server/tcp-socket';
+import { EventEmitter } from './eventEmitter/eventEmitter';
+import { MessageFactory } from './messages/messages';
+import { Server, createServer } from 'http';
 
 /**
  * Main worker file where all http and Socket and
@@ -13,10 +13,9 @@ import {Server, createServer} from 'http';
  *
  * all functions which starts from '_' are private
  */
-
 declare let process: any;
 
-export class Worker extends EventEmitter{
+export class Worker extends EventEmitter {
 
     id: number;
     broker: TcpSocket;
@@ -52,7 +51,7 @@ export class Worker extends EventEmitter{
             console.log('\x1b[31m%s\x1b[0m', 'Broker has been disconnected');
         });
         self.broker.on('error', (err: any) => {
-            console.log('\x1b[31m%s\x1b[0m', 'Worker' + ', PID ' + process.pid + '\n' + err);
+            console.log('\x1b[31m%s\x1b[0m', 'Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n');
         })
     }
 
@@ -62,7 +61,7 @@ export class Worker extends EventEmitter{
      *
      *  print to console that worker has been connected
      */
-   static _connectHttpServer(self:Worker) {
+    static _connectHttpServer(self: Worker) {
         self.httpServer = createServer();
         self.httpServer.listen(self.options.port, () => {
             console.log('\x1b[36m%s\x1b[0m', '          Worker: ' + self.options.id + ', PID ' + process.pid);
@@ -78,11 +77,11 @@ export class Worker extends EventEmitter{
      *  Add new event 'publish'
      */
     static _connectWebSocketServer(self: Worker) {
-        let webSocketServer = new WebSocket.Server({server: self.httpServer});
+        let webSocketServer = new WebSocket.Server({ server: self.httpServer });
 
         webSocketServer.on('connection', (_socket: WebSocket) => {
             let socket = new Socket(_socket, self);
-            self.emit('connect', socket);
+            self.emit('connection', socket);
         });
 
         self.webSocketServer = webSocketServer;
@@ -92,7 +91,7 @@ export class Worker extends EventEmitter{
 
         self.webSocketServer.publish = (channel: string, data?: any) => {
             self.broker.send(MessageFactory.brokerMessage(channel, data));
-            self.emit('publish', {channel: channel, data: data});
+            self.emit('publish', { channel: channel, data: data });
         }
     }
 }

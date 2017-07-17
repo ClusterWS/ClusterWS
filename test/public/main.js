@@ -1,7 +1,7 @@
 var socket;
 socket = new ClusterWS({
     url: 'localhost',
-    port: 3000
+    port: 80
 });
 
 var channel;

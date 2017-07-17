@@ -4,7 +4,7 @@
  *
  * Default options:
  *
- * @param {number} port = 3000
+ * @param {number} port = 80
  * @param {number} workers = 1
  * @param {number} brokerPort = 9346
  * @param {number} pingPongInterval = 20000
@@ -37,7 +37,7 @@ export class Options {
         if (!configurations.worker) {
             throw '\n\x1b[31mWorker function must be provided\x1b[0m';
         }
-        this.port = configurations.port || 3000;
+        this.port = configurations.port || 80;
         this.worker = configurations.worker;
         this.workers = configurations.workers || 1;
         this.brokerPort = configurations.brokerPort || 9346;

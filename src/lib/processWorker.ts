@@ -30,7 +30,7 @@ export function processWorker(options: Options) {
      * Print error to the console in red collor
      */
     process.on('uncaughtException', (err: any) => {
-        console.log('\x1b[31m%s\x1b[0m', server.is + ', PID ' + process.pid + '\n' + err.stack);
+        console.log('\x1b[31m%s\x1b[0m', server.is + ', PID ' + process.pid + '\n' + err.stack + '\n');
         process.exit();
     });
 }

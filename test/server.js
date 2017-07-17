@@ -4,7 +4,6 @@ var ClusterWS = require('../dist/index').ClusterWS;
 
 var cws = new ClusterWS({
     worker: Worker,
-    port: 3000,
     workers: 2,
     restartWorkerOnFail: false
 });
@@ -15,9 +14,10 @@ function Worker() {
     app.use('/', express.static(path.join(__dirname + '/public')));
 
     this.httpServer.on('request', app);
-    this.webSocketServer.on('connect', function (socket) {
+    this.webSocketServer.on('connection', function (socket) {
        
         socket.on('disconnect', function (code, reason) {
+            console.log(code);
         });
         socket.send('hello', 'I am in the right place');
     });
