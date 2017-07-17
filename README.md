@@ -4,7 +4,7 @@
 
 ClusterWS - minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
 
-![](http://u.cubeupload.com/goriunovd/main.gif)
+![](https://u.cubeupload.com/goriunovd/main.gif)
 
 
 This is a **Beta Version** that is why framework may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
