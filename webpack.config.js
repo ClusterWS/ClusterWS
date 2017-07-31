@@ -38,10 +38,10 @@ if(env === 'debug'){
 
 module.exports = {
     entry: {
-        'index': './src/index.ts'
+        'index': './fp-library/index.ts'
     },
     resolve: {
-        extensions: [".ts"]
+        extensions: [".ts", ".js"]
     },
     output: {
         path: path.join(__dirname, '/dist'),

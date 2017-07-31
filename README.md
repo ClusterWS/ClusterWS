@@ -46,7 +46,7 @@ All possible options:
 
     workers: 'number of the workers {number} default is 1',
 
-    port: 'port on which main process will listen {number} default is 80',
+    port: 'port on which main process will listen {number} default is 8000',
 
     restartWorkerOnFail: 'if you need to restart workers on error {bool} default is false',
 

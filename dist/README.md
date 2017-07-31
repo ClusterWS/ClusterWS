@@ -4,7 +4,7 @@
 
 ClusterWS - minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
 
-![](./information/gifts/main.gif)
+![](https://u.cubeupload.com/goriunovd/main.gif)
 
 
 This is a **Beta Version** that is why framework may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
@@ -46,7 +46,7 @@ All possible options:
 
     workers: 'number of the workers {number} default is 1',
 
-    port: 'port on which main process will listen {number} default is 80',
+    port: 'port on which main process will listen {number} default is 8000',
 
     restartWorkerOnFail: 'if you need to restart workers on error {bool} default is false',
 
