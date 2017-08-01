@@ -1,7 +1,6 @@
-let _ = require('../utils/fp')
-
+import * as _ from '../utils/fp'
 import { Options } from './options'
-import { processMessages } from './communication/messages'
+import { processMessages } from './modules/communication/messages'
 
 let onExit = (data: any[]) => data[0].on('exit', data[1])
 let fork: any = (cluster: any, options: Options, id?: number) => { return { cluster: cluster, process: cluster.fork(), options: options, id: id } }

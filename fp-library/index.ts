@@ -1,8 +1,7 @@
-let _ = require('./utils/fp')
-let log = require('./utils/fp').log
-let processWorker = require('./lib/processWorker')
-
+import * as _ from './utils/fp'
 import * as cluster from 'cluster'
+import { log } from './utils/common'
+import { processWorker } from './lib/processWorker'
 import { processMaster } from './lib/processMaster'
 import { Options, loadOptions } from './lib/options'
 

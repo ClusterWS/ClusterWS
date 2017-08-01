@@ -1,4 +1,6 @@
-let _ = require('../utils/fp')
+// const _: any = require('../utils/fp')
+import * as _ from '../utils/fp'
+
 
 export interface Options {
     port: number,
@@ -18,7 +20,7 @@ export function loadOptions(configurations: any) {
         workers: configurations.workers || 1,
         brokerPort: configurations.brokerPort || 9346,
         pingInterval: configurations.pingInterval || 20000,
-        restartOnFail: configurations.restartWorkerOnFail || true
+        restartOnFail: configurations.restartWorkerOnFail || false
     }
     return _.Right.of(options)
 }

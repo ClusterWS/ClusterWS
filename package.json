@@ -6,7 +6,7 @@
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
     "start": "npm run build:dev && npm run boot",
-    "boot": "node test/server.js",
+    "boot": "cross-env DEBUG=true node test/server.js",
     "build:prod": "webpack",
     "build:dev": "cross-env WEBPACK_ENV=debug webpack",
     "build:publish": "npm run build:prod && cd dist && npm publish && cd ..",

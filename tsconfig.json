@@ -11,7 +11,8 @@
     /* Enable all strict type-checking options. */
     "strict": true,
     /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "allowJs": true
   },
   "exclude": [
     "node_modules",
