@@ -6,8 +6,8 @@ import * as cluster from 'cluster'
 import { processMaster } from './lib/processMaster'
 import { Options, loadOptions } from './lib/options'
 
-let runProcess: any = _.curry((options: Options) => cluster.isMaster ?
+let runProcess: any = (options: Options) => cluster.isMaster ?
     processMaster(options, cluster) :
-    processWorker(options))
+    processWorker(options)
 
 module.exports = _.compose(_.either(log, runProcess), loadOptions)
