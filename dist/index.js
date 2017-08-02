@@ -98,8 +98,8 @@ var _ = __webpack_require__(0);
 var cluster = __webpack_require__(3);
 var common_1 = __webpack_require__(1);
 var processWorker_1 = __webpack_require__(4);
-var processMaster_1 = __webpack_require__(5);
-var options_1 = __webpack_require__(7);
+var processMaster_1 = __webpack_require__(6);
+var options_1 = __webpack_require__(8);
 var runProcess = function (options) { return cluster.isMaster ?
     processMaster_1.processMaster(options, cluster) :
     processWorker_1.processWorker(options); };
@@ -121,10 +121,26 @@ module.exports = require("cluster");
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = __webpack_require__(0);
 var common_1 = __webpack_require__(1);
+var eventemitter_1 = __webpack_require__(5);
 var on = _.curry(function (type, fn) { return process.on(type, fn); });
 var msgHandler = _.curry(function (options, msg) { return _.switch({
     'initWorker': function () { return common_1.log('Init Worker'); },
-    'initBroker': function () { return common_1.log('Init Broker'); },
+    'initBroker': function () {
+        var x = eventemitter_1.eventEmitter();
+        x.on('event', function (data) {
+            console.log('event executed ', data);
+        });
+        var y = eventemitter_1.eventEmitter();
+        x.emit('event', 'hello');
+        y.on('event', function () {
+            console.log('is y');
+        });
+        y.emit('event');
+        x.emit('event', 'hello');
+        x.removeAllEvents();
+        x.emit('event');
+        common_1.log('Init Broker');
+    },
     'default': function () { return common_1.log('default'); }
 })(msg.type); });
 var errHandler = function () { return function (err) {
@@ -145,7 +161,41 @@ exports.processWorker = processWorker;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = __webpack_require__(0);
-var messages_1 = __webpack_require__(6);
+var common_1 = __webpack_require__(1);
+function eventEmitter() {
+    var events = {};
+    var checkIfFunction = function (event, listener) { return typeof listener === 'function' ? _.Right.of({ event: event, listener: listener }) : _.Left.of('Listener must be function'); };
+    var listen = function (data) {
+        var isEvent = events[data.event];
+        return isEvent ? isEvent[isEvent.length] = data.listener : events[data.event] = [data.listener];
+    };
+    var on = _.compose(_.either(common_1.log, listen), checkIfFunction);
+    var emit = function (event) {
+        var rest = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            rest[_i - 1] = arguments[_i];
+        }
+        return events[event] ? _.map(function (x) { return x.call.apply(x, [null].concat(rest)); }, events[event]) : '';
+    };
+    var removeEvent = function (event) { return events[event] = null; };
+    var removeAllEvents = function () { return events = []; };
+    var removeListener = function (event, listener) { return _.map(function (currentListener, index, array) {
+        currentListener === listener ? array.splice(index, 1) : '';
+    }, events[event]); };
+    return { on: on, emit: emit, removeListener: removeListener, removeAllEvents: removeAllEvents, removeEvent: removeEvent };
+}
+exports.eventEmitter = eventEmitter;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var _ = __webpack_require__(0);
+var messages_1 = __webpack_require__(7);
 var onExit = function (data) { return data[0].on('exit', data[1]); };
 var fork = function (cluster, options, id) { return { cluster: cluster, process: cluster.fork(), options: options, id: id }; };
 var launchProcess = _.curry(function (type, data) {
@@ -163,7 +213,7 @@ exports.processMaster = processMaster;
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -177,7 +227,7 @@ exports.processMessages = processMessages;
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

@@ -1,12 +1,30 @@
 import * as _ from '../utils/fp'
 import { log } from '../utils/common'
 import { Options } from './options'
+import { eventEmitter } from './modules/events/eventemitter'
+
+
 
 let on = _.curry((type: any, fn: any) => process.on(type, fn))
 
 let msgHandler = _.curry((options: Options, msg: any) => _.switch({
     'initWorker': () => log('Init Worker'),
-    'initBroker': () => log('Init Broker'),
+    'initBroker': () => {
+        let x = eventEmitter()
+        x.on('event', (data: any) => {
+            console.log('event executed ', data)
+        })
+        let y = eventEmitter()
+
+        x.emit('event', 'hello')
+        y.on('event', () => {
+            console.log('is y')
+        })
+        y.emit('event')
+        x.emit('event', 'hello')
+        
+        log('Init Broker')
+    },
     'default': () => log('default')
 })(msg.type))
 
