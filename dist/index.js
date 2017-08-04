@@ -85,6 +85,10 @@ function log(x) {
     return;
 }
 exports.log = log;
+function logError(x) {
+    console.log('\x1b[31m' + 'Error: ' + x + '\x1b[0m');
+}
+exports.logError = logError;
 
 
 /***/ }),
@@ -103,7 +107,7 @@ var options_1 = __webpack_require__(8);
 var runProcess = function (options) { return cluster.isMaster ?
     processMaster_1.processMaster(options, cluster) :
     processWorker_1.processWorker(options); };
-module.exports = _.compose(_.either(common_1.log, runProcess), options_1.loadOptions);
+module.exports = _.compose(_.either(common_1.logError, runProcess), options_1.loadOptions);
 
 
 /***/ }),
@@ -127,9 +131,12 @@ var msgHandler = _.curry(function (options, msg) { return _.switch({
     'initWorker': function () { return common_1.log('Init Worker'); },
     'initBroker': function () {
         var x = eventemitter_1.eventEmitter();
-        x.on('event', function (data) {
+        var test = function (data) {
             console.log('event executed ', data);
-        });
+        };
+        x.on('event', test);
+        x.on('event', function () { });
+        x.removeListener('event', test);
         var y = eventemitter_1.eventEmitter();
         x.emit('event', 'hello');
         y.on('event', function () {
@@ -137,8 +144,6 @@ var msgHandler = _.curry(function (options, msg) { return _.switch({
         });
         y.emit('event');
         x.emit('event', 'hello');
-        x.removeAllEvents();
-        x.emit('event');
         common_1.log('Init Broker');
     },
     'default': function () { return common_1.log('default'); }
@@ -167,7 +172,7 @@ function eventEmitter() {
     var checkIfFunction = function (event, listener) { return typeof listener === 'function' ? _.Right.of({ event: event, listener: listener }) : _.Left.of('Listener must be function'); };
     var listen = function (data) {
         var isEvent = events[data.event];
-        return isEvent ? isEvent[isEvent.length] = data.listener : events[data.event] = [data.listener];
+        isEvent ? isEvent[isEvent.length] = data.listener : events[data.event] = [data.listener];
     };
     var on = _.compose(_.either(common_1.log, listen), checkIfFunction);
     var emit = function (event) {
@@ -235,6 +240,7 @@ exports.processMessages = processMessages;
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = __webpack_require__(0);
 function loadOptions(configurations) {
+    configurations = configurations || {};
     if (!configurations.worker)
         return _.Left.of('No worker was provided');
     var options = {

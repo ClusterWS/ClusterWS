@@ -12,6 +12,7 @@ export interface Options {
 }
 
 export function loadOptions(configurations: any) {
+    configurations = configurations || {}
     if (!configurations.worker) return _.Left.of('No worker was provided')
 
     let options: Options = {

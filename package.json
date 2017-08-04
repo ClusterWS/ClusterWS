@@ -5,6 +5,7 @@
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
+    "test": "mocha -r ts-node/register fp-library/tests/*.ts",
     "start": "npm run build:dev && npm run boot",
     "boot": "cross-env DEBUG=true node test/server.js",
     "build:prod": "webpack",
@@ -30,12 +31,18 @@
     "url": "https://github.com/goriunov/ClusterWS"
   },
   "devDependencies": {
+    "@types/chai": "^4.0.2",
+    "@types/mocha": "^2.2.41",
     "@types/node": "^8.0.5",
     "@types/uws": "^0.13.0",
+    "chai": "^4.1.0",
     "copy-pkg-json-webpack-plugin": "0.0.29",
     "copy-webpack-plugin": "^4.0.1",
     "cross-env": "^5.0.1",
+    "mocha": "^3.5.0",
+    "sinon": "^3.0.0",
     "ts-loader": "^2.2.1",
+    "ts-node": "^3.3.0",
     "typescript": "^2.4.1",
     "webpack": "^3.1.0"
   },

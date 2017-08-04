@@ -11,9 +11,12 @@ let msgHandler = _.curry((options: Options, msg: any) => _.switch({
     'initWorker': () => log('Init Worker'),
     'initBroker': () => {
         let x = eventEmitter()
-        x.on('event', (data: any) => {
+        let test = (data: any) => {
             console.log('event executed ', data)
-        })
+        }
+        x.on('event', test)
+        x.on('event', () => { })
+        x.removeListener('event', test)
         let y = eventEmitter()
 
         x.emit('event', 'hello')
@@ -22,7 +25,7 @@ let msgHandler = _.curry((options: Options, msg: any) => _.switch({
         })
         y.emit('event')
         x.emit('event', 'hello')
-        
+
         log('Init Broker')
     },
     'default': () => log('default')
