@@ -82,7 +82,6 @@ var debug = process.env.DEBUG;
 function log(x) {
     if (debug)
         console.log('DEBUG: ', x);
-    return;
 }
 exports.log = log;
 function logError(x) {
@@ -126,35 +125,37 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var _ = __webpack_require__(0);
 var common_1 = __webpack_require__(1);
 var eventemitter_1 = __webpack_require__(5);
-var on = _.curry(function (type, fn) { return process.on(type, fn); });
-var msgHandler = _.curry(function (options, msg) { return _.switch({
-    'initWorker': function () { return common_1.log('Init Worker'); },
-    'initBroker': function () {
-        var x = eventemitter_1.eventEmitter();
-        var test = function (data) {
-            console.log('event executed ', data);
-        };
-        x.on('event', test);
-        x.on('event', function () { });
-        x.removeListener('event', test);
-        var y = eventemitter_1.eventEmitter();
-        x.emit('event', 'hello');
-        y.on('event', function () {
-            console.log('is y');
-        });
-        y.emit('event');
-        x.emit('event', 'hello');
-        common_1.log('Init Broker');
-    },
-    'default': function () { return common_1.log('default'); }
-})(msg.type); });
-var errHandler = function () { return function (err) {
-    common_1.log(err);
-    process.exit();
-}; };
-var onMessage = _.compose(on('message'), msgHandler);
-var onError = _.compose(on('uncaughtException'), errHandler);
-function processWorker(options) { return _.compose(onError, onMessage)(options); }
+function processWorker(options) {
+    var on = _.curry(function (type, fn) { return process.on(type, fn); });
+    var msgHandler = _.curry(function (options, msg) { return _.switch({
+        'initWorker': function () { return common_1.log('Init Worker'); },
+        'initBroker': function () {
+            var x = eventemitter_1.eventEmitter();
+            var test = function (data) {
+                console.log('event executed ', data);
+            };
+            x.on('event', test);
+            x.on('event', function () { });
+            x.removeListener('event', test);
+            var y = eventemitter_1.eventEmitter();
+            x.emit('event', 'hello');
+            y.on('event', function () {
+                console.log('is y');
+            });
+            y.emit('event');
+            x.emit('event', 'hello');
+            common_1.log('Init Broker');
+        },
+        'default': function () { return common_1.log('default'); }
+    })(msg.type); });
+    var errHandler = function () { return function (err) {
+        common_1.log(err);
+        process.exit();
+    }; };
+    var onMessage = _.compose(on('message'), msgHandler);
+    var onError = _.compose(on('uncaughtException'), errHandler);
+    return _.compose(onError, onMessage)(options);
+}
 exports.processWorker = processWorker;
 
 
@@ -201,15 +202,15 @@ exports.eventEmitter = eventEmitter;
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = __webpack_require__(0);
 var messages_1 = __webpack_require__(7);
-var onExit = function (data) { return data[0].on('exit', data[1]); };
-var fork = function (cluster, options, id) { return { cluster: cluster, process: cluster.fork(), options: options, id: id }; };
-var launchProcess = _.curry(function (type, data) {
-    data.process.send(messages_1.processMessages(type, data.id));
-    return [data.process, function () { return data.options.restartOnFail ? type === 'initBroker' ? launchBroker(data.cluster, data.options) : launchWorker(data.cluster, data.options, data.id) : ''; }];
-});
-var launchBroker = _.compose(onExit, launchProcess('initBroker'), fork);
-var launchWorker = _.compose(onExit, launchProcess('initWorker'), fork);
 function processMaster(options, cluster) {
+    var onExit = function (data) { return data[0].on('exit', data[1]); };
+    var fork = function (cluster, options, id) { return { cluster: cluster, process: cluster.fork(), options: options, id: id }; };
+    var launchProcess = _.curry(function (type, data) {
+        data.process.send(messages_1.processMessages(type, data.id));
+        return [data.process, function () { return data.options.restartOnFail ? type === 'initBroker' ? launchBroker(data.cluster, data.options) : launchWorker(data.cluster, data.options, data.id) : ''; }];
+    });
+    var launchBroker = _.compose(onExit, launchProcess('initBroker'), fork);
+    var launchWorker = _.compose(onExit, launchProcess('initWorker'), fork);
     launchBroker(cluster, options);
     for (var i = 0; i < options.workers; i++)
         launchWorker(cluster, options, i);
