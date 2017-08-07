@@ -12,13 +12,9 @@ export function eventEmitter() {
     }
 
     let on: any = _.compose(_.either(log, listen), checkIfFunction)
-
     let emit: any = (event: string, ...rest: any[]) => events[event] ? _.map((x: any) => x.call(null, ...rest), events[event]) : ''
-
     let removeEvent: any = (event: string) => events[event] = null
-
     let removeAllEvents: any = () => events = []
-
     let removeListener: any = (event: string, listener: any) => _.map((currentListener: any, index: number, array: any) => {
         currentListener === listener ? array.splice(index, 1) : ''
     }, events[event])

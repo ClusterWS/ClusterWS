@@ -1,6 +1,4 @@
-// const _: any = require('../utils/fp')
 import * as _ from '../utils/fp'
-
 
 export interface Options {
     port: number,
