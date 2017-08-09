@@ -5,7 +5,7 @@ import { Socket, connect } from 'net'
 
 export function tcpSocket(portOrSocket: any, host?: string) {
     let _socket: Socket;
-
+    
     let baffer: string = ''
     let eventemitter = eventEmitter()
 

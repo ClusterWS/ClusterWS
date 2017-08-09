@@ -61,7 +61,7 @@ module.exports =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -92,17 +92,23 @@ exports.logError = logError;
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports) {
+
+module.exports = require("net");
+
+/***/ }),
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = __webpack_require__(0);
-var cluster = __webpack_require__(3);
+var cluster = __webpack_require__(4);
 var common_1 = __webpack_require__(1);
-var processWorker_1 = __webpack_require__(4);
-var processMaster_1 = __webpack_require__(6);
-var options_1 = __webpack_require__(8);
+var processWorker_1 = __webpack_require__(5);
+var processMaster_1 = __webpack_require__(9);
+var options_1 = __webpack_require__(11);
 var runProcess = function (options) { return cluster.isMaster ?
     processMaster_1.processMaster(options, cluster) :
     processWorker_1.processWorker(options); };
@@ -110,13 +116,13 @@ module.exports = _.compose(_.either(common_1.logError, runProcess), options_1.lo
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 module.exports = require("cluster");
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -124,28 +130,12 @@ module.exports = require("cluster");
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = __webpack_require__(0);
 var common_1 = __webpack_require__(1);
-var eventemitter_1 = __webpack_require__(5);
+var broker_1 = __webpack_require__(6);
 function processWorker(options) {
     var on = _.curry(function (type, fn) { return process.on(type, fn); });
     var msgHandler = _.curry(function (options, msg) { return _.switch({
         'initWorker': function () { return common_1.log('Init Worker'); },
-        'initBroker': function () {
-            var x = eventemitter_1.eventEmitter();
-            var test = function (data) {
-                console.log('event executed ', data);
-            };
-            x.on('event', test);
-            x.on('event', function () { });
-            x.removeListener('event', test);
-            var y = eventemitter_1.eventEmitter();
-            x.emit('event', 'hello');
-            y.on('event', function () {
-                console.log('is y');
-            });
-            y.emit('event');
-            x.emit('event', 'hello');
-            common_1.log('Init Broker');
-        },
+        'initBroker': function () { return broker_1.broker(options); },
         'default': function () { return common_1.log('default'); }
     })(msg.type); });
     var errHandler = function () { return function (err) {
@@ -160,7 +150,86 @@ exports.processWorker = processWorker;
 
 
 /***/ }),
-/* 5 */
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var _ = __webpack_require__(0);
+var common_1 = __webpack_require__(1);
+var socket_1 = __webpack_require__(7);
+var net_1 = __webpack_require__(2);
+function broker(options) {
+    var servers;
+    var on = _.curry(function (type, fn, data) {
+        data.server.on(type, fn(data.id));
+        return data;
+    });
+    var connectBroker = _.curry(function (options, fn) { return net_1.createServer(fn).listen(options.brokerPort); });
+    var switchSocket = function (server) { return socket_1.tcpSocket(server); };
+    var runPing = function (data) { return data.server.pingInterval = setInterval(function () { return data.server.send('_0'); }, 20000); };
+    var addSocket = function (server) {
+        var length = servers.length;
+        servers[length] = server;
+        return { server: server, id: length };
+    };
+    var onMessage = function (id) { return function (msg) { return msg === '_1' ? '' : broadcast(id, msg); }; };
+    var onDisconnect = function (id) { return function () { return common_1.logError('Worker ' + id + ' has disconnected from broker'); }; };
+    var onError = function (id) { return function (err) { return common_1.logError('Broker ' + id + ': ' + err); }; };
+    var broadcast = function (id, msg) { return _.map(function (server, index) { return id !== index ? server.send(msg) : ''; }, servers); };
+    var handleSockets = function (server) { return _.compose(runPing, on('error', onError), on('disconnect', onDisconnect), on('message', onMessage), addSocket); };
+    return connectBroker(options, _.compose(handleSockets, switchSocket));
+}
+exports.broker = broker;
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var _ = __webpack_require__(0);
+var common_1 = __webpack_require__(1);
+var eventemitter_1 = __webpack_require__(8);
+var net_1 = __webpack_require__(2);
+function tcpSocket(portOrSocket, host) {
+    var _socket;
+    common_1.log('Running srvice');
+    var baffer = '';
+    var eventemitter = eventemitter_1.eventEmitter();
+    var on = _.curry(function (type, fn, socket) {
+        socket.on(type, fn);
+        return socket;
+    });
+    var send = function (data) { return _socket.write(data + '\n'); };
+    var isSocket = function (socket, host) { return socket instanceof net_1.Socket ? _socket = socket : _socket = net_1.connect(socket, host); };
+    var onConnect = function () { return eventemitter.emit('connect'); };
+    var onError = function (err) { return eventemitter.emit('error', err); };
+    var onEnd = function () { return eventemitter.emit('disconnect'); };
+    var onData = function (data) {
+        var str = data.toString();
+        var i = str.indexOf('\n');
+        if (i === -1)
+            return baffer += str;
+        eventemitter.emit('message', baffer + str.slice(0, i));
+        var next = i + 1;
+        while ((i = data.indexOf('\n', next)) !== -1) {
+            eventemitter.emit('message', str.slice(next, i));
+            next = i + 1;
+        }
+        baffer = str.slice(next);
+    };
+    _.compose(on('error', onError), on('end', onEnd), on('data', onData), on('connect', net_1.connect), isSocket)(portOrSocket, host);
+    return { on: eventemitter.on, send: send };
+}
+exports.tcpSocket = tcpSocket;
+
+
+/***/ }),
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -194,14 +263,14 @@ exports.eventEmitter = eventEmitter;
 
 
 /***/ }),
-/* 6 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var _ = __webpack_require__(0);
-var messages_1 = __webpack_require__(7);
+var messages_1 = __webpack_require__(10);
 function processMaster(options, cluster) {
     var onExit = function (data) { return data[0].on('exit', data[1]); };
     var fork = function (cluster, options, id) { return { cluster: cluster, process: cluster.fork(), options: options, id: id }; };
@@ -219,7 +288,7 @@ exports.processMaster = processMaster;
 
 
 /***/ }),
-/* 7 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -233,7 +302,7 @@ exports.processMessages = processMessages;
 
 
 /***/ }),
-/* 8 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
