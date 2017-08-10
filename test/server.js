@@ -1,16 +1,18 @@
 var path = require('path');
-var express = require('express');
+// var express = require('express');
 // var ClusterWS = require('../dist/index').ClusterWS;
-var ClusterWS = require('../dist/index');
+var ClusterWS = require('../dist/index').ClusterWS;
 
-ClusterWS({
-    worker: 'Hello',
+new ClusterWS({
+    worker: Worker,
     workers: 2,
     restartWorkerOnFail: false
 })
 
 
+function Worker (){
 
+}
 
 // var cws = new ClusterWS({
 //     worker: Worker,

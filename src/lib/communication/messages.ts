@@ -1,3 +1,8 @@
+export function processMessages(type: string, data?: any) {
+    return { type: type, data: data }
+}
+
+
 /**
  * Here different messages generates for different communication reasons
  *

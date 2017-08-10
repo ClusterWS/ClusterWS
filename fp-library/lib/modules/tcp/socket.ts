@@ -14,8 +14,15 @@ export function tcpSocket(portOrSocket: any, host?: string) {
         return socket
     })
     let send = (data: any) => _socket.write(data + '\n')
-    let isSocket = (socket: any, host?: string) => socket instanceof Socket ? _socket = socket : _socket = connect(socket, host)
-    let onConnect = () => eventemitter.emit('connect')
+    let isSocket = (socket: any, host?: string) => socket instanceof Socket ?
+        _socket = socket :
+        _socket = connect(socket, host)
+
+
+    let onConnect = () => {
+        // log('Connected')
+        eventemitter.emit('connect')
+    }
     let onError = (err: any) => eventemitter.emit('error', err)
     let onEnd = () => eventemitter.emit('disconnect')
     let onData = (data: any) => {

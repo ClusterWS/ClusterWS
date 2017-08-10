@@ -1,7 +1,8 @@
-import { isMaster } from 'cluster';
-import { processMaster } from './lib/processMaster';
-import { processWorker } from './lib/processWorker';
-import { Options, Configurations } from './lib/options';
+import { isMaster } from 'cluster'
+import { Options } from './lib/options'
+import { processMaster } from './lib/processMaster'
+import { processWorker } from './lib/processWorker'
+
 
 /**
  * Main file which get configurations from the user,
@@ -14,21 +15,14 @@ import { Options, Configurations } from './lib/options';
  * If instance already existdo nothing
  */
 export class ClusterWS {
-    private static _instance: ClusterWS;
-    options: Options;
+    private static instance: ClusterWS
 
-    constructor(public configurations: Configurations) {
-        if (ClusterWS._instance) return;
-        ClusterWS._instance = this;
+    constructor(public configurations: any) {
+        if (ClusterWS.instance) return
+        ClusterWS.instance = this
 
-        this.configurations = this.configurations || {};
-        this.options = new Options(this.configurations);
-
-        if (isMaster) {
-            processMaster(this.options);
-        } else {
-            processWorker(this.options);
-        }
+        let options = new Options(this.configurations || {})
+        isMaster ? processMaster(options) : processWorker(options)
     }
 }
 

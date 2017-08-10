@@ -12,7 +12,8 @@ export function broker(options: Options) {
         return data
     })
 
-    let connectBroker = _.curry((options: Options, fn: any) => createServer(fn).listen(options.brokerPort))
+
+    let connectBroker = _.curry((options: Options, fn: any) => createServer(fn).listen())
     let switchSocket = (server: any) => tcpSocket(server)
 
     let runPing = (data: { server: any, id: number }) => data.server.pingInterval = setInterval(() => data.server.send('_0'), 20000)
@@ -31,5 +32,9 @@ export function broker(options: Options) {
 
     let handleSockets = (server: any) => _.compose(runPing, on('error', onError), on('disconnect', onDisconnect), on('message', onMessage), addSocket)
 
-    return connectBroker(options, _.compose(handleSockets, switchSocket))
+    connectBroker(options, _.compose(handleSockets, switchSocket))
+    let x = tcpSocket(options.brokerPort, '127.0.0.1')
+    x.on('message', (msg: any) => {
+        log(msg)
+    })
 }

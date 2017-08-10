@@ -17,7 +17,7 @@ export function loadOptions(configurations: any) {
         port: configurations.port || 8080,
         worker: configurations.worker,
         workers: configurations.workers || 1,
-        brokerPort: configurations.brokerPort || 9346,
+        brokerPort: configurations.brokerPort || 9846,
         pingInterval: configurations.pingInterval || 20000,
         restartOnFail: configurations.restartWorkerOnFail || false
     }

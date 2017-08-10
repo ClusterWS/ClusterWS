@@ -38,7 +38,7 @@ if(env === 'debug'){
 
 module.exports = {
     entry: {
-        'index': './fp-library/index.ts'
+        'index': './src/index.ts'
     },
     resolve: {
         extensions: [".ts", ".js"]
