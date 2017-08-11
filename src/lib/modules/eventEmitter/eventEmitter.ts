@@ -1,3 +1,5 @@
+import { _ } from '../../utils/fp'
+import { logError } from '../../utils/logs'
 /**
  * Custom event emitter 
  */
@@ -51,5 +53,19 @@ export class EventEmitter {
 
     exist(event: string) {
         return this._events[event]
+    }
+}
+
+
+export class EventEmitter1 {
+    _events: any = {}
+
+    on(event: string, listener: any) {
+        if (!listener || typeof listener === 'function') logError('Listener must be a function')
+        this._events ? this._events.push(listener) : this._events = [listener]
+    }
+
+    emit(event: string, ...args: any[]) {
+        _.map((listener: any) => listener.call(this, ...args), this._events[event])
     }
 }

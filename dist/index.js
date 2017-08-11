@@ -402,20 +402,18 @@ var fp_1 = __webpack_require__(2);
 var logs_1 = __webpack_require__(3);
 var messages_1 = __webpack_require__(4);
 function processMaster(options) {
-    var ready;
+    var ready = [];
     logs_1.logRunning('>>> Master on: ' + options.port + ', PID ' + process.pid);
-    var readyPrint = function (type, id, pid) {
-        if (id === 0)
-            logs_1.logRunning('>>> Broker on: ' + options.brokerPort + ', PID ' + pid);
-        ready[id--] = pid;
-        if (ready.length > options.workers)
-            ready.map(function (pid, index) { return logs_1.logRunning('          Worker: ' + (index + 1) + ', PID ' + pid); });
+    var readyPrint = function (id, pid) {
+        ready[id] = id === 0 ? '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : '          Worker: ' + id + ', PID ' + pid;
+        if (ready.length === options.workers + 1)
+            ready.map(function (print) { return logs_1.logRunning(print); });
     };
     var launch = function (type, i) {
         var server = cluster.fork();
         server.on('message', function (msg) {
             fp_1._.switchcase({
-                'ready': function () { return readyPrint(type, i, msg.data); },
+                'ready': function () { return readyPrint(i, msg.data); },
                 'default': ''
             })(msg.type);
         });

@@ -5,7 +5,6 @@ import { Options } from './options';
 import { logError } from './utils/logs'
 import { processMessages } from './communication/messages';
 
-
 declare let process: any
 
 export function processWorker(options: Options) {

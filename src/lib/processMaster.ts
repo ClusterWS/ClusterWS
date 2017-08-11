@@ -10,20 +10,19 @@ import { processMessages } from './communication/messages'
  * cluster.schedulingPolicy = cluster.SCHED_RR;
  */
 export function processMaster(options: Options) {
-    let ready: number[] = [];
+    let ready: string[] = [];
     logRunning('>>> Master on: ' + options.port + ', PID ' + process.pid)
 
-    let readyPrint = (type: string, id: number, pid: number) => {
-        if (id === 0) return logRunning('>>> Broker on: ' + options.brokerPort + ', PID ' + pid)
-        ready[id--] = pid
-        if (ready.length === options.workers) ready.map((pid, index) => logRunning('          Worker: ' + (index + 1) + ', PID ' + pid))
+    let readyPrint = (id: number, pid: number) => {
+        ready[id] = id === 0 ? '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : '          Worker: ' + id + ', PID ' + pid
+        if (ready.length === options.workers + 1) _.map((print: any) => logRunning(print), ready)
     }
 
     let launch = (type: string, i: number) => {
         let server = cluster.fork()
         server.on('message', (msg: { type: string, data?: any }) => {
             _.switchcase({
-                'ready': () => readyPrint(type, i, msg.data),
+                'ready': () => readyPrint(i, msg.data),
                 'default': ''
             })(msg.type)
         })
