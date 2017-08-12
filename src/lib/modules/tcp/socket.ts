@@ -12,9 +12,9 @@ export class TcpSocket extends EventEmitter {
 
         port instanceof Socket ? this.socket = port : this.socket = connect(port, host)
 
-        this.socket.on('connect', () => this.emit('connect'))
         this.socket.on('end', () => this.emit('disconnect'))
         this.socket.on('error', (err: any) => this.emit('error', err))
+        this.socket.on('connect', () => this.emit('connect'))
 
         this.socket.on('data', (data: any) => {
             let str: string = data.toString()

@@ -29,6 +29,6 @@ export class Broker {
     }
 
     broadcast(id: number, msg: any) {
-        _.map((server: any, index: number) => { index !== id ? server.send(msg) : '' }, this.servers)
+        _.map((server: any, index: number) => index !== id ? server.send(msg) : '', this.servers)
     }
 }

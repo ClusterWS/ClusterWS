@@ -13,7 +13,5 @@ export function processWorker(options: Options) {
         'broker': () => new Broker(options)
     })(msg.type))
 
-    process.on('uncaughtException', (err: any) => {
-        logError('PID: ' + process.pid + '\n' + err.stack + '\n')
-    })
+    process.on('uncaughtException', (err: any) => logError('PID: ' + process.pid + '\n' + err.stack + '\n'))
 }

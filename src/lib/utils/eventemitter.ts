@@ -7,12 +7,12 @@ export class EventEmitter {
     _events: any = {}
 
     on(event: string, listener: any) {
-        if (!listener || typeof listener === 'function') logError('Listener must be a function')
-        this._events ? this._events.push(listener) : this._events = [listener]
+        if (!listener || typeof listener !== 'function') logError('Listener must be a function')
+        this._events[event] ? this._events[event].push(listener) : this._events[event] = [listener]
     }
 
     emit(event: string, ...args: any[]) {
-        _.map((listener: any) => listener.call(this, ...args), this._events[event])
+        _.map((listener: any) => listener.call(null, ...args), this._events[event])
     }
 
     removeListener(event: string, listener: any) {

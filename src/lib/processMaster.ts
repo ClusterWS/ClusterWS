@@ -22,11 +22,9 @@ export function processMaster(options: Options) {
 
     let launch = (type: string, i: number) => {
         let server = cluster.fork()
-        server.on('message', (msg: { type: string, data?: any }) => {
-            _.switchcase({
-                'ready': () => readyPrint(i, msg.data)
-            })(msg.type)
-        })
+        server.on('message', (msg: { type: string, data?: any }) => _.switchcase({
+            'ready': () => readyPrint(i, msg.data)
+        })(msg.type))
         server.on('exit', () => options.restartWorkerOnFail ? launch(type, i) : '')
         server.send(processMessages(type, i))
     }

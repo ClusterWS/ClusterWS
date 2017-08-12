@@ -27,6 +27,7 @@ export class Worker {
         socketServer.on('connection', (socket: any) => this.socketServer.emitter.emit('connect', socket))
 
         this.options.worker.call(this)
+
         process.send(processMessages('ready', process.pid))
     }
 }
