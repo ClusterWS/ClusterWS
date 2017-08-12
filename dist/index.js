@@ -71,6 +71,28 @@ module.exports =
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+function logRunning(x) {
+    console.log('\x1b[36m%s\x1b[0m', x);
+}
+exports.logRunning = logRunning;
+function logError(x) {
+    console.log('\x1b[31m%s\x1b[0m', x);
+}
+exports.logError = logError;
+function logDebug(x) {
+    if (process.env.DEBUG)
+        console.log('DEBUG: ', x);
+}
+exports.logDebug = logDebug;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 var curry = function (fn) {
     return function curring() {
         var args = [];
@@ -110,28 +132,6 @@ exports._ = {
     curry: curry,
     switchcase: switchcase
 };
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-function logRunning(x) {
-    console.log('\x1b[36m%s\x1b[0m', x);
-}
-exports.logRunning = logRunning;
-function logError(x) {
-    console.log('\x1b[31m%s\x1b[0m', x);
-}
-exports.logError = logError;
-function logDebug(x) {
-    if (process.env.DEBUG)
-        console.log('DEBUG: ', x);
-}
-exports.logDebug = logDebug;
 
 
 /***/ }),
@@ -263,10 +263,11 @@ exports.ClusterWS = ClusterWS;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var logs_1 = __webpack_require__(0);
 var Options = (function () {
     function Options(configurations) {
         if (!configurations.worker)
-            throw '\n\x1b[31mWorker function must be provided\x1b[0m';
+            throw logs_1.logError('Worker function must be provided');
         this.port = configurations.port || 80;
         this.worker = configurations.worker;
         this.workers = configurations.workers || 1;
@@ -287,16 +288,16 @@ exports.Options = Options;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var cluster = __webpack_require__(3);
-var fp_1 = __webpack_require__(0);
-var utils_1 = __webpack_require__(8);
-var logs_1 = __webpack_require__(1);
+var fp_1 = __webpack_require__(1);
+var helpers_1 = __webpack_require__(8);
+var logs_1 = __webpack_require__(0);
 var messages_1 = __webpack_require__(2);
 function processMaster(options) {
     var ready = [];
     logs_1.logRunning('>>> Master on: ' + options.port + ', PID ' + process.pid);
     var readyPrint = function (id, pid) {
         ready[id] = id === 0 ? '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : '          Worker: ' + id + ', PID ' + pid;
-        if (utils_1.count(ready) === options.workers + 1)
+        if (helpers_1.count(ready) === options.workers + 1)
             fp_1._.map(function (print) { return logs_1.logRunning(print); }, ready);
     };
     var launch = function (type, i) {
@@ -340,9 +341,9 @@ exports.count = count;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var fp_1 = __webpack_require__(0);
+var fp_1 = __webpack_require__(1);
 var broker_1 = __webpack_require__(10);
-var logs_1 = __webpack_require__(1);
+var logs_1 = __webpack_require__(0);
 var messages_1 = __webpack_require__(2);
 function processWorker(options) {
     process.on('message', function (msg) { return fp_1._.switchcase({
@@ -366,8 +367,8 @@ exports.processWorker = processWorker;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var fp_1 = __webpack_require__(0);
-var logs_1 = __webpack_require__(1);
+var fp_1 = __webpack_require__(1);
+var logs_1 = __webpack_require__(0);
 var socket_1 = __webpack_require__(11);
 var messages_1 = __webpack_require__(2);
 var net_1 = __webpack_require__(4);
@@ -454,8 +455,8 @@ exports.TcpSocket = TcpSocket;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var fp_1 = __webpack_require__(0);
-var logs_1 = __webpack_require__(1);
+var fp_1 = __webpack_require__(1);
+var logs_1 = __webpack_require__(0);
 var EventEmitter = (function () {
     function EventEmitter() {
         this._events = {};

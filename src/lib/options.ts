@@ -1,3 +1,4 @@
+import {logError} from './utils/logs'
 /**
  * Creates options object from
  * configurations provided by user.
@@ -24,7 +25,7 @@ export class Options {
     restartWorkerOnFail: boolean
 
     constructor(configurations: any) {
-        if (!configurations.worker) throw '\n\x1b[31mWorker function must be provided\x1b[0m'
+        if (!configurations.worker) throw logError('Worker function must be provided')
 
         this.port = configurations.port || 80
         this.worker = configurations.worker
