@@ -1,22 +1,19 @@
 import { _ } from './utils/fp'
-import { Worker } from './modules/worker';
-import { Broker } from './modules/pubsub-server/broker';
-import { Options } from './options';
+// import { Worker } from './modules/worker';
+import { Broker } from './modules/broker/broker'
+import { Options } from './options'
 import { logError } from './utils/logs'
-import { processMessages } from './communication/messages';
+import { processMessages } from './communication/messages'
 
 declare let process: any
 
 export function processWorker(options: Options) {
     process.on('message', (msg: { type: string, data?: any }) => _.switchcase({
         'worker': () => {
-            new Worker(options)
+            // new Worker(options)
             process.send(processMessages('ready', process.pid))
         },
-        'broker': () => {
-            new Broker(options)
-            process.send(processMessages('ready', process.pid))
-        },
+        'broker': () => new Broker(options),
         'default': ''
     })(msg.type))
 

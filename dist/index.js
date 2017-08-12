@@ -61,78 +61,11 @@ module.exports =
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var EventEmitter = (function () {
-    function EventEmitter() {
-        this._events = {};
-    }
-    EventEmitter.prototype.on = function (event, listener) {
-        if (!listener && typeof listener === 'function')
-            throw 'Function must be provided';
-        this._events[event] = this._events[event] || [];
-        this._events[event].push(listener);
-    };
-    EventEmitter.prototype.emit = function (event) {
-        var rest = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            rest[_i - 1] = arguments[_i];
-        }
-        if (this.exist(event)) {
-            for (var i = 0, len = this._events[event].length; i < len; i++) {
-                this._events[event][i].apply(this, rest);
-            }
-        }
-    };
-    EventEmitter.prototype.removeListener = function (event, listener) {
-        if (this.exist(event)) {
-            var len = this._events[event].length;
-            while (len--) {
-                if (this._events[event][len] === listener) {
-                    this._events[event].splice(len, 1);
-                }
-            }
-        }
-        return;
-    };
-    EventEmitter.prototype.removeEvent = function (event) {
-        if (this.exist(event)) {
-            this._events[event] = null;
-            delete this._events[event];
-        }
-    };
-    EventEmitter.prototype.removeAllEvents = function () {
-        for (var key in this._events) {
-            if (this._events.hasOwnProperty(key)) {
-                this._events[key] = null;
-                delete this._events[key];
-            }
-        }
-    };
-    EventEmitter.prototype.exist = function (event) {
-        return this._events[event];
-    };
-    return EventEmitter;
-}());
-exports.EventEmitter = EventEmitter;
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports) {
-
-module.exports = require("cluster");
-
-/***/ }),
-/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -157,14 +90,30 @@ var curry = function (fn) {
 };
 var isFunction = function (f) { return typeof f === 'function' ? f() : f; };
 var switchcase = curry(function (cases, key) { return key in cases ? isFunction(cases[key]) : isFunction(cases['default']); });
+var mapArray = function (iteratee, array) {
+    var index = -1;
+    var length = array == null ? 0 : array.length;
+    var result = new Array(length);
+    while (++index < length)
+        result[index] = iteratee(array[index], index, array);
+    return result;
+};
+var mapObject = function (iteratee, object) {
+    var result = {};
+    object = Object(object);
+    Object.keys(object).forEach(function (key) { return result[key] = iteratee(object[key], key, object); });
+    return result;
+};
+var map = curry(function (fn, x) { return x instanceof Array ? mapArray(fn, x) : mapObject(fn, x); });
 exports._ = {
+    map: map,
     curry: curry,
     switchcase: switchcase
 };
 
 
 /***/ }),
-/* 3 */
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -186,7 +135,7 @@ exports.logDebug = logDebug;
 
 
 /***/ }),
-/* 4 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -271,88 +220,28 @@ exports.MessageFactory = MessageFactory;
 
 
 /***/ }),
-/* 5 */
-/***/ (function(module, exports, __webpack_require__) {
+/* 3 */
+/***/ (function(module, exports) {
 
-"use strict";
-
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-var eventEmitter_1 = __webpack_require__(0);
-var net_1 = __webpack_require__(6);
-var TcpSocket = (function (_super) {
-    __extends(TcpSocket, _super);
-    function TcpSocket(port, host) {
-        var _this = _super.call(this) || this;
-        _this.port = port;
-        _this.host = host;
-        _this.dataBuffer = '';
-        if (port instanceof net_1.Socket) {
-            _this.socket = port;
-        }
-        else {
-            _this.socket = net_1.connect(port, host);
-        }
-        _this.socket.on('connect', function () {
-            _this.emit('connect');
-        });
-        _this.socket.on('data', function (data) {
-            var str = data.toString();
-            var i = str.indexOf('\n');
-            if (i === -1) {
-                _this.dataBuffer += str;
-                return;
-            }
-            _this.emit('message', _this.dataBuffer + str.slice(0, i));
-            var nextPart = i + 1;
-            while ((i = data.indexOf('\n', nextPart)) !== -1) {
-                _this.emit('message', str.slice(nextPart, i));
-                nextPart = i + 1;
-            }
-            _this.dataBuffer = str.slice(nextPart);
-        });
-        _this.socket.on('end', function () {
-            _this.emit('disconnect');
-        });
-        _this.socket.on('error', function (err) {
-            _this.emit('error', err);
-        });
-        return _this;
-    }
-    TcpSocket.prototype.send = function (data) {
-        this.socket.write(data + '\n');
-    };
-    return TcpSocket;
-}(eventEmitter_1.EventEmitter));
-exports.TcpSocket = TcpSocket;
-
+module.exports = require("cluster");
 
 /***/ }),
-/* 6 */
+/* 4 */
 /***/ (function(module, exports) {
 
 module.exports = require("net");
 
 /***/ }),
-/* 7 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var cluster_1 = __webpack_require__(1);
-var options_1 = __webpack_require__(8);
-var processMaster_1 = __webpack_require__(9);
-var processWorker_1 = __webpack_require__(10);
+var cluster_1 = __webpack_require__(3);
+var options_1 = __webpack_require__(6);
+var processMaster_1 = __webpack_require__(7);
+var processWorker_1 = __webpack_require__(9);
 var ClusterWS = (function () {
     function ClusterWS(configurations) {
         this.configurations = configurations;
@@ -368,7 +257,7 @@ exports.ClusterWS = ClusterWS;
 
 
 /***/ }),
-/* 8 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -391,23 +280,24 @@ exports.Options = Options;
 
 
 /***/ }),
-/* 9 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var cluster = __webpack_require__(1);
-var fp_1 = __webpack_require__(2);
-var logs_1 = __webpack_require__(3);
-var messages_1 = __webpack_require__(4);
+var cluster = __webpack_require__(3);
+var fp_1 = __webpack_require__(0);
+var utils_1 = __webpack_require__(8);
+var logs_1 = __webpack_require__(1);
+var messages_1 = __webpack_require__(2);
 function processMaster(options) {
     var ready = [];
     logs_1.logRunning('>>> Master on: ' + options.port + ', PID ' + process.pid);
     var readyPrint = function (id, pid) {
         ready[id] = id === 0 ? '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : '          Worker: ' + id + ', PID ' + pid;
-        if (ready.length === options.workers + 1)
-            ready.map(function (print) { return logs_1.logRunning(print); });
+        if (utils_1.count(ready) === options.workers + 1)
+            fp_1._.map(function (print) { return logs_1.logRunning(print); }, ready);
     };
     var launch = function (type, i) {
         var server = cluster.fork();
@@ -428,27 +318,38 @@ exports.processMaster = processMaster;
 
 
 /***/ }),
-/* 10 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var fp_1 = __webpack_require__(2);
-var worker_1 = __webpack_require__(11);
-var broker_1 = __webpack_require__(19);
-var logs_1 = __webpack_require__(3);
-var messages_1 = __webpack_require__(4);
+function count(arr) {
+    var size = 0;
+    for (var i = 0, len = arr.length; i < len; i++)
+        arr[i] ? size++ : '';
+    return size;
+}
+exports.count = count;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(0);
+var broker_1 = __webpack_require__(10);
+var logs_1 = __webpack_require__(1);
+var messages_1 = __webpack_require__(2);
 function processWorker(options) {
     process.on('message', function (msg) { return fp_1._.switchcase({
         'worker': function () {
-            new worker_1.Worker(options);
             process.send(messages_1.processMessages('ready', process.pid));
         },
-        'broker': function () {
-            new broker_1.Broker(options);
-            process.send(messages_1.processMessages('ready', process.pid));
-        },
+        'broker': function () { return new broker_1.Broker(options); },
         'default': ''
     })(msg.type); });
     process.on('uncaughtException', function (err) {
@@ -456,6 +357,42 @@ function processWorker(options) {
     });
 }
 exports.processWorker = processWorker;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(0);
+var logs_1 = __webpack_require__(1);
+var socket_1 = __webpack_require__(11);
+var messages_1 = __webpack_require__(2);
+var net_1 = __webpack_require__(4);
+var Broker = (function () {
+    function Broker(options) {
+        var _this = this;
+        this.options = options;
+        this.servers = [];
+        this.broker = net_1.createServer(function (s) {
+            var id = _this.servers.length;
+            var socket = new socket_1.TcpSocket(s);
+            var ping = setInterval(function () { return socket.send('#0'); }, 20000);
+            _this.servers[id] = socket;
+            socket.on('message', function (msg) { return msg !== '#1' ? _this.broadcast(id, msg) : ''; });
+            socket.on('error', function (err) { return logs_1.logError('Broker' + ', PID ' + process.pid + '\n' + err.stack + '\n'); });
+            socket.on('disconnect', function () { return logs_1.logError('Server ' + id + ' has disconnected'); });
+        }).listen(options.brokerPort);
+        process.send(messages_1.processMessages('ready', process.pid));
+    }
+    Broker.prototype.broadcast = function (id, msg) {
+        fp_1._.map(function (server, index) { index !== id ? server.send(msg) : ''; }, this.servers);
+    };
+    return Broker;
+}());
+exports.Broker = Broker;
 
 
 /***/ }),
@@ -475,282 +412,83 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-var WebSocket = __webpack_require__(12);
-var socket_1 = __webpack_require__(13);
-var tcp_socket_1 = __webpack_require__(5);
-var eventEmitter_1 = __webpack_require__(0);
-var messages_1 = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"./messages/messages\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-var http_1 = __webpack_require__(18);
-var Worker = (function (_super) {
-    __extends(Worker, _super);
-    function Worker(options) {
+var eventemitter_1 = __webpack_require__(12);
+var net_1 = __webpack_require__(4);
+var TcpSocket = (function (_super) {
+    __extends(TcpSocket, _super);
+    function TcpSocket(port, host) {
         var _this = _super.call(this) || this;
-        _this.options = options;
-        _this.id = _this.options.id;
-        Worker._connectBroker(_this);
-        Worker._connectHttpServer(_this);
-        Worker._connectWebSocketServer(_this);
+        _this.port = port;
+        _this.buffer = '';
+        port instanceof net_1.Socket ? _this.socket = port : _this.socket = net_1.connect(port, host);
+        _this.socket.on('connect', function () { return _this.emit('connect'); });
+        _this.socket.on('end', function () { return _this.emit('disconnect'); });
+        _this.socket.on('error', function (err) { return _this.emit('error', err); });
+        _this.socket.on('data', function (data) {
+            var str = data.toString();
+            var i = str.indexOf('\n');
+            if (i === -1)
+                return _this.buffer += str;
+            _this.emit('message', _this.buffer + str.slice(0, i));
+            var next = i + 1;
+            while ((i = str.indexOf('\n', next)) !== -1) {
+                _this.emit('message', str.slice(next, i));
+                next = i + 1;
+            }
+            _this.buffer = str.slice(next);
+        });
         return _this;
     }
-    Worker._connectBroker = function (self) {
-        self.broker = new tcp_socket_1.TcpSocket(self.options.brokerPort, '127.0.0.1');
-        self.broker.on('message', function (msg) {
-            if (msg === '_0')
-                return self.broker.send('_1');
-            self.emit('publish', JSON.parse(msg));
-        });
-        self.broker.on('disconnect', function () {
-            console.log('\x1b[31m%s\x1b[0m', 'Broker has been disconnected');
-        });
-        self.broker.on('error', function (err) {
-            console.log('\x1b[31m%s\x1b[0m', 'Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n');
-        });
+    TcpSocket.prototype.send = function (data) {
+        this.socket.write(data + '\n');
     };
-    Worker._connectHttpServer = function (self) {
-        self.httpServer = http_1.createServer();
-        self.httpServer.listen(self.options.port, function () {
-            console.log('\x1b[36m%s\x1b[0m', '          Worker: ' + self.options.id + ', PID ' + process.pid);
-        });
-    };
-    Worker._connectWebSocketServer = function (self) {
-        var webSocketServer = new WebSocket.Server({ server: self.httpServer });
-        webSocketServer.on('connection', function (_socket) {
-            var socket = new socket_1.Socket(_socket, self);
-            self.emit('connection', socket);
-        });
-        self.webSocketServer = webSocketServer;
-        self.webSocketServer.on = function (event, fn) {
-            self.on(event, fn);
-        };
-        self.webSocketServer.publish = function (channel, data) {
-            self.broker.send(messages_1.MessageFactory.brokerMessage(channel, data));
-            self.emit('publish', { channel: channel, data: data });
-        };
-    };
-    return Worker;
-}(eventEmitter_1.EventEmitter));
-exports.Worker = Worker;
+    return TcpSocket;
+}(eventemitter_1.EventEmitter));
+exports.TcpSocket = TcpSocket;
 
 
 /***/ }),
 /* 12 */
-/***/ (function(module, exports) {
-
-module.exports = require("uws");
-
-/***/ }),
-/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var eventEmitter_1 = __webpack_require__(0);
-var messages_1 = __webpack_require__(!(function webpackMissingModule() { var e = new Error("Cannot find module \"../messages/messages\""); e.code = 'MODULE_NOT_FOUND'; throw e; }()));
-var socketPing_1 = __webpack_require__(14);
-var socketMessage_1 = __webpack_require__(15);
-var socketClose_1 = __webpack_require__(16);
-var socketError_1 = __webpack_require__(17);
-var Socket = (function () {
-    function Socket(_socket, server) {
-        var _this = this;
-        this._socket = _socket;
-        this.server = server;
-        this.missedPing = 0;
-        this.eventsEmitter = new eventEmitter_1.EventEmitter();
-        this.channelsEmitter = new eventEmitter_1.EventEmitter();
-        this.publishListener = function (msg) {
-            _this.channelsEmitter.emit(msg.channel, msg.data);
-        };
-        this.server.on('publish', this.publishListener);
-        socketPing_1.socketPing(this);
-        socketMessage_1.socketMessage(this);
-        socketError_1.socketError(this);
-        socketClose_1.socketClose(this);
+var fp_1 = __webpack_require__(0);
+var logs_1 = __webpack_require__(1);
+var EventEmitter = (function () {
+    function EventEmitter() {
+        this._events = {};
     }
-    Socket.prototype.on = function (event, fn) {
-        if (!this.eventsEmitter.exist(event))
-            this.eventsEmitter.on(event, fn);
+    EventEmitter.prototype.on = function (event, listener) {
+        if (!listener || typeof listener === 'function')
+            logs_1.logError('Listener must be a function');
+        this._events ? this._events.push(listener) : this._events = [listener];
     };
-    Socket.prototype.send = function (event, data, type) {
-        switch (type) {
-            case 'ping':
-                this._socket.send(event);
-                break;
-            case 'internal':
-                this._socket.send(messages_1.MessageFactory.internalMessage(event, data));
-                break;
-            case 'publish':
-                this._socket.send(messages_1.MessageFactory.publishMessage(event, data));
-                break;
-            default:
-                this._socket.send(messages_1.MessageFactory.emitMessage(event, data));
-                break;
-        }
-    };
-    Socket.prototype.disconnect = function (code, message) {
-        return this._socket.close(code, message);
-    };
-    return Socket;
-}());
-exports.Socket = Socket;
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-function socketPing(self) {
-    self.send('config', { pingInterval: self.server.options.pingInterval }, 'internal');
-    self.pingPongInterval = setInterval(function () {
-        if (self.missedPing >= 2) {
-            return self.disconnect(3001, 'No pongs');
-        }
-        self.send('_0', null, 'ping');
-        self.missedPing++;
-    }, self.server.options.pingInterval);
-}
-exports.socketPing = socketPing;
-
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-function socketMessage(self) {
-    self._socket.on('message', function (msg) {
-        if (msg === '_1') {
-            return self.missedPing = 0;
-        }
-        try {
-            msg = JSON.parse(msg);
-        }
-        catch (e) {
-            return self.disconnect(1007);
-        }
-        switch (msg.action) {
-            case 'emit':
-                self.eventsEmitter.emit(msg.event, msg.data);
-                break;
-            case 'publish':
-                if (self.channelsEmitter.exist(msg.channel))
-                    self.server.webSocketServer.publish(msg.channel, msg.data);
-                break;
-            case 'internal':
-                if (msg.event === 'subscribe') {
-                    self.channelsEmitter.on(msg.data, function (data) {
-                        self.send(msg.data, data, 'publish');
-                    });
-                }
-                if (msg.event === 'unsubscribe') {
-                    self.channelsEmitter.removeEvent(msg.data);
-                }
-                break;
-            default: break;
-        }
-    });
-}
-exports.socketMessage = socketMessage;
-
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-function socketClose(self) {
-    self._socket.on('close', function (code, msg) {
-        self.eventsEmitter.emit('disconnect', code, msg);
-        clearInterval(self.pingPongInterval);
-        self.server.removeListener('publish', self.publishListener);
-        self.eventsEmitter.removeAllEvents();
-        self.channelsEmitter.removeAllEvents();
-        for (var key in self) {
-            if (self.hasOwnProperty(key)) {
-                self[key] = null;
-                delete self[key];
-            }
-        }
-    });
-}
-exports.socketClose = socketClose;
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-function socketError(self) {
-    self._socket.on('error', function (err) {
-        self.eventsEmitter.emit('error', err);
-    });
-}
-exports.socketError = socketError;
-
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports) {
-
-module.exports = require("http");
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var tcp_socket_1 = __webpack_require__(5);
-var net_1 = __webpack_require__(6);
-var Broker = (function () {
-    function Broker(options) {
+    EventEmitter.prototype.emit = function (event) {
         var _this = this;
-        this.options = options;
-        this.servers = [];
-        console.log('\x1b[36m%s\x1b[0m', '>>> Broker on: ' + this.options.brokerPort + ', PID ' + process.pid);
-        this.brokerServer = net_1.createServer(function (socket) {
-            socket = new tcp_socket_1.TcpSocket(socket);
-            var length = _this.servers.length;
-            socket.id = length;
-            socket.pingInterval = setInterval(function () {
-                socket.send('_0');
-            }, 20000);
-            _this.servers[length] = socket;
-            socket.on('message', function (msg) {
-                if (msg === '_1')
-                    return;
-                _this.broadcast(socket.id, msg);
-            });
-            socket.on('disconnect', function () {
-                console.log('socket disconnected');
-            });
-            socket.on('error', function (err) {
-                console.error('\x1b[31m%s\x1b[0m', 'Broker' + ', PID ' + process.pid + '\n' + err.stack + '\n');
-            });
-        });
-        this.brokerServer.listen(this.options.brokerPort);
-    }
-    Broker.prototype.broadcast = function (id, msg) {
-        for (var i = 0, len = this.servers.length; i < len; i++) {
-            if (id !== i)
-                this.servers[i].send(msg);
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
         }
+        fp_1._.map(function (listener) { return listener.call.apply(listener, [_this].concat(args)); }, this._events[event]);
     };
-    return Broker;
+    EventEmitter.prototype.removeListener = function (event, listener) {
+        var _this = this;
+        fp_1._.map(function (l, index) { return l === listener ? _this._events[event].splice(index, 1) : ''; }, this._events[event]);
+    };
+    EventEmitter.prototype.removeEvent = function (event) {
+        this._events[event] = null;
+    };
+    EventEmitter.prototype.removeAllEvents = function () {
+        this._events = {};
+    };
+    EventEmitter.prototype.exist = function (event) {
+        return this._events[event];
+    };
+    return EventEmitter;
 }());
-exports.Broker = Broker;
+exports.EventEmitter = EventEmitter;
 
 
 /***/ })

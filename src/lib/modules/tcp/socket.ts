@@ -37,4 +37,3 @@ export class TcpSocket extends EventEmitter {
         this.socket.write(data + '\n')
     }
 }
-

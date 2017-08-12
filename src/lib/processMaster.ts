@@ -1,5 +1,7 @@
 import * as cluster from 'cluster'
+
 import { _ } from './utils/fp'
+import { count } from './utils/helpers'
 import { Options } from './options'
 import { logRunning } from './utils/logs'
 import { processMessages } from './communication/messages'
@@ -15,7 +17,7 @@ export function processMaster(options: Options) {
 
     let readyPrint = (id: number, pid: number) => {
         ready[id] = id === 0 ? '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : '          Worker: ' + id + ', PID ' + pid
-        if (ready.length === options.workers + 1) _.map((print: any) => logRunning(print), ready)
+        if (count(ready) === options.workers + 1) _.map((print: any) => logRunning(print), ready)
     }
 
     let launch = (type: string, i: number) => {
