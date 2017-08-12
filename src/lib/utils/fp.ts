@@ -8,8 +8,8 @@ let curry = (fn: any) =>
 
 
 /* Switch Module */
-let isFunction = (f: any) => typeof f === 'function' ? f() : f
-let switchcase = curry((cases: any, key: any) => key in cases ? isFunction(cases[key]) : isFunction(cases['default']))
+let isFunction = (f: any) => f ? typeof f === 'function' ? f() : f : ''
+let switchcase = curry((cases: any, key: any, df?: any) => key in cases ? isFunction(cases[key]) : isFunction(df))
 
 /* Map Module */
 let mapArray = (iteratee: any, array: any) => {

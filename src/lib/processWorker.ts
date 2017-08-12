@@ -13,8 +13,7 @@ export function processWorker(options: Options) {
             // new Worker(options)
             process.send(processMessages('ready', process.pid))
         },
-        'broker': () => new Broker(options),
-        'default': ''
+        'broker': () => new Broker(options)
     })(msg.type))
 
     process.on('uncaughtException', (err: any) => {

@@ -24,8 +24,7 @@ export function processMaster(options: Options) {
         let server = cluster.fork()
         server.on('message', (msg: { type: string, data?: any }) => {
             _.switchcase({
-                'ready': () => readyPrint(i, msg.data),
-                'default': ''
+                'ready': () => readyPrint(i, msg.data)
             })(msg.type)
         })
         server.on('exit', () => options.restartWorkerOnFail ? launch(type, i) : '')

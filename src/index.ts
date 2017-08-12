@@ -3,7 +3,6 @@ import { Options } from './lib/options'
 import { processMaster } from './lib/processMaster'
 import { processWorker } from './lib/processWorker'
 
-
 /**
  * Main file which get configurations from the user,
  * check them and pass it
