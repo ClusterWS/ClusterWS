@@ -20,8 +20,8 @@ export class Broker {
 
             this.servers[id] = socket
 
-            socket.on('message', (msg: any) => msg !== '#1' ? this.broadcast(id, msg) : '')
             socket.on('error', (err: any) => logError('Broker' + ', PID ' + process.pid + '\n' + err.stack + '\n'))
+            socket.on('message', (msg: any) => msg !== '#1' ? this.broadcast(id, msg) : '')
             socket.on('disconnect', () => logError('Server ' + id + ' has disconnected'))
         }).listen(options.brokerPort)
 
