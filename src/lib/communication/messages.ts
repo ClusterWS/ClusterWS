@@ -1,5 +1,16 @@
+import { _ } from '../utils/fp'
+
 export function processMessages(type: string, data?: any) {
     return { type: type, data: data }
+}
+
+
+export function socketMessages(event: string, data: any, type: string) {
+    _.switchcase({
+        'pub': JSON.stringify({ 'p': [event, data] }),
+        'emt': JSON.stringify({ 'e': [event, data] }),
+        'sys': JSON.stringify({ 's': [event, data] })
+    })(type)
 }
 
 

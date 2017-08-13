@@ -1,21 +1,27 @@
+import { _ } from '../../../utils/fp'
+import { socketMessages } from '../../../communication/messages'
 import { EventEmitter } from '../../../utils/eventemitter'
 
 
 export class Socket {
-    on: any
-    send: any
     events: EventEmitter = new EventEmitter()
     channels: EventEmitter = new EventEmitter()
-    
-    constructor(socket: any, listen: any) {
-        this.on = this.events.on
-        this.send = socket.send
+
+    constructor(public socket: any, listen: any) {
 
         let publishListener = (msg: any) => this.channels.emit(msg)
         listen('#publish', publishListener)
 
         let missedPing: number = 0
-        let pingInterval = () => socket.send('#0')
+        // let pingInterval = () => this.send('#0')
+    }
+
+    on(event: string, fn: any){
+        this.socket.on(event, fn)
+    }
+
+    send(event: string, data: any, type?: string){
+        this.socket.send(socketMessages(event, data, type || 'emt'))
     }
 }
 
