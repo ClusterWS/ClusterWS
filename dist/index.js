@@ -251,9 +251,9 @@ var TcpSocket = (function (_super) {
         _this.port = port;
         _this.buffer = '';
         port instanceof net_1.Socket ? _this.socket = port : _this.socket = net_1.connect(port, host);
-        _this.socket.on('connect', function () { return _this.emit('connect'); });
         _this.socket.on('end', function () { return _this.emit('disconnect'); });
         _this.socket.on('error', function (err) { return _this.emit('error', err); });
+        _this.socket.on('connect', function () { return _this.emit('connect'); });
         _this.socket.on('data', function (data) {
             var str = data.toString();
             var i = str.indexOf('\n');
@@ -514,13 +514,10 @@ var Broker = (function () {
         this.broker = net_1.createServer(function (s) {
             var id = _this.servers.length;
             var socket = new socket_1.TcpSocket(s);
-            var ping = setInterval(function () { return socket.send('#0'); }, 2000);
+            var ping = setInterval(function () { return socket.send('#0'); }, 20000);
             _this.servers[id] = socket;
             socket.on('error', function (err) { return logs_1.logError('Broker' + ', PID ' + process.pid + '\n' + err.stack + '\n'); });
-            socket.on('message', function (msg) {
-                console.log(msg);
-                msg !== '#1' ? _this.broadcast(id, msg) : '';
-            });
+            socket.on('message', function (msg) { return msg !== '#1' ? _this.broadcast(id, msg) : ''; });
             socket.on('disconnect', function () { return logs_1.logError('Server ' + id + ' has disconnected'); });
         }).listen(options.brokerPort);
         process.send(messages_1.processMessages('ready', process.pid));
