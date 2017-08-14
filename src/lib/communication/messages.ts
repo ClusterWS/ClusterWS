@@ -7,9 +7,10 @@ export function processMessages(type: string, data?: any) {
 
 export function socketMessages(event: string, data: any, type: string) {
     _.switchcase({
-        'pub': JSON.stringify({ 'p': [event, data] }),
-        'emt': JSON.stringify({ 'e': [event, data] }),
-        'sys': JSON.stringify({ 's': [event, data] })
+        'pub': JSON.stringify({ 'm': ['p', event, data] }),
+        'emt': JSON.stringify({ 'm': ['e', event, data] }),
+        'sys': JSON.stringify({ 'm': ['s', event, data] }),
+        'ping': event
     })(type)
 }
 

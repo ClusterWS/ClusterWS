@@ -1,27 +1,54 @@
 import { _ } from '../../../utils/fp'
-import { socketMessages } from '../../../communication/messages'
+import { Options } from '../../../options'
 import { EventEmitter } from '../../../utils/eventemitter'
+import { socketMessages } from '../../../communication/messages'
 
 
 export class Socket {
     events: EventEmitter = new EventEmitter()
     channels: EventEmitter = new EventEmitter()
 
-    constructor(public socket: any, listen: any) {
+    constructor(public socket: any, pubsub: any, options: Options) {
 
-        let publishListener = (msg: any) => this.channels.emit(msg)
-        listen('#publish', publishListener)
+        // let publishListener = (msg: any) => this.channels.emit(msg)
+        // listen('#publish', publishListener)
 
         let missedPing: number = 0
-        // let pingInterval = () => this.send('#0')
+        let pingInterval = setInterval(() => (missedPing++) > 2 ? this.disconnect(3001, 'No pongs from socket') : this.send('#0', null, 'ping'), options.pingInterval)
+
+        this.socket.on('message', (msg: any) => {
+            msg === '#1' ? missedPing = 0 : msg = JSON.parse(msg)
+
+            _.switchcase({
+                'p': () => pubsub.emit(msg.m[1], msg.m[2]),
+                'e': () => this.events.emit(msg.m[1], msg.m[2]),
+                's': () => _.switchcase({
+                    'subscribe': () => this.channels.on(msg.m[2], (data: any) => this.send(msg.m[2], data, 'pub')),
+                    'unsubscribe': () => this.channels.removeEvent(msg.m[2])
+                })(msg.m[1])
+            })(msg.m[0])
+        })
+
+        this.socket.on('close', (code: number, msg: any) => {
+            this.events.emit('disconnect', code, msg)
+
+            clearInterval(pingInterval)
+            for (let key in this) if (this.hasOwnProperty(key)) this[key] = null
+        })
+
+        this.socket.on('error', (err: any) => this.events.emit('error', err))
     }
 
-    on(event: string, fn: any){
+    on(event: string, fn: any) {
         this.socket.on(event, fn)
     }
 
-    send(event: string, data: any, type?: string){
+    send(event: string, data: any, type?: string) {
         this.socket.send(socketMessages(event, data, type || 'emt'))
+    }
+
+    disconnect(code?: number, msg?: any) {
+        this.socket.close(code, msg)
     }
 }
 

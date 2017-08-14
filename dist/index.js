@@ -141,10 +141,20 @@ exports._ = {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(1);
 function processMessages(type, data) {
     return { type: type, data: data };
 }
 exports.processMessages = processMessages;
+function socketMessages(event, data, type) {
+    fp_1._.switchcase({
+        'pub': JSON.stringify({ 'p': [event, data] }),
+        'emt': JSON.stringify({ 'e': [event, data] }),
+        'sys': JSON.stringify({ 's': [event, data] }),
+        'ping': event
+    })(type);
+}
+exports.socketMessages = socketMessages;
 var ProcessMessages = (function () {
     function ProcessMessages(type, data) {
         this.type = type;
@@ -221,64 +231,6 @@ exports.MessageFactory = MessageFactory;
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports) {
-
-module.exports = require("cluster");
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-Object.defineProperty(exports, "__esModule", { value: true });
-var eventemitter_1 = __webpack_require__(5);
-var net_1 = __webpack_require__(6);
-var TcpSocket = (function (_super) {
-    __extends(TcpSocket, _super);
-    function TcpSocket(port, host) {
-        var _this = _super.call(this) || this;
-        _this.port = port;
-        _this.buffer = '';
-        port instanceof net_1.Socket ? _this.socket = port : _this.socket = net_1.connect(port, host);
-        _this.socket.on('end', function () { return _this.emit('disconnect'); });
-        _this.socket.on('error', function (err) { return _this.emit('error', err); });
-        _this.socket.on('connect', function () { return _this.emit('connect'); });
-        _this.socket.on('data', function (data) {
-            var str = data.toString();
-            var i = str.indexOf('\n');
-            if (i === -1)
-                return _this.buffer += str;
-            _this.emit('message', _this.buffer + str.slice(0, i));
-            var next = i + 1;
-            while ((i = str.indexOf('\n', next)) !== -1) {
-                _this.emit('message', str.slice(next, i));
-                next = i + 1;
-            }
-            _this.buffer = str.slice(next);
-        });
-        return _this;
-    }
-    TcpSocket.prototype.send = function (data) {
-        this.socket.write(data + '\n');
-    };
-    return TcpSocket;
-}(eventemitter_1.EventEmitter));
-exports.TcpSocket = TcpSocket;
-
-
-/***/ }),
-/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -321,6 +273,64 @@ exports.EventEmitter = EventEmitter;
 
 
 /***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+module.exports = require("cluster");
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var eventemitter_1 = __webpack_require__(3);
+var net_1 = __webpack_require__(6);
+var TcpSocket = (function (_super) {
+    __extends(TcpSocket, _super);
+    function TcpSocket(port, host) {
+        var _this = _super.call(this) || this;
+        _this.port = port;
+        _this.buffer = '';
+        port instanceof net_1.Socket ? _this.socket = port : _this.socket = net_1.connect(port, host);
+        _this.socket.on('end', function () { return _this.emit('disconnect'); });
+        _this.socket.on('error', function (err) { return _this.emit('error', err); });
+        _this.socket.on('connect', function () { return _this.emit('connect'); });
+        _this.socket.on('data', function (data) {
+            var str = data.toString();
+            var i = str.indexOf('\n');
+            if (i === -1)
+                return _this.buffer += str;
+            _this.emit('message', _this.buffer + str.slice(0, i));
+            var next = i + 1;
+            while ((i = str.indexOf('\n', next)) !== -1) {
+                _this.emit('message', str.slice(next, i));
+                next = i + 1;
+            }
+            _this.buffer = str.slice(next);
+        });
+        return _this;
+    }
+    TcpSocket.prototype.send = function (data) {
+        this.socket.write(data + '\n');
+    };
+    return TcpSocket;
+}(eventemitter_1.EventEmitter));
+exports.TcpSocket = TcpSocket;
+
+
+/***/ }),
 /* 6 */
 /***/ (function(module, exports) {
 
@@ -333,7 +343,7 @@ module.exports = require("net");
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var cluster_1 = __webpack_require__(3);
+var cluster_1 = __webpack_require__(4);
 var options_1 = __webpack_require__(8);
 var processMaster_1 = __webpack_require__(9);
 var processWorker_1 = __webpack_require__(11);
@@ -382,7 +392,7 @@ exports.Options = Options;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var cluster = __webpack_require__(3);
+var cluster = __webpack_require__(4);
 var fp_1 = __webpack_require__(1);
 var helpers_1 = __webpack_require__(10);
 var logs_1 = __webpack_require__(0);
@@ -435,7 +445,7 @@ exports.count = count;
 Object.defineProperty(exports, "__esModule", { value: true });
 var fp_1 = __webpack_require__(1);
 var worker_1 = __webpack_require__(12);
-var broker_1 = __webpack_require__(15);
+var broker_1 = __webpack_require__(16);
 var logs_1 = __webpack_require__(0);
 function processWorker(options) {
     process.on('message', function (msg) { return fp_1._.switchcase({
@@ -455,25 +465,26 @@ exports.processWorker = processWorker;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var uws = __webpack_require__(13);
+var socket_1 = __webpack_require__(14);
 var logs_1 = __webpack_require__(0);
-var socket_1 = __webpack_require__(4);
-var http_1 = __webpack_require__(14);
-var eventemitter_1 = __webpack_require__(5);
+var socket_2 = __webpack_require__(5);
+var http_1 = __webpack_require__(15);
+var eventemitter_1 = __webpack_require__(3);
 var messages_1 = __webpack_require__(2);
 var Worker = (function () {
     function Worker(options) {
         var _this = this;
         this.options = options;
         this.socketServer = {};
-        var brokerConnection = new socket_1.TcpSocket(this.options.brokerPort, '127.0.0.1');
+        var brokerConnection = new socket_2.TcpSocket(this.options.brokerPort, '127.0.0.1');
         brokerConnection.on('error', function (err) { return logs_1.logError('Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n'); });
-        brokerConnection.on('message', function (msg) { return msg === '#0' ? brokerConnection.send('#1') : ''; });
+        brokerConnection.on('message', function (msg) { return msg === '#0' ? brokerConnection.send('#1') : _this.socketServer.emitter.emit('#publish', msg); });
         brokerConnection.on('disconnect', function () { return logs_1.logError('Broker has been disconnected'); });
         this.socketServer.emitter = new eventemitter_1.EventEmitter();
         this.socketServer.on = this.socketServer.emitter.on;
         this.httpServer = http_1.createServer().listen(this.options.port);
-        var socketServer = new uws.Server({ server: this.httpServer });
-        socketServer.on('connection', function (socket) { return _this.socketServer.emitter.emit('connect', socket); });
+        var uWS = new uws.Server({ server: this.httpServer });
+        uWS.on('connection', function (socket) { return _this.socketServer.emitter.emit('connection', new socket_1.Socket(socket, _this.socketServer.emitter, _this.options)); });
         this.options.worker.call(this);
         process.send(messages_1.processMessages('ready', process.pid));
     }
@@ -490,12 +501,97 @@ module.exports = require("uws");
 
 /***/ }),
 /* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var eventemitter_1 = __webpack_require__(3);
+var messages_1 = __webpack_require__(2);
+var Socket = (function () {
+    function Socket(socket, pubsub, options) {
+        var _this = this;
+        this.socket = socket;
+        this.events = new eventemitter_1.EventEmitter();
+        this.channels = new eventemitter_1.EventEmitter();
+        var missedPing = 0;
+        var pingInterval = setInterval(function () { return (missedPing++) > 2 ? _this.disconnect(3001, 'No pongs from socket') : _this.send('#0', null, 'ping'); }, options.pingInterval);
+        this.socket.on('message', function () {
+        });
+        this.socket.on('close', function (code, msg) {
+            _this.events.emit('disconnect', code, msg);
+            clearInterval(pingInterval);
+            for (var key in _this)
+                if (_this.hasOwnProperty(key))
+                    _this[key] = null;
+        });
+        this.socket.on('error', function (err) { return _this.events.emit('error', err); });
+    }
+    Socket.prototype.on = function (event, fn) {
+        this.socket.on(event, fn);
+    };
+    Socket.prototype.send = function (event, data, type) {
+        this.socket.send(messages_1.socketMessages(event, data, type || 'emt'));
+    };
+    Socket.prototype.disconnect = function (code, msg) {
+        this.socket.close(code, msg);
+    };
+    return Socket;
+}());
+exports.Socket = Socket;
+var Socket2 = (function () {
+    function Socket2(_socket, server) {
+        var _this = this;
+        this._socket = _socket;
+        this.server = server;
+        this.missedPing = 0;
+        this.eventsEmitter = new eventemitter_1.EventEmitter();
+        this.channelsEmitter = new eventemitter_1.EventEmitter();
+        this.publishListener = function (msg) {
+            _this.channelsEmitter.emit(msg.channel, msg.data);
+        };
+        this.server.on('publish', this.publishListener);
+        socketPing(this);
+        socketMessage(this);
+        socketError(this);
+        socketClose(this);
+    }
+    Socket2.prototype.on = function (event, fn) {
+        if (!this.eventsEmitter.exist(event))
+            this.eventsEmitter.on(event, fn);
+    };
+    Socket2.prototype.send = function (event, data, type) {
+        switch (type) {
+            case 'ping':
+                this._socket.send(event);
+                break;
+            case 'internal':
+                this._socket.send(MessageFactory.internalMessage(event, data));
+                break;
+            case 'publish':
+                this._socket.send(MessageFactory.publishMessage(event, data));
+                break;
+            default:
+                this._socket.send(MessageFactory.emitMessage(event, data));
+                break;
+        }
+    };
+    Socket2.prototype.disconnect = function (code, message) {
+        return this._socket.close(code, message);
+    };
+    return Socket2;
+}());
+exports.Socket2 = Socket2;
+
+
+/***/ }),
+/* 15 */
 /***/ (function(module, exports) {
 
 module.exports = require("http");
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -503,7 +599,7 @@ module.exports = require("http");
 Object.defineProperty(exports, "__esModule", { value: true });
 var fp_1 = __webpack_require__(1);
 var logs_1 = __webpack_require__(0);
-var socket_1 = __webpack_require__(4);
+var socket_1 = __webpack_require__(5);
 var messages_1 = __webpack_require__(2);
 var net_1 = __webpack_require__(6);
 var Broker = (function () {

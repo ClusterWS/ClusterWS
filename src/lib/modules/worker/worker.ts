@@ -1,12 +1,12 @@
 import * as uws from 'uws'
 
+import { Socket } from './socket/socket'
 import { Options } from '../../options'
 import { logError } from '../../utils/logs'
 import { TcpSocket } from '../tcp/socket'
 import { createServer } from 'http'
 import { EventEmitter } from '../../utils/eventemitter'
 import { processMessages } from '../../communication/messages'
-import { Socket } from './socket/socket'
 
 declare let process: any
 
@@ -26,7 +26,7 @@ export class Worker {
         this.httpServer = createServer().listen(this.options.port)
 
         let uWS: any = new uws.Server({ server: this.httpServer })
-        uWS.on('connection', (socket: any) => this.socketServer.emitter.emit('connection', new Socket(socket, this.socketServer.on)))
+        uWS.on('connection', (socket: any) => this.socketServer.emitter.emit('connection', new Socket(socket, this.socketServer.emitter, this.options)))
 
         this.options.worker.call(this)
 

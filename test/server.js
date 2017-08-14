@@ -11,7 +11,7 @@ new ClusterWS({
 
 
 function Worker (){
-
+    
 }
 
 // var cws = new ClusterWS({
