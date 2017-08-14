@@ -6,19 +6,25 @@ import { logError } from '../../utils/logs'
 import { TcpSocket } from '../tcp/socket'
 import { createServer } from 'http'
 import { EventEmitter } from '../../utils/eventemitter'
-import { processMessages } from '../../communication/messages'
+import { processMessages, brokerMessage } from '../../communication/messages'
 
 declare let process: any
 
 export class Worker {
+    publish: any
     httpServer: any
     socketServer: any = {}
 
     constructor(public options: Options) {
         let brokerConnection: TcpSocket = new TcpSocket(this.options.brokerPort, '127.0.0.1')
         brokerConnection.on('error', (err: any) => logError('Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n'))
-        brokerConnection.on('message', (msg: any) => msg === '#0' ? brokerConnection.send('#1') : this.socketServer.emitter.emit('#publish', msg))
+        brokerConnection.on('message', (msg: any) => msg === '#0' ? brokerConnection.send('#1') : this.socketServer.emitter.emit('#publish', JSON.parse(msg)))
         brokerConnection.on('disconnect', () => logError('Broker has been disconnected'))
+
+        this.publish = (channel: string, data: any) => {
+            brokerConnection.send(brokerMessage(channel, data))
+            this.socketServer.emitter.emit('#publish', { channel: channel, data: data })
+        }
 
         this.socketServer.emitter = new EventEmitter()
         this.socketServer.on = this.socketServer.emitter.on

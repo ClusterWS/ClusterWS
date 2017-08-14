@@ -148,85 +148,17 @@ function processMessages(type, data) {
 exports.processMessages = processMessages;
 function socketMessages(event, data, type) {
     fp_1._.switchcase({
-        'pub': JSON.stringify({ 'p': [event, data] }),
-        'emt': JSON.stringify({ 'e': [event, data] }),
-        'sys': JSON.stringify({ 's': [event, data] }),
+        'pub': JSON.stringify({ 'm': ['p', event, data] }),
+        'emt': JSON.stringify({ 'm': ['e', event, data] }),
+        'sys': JSON.stringify({ 'm': ['s', event, data] }),
         'ping': event
     })(type);
 }
 exports.socketMessages = socketMessages;
-var ProcessMessages = (function () {
-    function ProcessMessages(type, data) {
-        this.type = type;
-        this.data = data;
-    }
-    return ProcessMessages;
-}());
-exports.ProcessMessages = ProcessMessages;
-var ProcessErrors = (function () {
-    function ProcessErrors(err, is, pid) {
-        this.err = err;
-        this.is = is;
-        this.pid = pid;
-    }
-    return ProcessErrors;
-}());
-exports.ProcessErrors = ProcessErrors;
-var EmitMessage = (function () {
-    function EmitMessage(event, data) {
-        this.event = event;
-        this.data = data;
-        this.action = 'emit';
-    }
-    return EmitMessage;
-}());
-var PublishMessage = (function () {
-    function PublishMessage(channel, data) {
-        this.channel = channel;
-        this.data = data;
-        this.action = 'publish';
-    }
-    return PublishMessage;
-}());
-var InternalMessage = (function () {
-    function InternalMessage(event, data) {
-        this.event = event;
-        this.data = data;
-        this.action = 'internal';
-    }
-    return InternalMessage;
-}());
-var BrokerMessage = (function () {
-    function BrokerMessage(channel, data) {
-        this.channel = channel;
-        this.data = data;
-    }
-    return BrokerMessage;
-}());
-var MessageFactory = (function () {
-    function MessageFactory() {
-    }
-    MessageFactory.emitMessage = function (event, data) {
-        return JSON.stringify(new EmitMessage(event, data));
-    };
-    MessageFactory.publishMessage = function (channel, data) {
-        return JSON.stringify(new PublishMessage(channel, data));
-    };
-    MessageFactory.brokerMessage = function (channel, data) {
-        return JSON.stringify(new BrokerMessage(channel, data));
-    };
-    MessageFactory.internalMessage = function (event, data) {
-        return JSON.stringify(new InternalMessage(event, data));
-    };
-    MessageFactory.processErrors = function (err, is, pid) {
-        return new ProcessErrors(err, is, pid);
-    };
-    MessageFactory.processMessages = function (type, data) {
-        return new ProcessMessages(type, data);
-    };
-    return MessageFactory;
-}());
-exports.MessageFactory = MessageFactory;
+function brokerMessage(channel, data) {
+    return JSON.stringify({ channel: channel, data: data });
+}
+exports.brokerMessage = brokerMessage;
 
 
 /***/ }),
@@ -478,8 +410,12 @@ var Worker = (function () {
         this.socketServer = {};
         var brokerConnection = new socket_2.TcpSocket(this.options.brokerPort, '127.0.0.1');
         brokerConnection.on('error', function (err) { return logs_1.logError('Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n'); });
-        brokerConnection.on('message', function (msg) { return msg === '#0' ? brokerConnection.send('#1') : _this.socketServer.emitter.emit('#publish', msg); });
+        brokerConnection.on('message', function (msg) { return msg === '#0' ? brokerConnection.send('#1') : _this.socketServer.emitter.emit('#publish', JSON.parse(msg)); });
         brokerConnection.on('disconnect', function () { return logs_1.logError('Broker has been disconnected'); });
+        this.publish = function (channel, data) {
+            brokerConnection.send(messages_1.brokerMessage(channel, data));
+            _this.socketServer.emitter.emit('#publish', { channel: channel, data: data });
+        };
         this.socketServer.emitter = new eventemitter_1.EventEmitter();
         this.socketServer.on = this.socketServer.emitter.on;
         this.httpServer = http_1.createServer().listen(this.options.port);
@@ -506,21 +442,34 @@ module.exports = require("uws");
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(1);
 var eventemitter_1 = __webpack_require__(3);
 var messages_1 = __webpack_require__(2);
 var Socket = (function () {
     function Socket(socket, pubsub, options) {
         var _this = this;
         this.socket = socket;
+        this.channels = [];
         this.events = new eventemitter_1.EventEmitter();
-        this.channels = new eventemitter_1.EventEmitter();
+        var publishListener = function (msg) { return _this.channels.indexOf(msg.channel) !== -1 ? _this.send(msg.channel, msg.data, 'pub') : ''; };
+        pubsub.on('#publish', publishListener);
         var missedPing = 0;
         var pingInterval = setInterval(function () { return (missedPing++) > 2 ? _this.disconnect(3001, 'No pongs from socket') : _this.send('#0', null, 'ping'); }, options.pingInterval);
-        this.socket.on('message', function () {
+        this.socket.on('message', function (msg) {
+            msg === '#1' ? missedPing = 0 : msg = JSON.parse(msg);
+            fp_1._.switchcase({
+                'p': function () { return pubsub.emit(msg.m[1], msg.m[2]); },
+                'e': function () { return _this.events.emit(msg.m[1], msg.m[2]); },
+                's': function () { return fp_1._.switchcase({
+                    'subscribe': function () { return _this.channels.indexOf(msg.m[2]) !== -1 ? _this.channels.push(msg.m[2]) : ''; },
+                    'unsubscribe': function () { return _this.channels.removeEvent(msg.m[2]); }
+                })(msg.m[1]); }
+            })(msg.m[0]);
         });
         this.socket.on('close', function (code, msg) {
             _this.events.emit('disconnect', code, msg);
             clearInterval(pingInterval);
+            _this.events.removeAllEvents();
             for (var key in _this)
                 if (_this.hasOwnProperty(key))
                     _this[key] = null;
@@ -539,49 +488,6 @@ var Socket = (function () {
     return Socket;
 }());
 exports.Socket = Socket;
-var Socket2 = (function () {
-    function Socket2(_socket, server) {
-        var _this = this;
-        this._socket = _socket;
-        this.server = server;
-        this.missedPing = 0;
-        this.eventsEmitter = new eventemitter_1.EventEmitter();
-        this.channelsEmitter = new eventemitter_1.EventEmitter();
-        this.publishListener = function (msg) {
-            _this.channelsEmitter.emit(msg.channel, msg.data);
-        };
-        this.server.on('publish', this.publishListener);
-        socketPing(this);
-        socketMessage(this);
-        socketError(this);
-        socketClose(this);
-    }
-    Socket2.prototype.on = function (event, fn) {
-        if (!this.eventsEmitter.exist(event))
-            this.eventsEmitter.on(event, fn);
-    };
-    Socket2.prototype.send = function (event, data, type) {
-        switch (type) {
-            case 'ping':
-                this._socket.send(event);
-                break;
-            case 'internal':
-                this._socket.send(MessageFactory.internalMessage(event, data));
-                break;
-            case 'publish':
-                this._socket.send(MessageFactory.publishMessage(event, data));
-                break;
-            default:
-                this._socket.send(MessageFactory.emitMessage(event, data));
-                break;
-        }
-    };
-    Socket2.prototype.disconnect = function (code, message) {
-        return this._socket.close(code, message);
-    };
-    return Socket2;
-}());
-exports.Socket2 = Socket2;
 
 
 /***/ }),
