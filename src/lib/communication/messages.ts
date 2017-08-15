@@ -5,7 +5,7 @@ export function processMessages(type: string, data?: any) {
 }
 
 export function socketMessages(event: string, data: any, type: string) {
-    _.switchcase({
+    return _.switchcase({
         'pub': JSON.stringify({ 'm': ['p', event, data] }),
         'emt': JSON.stringify({ 'm': ['e', event, data] }),
         'sys': JSON.stringify({ 'm': ['s', event, data] }),

@@ -9,8 +9,8 @@ declare let process: any
 
 export function processWorker(options: Options) {
     process.on('message', (msg: { type: string, data?: any }) => _.switchcase({
-        'worker': () => new Worker(options),
-        'broker': () => new Broker(options)
+        'worker': () => new Worker(options, msg.data),
+        'broker': () => new Broker(options, msg.data)
     })(msg.type))
 
     process.on('uncaughtException', (err: any) => logError('PID: ' + process.pid + '\n' + err.stack + '\n'))

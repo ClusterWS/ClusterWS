@@ -15,7 +15,7 @@ export class Worker {
     httpServer: any
     socketServer: any = {}
 
-    constructor(public options: Options) {
+    constructor(public options: Options, public id: number) {
         let brokerConnection: TcpSocket = new TcpSocket(this.options.brokerPort, '127.0.0.1')
         brokerConnection.on('error', (err: any) => logError('Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n'))
         brokerConnection.on('message', (msg: any) => msg === '#0' ? brokerConnection.send('#1') : this.socketServer.emitter.emit('#publish', JSON.parse(msg)))
@@ -27,12 +27,15 @@ export class Worker {
         }
 
         this.socketServer.emitter = new EventEmitter()
-        this.socketServer.on = this.socketServer.emitter.on
+        this.socketServer.on = (event: string, fn: any) => this.socketServer.emitter.on(event, fn)
 
         this.httpServer = createServer().listen(this.options.port)
 
         let uWS: any = new uws.Server({ server: this.httpServer })
-        uWS.on('connection', (socket: any) => this.socketServer.emitter.emit('connection', new Socket(socket, this.socketServer.emitter, this.options)))
+        uWS.on('connection', (socket: any) => {
+            console.log(this.id)
+            this.socketServer.emitter.emit('connection', new Socket(socket, this.socketServer.emitter, this.options))
+        })
 
         this.options.worker.call(this)
 

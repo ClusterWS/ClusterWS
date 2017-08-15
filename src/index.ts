@@ -1,5 +1,5 @@
-import { isMaster } from 'cluster'
 import { Options } from './lib/options'
+import { isMaster } from 'cluster'
 import { processMaster } from './lib/processMaster'
 import { processWorker } from './lib/processWorker'
 
@@ -16,13 +16,11 @@ import { processWorker } from './lib/processWorker'
 export class ClusterWS {
     private static instance: ClusterWS
 
-    constructor(public configurations: any) {
+    constructor(configurations: any) {
         if (ClusterWS.instance) return
         ClusterWS.instance = this
 
-        let options = new Options(this.configurations || {})
+        let options = new Options(configurations || {})
         isMaster ? processMaster(options) : processWorker(options)
     }
 }
-
-

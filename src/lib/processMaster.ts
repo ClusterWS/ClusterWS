@@ -7,7 +7,7 @@ import { logRunning } from './utils/logs'
 import { processMessages } from './communication/messages'
 
 /**
- * Create master process and spawn workers and broker.
+ * Create master process and spawn workers and a broker.
  * 
  * cluster.schedulingPolicy = cluster.SCHED_RR;
  */
@@ -16,7 +16,7 @@ export function processMaster(options: Options) {
     logRunning('>>> Master on: ' + options.port + ', PID ' + process.pid)
 
     let readyPrint = (id: number, pid: number) => {
-        ready[id] = id === 0 ? '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : '          Worker: ' + id + ', PID ' + pid
+        ready[id] = id === 0 ? '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : '       Worker: ' + id + ', PID ' + pid
         if (count(ready) === options.workers + 1) _.map((print: any) => logRunning(print), ready)
     }
 

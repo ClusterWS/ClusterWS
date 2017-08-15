@@ -7,7 +7,7 @@
   "scripts": {
     "test": "mocha -r ts-node/register fp-library/tests/*.ts",
     "start": "npm run build:dev && npm run boot",
-    "boot": "cross-env DEBUG=true node test/server.js",
+    "boot": "cross-env DEBUG=true node example/server.js",
     "build:prod": "webpack",
     "build:dev": "cross-env WEBPACK_ENV=debug webpack",
     "build:publish": "npm run build:prod && cd dist && npm publish && cd ..",
@@ -36,6 +36,7 @@
     "copy-pkg-json-webpack-plugin": "0.0.29",
     "copy-webpack-plugin": "^4.0.1",
     "cross-env": "^5.0.1",
+    "express": "^4.15.4",
     "ts-loader": "^2.2.1",
     "typescript": "^2.4.1",
     "webpack": "^3.1.0"

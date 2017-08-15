@@ -5,7 +5,7 @@ import { socketMessages } from '../../../communication/messages'
 
 
 export class Socket {
-    channels: any = []
+    channels: any = ['world']
     events: EventEmitter = new EventEmitter()
 
     constructor(public socket: any, pubsub: any, options: Options) {
@@ -35,14 +35,17 @@ export class Socket {
             clearInterval(pingInterval)
 
             this.events.removeAllEvents()
-            for (let key in this) if (this.hasOwnProperty(key)) this[key] = null
+            for (let key in this) if (this.hasOwnProperty(key)) {
+                this[key] = null
+                delete this[key]
+            }
         })
 
         this.socket.on('error', (err: any) => this.events.emit('error', err))
     }
 
     on(event: string, fn: any) {
-        this.socket.on(event, fn)
+        this.events.on(event, fn)
     }
 
     send(event: string, data: any, type?: string) {

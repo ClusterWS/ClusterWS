@@ -1,1 +1,543 @@
-module.exports=function(e){function t(r){if(n[r])return n[r].exports;var o=n[r]={i:r,l:!1,exports:{}};return e[r].call(o.exports,o,o.exports,t),o.l=!0,o.exports}var n={};return t.m=e,t.c=n,t.d=function(e,n,r){t.o(e,n)||Object.defineProperty(e,n,{configurable:!1,enumerable:!0,get:r})},t.n=function(e){var n=e&&e.__esModule?function(){return e.default}:function(){return e};return t.d(n,"a",n),n},t.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},t.p="",t(t.s=7)}([function(e,t,n){"use strict";function r(e){console.log("[36m%s[0m",e)}function o(e){console.log("[31m%s[0m",e)}function s(e){process.env.DEBUG&&console.log("DEBUG: ",e)}Object.defineProperty(t,"__esModule",{value:!0}),t.logRunning=r,t.logError=o,t.logDebug=s},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=function(e){return function t(){for(var n=[],r=0;r<arguments.length;r++)n[r]=arguments[r];return n.length<e.length?function(){for(var e=[],r=0;r<arguments.length;r++)e[r]=arguments[r];return t.call.apply(t,[null].concat(n,e))}:e.length?e.call.apply(e,[null].concat(n)):e}},o=function(e){return e?"function"==typeof e?e():e:""},s=r(function(e,t){return o(t in e?e[t]:e.default)}),i=function(e,t){for(var n=-1,r=null==t?0:t.length,o=new Array(r);++n<r;)o[n]=e(t[n],n,t);return o},c=function(e,t){var n={};return t=Object(t),Object.keys(t).forEach(function(r){return n[r]=e(t[r],r,t)}),n},u=r(function(e,t){return t instanceof Array?i(e,t):c(e,t)});t._={map:u,curry:r,switchcase:s}},function(e,t,n){"use strict";function r(e,t){return{type:e,data:t}}function o(e,t,n){i._.switchcase({pub:JSON.stringify({m:["p",e,t]}),emt:JSON.stringify({m:["e",e,t]}),sys:JSON.stringify({m:["s",e,t]}),ping:e})(n)}function s(e,t){return JSON.stringify({channel:e,data:t})}Object.defineProperty(t,"__esModule",{value:!0});var i=n(1);t.processMessages=r,t.socketMessages=o,t.brokerMessage=s},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(1),o=n(0),s=function(){function e(){this._events={}}return e.prototype.on=function(e,t){t&&"function"==typeof t||o.logError("Listener must be a function"),this._events[e]?this._events[e].push(t):this._events[e]=[t]},e.prototype.emit=function(e){for(var t=[],n=1;n<arguments.length;n++)t[n-1]=arguments[n];r._.map(function(e){return e.call.apply(e,[null].concat(t))},this._events[e])},e.prototype.removeListener=function(e,t){var n=this;r._.map(function(r,o){return r===t?n._events[e].splice(o,1):""},this._events[e])},e.prototype.removeEvent=function(e){this._events[e]=null},e.prototype.removeAllEvents=function(){this._events={}},e.prototype.exist=function(e){return this._events[e]},e}();t.EventEmitter=s},function(e,t){e.exports=require("cluster")},function(e,t,n){"use strict";var r=this&&this.__extends||function(){var e=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(e,t){e.__proto__=t}||function(e,t){for(var n in t)t.hasOwnProperty(n)&&(e[n]=t[n])};return function(t,n){function r(){this.constructor=t}e(t,n),t.prototype=null===n?Object.create(n):(r.prototype=n.prototype,new r)}}();Object.defineProperty(t,"__esModule",{value:!0});var o=n(3),s=n(6),i=function(e){function t(t,n){var r=e.call(this)||this;return r.port=t,r.buffer="",t instanceof s.Socket?r.socket=t:r.socket=s.connect(t,n),r.socket.on("end",function(){return r.emit("disconnect")}),r.socket.on("error",function(e){return r.emit("error",e)}),r.socket.on("connect",function(){return r.emit("connect")}),r.socket.on("data",function(e){var t=e.toString(),n=t.indexOf("\n");if(-1===n)return r.buffer+=t;r.emit("message",r.buffer+t.slice(0,n));for(var o=n+1;-1!==(n=t.indexOf("\n",o));)r.emit("message",t.slice(o,n)),o=n+1;r.buffer=t.slice(o)}),r}return r(t,e),t.prototype.send=function(e){this.socket.write(e+"\n")},t}(o.EventEmitter);t.TcpSocket=i},function(e,t){e.exports=require("net")},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(4),o=n(8),s=n(9),i=n(11),c=function(){function e(t){if(this.configurations=t,!e.instance){e.instance=this;var n=new o.Options(this.configurations||{});r.isMaster?s.processMaster(n):i.processWorker(n)}}return e}();t.ClusterWS=c},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(0),o=function(){function e(e){if(!e.worker)throw r.logError("Worker function must be provided");this.port=e.port||80,this.worker=e.worker,this.workers=e.workers||1,this.brokerPort=e.brokerPort||9346,this.pingInterval=e.pingInterval||2e4,this.restartWorkerOnFail=e.restartWorkerOnFail||!1}return e}();t.Options=o},function(e,t,n){"use strict";function r(e){var t=[];c.logRunning(">>> Master on: "+e.port+", PID "+process.pid);var n=function(n,r){t[n]=0===n?">>> Broker on: "+e.brokerPort+", PID "+r:"          Worker: "+n+", PID "+r,i.count(t)===e.workers+1&&s._.map(function(e){return c.logRunning(e)},t)},r=function(t,i){var c=o.fork();c.on("message",function(e){return s._.switchcase({ready:function(){return n(i,e.data)}})(e.type)}),c.on("exit",function(){return e.restartWorkerOnFail?r(t,i):""}),c.send(u.processMessages(t,i))};r("broker",0);for(var f=1;f<=e.workers;f++)r("worker",f)}Object.defineProperty(t,"__esModule",{value:!0});var o=n(4),s=n(1),i=n(10),c=n(0),u=n(2);t.processMaster=r},function(e,t,n){"use strict";function r(e){for(var t=0,n=0,r=e.length;n<r;n++)e[n]&&t++;return t}Object.defineProperty(t,"__esModule",{value:!0}),t.count=r},function(e,t,n){"use strict";function r(e){process.on("message",function(t){return o._.switchcase({worker:function(){return new s.Worker(e)},broker:function(){return new i.Broker(e)}})(t.type)}),process.on("uncaughtException",function(e){return c.logError("PID: "+process.pid+"\n"+e.stack+"\n")})}Object.defineProperty(t,"__esModule",{value:!0});var o=n(1),s=n(12),i=n(16),c=n(0);t.processWorker=r},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(13),o=n(14),s=n(0),i=n(5),c=n(15),u=n(3),f=n(2),a=function(){function e(e){var t=this;this.options=e,this.socketServer={};var n=new i.TcpSocket(this.options.brokerPort,"127.0.0.1");n.on("error",function(e){return s.logError("Worker, PID "+process.pid+"\n"+e.stack+"\n")}),n.on("message",function(e){return"#0"===e?n.send("#1"):t.socketServer.emitter.emit("#publish",JSON.parse(e))}),n.on("disconnect",function(){return s.logError("Broker has been disconnected")}),this.publish=function(e,r){n.send(f.brokerMessage(e,r)),t.socketServer.emitter.emit("#publish",{channel:e,data:r})},this.socketServer.emitter=new u.EventEmitter,this.socketServer.on=this.socketServer.emitter.on,this.httpServer=c.createServer().listen(this.options.port),new r.Server({server:this.httpServer}).on("connection",function(e){return t.socketServer.emitter.emit("connection",new o.Socket(e,t.socketServer.emitter,t.options))}),this.options.worker.call(this),process.send(f.processMessages("ready",process.pid))}return e}();t.Worker=a},function(e,t){e.exports=require("uws")},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(1),o=n(3),s=n(2),i=function(){function e(e,t,n){var s=this;this.socket=e,this.channels=[],this.events=new o.EventEmitter;var i=function(e){return-1!==s.channels.indexOf(e.channel)?s.send(e.channel,e.data,"pub"):""};t.on("#publish",i);var c=0,u=setInterval(function(){return c++>2?s.disconnect(3001,"No pongs from socket"):s.send("#0",null,"ping")},n.pingInterval);this.socket.on("message",function(e){"#1"===e?c=0:e=JSON.parse(e),r._.switchcase({p:function(){return t.emit(e.m[1],e.m[2])},e:function(){return s.events.emit(e.m[1],e.m[2])},s:function(){return r._.switchcase({subscribe:function(){return-1!==s.channels.indexOf(e.m[2])?s.channels.push(e.m[2]):""},unsubscribe:function(){return s.channels.removeEvent(e.m[2])}})(e.m[1])}})(e.m[0])}),this.socket.on("close",function(e,t){s.events.emit("disconnect",e,t),clearInterval(u),s.events.removeAllEvents();for(var n in s)s.hasOwnProperty(n)&&(s[n]=null)}),this.socket.on("error",function(e){return s.events.emit("error",e)})}return e.prototype.on=function(e,t){this.socket.on(e,t)},e.prototype.send=function(e,t,n){this.socket.send(s.socketMessages(e,t,n||"emt"))},e.prototype.disconnect=function(e,t){this.socket.close(e,t)},e}();t.Socket=i},function(e,t){e.exports=require("http")},function(e,t,n){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var r=n(1),o=n(0),s=n(5),i=n(2),c=n(6),u=function(){function e(e){var t=this;this.options=e,this.servers=[],this.broker=c.createServer(function(e){var n=t.servers.length,r=new s.TcpSocket(e);setInterval(function(){return r.send("#0")},2e4);t.servers[n]=r,r.on("error",function(e){return o.logError("Broker, PID "+process.pid+"\n"+e.stack+"\n")}),r.on("message",function(e){return"#1"!==e?t.broadcast(n,e):""}),r.on("disconnect",function(){return o.logError("Server "+n+" has disconnected")})}).listen(e.brokerPort),process.send(i.processMessages("ready",process.pid))}return e.prototype.broadcast=function(e,t){r._.map(function(n,r){return r!==e?n.send(t):""},this.servers)},e}();t.Broker=u}]);
+module.exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function logRunning(x) {
+    console.log('\x1b[36m%s\x1b[0m', x);
+}
+exports.logRunning = logRunning;
+function logError(x) {
+    console.log('\x1b[31m%s\x1b[0m', x);
+}
+exports.logError = logError;
+function logDebug(x) {
+    if (process.env.DEBUG)
+        console.log('DEBUG: ', x);
+}
+exports.logDebug = logDebug;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var curry = function (fn) {
+    return function curring() {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return args.length < fn.length ?
+            function () {
+                var newArgs = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    newArgs[_i] = arguments[_i];
+                }
+                return curring.call.apply(curring, [null].concat(args, newArgs));
+            } :
+            fn.length ? fn.call.apply(fn, [null].concat(args)) : fn;
+    };
+};
+var isFunction = function (f) { return f ? typeof f === 'function' ? f() : f : ''; };
+var switchcase = curry(function (cases, key) { return key in cases ? isFunction(cases[key]) : isFunction(cases['default']); });
+var mapArray = function (iteratee, array) {
+    var index = -1;
+    var length = array == null ? 0 : array.length;
+    var result = new Array(length);
+    while (++index < length)
+        result[index] = iteratee(array[index], index, array);
+    return result;
+};
+var mapObject = function (iteratee, object) {
+    var result = {};
+    object = Object(object);
+    Object.keys(object).forEach(function (key) { return result[key] = iteratee(object[key], key, object); });
+    return result;
+};
+var map = curry(function (fn, x) { return x instanceof Array ? mapArray(fn, x) : mapObject(fn, x); });
+exports._ = {
+    map: map,
+    curry: curry,
+    switchcase: switchcase
+};
+
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(1);
+function processMessages(type, data) {
+    return { type: type, data: data };
+}
+exports.processMessages = processMessages;
+function socketMessages(event, data, type) {
+    return fp_1._.switchcase({
+        'pub': JSON.stringify({ 'm': ['p', event, data] }),
+        'emt': JSON.stringify({ 'm': ['e', event, data] }),
+        'sys': JSON.stringify({ 'm': ['s', event, data] }),
+        'ping': event
+    })(type);
+}
+exports.socketMessages = socketMessages;
+function brokerMessage(channel, data) {
+    return JSON.stringify({ channel: channel, data: data });
+}
+exports.brokerMessage = brokerMessage;
+
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(1);
+var logs_1 = __webpack_require__(0);
+var EventEmitter = (function () {
+    function EventEmitter() {
+        this._events = {};
+    }
+    EventEmitter.prototype.on = function (event, listener) {
+        if (!listener || typeof listener !== 'function')
+            logs_1.logError('Listener must be a function');
+        this._events[event] ? this._events[event].push(listener) : this._events[event] = [listener];
+    };
+    EventEmitter.prototype.emit = function (event) {
+        var args = [];
+        for (var _i = 1; _i < arguments.length; _i++) {
+            args[_i - 1] = arguments[_i];
+        }
+        fp_1._.map(function (listener) { return listener.call.apply(listener, [null].concat(args)); }, this._events[event]);
+    };
+    EventEmitter.prototype.removeListener = function (event, listener) {
+        var _this = this;
+        fp_1._.map(function (l, index) { return l === listener ? _this._events[event].splice(index, 1) : ''; }, this._events[event]);
+    };
+    EventEmitter.prototype.removeEvent = function (event) {
+        this._events[event] = null;
+    };
+    EventEmitter.prototype.removeAllEvents = function () {
+        this._events = {};
+    };
+    EventEmitter.prototype.exist = function (event) {
+        return this._events[event];
+    };
+    return EventEmitter;
+}());
+exports.EventEmitter = EventEmitter;
+
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+module.exports = require("cluster");
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+var eventemitter_1 = __webpack_require__(3);
+var net_1 = __webpack_require__(6);
+var TcpSocket = (function (_super) {
+    __extends(TcpSocket, _super);
+    function TcpSocket(port, host) {
+        var _this = _super.call(this) || this;
+        _this.port = port;
+        _this.buffer = '';
+        port instanceof net_1.Socket ? _this.socket = port : _this.socket = net_1.connect(port, host);
+        _this.socket.on('end', function () { return _this.emit('disconnect'); });
+        _this.socket.on('error', function (err) { return _this.emit('error', err); });
+        _this.socket.on('connect', function () { return _this.emit('connect'); });
+        _this.socket.on('data', function (data) {
+            var str = data.toString();
+            var i = str.indexOf('\n');
+            if (i === -1)
+                return _this.buffer += str;
+            _this.emit('message', _this.buffer + str.slice(0, i));
+            var next = i + 1;
+            while ((i = str.indexOf('\n', next)) !== -1) {
+                _this.emit('message', str.slice(next, i));
+                next = i + 1;
+            }
+            _this.buffer = str.slice(next);
+        });
+        return _this;
+    }
+    TcpSocket.prototype.send = function (data) {
+        this.socket.write(data + '\n');
+    };
+    return TcpSocket;
+}(eventemitter_1.EventEmitter));
+exports.TcpSocket = TcpSocket;
+
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+module.exports = require("net");
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var options_1 = __webpack_require__(8);
+var cluster_1 = __webpack_require__(4);
+var processMaster_1 = __webpack_require__(9);
+var processWorker_1 = __webpack_require__(11);
+var ClusterWS = (function () {
+    function ClusterWS(configurations) {
+        if (ClusterWS.instance)
+            return;
+        ClusterWS.instance = this;
+        var options = new options_1.Options(configurations || {});
+        cluster_1.isMaster ? processMaster_1.processMaster(options) : processWorker_1.processWorker(options);
+    }
+    return ClusterWS;
+}());
+exports.ClusterWS = ClusterWS;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var logs_1 = __webpack_require__(0);
+var Options = (function () {
+    function Options(configurations) {
+        if (!configurations.worker)
+            throw logs_1.logError('Worker function must be provided');
+        this.port = configurations.port || 80;
+        this.worker = configurations.worker;
+        this.workers = configurations.workers || 1;
+        this.brokerPort = configurations.brokerPort || 9346;
+        this.pingInterval = configurations.pingInterval || 20000;
+        this.restartWorkerOnFail = configurations.restartWorkerOnFail || false;
+    }
+    return Options;
+}());
+exports.Options = Options;
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var cluster = __webpack_require__(4);
+var fp_1 = __webpack_require__(1);
+var helpers_1 = __webpack_require__(10);
+var logs_1 = __webpack_require__(0);
+var messages_1 = __webpack_require__(2);
+function processMaster(options) {
+    cluster.schedulingPolicy = cluster.SCHED_RR;
+    var ready = [];
+    logs_1.logRunning('>>> Master on: ' + options.port + ', PID ' + process.pid);
+    var readyPrint = function (id, pid) {
+        ready[id] = id === 0 ? '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : '       Worker: ' + id + ', PID ' + pid;
+        if (helpers_1.count(ready) === options.workers + 1)
+            fp_1._.map(function (print) { return logs_1.logRunning(print); }, ready);
+    };
+    var launch = function (type, i) {
+        var server = cluster.fork();
+        server.on('message', function (msg) { return fp_1._.switchcase({
+            'ready': function () { return readyPrint(i, msg.data); }
+        })(msg.type); });
+        server.on('exit', function () { return options.restartWorkerOnFail ? launch(type, i) : ''; });
+        server.send(messages_1.processMessages(type, i));
+    };
+    launch('broker', 0);
+    for (var i = 1; i <= options.workers; i++)
+        launch('worker', i);
+}
+exports.processMaster = processMaster;
+
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+function count(arr) {
+    var size = 0;
+    for (var i = 0, len = arr.length; i < len; i++)
+        arr[i] ? size++ : '';
+    return size;
+}
+exports.count = count;
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(1);
+var worker_1 = __webpack_require__(12);
+var broker_1 = __webpack_require__(16);
+var logs_1 = __webpack_require__(0);
+function processWorker(options) {
+    process.on('message', function (msg) { return fp_1._.switchcase({
+        'worker': function () { return new worker_1.Worker(options, msg.data); },
+        'broker': function () { return new broker_1.Broker(options, msg.data); }
+    })(msg.type); });
+    process.on('uncaughtException', function (err) { return logs_1.logError('PID: ' + process.pid + '\n' + err.stack + '\n'); });
+}
+exports.processWorker = processWorker;
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var uws = __webpack_require__(13);
+var socket_1 = __webpack_require__(14);
+var logs_1 = __webpack_require__(0);
+var socket_2 = __webpack_require__(5);
+var http_1 = __webpack_require__(15);
+var eventemitter_1 = __webpack_require__(3);
+var messages_1 = __webpack_require__(2);
+var Worker = (function () {
+    function Worker(options, id) {
+        var _this = this;
+        this.options = options;
+        this.id = id;
+        this.socketServer = {};
+        var brokerConnection = new socket_2.TcpSocket(this.options.brokerPort, '127.0.0.1');
+        brokerConnection.on('error', function (err) { return logs_1.logError('Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n'); });
+        brokerConnection.on('message', function (msg) { return msg === '#0' ? brokerConnection.send('#1') : _this.socketServer.emitter.emit('#publish', JSON.parse(msg)); });
+        brokerConnection.on('disconnect', function () { return logs_1.logError('Broker has been disconnected'); });
+        this.publish = function (channel, data) {
+            brokerConnection.send(messages_1.brokerMessage(channel, data));
+            _this.socketServer.emitter.emit('#publish', { channel: channel, data: data });
+        };
+        this.socketServer.emitter = new eventemitter_1.EventEmitter();
+        this.socketServer.on = function (event, fn) { return _this.socketServer.emitter.on(event, fn); };
+        this.httpServer = http_1.createServer().listen(this.options.port);
+        var uWS = new uws.Server({ server: this.httpServer });
+        uWS.on('connection', function (socket) {
+            console.log(_this.id);
+            _this.socketServer.emitter.emit('connection', new socket_1.Socket(socket, _this.socketServer.emitter, _this.options));
+        });
+        this.options.worker.call(this);
+        process.send(messages_1.processMessages('ready', process.pid));
+    }
+    return Worker;
+}());
+exports.Worker = Worker;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+module.exports = require("uws");
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(1);
+var eventemitter_1 = __webpack_require__(3);
+var messages_1 = __webpack_require__(2);
+var Socket = (function () {
+    function Socket(socket, pubsub, options) {
+        var _this = this;
+        this.socket = socket;
+        this.channels = ['world'];
+        this.events = new eventemitter_1.EventEmitter();
+        var publishListener = function (msg) { return _this.channels.indexOf(msg.channel) !== -1 ? _this.send(msg.channel, msg.data, 'pub') : ''; };
+        pubsub.on('#publish', publishListener);
+        var missedPing = 0;
+        var pingInterval = setInterval(function () { return (missedPing++) > 2 ? _this.disconnect(3001, 'No pongs from socket') : _this.send('#0', null, 'ping'); }, options.pingInterval);
+        this.socket.on('message', function (msg) {
+            msg === '#1' ? missedPing = 0 : msg = JSON.parse(msg);
+            fp_1._.switchcase({
+                'p': function () { return pubsub.emit(msg.m[1], msg.m[2]); },
+                'e': function () { return _this.events.emit(msg.m[1], msg.m[2]); },
+                's': function () { return fp_1._.switchcase({
+                    'subscribe': function () { return _this.channels.indexOf(msg.m[2]) !== -1 ? _this.channels.push(msg.m[2]) : ''; },
+                    'unsubscribe': function () { return _this.channels.removeEvent(msg.m[2]); }
+                })(msg.m[1]); }
+            })(msg.m[0]);
+        });
+        this.socket.on('close', function (code, msg) {
+            _this.events.emit('disconnect', code, msg);
+            clearInterval(pingInterval);
+            _this.events.removeAllEvents();
+            for (var key in _this)
+                if (_this.hasOwnProperty(key)) {
+                    _this[key] = null;
+                    delete _this[key];
+                }
+        });
+        this.socket.on('error', function (err) { return _this.events.emit('error', err); });
+    }
+    Socket.prototype.on = function (event, fn) {
+        this.events.on(event, fn);
+    };
+    Socket.prototype.send = function (event, data, type) {
+        this.socket.send(messages_1.socketMessages(event, data, type || 'emt'));
+    };
+    Socket.prototype.disconnect = function (code, msg) {
+        this.socket.close(code, msg);
+    };
+    return Socket;
+}());
+exports.Socket = Socket;
+
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports) {
+
+module.exports = require("http");
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var fp_1 = __webpack_require__(1);
+var logs_1 = __webpack_require__(0);
+var socket_1 = __webpack_require__(5);
+var messages_1 = __webpack_require__(2);
+var net_1 = __webpack_require__(6);
+var Broker = (function () {
+    function Broker(options, id) {
+        var _this = this;
+        this.options = options;
+        this.id = id;
+        this.servers = [];
+        this.broker = net_1.createServer(function (s) {
+            var id = _this.servers.length;
+            var socket = new socket_1.TcpSocket(s);
+            var ping = setInterval(function () { return socket.send('#0'); }, 20000);
+            _this.servers[id] = socket;
+            socket.on('error', function (err) { return logs_1.logError('Broker' + ', PID ' + process.pid + '\n' + err.stack + '\n'); });
+            socket.on('message', function (msg) { return msg !== '#1' ? _this.broadcast(id, msg) : ''; });
+            socket.on('disconnect', function () { return logs_1.logError('Server ' + id + ' has disconnected'); });
+        }).listen(options.brokerPort);
+        process.send(messages_1.processMessages('ready', process.pid));
+    }
+    Broker.prototype.broadcast = function (id, msg) {
+        fp_1._.map(function (server, index) { return index !== id ? server.send(msg) : ''; }, this.servers);
+    };
+    return Broker;
+}());
+exports.Broker = Broker;
+
+
+/***/ })
+/******/ ]);

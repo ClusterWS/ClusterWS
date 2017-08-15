@@ -58,7 +58,8 @@ module.exports = {
             'process.env.NODE_ENV': '"production"'
         }),
         // new webpack.optimize.UglifyJsPlugin({
-        //     compress: { warnings: false }
+        //     comments: false,
+        //     beautify: true
         // }),
         new CopyPkgJsonPlugin({
             remove: ['devDependencies', 'scripts']

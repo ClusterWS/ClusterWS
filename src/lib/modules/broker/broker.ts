@@ -11,7 +11,7 @@ export class Broker {
     broker: Server
     servers: TcpSocket[] = []
 
-    constructor(public options: Options) {
+    constructor(public options: Options, public id: number) {
 
         this.broker = createServer((s) => {
             let id = this.servers.length
