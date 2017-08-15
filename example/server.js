@@ -5,7 +5,7 @@ var ClusterWS = require('../dist/index').ClusterWS
 
 let clusterWs = new ClusterWS({
     worker: Worker,
-    workers: 2,
+    workers: 8,
     pingInterval: 5000
 })
 
@@ -18,7 +18,9 @@ function Worker() {
 
     this.socketServer.on('connection', (socket) => {
 
-        this.publish('world', 'i am on world')
+        this.socketServer.publish('world', 'i am on world')
+        this.socketServer.publish('ssss', 'i am on world')
+        
 
         socket.on('hello', (data) => {
             console.log(data)

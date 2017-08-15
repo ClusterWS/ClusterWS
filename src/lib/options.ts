@@ -1,4 +1,5 @@
-import {logError} from './utils/logs'
+import { logError } from './utils/common'
+
 /**
  * Creates options object from
  * configurations provided by user.
@@ -11,12 +12,9 @@ import {logError} from './utils/logs'
  * @param {number} pingPongInterval = 20000
  * @param {boolean} restartWorkerOnFail = false
  *
- * Configuration interface is needed to make
- * some options optional in TypeScript.
  */
 
 export class Options {
-    id: number
     port: number
     worker: any
     workers: number
@@ -25,7 +23,7 @@ export class Options {
     restartWorkerOnFail: boolean
 
     constructor(configurations: any) {
-        if (!configurations.worker) throw logError('Worker function must be provided')
+        if (!configurations.worker) throw logError('Worker must be provided')
 
         this.port = configurations.port || 80
         this.worker = configurations.worker

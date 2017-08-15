@@ -11,6 +11,7 @@ let curry = (fn: any) =>
 let isFunction = (f: any) => f ? typeof f === 'function' ? f() : f : ''
 let switchcase = curry((cases: any, key: any) => key in cases ? isFunction(cases[key]) : isFunction(cases['default']))
 
+
 /* Map Module */
 let mapArray = (iteratee: any, array: any) => {
     let index: number = -1

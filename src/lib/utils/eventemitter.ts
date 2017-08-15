@@ -1,5 +1,5 @@
 import { _ } from './fp'
-import { logError } from './logs'
+import { logError } from './common'
 
 /* Custom EventEmitter */
 

@@ -2,7 +2,7 @@ import { _ } from './utils/fp'
 import { Worker } from './modules/worker/worker'
 import { Broker } from './modules/broker/broker'
 import { Options } from './options'
-import { logError } from './utils/logs'
+import { logError } from './utils/common'
 import { processMessages } from './communication/messages'
 
 declare let process: any

@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "description": "ClusterWS - minimal node js http and real-time framework which allows easily scale WebSocket(uWS - one of the fastest WebSocket libraries) between node clusters and utilize all available CPU",
   "main": "index.js",
-  "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
+  "author": "Dmitrii Goriunov",
   "scripts": {
-    "test": "mocha -r ts-node/register fp-library/tests/*.ts",
     "start": "npm run build:dev && npm run boot",
     "boot": "cross-env DEBUG=true node example/server.js",
     "build:prod": "webpack",
