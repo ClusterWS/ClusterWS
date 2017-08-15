@@ -18,7 +18,7 @@ export class Worker {
         let brokerConnection: TcpSocket = new TcpSocket(this.options.brokerPort, '127.0.0.1')
         brokerConnection.on('error', (err: any) => logError('Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n'))
         brokerConnection.on('message', (msg: any) => msg === '#0' ? brokerConnection.send('#1') : this.socketServer.emitter.emit('#publish', JSON.parse(msg)))
-        brokerConnection.on('disconnect', () => logError('Broker has been disconnected'))
+        brokerConnection.on('disconnect', () => logError('Something went wrong broker has been disconnected'))
 
         this.socketServer.emitter = new EventEmitter()
         this.socketServer.on = (event: string, fn: any) => this.socketServer.emitter.on(event, fn)

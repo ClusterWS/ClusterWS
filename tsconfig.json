@@ -1,22 +1,15 @@
 {
   "compilerOptions": {
-    /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', or 'ESNEXT'. */
     "target": "es5",
-    /* Specify module code generation: 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
     "module": "commonjs",
-    /* Redirect output structure to the directory. */
     "outDir": "./dist",
-    /* Do not emit comments to output. */
     "removeComments": true,
-    /* Enable all strict type-checking options. */
     "strict": true,
-    /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
-    "moduleResolution": "node",
-    "allowJs": true
+    "moduleResolution": "node"
   },
   "exclude": [
-    "node_modules",
     "dist",
-    "test"
+    "example",
+    "node_modules"
   ]
 }

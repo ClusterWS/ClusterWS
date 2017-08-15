@@ -1,47 +1,29 @@
-const fs = require('fs');
-const path = require('path');
-const webpack = require('webpack');
-const CopyPkgJsonPlugin = require("copy-pkg-json-webpack-plugin");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
-const exec = require('child_process').exec;
-const env = process.env.WEBPACK_ENV;
+const fs = require('fs')
+const env = process.env.WEBPACK_ENV
+const path = require('path')
+const webpack = require('webpack')
+const CopyPkgJsonPlugin = require("copy-pkg-json-webpack-plugin")
+const CopyWebpackPlugin = require("copy-webpack-plugin")
 
-// Make git tag be the same version as project
-const version = require('./package.json').version;
-exec("git tag -a "+ version + " -m \"Update version\"", function(err, stdout, stderr){});
+let nodeModules = {}
+fs.readdirSync('node_modules').filter((x) => ['.bin'].indexOf(x) === -1).forEach((mod) => nodeModules[mod] = 'commonjs ' + mod)
 
-var nodeModules = {};
-fs.readdirSync('node_modules')
-    .filter(function(x) {
-        return ['.bin'].indexOf(x) === -1;
-    })
-    .forEach(function(mod) {
-        nodeModules[mod] = 'commonjs ' + mod;
-    });
+let loaders = env === 'debug' ? [{
+    test: /\.ts$/,
+    loader: 'ts-loader?' + JSON.stringify({ transpileOnly: true }),
+    exclude: /node_modules/
+}] : [{
+    test: /\.ts$/,
+    loader: 'ts-loader',
+    exclude: /node_modules/
+}]
 
-var loaders = [];
-if(env === 'debug'){
-    loaders.push({
-        test: /\.ts$/,
-        loader: 'ts-loader?'+ JSON.stringify({
-            transpileOnly: true
-        }),
-        exclude: /node_modules/
-    })
-} else {
-    loaders.push({
-        test: /\.ts$/,
-        loader: 'ts-loader',
-        exclude: /node_modules/
-    })
-}
-
-module.exports = {
+let configs = {
     entry: {
         'index': './src/index.ts'
     },
     resolve: {
-        extensions: [".ts", ".js"]
+        extensions: [".ts"]
     },
     output: {
         path: path.join(__dirname, '/dist'),
@@ -64,6 +46,17 @@ module.exports = {
         new CopyPkgJsonPlugin({
             remove: ['devDependencies', 'scripts']
         }),
-        new CopyWebpackPlugin([{from:'README.md'}])
+        new CopyWebpackPlugin([{ from: 'README.md' }])
     ]
-};
+}
+
+module.exports = configs
+
+
+
+// const exec = require('child_process').exec
+// const env = process.env.WEBPACK_ENV
+
+// // Make git tag be the same version as project
+// const version = require('./package.json').version
+// exec("git tag -a " + version + " -m \"Update version\"", function (err, stdout, stderr) { })

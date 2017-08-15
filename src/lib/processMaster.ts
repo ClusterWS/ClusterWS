@@ -25,7 +25,7 @@ export function processMaster(options: Options) {
         server.on('message', (msg: { type: string, data?: any }) => _.switchcase({
             'ready': () => onReady(i, msg.data)
         })(msg.type))
-        server.on('exit', () => options.restartWorkerOnFail ? launch(type, i) : '')
+        server.on('exit', () => options.restartOnFail ? launch(type, i) : '')
         server.send(processMessages(type, i))
     }
 

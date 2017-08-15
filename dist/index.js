@@ -210,7 +210,7 @@ module.exports = function(e) {
             if (!e.worker) throw r.logError("Worker must be provided");
             this.port = e.port || 80, this.worker = e.worker, this.workers = e.workers || 1, 
             this.brokerPort = e.brokerPort || 9346, this.pingInterval = e.pingInterval || 2e4, 
-            this.restartWorkerOnFail = e.restartWorkerOnFail || !1;
+            this.restartOnFail = e.restartOnFail || !1;
         }
         return e;
     }();
@@ -234,7 +234,7 @@ module.exports = function(e) {
                     }
                 })(e.type);
             }), u.on("exit", function() {
-                return e.restartWorkerOnFail ? r(t, c) : "";
+                return e.restartOnFail ? r(t, c) : "";
             }), u.send(i.processMessages(t, c));
         };
         r("broker", 0);
@@ -281,7 +281,7 @@ module.exports = function(e) {
             }), f.on("message", function(e) {
                 return "#0" === e ? f.send("#1") : n.socketServer.emitter.emit("#publish", JSON.parse(e));
             }), f.on("disconnect", function() {
-                return s.logError("Broker has been disconnected");
+                return s.logError("Something went wrong broker has been disconnected");
             }), this.socketServer.emitter = new u.EventEmitter(), this.socketServer.on = function(e, t) {
                 return n.socketServer.emitter.on(e, t);
             }, this.socketServer.publish = function(e, t) {
@@ -308,7 +308,7 @@ module.exports = function(e) {
     var r = n(1), o = n(3), s = n(2), i = function() {
         function e(e, t, n) {
             var s = this;
-            this.socket = e, this.channels = [], this.events = new o.EventEmitter(), this.send("c", {}, "system");
+            this.socket = e, this.channels = [], this.events = new o.EventEmitter();
             var i = function(e) {
                 return -1 !== s.channels.indexOf(e.channel) ? s.send(e.channel, e.data, "publish") : "";
             };
@@ -316,7 +316,13 @@ module.exports = function(e) {
             var c = 0, u = setInterval(function() {
                 return c++ > 2 ? s.disconnect(3001, "No pongs from socket") : s.send("#0", null, "ping");
             }, n.pingInterval);
-            this.socket.on("message", function(e) {
+            this.send("c", {}, "system"), this.socket.on("error", function(e) {
+                return s.events.emit("error", e);
+            }), this.socket.on("close", function(e, n) {
+                s.events.emit("disconnect", e, n), clearInterval(u), s.events.removeAllEvents(), 
+                t.emitter.removeListener("#publish", i);
+                for (var r in s) s.hasOwnProperty(r) && (s[r] = null, delete s[r]);
+            }), this.socket.on("message", function(e) {
                 "#1" === e ? c = 0 : e = JSON.parse(e), r._.switchcase({
                     p: function() {
                         return t.publish(e.m[1], e.m[2]);
@@ -335,12 +341,6 @@ module.exports = function(e) {
                         })(e.m[1]);
                     }
                 })(e.m[0]);
-            }), this.socket.on("close", function(e, n) {
-                s.events.emit("disconnect", e, n), clearInterval(u), s.events.removeAllEvents(), 
-                t.emitter.removeListener("#publish", i);
-                for (var r in s) s.hasOwnProperty(r) && (s[r] = null, delete s[r]);
-            }), this.socket.on("error", function(e) {
-                return s.events.emit("error", e);
             });
         }
         return e.prototype.on = function(e, t) {
@@ -359,11 +359,11 @@ module.exports = function(e) {
     Object.defineProperty(t, "__esModule", {
         value: !0
     });
-    var r = n(1), o = n(0), s = n(5), i = n(2), c = n(6), u = function() {
+    var r = n(1), o = n(0), s = n(5), i = n(6), c = n(2), u = function() {
         function e(e, t) {
             var n = this;
             this.options = e, this.id = t, this.servers = [];
-            c.createServer(function(e) {
+            i.createServer(function(e) {
                 var t = n.servers.length, r = new s.TcpSocket(e);
                 setInterval(function() {
                     return r.send("#0");
@@ -376,7 +376,7 @@ module.exports = function(e) {
                     return o.logError("Server " + t + " has disconnected");
                 });
             }).listen(e.brokerPort);
-            process.send(i.processMessages("ready", process.pid));
+            process.send(c.processMessages("ready", process.pid));
         }
         return e.prototype.broadcast = function(e, t) {
             r._.map(function(n, r) {

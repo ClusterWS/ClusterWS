@@ -10,7 +10,7 @@ import { logError } from './utils/common'
  * @param {number} workers = 1
  * @param {number} brokerPort = 9346
  * @param {number} pingPongInterval = 20000
- * @param {boolean} restartWorkerOnFail = false
+ * @param {boolean} restartOnFail = false
  *
  */
 
@@ -20,7 +20,7 @@ export class Options {
     workers: number
     brokerPort: number
     pingInterval: number
-    restartWorkerOnFail: boolean
+    restartOnFail: boolean
 
     constructor(configurations: any) {
         if (!configurations.worker) throw logError('Worker must be provided')
@@ -30,6 +30,6 @@ export class Options {
         this.workers = configurations.workers || 1
         this.brokerPort = configurations.brokerPort || 9346
         this.pingInterval = configurations.pingInterval || 20000
-        this.restartWorkerOnFail = configurations.restartWorkerOnFail || false
+        this.restartOnFail = configurations.restartOnFail || false
     }
 }
