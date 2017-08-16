@@ -2,17 +2,16 @@ var path = require('path')
 var express = require('express')
 var ClusterWS = require('../dist/index').ClusterWS
 
-
 let clusterWs = new ClusterWS({
     worker: Worker,
     workers: 8,
     pingInterval: 5000
 })
 
-var ClusterWS = require('clusterws').ClusterWS
-function Worker() {}
 
 function Worker() {
+    let httpServer = this.httpServer
+    var socketServer = this.socketServer
     let app = express()
     app.use('/', express.static(path.join(__dirname + '/public')))
 

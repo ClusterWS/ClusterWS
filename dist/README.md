@@ -1,85 +1,74 @@
 # ClusterWS (Node Cluster WebSocket)
-<!-- *"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this framework"* -->
+
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 
-ClusterWS - minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
+ClusterWS - is a minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node js clusters and utilize all available CPU on your computer.
 
 ![](https://u.cubeupload.com/goriunovd/main.gif)
 
+You can see main changes in [HERE](./information/CHANGELOG.md).
 
-This is a **Beta Version** that is why framework may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
-
-
-ClusterWS has been written in TypeScript and compiling down to es5. All development code you can find in `src/` folder and compiled code in `dist/` folder.
+ClusterWS has been written in TypeScript and compiling down to es5 modules. All development code you can find in `src/` folder and compiled code in `dist/index.js` file.
 
 ### ClusterWS client libraries:
 
 1. [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
-2. Swift IOS (coming after all main features will be implemented)
-3. Java Android (coming after all main features will be implemented)
+2. Swift IOS (coming soon)
+3. Java Android (coming soon)
 
 ### Installation:
 
-Use npm :
+ClusterWS supports npm installation: 
 
 ```js
 npm install --save clusterws
 ```
 
-### Configuration
+### Setting up server
 
-To be able to run this framework you have to create 2 files. First one is `'server.js'` (you can name it as you wish) with:
+Create file `'server.js'` and follow next: 
+
+![](https://u.cubeupload.com/goriunovd/conf.gif)
+
+**Code:**
 
 ```js
-var ClusterWS = require('clusterws').ClusterWS;
+var ClusterWS = require('clusterws').ClusterWS
 
-var cws = new ClusterWS({ pathToWorker: __dirname + '/worker.js' });
+var clusterWS = new ClusterWS({
+    worker: Worker
+})
+
+function Worker() {}
 ```
 
-It is mandatory to provide path to the worker
-
-All possible options:
+*ClusterWS available options:*
 
 ```js
 {
-    pathToWorker: 'path to the worker file {__dirname + string} (!mandatory to provide)',
-
-    workers: 'number of the workers {number} default is 1',
-
-    port: 'port on which main process will listen {number} default is 8000',
-
-    restartWorkerOnFail: 'if you need to restart workers on error {bool} default is false',
-
-    brokerPort: 'port on which broker will communicate (change it only if default port is busy) {number} default is 9346',
-
-    pingInterval: 'time between which will be send ping to the client in ms {number} default is 20000 (20s)'
+    worker: '{function} must be provided!',
+    workers: '{number} how many workers will be spawned (default 1)',
+    port: '{number} port on which main process will listen  (default 80)',
+    restartOnFail: '{bool} function still in work (dafault false)',
+    brokerPort: '{number} better to do not change, only in case if port already in use (default 9346)',
+    pingInterval: '{number}  (default 20000ms)'
 }
 ```
 
-Second file is `'worker.js'` (also may name as you wish but do not forget to change workerPath) all server log should be here with:
+### Adding http server and socket server
 
-For http handler i am going to use `'express'`. So you need to run `npm install --save express`
+![](http://i.cubeupload.com/vxM7wC.gif)
+
+**Code:**
+
+Insert it in `'Worker'` function
 
 ```js
-var express = require('express');
-
-// You have to export function from this file
-module.exports = function(worker){
-    var httpServer = worker.httpServer;
-    var webSocketServer = worker.webSocketServer;
-
-    // http handler
-    var app = express();
-
-    // here you can write everything as usually with express ex: app.use('/' and what you need);
-
-    httpServer.on('request',  app)
-
-    webSocketServer.on('connection', function(socket){
-        // Here write all logic for socket
-    });
-}
+    var httpServer = this.httpServer
+    var socketServer = this.socketServer
 ```
+
+
 
 ### Listen on events from the connected client:
 

@@ -24,13 +24,13 @@ ClusterWS supports npm installation:
 npm install --save clusterws
 ```
 
-### Basic Set Up 
+### Setting up server
 
 Create file `'server.js'` and follow next: 
 
-![](https://u.cubeupload.com/goriunovd/conf.gif)
+![](https://u.cubeupload.com/goriunovd/e26conf.gif)
 
-Code:
+**Code:**
 
 ```js
 var ClusterWS = require('clusterws').ClusterWS
@@ -42,50 +42,77 @@ var clusterWS = new ClusterWS({
 function Worker() {}
 ```
 
-It is mandatory to provide worker function
-
-All possible options:
+*ClusterWS available options:*
 
 ```js
 {
-    pathToWorker: 'path to the worker file {__dirname + string} (!mandatory to provide)',
-
-    workers: 'number of the workers {number} default is 1',
-
-    port: 'port on which main process will listen {number} default is 8000',
-
-    restartWorkerOnFail: 'if you need to restart workers on error {bool} default is false',
-
-    brokerPort: 'port on which broker will communicate (change it only if default port is busy) {number} default is 9346',
-
-    pingInterval: 'time between which will be send ping to the client in ms {number} default is 20000 (20s)'
+    worker: '{function} must be provided!',
+    workers: '{number} how many workers will be spawned (default 1)',
+    port: '{number} port on which main process will listen  (default 80)',
+    restartOnFail: '{bool} function still in work (dafault false)',
+    brokerPort: '{number} better to do not change, only in case if port already in use (default 9346)',
+    pingInterval: '{number}  (default 20000ms)'
 }
 ```
 
-Second file is `'worker.js'` (also may name as you wish but do not forget to change workerPath) all server log should be here with:
+### Connecting socket server
 
-For http handler i am going to use `'express'`. So you need to run `npm install --save express`
+![](https://u.cubeupload.com/goriunovd/sserver.gif)
+
+
+**Code:**
+
+Insert it in `'Worker'` function
 
 ```js
-var express = require('express');
+var socketServer = this.socketServer
 
-// You have to export function from this file
-module.exports = function(worker){
-    var httpServer = worker.httpServer;
-    var webSocketServer = worker.webSocketServer;
-
-    // http handler
-    var app = express();
-
-    // here you can write everything as usually with express ex: app.use('/' and what you need);
-
-    httpServer.on('request',  app)
-
-    webSocketServer.on('connection', function(socket){
-        // Here write all logic for socket
-    });
-}
+socketServer.on('connection', function(socket){});
 ```
+
+### Connecting http server (express)
+
+Before connect express to the ClusterWS you have to install it with: 
+
+```js
+npm install --save express
+```
+
+![](https://u.cubeupload.com/goriunovd/httpexpress.gif)
+
+**Code:**
+
+Make import at the top of the file:
+
+```js
+var express = require('express')
+```
+
+then in the `'Worker'` function add
+
+```js
+var httpServer = this.httpServer
+var app = express()
+
+// any usuall express code 
+
+this.httpServer.on('request', app)
+
+```
+
+### Run server
+
+To run our server just type 
+
+```js
+node server.js
+```
+
+Congratulations you have set up basic server
+
+
+## Socket
+
 
 ### Listen on events from the connected client:
 
