@@ -30,7 +30,7 @@ npm install --save clusterws
 
 Create file `'server.js'` and follow next: 
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/e26conf.gif"></div>
+<div style="text-align:center"><img style="width:100%"  src ="https://u.cubeupload.com/goriunovd/e26conf.gif"></div>
 
 **Code:**
 
@@ -79,7 +79,7 @@ Before connect express to the ClusterWS you have to install it with:
 npm install --save express
 ```
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/httpexpress.gif"></div>
+<div style="text-align:center"><img style="width:100%"   src ="https://u.cubeupload.com/goriunovd/httpexpress.gif"></div>
 
 **Code:**
 
@@ -103,7 +103,7 @@ this.httpServer.on('request', app)
 
 ### 4. Run server
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/runserver.gif"></div>
+<div style="text-align:center"><img style="width:100%"  src ="https://u.cubeupload.com/goriunovd/runserver.gif"></div>
 
 To run our server just type in `'cmd/terminal'`
 
@@ -131,7 +131,7 @@ socketServer.on('connection', function(socket){
 
 To listen on event use `'on'` method which is provided by socket:
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketon.gif"></div>
+<div style="text-align:center"><img style="width:100%"  src ="https://u.cubeupload.com/goriunovd/socketon.gif"></div>
 
 **Code:**
 
@@ -161,7 +161,7 @@ socket.on('disconnect', function(code, msg){
 
 To emit an event to the connected user you should use `'send'` method which is provided by socket:
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketsend.gif"></div>
+<div style="text-align:center"><img style="width:100%"  src ="https://u.cubeupload.com/goriunovd/socketsend.gif"></div>
 
 **Code:**
 
@@ -184,7 +184,7 @@ Each user can have as many channels as you want (i don't think that it will be m
 
 To publish data from the server to the channels you can use `'publish'` method which is provided by `'socketServer'`:
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketpublish.gif"></div>
+<div style="text-align:center"><img style="width:100%"   src ="https://u.cubeupload.com/goriunovd/socketpublish.gif"></div>
 
 **Code:**
 
