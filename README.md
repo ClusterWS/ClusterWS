@@ -1,42 +1,48 @@
 # ClusterWS (Node Cluster WebSocket)
-<!-- *"I was inspired by [SocketCluster](https://github.com/SocketCluster/socketcluster) to create this framework"* -->
+
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 
-ClusterWS - minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node clusters and utilize all available CPU.
+ClusterWS - is a minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node js clusters and utilize all available CPU on your computer.
 
 ![](https://u.cubeupload.com/goriunovd/main.gif)
 
+You can see main changes in [HERE](./information/CHANGELOG.md).
 
-This is a **Beta Version** that is why framework may lack some important features :) . You can see main changes in [HERE](./information/CHANGELOG.md).
-
-
-ClusterWS has been written in TypeScript and compiling down to es5. All development code you can find in `src/` folder and compiled code in `dist/` folder.
+ClusterWS has been written in TypeScript and compiling down to es5 modules. All development code you can find in `src/` folder and compiled code in `dist/index.js` file.
 
 ### ClusterWS client libraries:
 
 1. [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
-2. Swift IOS (coming after all main features will be implemented)
-3. Java Android (coming after all main features will be implemented)
+2. Swift IOS (coming soon)
+3. Java Android (coming soon)
 
 ### Installation:
 
-Use npm :
+ClusterWS supports npm installation: 
 
 ```js
 npm install --save clusterws
 ```
 
-### Configuration
+### Basic Set Up 
 
-To be able to run this framework you have to create 2 files. First one is `'server.js'` (you can name it as you wish) with:
+Create file `'server.js'` and follow next: 
+
+![](https://u.cubeupload.com/goriunovd/conf.gif)
+
+Code:
 
 ```js
-var ClusterWS = require('clusterws').ClusterWS;
+var ClusterWS = require('clusterws').ClusterWS
 
-var cws = new ClusterWS({ pathToWorker: __dirname + '/worker.js' });
+var clusterWS = new ClusterWS({
+    worker: Worker
+})
+
+function Worker() {}
 ```
 
-It is mandatory to provide path to the worker
+It is mandatory to provide worker function
 
 All possible options:
 

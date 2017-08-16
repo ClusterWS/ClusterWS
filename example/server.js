@@ -9,6 +9,8 @@ let clusterWs = new ClusterWS({
     pingInterval: 5000
 })
 
+var ClusterWS = require('clusterws').ClusterWS
+function Worker() {}
 
 function Worker() {
     let app = express()
