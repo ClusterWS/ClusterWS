@@ -10,7 +10,7 @@ let clusterWs = new ClusterWS({
 
 
 function Worker() {
-    let httpServer = this.httpServer
+    var httpServer = this.httpServer
     var socketServer = this.socketServer
     let app = express()
     app.use('/', express.static(path.join(__dirname + '/public')))

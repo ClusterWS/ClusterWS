@@ -6,7 +6,7 @@ ClusterWS - is a minimal node js http and real-time framework which allows easil
 
 ![](https://u.cubeupload.com/goriunovd/main.gif)
 
-You can see main changes in [HERE](./information/CHANGELOG.md).
+[ClusterWS Changelog](./information/CHANGELOG.md)
 
 ClusterWS has been written in TypeScript and compiling down to es5 modules. All development code you can find in `src/` folder and compiled code in `dist/index.js` file.
 
@@ -18,17 +18,19 @@ ClusterWS has been written in TypeScript and compiling down to es5 modules. All 
 
 ### Installation:
 
-ClusterWS supports npm installation: 
+ClusterWS npm installation: 
 
 ```js
 npm install --save clusterws
 ```
 
-### Setting up server
+## Setting up basic server
+
+### 1. Creating server file
 
 Create file `'server.js'` and follow next: 
 
-![](https://u.cubeupload.com/goriunovd/e26conf.gif)
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/e26conf.gif"></div>
 
 **Code:**
 
@@ -49,16 +51,15 @@ function Worker() {}
     worker: '{function} must be provided!',
     workers: '{number} how many workers will be spawned (default 1)',
     port: '{number} port on which main process will listen  (default 80)',
-    restartOnFail: '{bool} function still in work (dafault false)',
-    brokerPort: '{number} better to do not change, only in case if port already in use (default 9346)',
+    restartOnFail: '{bool} in development (dafault false)',
+    brokerPort: '{number} better to do not change it, only in case if port already in use (default 9346)',
     pingInterval: '{number}  (default 20000ms)'
 }
 ```
 
-### Connecting socket server
+### 2. Connecting socket server
 
-![](https://u.cubeupload.com/goriunovd/sserver.gif)
-
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/sserver.gif"></div>
 
 **Code:**
 
@@ -70,7 +71,7 @@ var socketServer = this.socketServer
 socketServer.on('connection', function(socket){});
 ```
 
-### Connecting http server (express)
+### 3. Connecting http server (express)
 
 Before connect express to the ClusterWS you have to install it with: 
 
@@ -78,17 +79,17 @@ Before connect express to the ClusterWS you have to install it with:
 npm install --save express
 ```
 
-![](https://u.cubeupload.com/goriunovd/httpexpress.gif)
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/httpexpress.gif"></div>
 
 **Code:**
 
-Make import at the top of the file:
+Make import at the top of the `'server.js'`file:
 
 ```js
 var express = require('express')
 ```
 
-then in the `'Worker'` function add
+then in the `'Worker'` function add:
 
 ```js
 var httpServer = this.httpServer
@@ -100,57 +101,102 @@ this.httpServer.on('request', app)
 
 ```
 
-### Run server
+### 4. Run server
 
-To run our server just type 
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/runserver.gif"></div>
+
+To run our server just type in `'cmd/terminal'`
 
 ```js
 node server.js
 ```
 
-Congratulations you have set up basic server
+If you see blue color text like on gif above then
 
+#### Congratulations you have set up basic server :sunglasses:
+
+*In next section we are going to look how to work with connected sockets*
 
 ## Socket
 
+All work will be inside of the 
 
-### Listen on events from the connected client:
-
-To listen on event use `'on'` method which is provided by socket:
-
-```js
-socket.on('any event name', function(data){
-       console.log(data);
+```js 
+socketServer.on('connection', function(socket){
+    // HERE  
 });
 ```
 
-You can listen on any event which you emit from the client also you can listen on **Reserved event** which are emitting automatically :)
+### 1. Listen on events from the connected user:
 
-Data which you get in `function(data)` it what you send with event, you can send any type of data.
+To listen on event use `'on'` method which is provided by socket:
 
-**Reserved events**: `'connection'`, `'error'`, `'disconnect'`.
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketon.gif"></div>
 
-### Emit an event to the client:
-
-To emit and event to the client you should use `send` method which provided by socket:
+**Code:**
 
 ```js
-socket.send('event name', data);
+socket.on('myevent', function(data){
+    //write what to do if this event fires
+})
 ```
 
-`data` can be any type you want.
+*You can listen on any event which you emit from the client also you can listen on **Reserved events** which are emitting automatically :)*
 
-**Never emit reserved events**: `'connection'`, `'error'`, `'disconnect'`.
+*Data which you get in `function(data)` is what you send with event, you can send any type of data.*
 
-### Pub/Sub communication:
-
-To publish some data to the channel you can use `publish` method which is provided by webSocketServer:
+***Reserved events**: `'error'`, `'disconnect'`*
 
 ```js
-webSocketServer.publish('channel name', data);
+socket.on('error', function(err){
+    //write what to do on error
+})
+
+socket.on('disconnect', function(code, msg){
+    //write what to do on disconnect
+})
 ```
 
-`data` can be any type you want.
+### 2. Emit an event with or without data to the user:
+
+To emit an event to the connected user you should use `'send'` method which is provided by socket:
+
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketsend.gif"></div>
+
+**Code:**
+
+```js
+socket.send('myevent', 'any type of data')
+```
+
+*`'any type of data'` can be any thing you want `array`, `string`, `object` and so on*
+
+***Try to avoid emitting reserved events**: `'connection'`, `'error'`, `'disconnect'`, or any events which start with `'#'`*
+
+## Pub/Sub System
+
+The publish-subscribe pattern (or pub/sub, for short) is messaging pattern where senders of messages (`publishers`), do not program the messages to be sent directly to specific receivers (`subscribers`). Instead, the programmer `publishes` messages (events), without any knowledge of any subscribers there may be. [Author](https://www.toptal.com/ruby-on-rails/the-publish-subscribe-pattern-on-rails)
+
+`ClusterWS` contains own written `Pub/Sub system` which allows to send messages between node js workers to every user who is subscribed to the channel.
+
+Each user can have as many channels as you want (i don't think that it will be more then 100 - 200 channels per user). Each user even can have their own unique channels. It all depends from how do you want to design your application. Server does not allow to subscribe user from itself. Only req from the client will do it, therefore all information about subscribe to the channels can be found in client libraries.
+
+
+To publish data from the server to the channels you can use `'publish'` method which is provided by `'socketServer'`:
+
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketpublish.gif"></div>
+
+**Code:**
+
+```js
+socketServer.publish('mychannel', 'any type of data')
+```
+
+*You can use `socketServer.publish` any where you wish event our of `connection` method*
+
+*`'any type of data'` can be any thing you want `array`, `string`, `object` and so on*
+
+### This document is still under development
 
 ## Happy codding !!! :sunglasses:
 
