@@ -131,7 +131,7 @@ socketServer.on('connection', function(socket){
 
 To listen on event use `'on'` method which is provided by socket:
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketon.gif"></div>
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/f8dsocketon.gif"></div>
 
 **Code:**
 
@@ -161,7 +161,7 @@ socket.on('disconnect', function(code, msg){
 
 To emit an event to the connected user you should use `'send'` method which is provided by socket:
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketsend.gif"></div>
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketemit.gif"></div>
 
 **Code:**
 
@@ -184,7 +184,7 @@ Each user can have as many channels as you want (i don't think that it will be m
 
 To publish data from the server to the channels you can use `'publish'` method which is provided by `'socketServer'`:
 
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/socketpublish.gif"></div>
+<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/96esocketpublish.gif"></div>
 
 **Code:**
 
