@@ -6,10 +6,14 @@ export function processMessages(type: string, data?: any) {
 
 export function socketMessages(event: string, data: any, type: string) {
     return _.switchcase({
+        'ping': event,
         'publish': JSON.stringify({ 'm': ['p', event, data] }),
-        'system': JSON.stringify({ 'm': ['s', event, data] }),
         'emit': JSON.stringify({ 'm': ['e', event, data] }),
-        'ping': event
+        'system': _.switchcase({
+            'subsribe': JSON.stringify({ 'm': ['s', 's', data] }),
+            'unsubscribe': JSON.stringify({ 'm': ['s', 'u', data] }),
+            'configuration': JSON.stringify({ 'm': ['s', 'c', data] })
+        })(event)
     })(type)
 }
 

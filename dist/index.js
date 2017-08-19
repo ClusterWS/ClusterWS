@@ -85,12 +85,20 @@ module.exports = function(e) {
             publish: JSON.stringify({
                 m: [ "p", e, t ]
             }),
-            system: JSON.stringify({
-                m: [ "s", e, t ]
-            }),
             emit: JSON.stringify({
                 m: [ "e", e, t ]
             }),
+            system: i._.switchcase({
+                subsribe: JSON.stringify({
+                    m: [ "s", "s", t ]
+                }),
+                unsubscribe: JSON.stringify({
+                    m: [ "s", "u", t ]
+                }),
+                configuration: JSON.stringify({
+                    m: [ "s", "c", t ]
+                })
+            })(e),
             ping: e
         })(n);
     }
@@ -316,7 +324,7 @@ module.exports = function(e) {
             var c = 0, u = setInterval(function() {
                 return c++ > 2 ? s.disconnect(3001, "No pongs from socket") : s.send("#0", null, "ping");
             }, n.pingInterval);
-            this.send("c", {}, "system"), this.socket.on("error", function(e) {
+            this.send("configuration", {}, "system"), this.socket.on("error", function(e) {
                 return s.events.emit("error", e);
             }), this.socket.on("close", function(e, n) {
                 s.events.emit("disconnect", e, n), clearInterval(u), s.events.removeAllEvents(), 

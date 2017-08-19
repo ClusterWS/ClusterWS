@@ -21,7 +21,7 @@ function Worker() {
 
         this.socketServer.publish('world', 'i am on world')
         this.socketServer.publish('ssss', 'i am on world')
-        
+
 
         socket.on('hello', (data) => {
             console.log(data)
