@@ -2,13 +2,13 @@
 
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 
-ClusterWS - is a minimal node js http and real-time framework which allows easily scale WebSocket([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node js clusters and utilize all available CPU on your computer.
+ClusterWS - is a minimal **Node JS http & real-time** framework which allows easily scale WebSocket ([uWS](https://github.com/uNetworking/uWebSockets)- one of the fastest WebSocket libraries) between node js clusters.
 
 ![](https://u.cubeupload.com/goriunovd/6cdmain.gif)
 
-[ClusterWS Changelog](./information/CHANGELOG.md)
-
 ClusterWS has been written in TypeScript and compiling down to es5 modules. All development code you can find in `src/` folder and compiled code in `dist/index.js` file.
+
+[ClusterWS CHANGELOG.](./information/CHANGELOG.md)
 
 ### ClusterWS client libraries:
 
@@ -24,15 +24,15 @@ ClusterWS npm installation:
 npm install --save clusterws
 ```
 
-## Setting up basic server
+## Setting server
 
-### 1. Creating server file
+### 1. Creating server file with basic stracture
 
 Create file `'server.js'` and follow next: 
 
 <div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server1.gif"></div>
 
-**Code:**
+#### **Code:**
 
 ```js
 var ClusterWS = require('clusterws').ClusterWS
@@ -44,7 +44,7 @@ var clusterWS = new ClusterWS({
 function Worker() {}
 ```
 
-*ClusterWS available options:*
+*ClusterWS all options:*
 
 ```js
 {
@@ -61,7 +61,7 @@ function Worker() {}
 
 <div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server2.gif"></div>
 
-**Code:**
+#### **Code:**
 
 Insert it in `'Worker'` function
 
@@ -81,7 +81,7 @@ npm install --save express
 
 <div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server3.gif"></div>
 
-**Code:**
+#### **Code:**
 
 Make import at the top of the `'server.js'`file:
 
@@ -115,7 +115,7 @@ If you see blue color text like on gif above then
 
 #### Congratulations you have set up basic server :sunglasses:
 
-*In next section we are going to look how to work with connected sockets*
+*In next section we are going to look at how to work with connected sockets*
 
 ## Socket
 
@@ -129,11 +129,11 @@ socketServer.on('connection', function(socket){
 
 ### 1. Listen on events from the connected user:
 
-To listen on event use `'on'` method which is provided by socket:
+To listen on events use `'on'` method which is provided by socket:
 
 <div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server5.gif"></div>
 
-**Code:**
+#### **Code:**
 
 ```js
 socket.on('myevent', function(data){
@@ -141,9 +141,9 @@ socket.on('myevent', function(data){
 })
 ```
 
-*You can listen on any event which you emit from the client also you can listen on **Reserved events** which are emitting automatically :)*
+*You can listen on any events which you emit from the clients also you can listen on **Reserved events** which are emitting automatically by server :)*
 
-*Data which you get in `function(data)` is what you send with event, you can send any type of data.*
+*Data which you get in `function(data)` is what you send with events, you can send `any type of data`.*
 
 ***Reserved events**: `'error'`, `'disconnect'`*
 
@@ -159,17 +159,17 @@ socket.on('disconnect', function(code, msg){
 
 ### 2. Emit an event with or without data to the user:
 
-To emit an event to the connected user you should use `'send'` method which is provided by socket:
+To emit events to the connected users you should use `'send'` method which is provided by socket:
 
 <div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server6.gif"></div>
 
-**Code:**
+#### **Code:**
 
 ```js
 socket.send('myevent', 'any type of data')
 ```
 
-*`'any type of data'` can be any thing you want `array`, `string`, `object` and so on*
+*`'any type of data'` can be anything you want `array`, `string`, `object`, `...`*
 
 ***Try to avoid emitting reserved events**: `'connection'`, `'error'`, `'disconnect'`, or any events which start with `'#'`*
 
@@ -186,7 +186,7 @@ To publish data from the server to the channels you can use `'publish'` method w
 
 <div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server7.gif"></div>
 
-**Code:**
+#### **Code:**
 
 ```js
 socketServer.publish('mychannel', 'any type of data')
