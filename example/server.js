@@ -26,7 +26,7 @@ function Worker() {
         socket.on('hello', (data) => {
             console.log(data)
         })
-        socket.send('hello', 'i am working')
+        socket.send('hello')
 
         socket.on('disconnect', (code, msg) => {
             console.log('Socket disconnected ' + code + ' ' + msg)

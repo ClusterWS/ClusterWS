@@ -82,6 +82,7 @@ module.exports = function(e) {
     }
     function o(e, t, n) {
         return i._.switchcase({
+            ping: e,
             publish: JSON.stringify({
                 m: [ "p", e, t ]
             }),
@@ -98,8 +99,7 @@ module.exports = function(e) {
                 configuration: JSON.stringify({
                     m: [ "s", "c", t ]
                 })
-            })(e),
-            ping: e
+            })(e)
         })(n);
     }
     function s(e, t) {
