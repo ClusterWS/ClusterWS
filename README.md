@@ -196,7 +196,7 @@ socketServer.publish('mychannel', 'any type of data')
 
 *`'any type of data'` can be any thing you want `array`, `string`, `object` and so on*
 
-### This document is still under development
+### This document is under development
 
 ## Happy codding !!! :sunglasses:
 
