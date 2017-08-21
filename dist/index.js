@@ -300,7 +300,7 @@ module.exports = function(e) {
             }, this.httpServer = c.createServer().listen(this.options.port), new r.Server({
                 server: this.httpServer
             }).on("connection", function(e) {
-                return n.socketServer.emitter.emit("connection", new o.Socket(e, n.socketServer, n.options));
+                return n.socketServer.emitter.emit("connection", new o.Socket(e, n));
             }), this.options.worker.call(this), process.send(a.processMessages("ready", process.pid));
         }
         return e;
@@ -314,37 +314,38 @@ module.exports = function(e) {
         value: !0
     });
     var r = n(1), o = n(3), s = n(2), i = function() {
-        function e(e, t, n) {
-            var s = this;
+        function e(e, t) {
+            var n = this;
             this.socket = e, this.channels = [], this.events = new o.EventEmitter();
-            var i = function(e) {
-                return -1 !== s.channels.indexOf(e.channel) ? s.send(e.channel, e.data, "publish") : "";
+            var s = function(e) {
+                return -1 !== n.channels.indexOf(e.channel) ? n.send(e.channel, e.data, "publish") : "";
             };
-            t.emitter.on("#publish", i);
-            var c = 0, u = setInterval(function() {
-                return c++ > 2 ? s.disconnect(3001, "No pongs from socket") : s.send("#0", null, "ping");
-            }, n.pingInterval);
+            t.socketServer.emitter.on("#publish", s);
+            var i = 0, c = setInterval(function() {
+                return i++ > 2 ? n.disconnect(3001, "No pongs from socket") : n.send("#0", null, "ping");
+            }, t.options.pingInterval);
             this.send("configuration", {}, "system"), this.socket.on("error", function(e) {
-                return s.events.emit("error", e);
-            }), this.socket.on("close", function(e, n) {
-                s.events.emit("disconnect", e, n), clearInterval(u), s.events.removeAllEvents(), 
-                t.emitter.removeListener("#publish", i);
-                for (var r in s) s.hasOwnProperty(r) && (s[r] = null, delete s[r]);
+                return n.events.emit("error", e);
+            }), this.socket.on("close", function(e, r) {
+                n.events.emit("disconnect", e, r), clearInterval(c), n.events.removeAllEvents(), 
+                t.socketServer.emitter.removeListener("#publish", s);
+                for (var o in n) n.hasOwnProperty(o) && (n[o] = null, delete n[o]);
             }), this.socket.on("message", function(e) {
-                "#1" === e ? c = 0 : e = JSON.parse(e), r._.switchcase({
+                if (console.log(e), "#1" === e) return i = 0;
+                e = JSON.parse(e), r._.switchcase({
                     p: function() {
-                        return t.publish(e.m[1], e.m[2]);
+                        return -1 !== n.channels.indexOf(e.m[1]) ? t.socketServer.publish(e.m[1], e.m[2]) : "";
                     },
                     e: function() {
-                        return s.events.emit(e.m[1], e.m[2]);
+                        return n.events.emit(e.m[1], e.m[2]);
                     },
                     s: function() {
                         return r._.switchcase({
                             s: function() {
-                                return -1 === s.channels.indexOf(e.m[2]) ? s.channels.push(e.m[2]) : "";
+                                return -1 === n.channels.indexOf(e.m[2]) ? n.channels.push(e.m[2]) : "";
                             },
                             u: function() {
-                                return s.channels.removeEvent(e.m[2]);
+                                return -1 !== n.channels.indexOf(e.m[2]) ? n.channels.splice(n.channels.indexOf(e.m[2]), 1) : "";
                             }
                         })(e.m[1]);
                     }

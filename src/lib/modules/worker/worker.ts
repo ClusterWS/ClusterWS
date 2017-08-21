@@ -30,7 +30,7 @@ export class Worker {
         this.httpServer = createServer().listen(this.options.port)
 
         let uWS: any = new uws.Server({ server: this.httpServer })
-        uWS.on('connection', (socket: any) => this.socketServer.emitter.emit('connection', new Socket(socket, this.socketServer, this.options)))
+        uWS.on('connection', (socket: any) => this.socketServer.emitter.emit('connection', new Socket(socket, this)))
 
         this.options.worker.call(this)
 

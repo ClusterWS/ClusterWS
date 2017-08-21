@@ -16,12 +16,12 @@ export class Socket {
     channels: any = []
     events: EventEmitter = new EventEmitter()
 
-    constructor(public socket: any, socketServer: any, options: Options) {
+    constructor(public socket: any, server: any) {
         let publishListener = (msg: any) => this.channels.indexOf(msg.channel) !== -1 ? this.send(msg.channel, msg.data, 'publish') : ''
-        socketServer.emitter.on('#publish', publishListener)
+        server.socketServer.emitter.on('#publish', publishListener)
 
         let missedPing: number = 0
-        let pingInterval = setInterval(() => (missedPing++) > 2 ? this.disconnect(3001, 'No pongs from socket') : this.send('#0', null, 'ping'), options.pingInterval)
+        let pingInterval = setInterval(() => (missedPing++) > 2 ? this.disconnect(3001, 'No pongs from socket') : this.send('#0', null, 'ping'), server.options.pingInterval)
 
         this.send('configuration', {}, 'system')
 
@@ -31,7 +31,7 @@ export class Socket {
 
             clearInterval(pingInterval)
             this.events.removeAllEvents()
-            socketServer.emitter.removeListener('#publish', publishListener)
+            server.socketServer.emitter.removeListener('#publish', publishListener)
 
             for (let key in this) if (this.hasOwnProperty(key)) {
                 this[key] = null
@@ -39,14 +39,17 @@ export class Socket {
             }
         })
         this.socket.on('message', (msg: any) => {
-            msg === '#1' ? missedPing = 0 : msg = JSON.parse(msg)
+            console.log(msg)
+            if (msg === '#1') return missedPing = 0
+
+            msg = JSON.parse(msg)
 
             _.switchcase({
-                'p': () => socketServer.publish(msg.m[1], msg.m[2]),
+                'p': () => this.channels.indexOf(msg.m[1]) !== -1 ? server.socketServer.publish(msg.m[1], msg.m[2]) : '',
                 'e': () => this.events.emit(msg.m[1], msg.m[2]),
                 's': () => _.switchcase({
                     's': () => this.channels.indexOf(msg.m[2]) === -1 ? this.channels.push(msg.m[2]) : '',
-                    'u': () => this.channels.removeEvent(msg.m[2])
+                    'u': () => this.channels.indexOf(msg.m[2]) !== -1 ? this.channels.splice(this.channels.indexOf(msg.m[2]), 1) : ''
                 })(msg.m[1])
             })(msg.m[0])
         })
