@@ -23,7 +23,7 @@ export class Socket {
         let missedPing: number = 0
         let pingInterval = setInterval(() => (missedPing++) > 2 ? this.disconnect(3001, 'No pongs from socket') : this.send('#0', null, 'ping'), server.options.pingInterval)
 
-        this.send('configuration', {}, 'system')
+        this.send('configuration', {ping: server.options.pingInterval}, 'system')
 
         this.socket.on('error', (err: any) => this.events.emit('error', err))
         this.socket.on('close', (code: number, msg: any) => {
@@ -39,11 +39,9 @@ export class Socket {
             }
         })
         this.socket.on('message', (msg: any) => {
-            console.log(msg)
             if (msg === '#1') return missedPing = 0
 
             msg = JSON.parse(msg)
-
             _.switchcase({
                 'p': () => this.channels.indexOf(msg.m[1]) !== -1 ? server.socketServer.publish(msg.m[1], msg.m[2]) : '',
                 'e': () => this.events.emit(msg.m[1], msg.m[2]),

@@ -324,14 +324,16 @@ module.exports = function(e) {
             var i = 0, c = setInterval(function() {
                 return i++ > 2 ? n.disconnect(3001, "No pongs from socket") : n.send("#0", null, "ping");
             }, t.options.pingInterval);
-            this.send("configuration", {}, "system"), this.socket.on("error", function(e) {
+            this.send("configuration", {
+                ping: t.options.pingInterval
+            }, "system"), this.socket.on("error", function(e) {
                 return n.events.emit("error", e);
             }), this.socket.on("close", function(e, r) {
                 n.events.emit("disconnect", e, r), clearInterval(c), n.events.removeAllEvents(), 
                 t.socketServer.emitter.removeListener("#publish", s);
                 for (var o in n) n.hasOwnProperty(o) && (n[o] = null, delete n[o]);
             }), this.socket.on("message", function(e) {
-                if (console.log(e), "#1" === e) return i = 0;
+                if ("#1" === e) return i = 0;
                 e = JSON.parse(e), r._.switchcase({
                     p: function() {
                         return -1 !== n.channels.indexOf(e.m[1]) ? t.socketServer.publish(e.m[1], e.m[2]) : "";
