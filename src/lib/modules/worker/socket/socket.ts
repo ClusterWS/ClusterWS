@@ -11,7 +11,6 @@ import { socketMessages } from '../../../communication/messages'
 's' 'u' = system unsubscribe
 's' 'c' = configuration
 */
-
 export class Socket {
     channels: any = []
     events: EventEmitter = new EventEmitter()
@@ -23,7 +22,7 @@ export class Socket {
         let missedPing: number = 0
         let pingInterval = setInterval(() => (missedPing++) > 2 ? this.disconnect(3001, 'No pongs from socket') : this.send('#0', null, 'ping'), server.options.pingInterval)
 
-        this.send('configuration', {ping: server.options.pingInterval}, 'system')
+        this.send('configuration', { ping: server.options.pingInterval }, 'system')
 
         this.socket.on('error', (err: any) => this.events.emit('error', err))
         this.socket.on('close', (code: number, msg: any) => {

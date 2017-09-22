@@ -5,7 +5,6 @@ import { TcpSocket } from '../tcp/socket'
 import { createServer } from 'net'
 import { processMessages } from '../../communication/messages'
 
-
 declare let process: any
 
 export class Broker {
