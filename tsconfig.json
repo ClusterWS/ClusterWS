@@ -9,7 +9,7 @@
   },
   "exclude": [
     "dist",
-    "example",
-    "node_modules"
+    "node_modules",
+    "information"
   ]
 }
