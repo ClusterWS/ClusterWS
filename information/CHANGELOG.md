@@ -11,7 +11,7 @@
 
 ## Other 
 
-* Added test repository out of client version.
+* Added separate Mocha test repository.
 * Complete README.md change.
 * Added GIFTS to README.md.
 
