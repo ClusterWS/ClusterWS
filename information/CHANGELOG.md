@@ -1,3 +1,21 @@
+# 1.0.0
+
+## New features 
+
+* **new:**  Complete library rewriting.
+
+## Changes
+
+* **chg:**  Improve performance.
+* **chg:**  Ranamed params.
+
+## Other 
+
+* Added test repository out of client version.
+* Complete README.md change.
+* Added GIFTS to README.md.
+
+
 # 0.1.0
  
 ## New features 
