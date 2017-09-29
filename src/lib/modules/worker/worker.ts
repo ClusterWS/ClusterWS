@@ -20,6 +20,7 @@ export class Worker {
         brokerConnection.on('message', (msg: any) => msg === '#0' ? brokerConnection.send('#1') : this.socketServer.emitter.emit('#publish', JSON.parse(msg)))
         brokerConnection.on('disconnect', () => logError('Something went wrong broker has been disconnected'))
 
+        this.socketServer.middleware = {}
         this.socketServer.emitter = new EventEmitter()
         this.socketServer.on = (event: string, fn: any) => this.socketServer.emitter.on(event, fn)
         this.socketServer.publish = (channel: string, data: any) => {

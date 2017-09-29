@@ -45,7 +45,14 @@ export class Socket {
                 'p': () => this.channels.indexOf(msg.m[1]) !== -1 ? server.socketServer.publish(msg.m[1], msg.m[2]) : '',
                 'e': () => this.events.emit(msg.m[1], msg.m[2]),
                 's': () => _.switchcase({
-                    's': () => this.channels.indexOf(msg.m[2]) === -1 ? this.channels.push(msg.m[2]) : '',
+                    's': () => {
+                        if (!server.socketServer.middleware.subscribe) return this.channels.indexOf(msg.m[2]) === -1 ? this.channels.push(msg.m[2]) : ''
+
+                        return server.socketServer.middleware.subscribe(this, msg.m[2], (notAllow: any) => {
+                            if (notAllow) return
+                            return this.channels.indexOf(msg.m[2]) === -1 ? this.channels.push(msg.m[2]) : ''
+                        })
+                    },
                     'u': () => this.channels.indexOf(msg.m[2]) !== -1 ? this.channels.splice(this.channels.indexOf(msg.m[2]), 1) : ''
                 })(msg.m[1])
             })(msg.m[0])

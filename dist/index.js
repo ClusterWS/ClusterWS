@@ -290,7 +290,8 @@ module.exports = function(e) {
                 return "#0" === e ? f.send("#1") : n.socketServer.emitter.emit("#publish", JSON.parse(e));
             }), f.on("disconnect", function() {
                 return s.logError("Something went wrong broker has been disconnected");
-            }), this.socketServer.emitter = new u.EventEmitter(), this.socketServer.on = function(e, t) {
+            }), this.socketServer.middleware = {}, this.socketServer.emitter = new u.EventEmitter(), 
+            this.socketServer.on = function(e, t) {
                 return n.socketServer.emitter.on(e, t);
             }, this.socketServer.publish = function(e, t) {
                 f.send(a.brokerMessage(e, t)), n.socketServer.emitter.emit("#publish", {
@@ -344,7 +345,9 @@ module.exports = function(e) {
                     s: function() {
                         return r._.switchcase({
                             s: function() {
-                                return -1 === n.channels.indexOf(e.m[2]) ? n.channels.push(e.m[2]) : "";
+                                return t.socketServer.middleware.subscribe ? t.socketServer.middleware.subscribe(n, e.m[2], function(t) {
+                                    if (!t) return -1 === n.channels.indexOf(e.m[2]) ? n.channels.push(e.m[2]) : "";
+                                }) : -1 === n.channels.indexOf(e.m[2]) ? n.channels.push(e.m[2]) : "";
                             },
                             u: function() {
                                 return -1 !== n.channels.indexOf(e.m[2]) ? n.channels.splice(n.channels.indexOf(e.m[2]), 1) : "";
