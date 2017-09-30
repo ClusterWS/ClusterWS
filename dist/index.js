@@ -68,10 +68,8 @@ module.exports = function(e) {
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var n = t(3), s = t(4), u = t(2);
+    var n = t(2), s = t(3), u = t(4);
     r.processMaster = o;
-}, function(e, r) {
-    e.exports = require("cluster");
 }, function(e, r, t) {
     "use strict";
     function o(e) {
@@ -95,4 +93,6 @@ module.exports = function(e) {
     Object.defineProperty(r, "__esModule", {
         value: !0
     }), r.processMessage = o;
+}, function(e, r) {
+    e.exports = require("cluster");
 } ]);

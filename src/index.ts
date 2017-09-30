@@ -1,4 +1,4 @@
-import { processMaster } from './modules/process.master'
+import { processMaster } from './modules/master.process'
 import { Options, UserOptions } from './modules/common/interfaces'
 
 export class ClusteWS {
