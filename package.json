@@ -5,40 +5,20 @@
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
-    "debug": "npm run build:dev",
-    "build": "webpack",
-    "build:dev": "cross-env WEBPACK_ENV=debug webpack",
-    "publish": "npm run build && cd dist && npm publish && cd .."
+    "build": "webpack --config ./.builder/webpack.config.js",
+    "build:watch": "webpack --watch --config ./.builder/webpack.config.js"
   },
   "license": "MIT",
-  "keywords": [
-    "node",
-    "websocket",
-    "socket",
-    "cluster",
-    "nodejs",
-    "websocketcluster",
-    "clusterws",
-    "js",
-    "scale",
-    "framework"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/goriunov/ClusterWS"
   },
   "devDependencies": {
-    "@types/node": "^8.0.5",
-    "@types/uws": "^0.13.0",
-    "copy-pkg-json-webpack-plugin": "0.0.29",
-    "copy-webpack-plugin": "^4.0.1",
-    "cross-env": "^5.0.1",
-    "express": "^4.15.4",
-    "ts-loader": "^2.2.1",
-    "typescript": "^2.4.1",
-    "webpack": "^3.1.0"
-  },
-  "dependencies": {
-    "uws": "^8.14.1"
+    "@types/node": "^8.0.31",
+    "awesome-typescript-loader": "^3.2.3",
+    "tslint": "^5.7.0",
+    "tslint-loader": "^3.5.3",
+    "typescript": "^2.5.3",
+    "webpack": "^3.6.0"
   }
 }
