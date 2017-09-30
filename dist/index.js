@@ -170,7 +170,7 @@ module.exports = function(e) {
         function t(t, n) {
             var r = e.call(this) || this;
             return r.port = t, r.buffer = "", t instanceof s.Socket ? r.socket = t : r.socket = s.connect(t, n), 
-            r.socket.on("end", function() {
+            r.socket.setKeepAlive(!0, 2e4), r.socket.on("end", function() {
                 return r.emit("disconnect");
             }), r.socket.on("error", function(e) {
                 return r.emit("error", e);
