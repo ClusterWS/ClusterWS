@@ -33,7 +33,7 @@ export function socketDecodeMessages(socket: Socket, message: any): any {
             case 's':
                 const subscribe: any = (): any => socket.channels.indexOf(message['#'][2]) !== -1 ? socket.channels.push(message['#'][2]) : ''
                 if (!socket.server.socketServer.middleware.onSubscribe) return subscribe()
-                
+
                 return socket.server.socketServer.middleware.onSubscribe(socket, message['#'][2], (decline: any): any => decline ? '' : subscribe())
             case 'u':
                 const index: number = socket.channels.indexOf(message['#'][2])
