@@ -14,7 +14,7 @@ ClusterWS has been written in TypeScript and compiling down to es5 modules. All 
 
 1. [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
 2. Swift IOS (coming soon)
-3. Java Android (coming soon)
+3. [Java Android](https://github.com/Yegorisa/ClusterWS-Client-Java)
 
 ### Installation:
 
