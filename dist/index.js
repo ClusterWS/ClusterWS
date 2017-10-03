@@ -243,7 +243,7 @@ module.exports = function(e) {
             }), f.on("message", function(e) {
                 return "#0" === e ? f.send("#1") : r.socketServer.emitter.emit("#publish", JSON.parse(e));
             }), f.on("disconnect", function() {
-                return s.logError("Something went wrong broker has been disconnected");
+                return s.logError("Something went wrong, broker has been disconnected");
             }), this.socketServer = {
                 middleware: {},
                 emitter: new u.EventEmitter(),
@@ -296,7 +296,8 @@ module.exports = function(e) {
             }), this.socket.on("error", function(e) {
                 return r.events.emit("error", e);
             }), this.socket.on("close", function(e, t) {
-                r.events.emit("disconnect", e, t);
+                r.events.emit("disconnect", e, t), r.server.socketServer.emitter.removeListener("#publish", i);
+                for (var n in r) r.hasOwnProperty(n) && delete r[n];
             });
         }
         return e.prototype.on = function(e, t) {

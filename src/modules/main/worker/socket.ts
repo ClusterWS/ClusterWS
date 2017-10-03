@@ -35,7 +35,7 @@ export class Socket {
             this.events.emit('disconnect', code, reason)
             this.server.socketServer.emitter.removeListener('#publish', onPublish)
 
-            for (let key in this) {
+            for (const key in this) {
                 if (this.hasOwnProperty(key)) delete this[key]
             }
         })
