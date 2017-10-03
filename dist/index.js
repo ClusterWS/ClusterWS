@@ -50,9 +50,67 @@ module.exports = function(e) {
             data: r
         });
     }
+    function s(e, r, t) {
+        switch (t) {
+          case "ping":
+            return e;
+
+          case "emit":
+            return JSON.stringify({
+                "#": [ "e", e, r ]
+            });
+
+          case "publish":
+            return JSON.stringify({
+                "#": [ "p", e, r ]
+            });
+
+          case "system":
+            switch (e) {
+              case "subsribe":
+                return JSON.stringify({
+                    "#": [ "s", "s", r ]
+                });
+
+              case "unsubscribe":
+                return JSON.stringify({
+                    "#": [ "s", "u", r ]
+                });
+
+              case "configuration":
+                return JSON.stringify({
+                    "#": [ "s", "c", r ]
+                });
+            }
+        }
+    }
+    function i(e, r) {
+        switch (r["#"][0]) {
+          case "e":
+            return e.events.emit(r["#"][1], r["#"][2]);
+
+          case "p":
+            return -1 !== e.channels.indexOf(r["#"][1]) ? e.server.socketServer.publish(r["#"][1], r["#"][2]) : "";
+
+          case "s":
+            switch (r["#"][1]) {
+              case "s":
+                var t = function() {
+                    return -1 !== e.channels.indexOf(r["#"][2]) ? e.channels.push(r["#"][2]) : "";
+                };
+                return e.server.socketServer.middleware.onSubscribe ? e.server.socketServer.middleware.onSubscribe(e, r["#"][2], function(e) {
+                    return e ? "" : t();
+                }) : t();
+
+              case "u":
+                var n = e.channels.indexOf(r["#"][2]);
+                if (-1 !== n) return e.channels.splice(n, 1);
+            }
+        }
+    }
     Object.defineProperty(r, "__esModule", {
         value: !0
-    }), r.processMessage = n, r.brokerMessage = o;
+    }), r.processMessage = n, r.brokerMessage = o, r.socketEncodeMessages = s, r.socketDecodeMessages = i;
 }, function(e, r) {
     e.exports = require("cluster");
 }, function(e, r, t) {
