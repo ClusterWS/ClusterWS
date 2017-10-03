@@ -1,3 +1,5 @@
+import { isMaster } from 'cluster'
+import { processWorker } from './modules/worker.process'
 import { processMaster } from './modules/master.process'
 import { Options, UserOptions } from './modules/common/interfaces'
 
@@ -11,6 +13,7 @@ export class ClusteWS {
             pingInterval: configurations.pingInterval || 20000,
             restartOnFail: configurations.restartOnFail || false
         }
-        processMaster(options)
+
+        isMaster ? processMaster(options) : processWorker(options)
     }
 }

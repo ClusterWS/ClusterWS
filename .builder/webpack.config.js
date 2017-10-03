@@ -1,5 +1,7 @@
 const path = require('path')
 const webpack = require('webpack')
+const nodeExternals = require('webpack-node-externals')
+
 
 let configs = {
     entry: {
@@ -14,6 +16,7 @@ let configs = {
         libraryTarget: 'commonjs2'
     },
     target: 'node',
+    externals: [nodeExternals()],
     module: {
         loaders: [
             {
