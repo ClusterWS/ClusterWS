@@ -6,7 +6,6 @@ import { createServer } from 'http'
 import { EventEmitter } from '../../common/emitter'
 import { processMessage, brokerMessage } from '../../common/messages'
 
-
 declare let process: any
 
 export class Worker {

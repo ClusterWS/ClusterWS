@@ -3,7 +3,6 @@ import { Socket, connect } from 'net'
 
 export class TcpSocket extends EventEmitter {
     socket: Socket
-    buffer: string
 
     constructor(socketOrPort: any, host?: string) {
         super()
@@ -16,7 +15,7 @@ export class TcpSocket extends EventEmitter {
         this.socket.on('error', (err: any): void => this.emit('error', err))
         this.socket.on('connect', (): void => this.emit('connect'))
 
-        this.buffer = ''
+        let buffer: String = ''
 
         this.socket.on('data', (data: any): void => {
             let next: number
@@ -25,12 +24,12 @@ export class TcpSocket extends EventEmitter {
             data = data.toString('utf8')
 
             while ((next = data.indexOf('\n', prev)) > -1) {
-                this.buffer += data.substring(prev, next)
-                this.emit('message', this.buffer)
-                this.buffer = ''
+                buffer += data.substring(prev, next)
+                this.emit('message', buffer)
+                buffer = ''
                 prev = next + 1
             }
-            this.buffer += data.substring(prev)
+            buffer += data.substring(prev)
         })
     }
 
