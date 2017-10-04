@@ -32,6 +32,7 @@ export class Socket {
 
         this.socket.on('error', (err: any): void => this.events.emit('error', err))
         this.socket.on('close', (code: number, reason: any): void => {
+            clearInterval(pingInterval)
             this.events.emit('disconnect', code, reason)
             this.server.socketServer.emitter.removeListener('#publish', onPublish)
 

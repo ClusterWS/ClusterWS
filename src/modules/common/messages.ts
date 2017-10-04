@@ -31,9 +31,9 @@ export function socketDecodeMessages(socket: Socket, message: any): any {
         case 'p': return socket.channels.indexOf(message['#'][1]) !== -1 ? socket.server.socketServer.publish(message['#'][1], message['#'][2]) : ''
         case 's': switch (message['#'][1]) {
             case 's':
-                const subscribe: any = (): any => socket.channels.indexOf(message['#'][2]) !== -1 ? socket.channels.push(message['#'][2]) : ''
+                const subscribe: any = (): any => socket.channels.indexOf(message['#'][2]) === -1 ? socket.channels.push(message['#'][2]) : ''
                 if (!socket.server.socketServer.middleware.onSubscribe) return subscribe()
-
+                
                 return socket.server.socketServer.middleware.onSubscribe(socket, message['#'][2], (decline: any): any => decline ? '' : subscribe())
             case 'u':
                 const index: number = socket.channels.indexOf(message['#'][2])

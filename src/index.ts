@@ -3,8 +3,13 @@ import { processWorker } from './modules/worker.process'
 import { processMaster } from './modules/master.process'
 import { Options, UserOptions } from './modules/common/interfaces'
 
-export class ClusteWS {
+export class ClusterWS {
+    private static instance: ClusterWS
+
     constructor(configurations: UserOptions) {
+        if (ClusterWS.instance) return
+        ClusterWS.instance = this
+
         const options: Options = {
             port: configurations.port || 80,
             worker: configurations.worker,
@@ -13,7 +18,6 @@ export class ClusteWS {
             pingInterval: configurations.pingInterval || 20000,
             restartOnFail: configurations.restartOnFail || false
         }
-
         isMaster ? processMaster(options) : processWorker(options)
     }
 }

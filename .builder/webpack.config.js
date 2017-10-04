@@ -1,6 +1,8 @@
 const path = require('path')
 const webpack = require('webpack')
 const nodeExternals = require('webpack-node-externals')
+const CopyPkgJsonPlugin = require("copy-pkg-json-webpack-plugin")
+const CopyWebpackPlugin = require("copy-webpack-plugin")
 
 let configs = {
     entry: {
@@ -41,9 +43,14 @@ let configs = {
             'process.env.NODE_ENV': '"production"'
         }),
         new webpack.optimize.UglifyJsPlugin({
-            comments: false,
             beautify: true
-        })
+        }),
+        new CopyPkgJsonPlugin({
+            remove: ['devDependencies', 'scripts']
+        }),
+        new CopyWebpackPlugin([{
+            from: 'README.md'
+        }])
     ]
 }
 

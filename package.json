@@ -1,7 +1,7 @@
 {
   "name": "clusterws",
   "version": "1.0.0",
-  "description": "ClusterWS - minimal node js http and real-time framework which allows to scale WebSocket (uWS - one of the fastest WebSocket libraries) between node clusters and utilize all available CPU",
+  "description": "ClusterWS - is a minimal Node JS http & real-time framework which allows to scale WebSocket (uWS - one of the fastest WebSocket libraries) between Node JS Clusters and utilize all available CPU.",
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
@@ -17,6 +17,8 @@
     "@types/node": "^8.0.31",
     "@types/uws": "^0.13.0",
     "awesome-typescript-loader": "^3.2.3",
+    "copy-pkg-json-webpack-plugin": "0.0.29",
+    "copy-webpack-plugin": "^4.1.0",
     "tslint": "^5.7.0",
     "tslint-loader": "^3.5.3",
     "typescript": "^2.5.3",

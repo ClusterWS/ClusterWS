@@ -96,7 +96,7 @@ module.exports = function(e) {
             switch (t["#"][1]) {
               case "s":
                 var r = function() {
-                    return -1 !== e.channels.indexOf(t["#"][2]) ? e.channels.push(t["#"][2]) : "";
+                    return -1 === e.channels.indexOf(t["#"][2]) ? e.channels.push(t["#"][2]) : "";
                 };
                 return e.server.socketServer.middleware.onSubscribe ? e.server.socketServer.middleware.onSubscribe(e, t["#"][2], function(e) {
                     return e ? "" : r();
@@ -194,20 +194,23 @@ module.exports = function(e) {
         value: !0
     });
     var n = r(3), o = r(7), s = r(13), i = function() {
-        function e(e) {
-            var t = {
-                port: e.port || 80,
-                worker: e.worker,
-                workers: e.workers || 1,
-                brokerPort: e.brokerPort || 9346,
-                pingInterval: e.pingInterval || 2e4,
-                restartOnFail: e.restartOnFail || !1
-            };
-            n.isMaster ? s.processMaster(t) : o.processWorker(t);
+        function e(t) {
+            if (!e.instance) {
+                e.instance = this;
+                var r = {
+                    port: t.port || 80,
+                    worker: t.worker,
+                    workers: t.workers || 1,
+                    brokerPort: t.brokerPort || 9346,
+                    pingInterval: t.pingInterval || 2e4,
+                    restartOnFail: t.restartOnFail || !1
+                };
+                n.isMaster ? s.processMaster(r) : o.processWorker(r);
+            }
         }
         return e;
     }();
-    t.ClusteWS = i;
+    t.ClusterWS = i;
 }, function(e, t, r) {
     "use strict";
     function n(e) {
@@ -280,8 +283,7 @@ module.exports = function(e) {
                 return -1 !== r.channels.indexOf(e.channel) ? r.send(e.channel, e.data, "publish") : "";
             };
             this.server.socketServer.emitter.on("#publish", i);
-            var c = 0;
-            setInterval(function() {
+            var c = 0, u = setInterval(function() {
                 if (c++ > 2) return r.disconnect(3001, "Did not get pongs");
                 r.send("#0", null, "ping");
             }, this.server.options.pingInterval);
@@ -296,7 +298,7 @@ module.exports = function(e) {
             }), this.socket.on("error", function(e) {
                 return r.events.emit("error", e);
             }), this.socket.on("close", function(e, t) {
-                r.events.emit("disconnect", e, t), r.server.socketServer.emitter.removeListener("#publish", i);
+                clearInterval(u), r.events.emit("disconnect", e, t), r.server.socketServer.emitter.removeListener("#publish", i);
                 for (var n in r) r.hasOwnProperty(n) && delete r[n];
             });
         }
