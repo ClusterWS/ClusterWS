@@ -165,8 +165,6 @@ function Worker() {
     // Express code as usualy
     httpServer.on('request', app) // for Koa use app.callback()
 
-
-
     /**
         Subscription middleware
         socket: Socket - the instanse of Socket which is trying to subscribe
