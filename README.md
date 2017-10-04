@@ -9,8 +9,8 @@ ClusterWS - is a minimal **Node JS http & real-time** framework which allows to 
 
 ### ClusterWS client libraries:
 1. [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
-2. [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
-3. [Java](https://github.com/Yegorisa/ClusterWS-Client-Java)
+2. [Java](https://github.com/Yegorisa/ClusterWS-Client-Java)
+3. [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
 
 ### Installation
 To install ClusterWS run:
@@ -40,12 +40,12 @@ function Worker() {
 *All available options of ClusterWS:*
 ```js
 {
-    worker: '{function} must be provided!',
-    workers: '{number} number of workers (default 1)',
-    port: '{number} port on which main process will listen (default 80)',
-    restartOnFail: '{bool} in development (dafault false)',
-    brokerPort: '{number} better to do not change it, only in case if port already in use (default 9346)',
-    pingInterval: '{number}  (default 20000ms)'
+    worker: '{function} will be scale between all clusters. (must be provided)',
+    workers: '{number} amount of workers/clusters. (default 1)',
+    port: '{number} port on which main process will listen. (default 80)',
+    restartOnFail: '{bool} in development. (dafault false)',
+    brokerPort: '{number} dont change if it is not needed. (default 9346)',
+    pingInterval: '{number} how often ping will be send to the client. (default 20000) in ms'
 }
 ```
 
