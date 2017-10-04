@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "outDir": "../dist",
+        "strict": true,
+        "removeComments": true,
+        "moduleResolution": "node"
+    },
+    "files": [
+        "../node_modules/@types/node/index.d.ts",
+        "../node_modules/@types/uws/index.d.ts"   
+    ],
+    "include": [
+        "../src/**/*.ts"
+    ],
+    "exclude": [
+        "../node_modules",
+        "../.builder",
+        "../dist"     
+    ]
+}

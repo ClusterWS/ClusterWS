@@ -1,197 +1,191 @@
 # ClusterWS (Node Cluster WebSocket)
-
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
-
-ClusterWS - is a minimal **Node JS http & real-time** framework which allows to scale WebSocket ([uWS](https://github.com/uNetworking/uWebSockets) - one of the fastest WebSocket libraries) between node js clusters and utilize all available CPU.
 
 ![](https://u.cubeupload.com/goriunovd/6cdmain.gif)
 
-ClusterWS has been written in TypeScript and compiling down to es5 modules. All development code can be found in `src/` folder and compiled code in `dist/`.
+ClusterWS - is a minimal **Node JS http & real-time** framework which allows to scale WebSocket ([uWS](https://github.com/uNetworking/uWebSockets) - one of the fastest WebSocket libraries) between [Node JS Clusters](https://nodejs.org/api/cluster.html) and utilize all available CPU.
 
-[ClusterWS CHANGELOG.](./information/CHANGELOG.md)
+*Node JS Cluster - is a single instance of Node JS runs in a single thread. To take advantage of multi-core systems the user will sometimes want to launch a cluster of Node JS processes to handle the load. To learn more about Node JS Cluster read official Node JS docs [here](https://nodejs.org/api/cluster.html). **Also Worker === Cluster.***
 
 ### ClusterWS client libraries:
-
 1. [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
-2. Swift IOS (coming soon)
-3. [Java Android](https://github.com/Yegorisa/ClusterWS-Client-Java)
+2. [Java](https://github.com/Yegorisa/ClusterWS-Client-Java)
+3. [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
 
-### Installation:
-
-ClusterWS `npm` installation: 
-
+### Installation
+To install ClusterWS run:
 ```js
 npm install --save clusterws
 ```
 
-## Setting server
-
-### 1. Creating server file with basic stracture
-
-Create file `'server.js'` and follow next: 
-
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server1.gif"></div>
-
-#### **Code:**
-
+## Setting Up
+### 1. Creating server
+First of all you need to create `server.js` file with: 
 ```js
-var ClusterWS = require('clusterws').ClusterWS
+var cws = require('clusterws').ClusterWS
 
-var clusterWS = new ClusterWS({
+var cws = new ClusterWS({
     worker: Worker
 })
 
-function Worker() {}
-```
+function Worker() { 
+    var httpServer = this.httpServer
+    var socketServer = this.socketServer
 
-*ClusterWS all options:*
-
-```js
-{
-    worker: '{function} must be provided!',
-    workers: '{number} number of workers (default 1)',
-    port: '{number} port on which main process will listen (default 80)',
-    restartOnFail: '{bool} in development (dafault false)',
-    brokerPort: '{number} better to do not change it, only in case if port already in use (default 9346)',
-    pingInterval: '{number}  (default 20000ms)'
+    // Listen on connection to the WebSocket
+    socketServer.on('connection', function(socket){})
 }
 ```
 
-### 2. Connecting socket server
-
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server2.gif"></div>
-
-#### **Code:**
-
-Insert it in `'Worker'` function
-
+*All available options of ClusterWS:*
 ```js
-var socketServer = this.socketServer
-
-socketServer.on('connection', function(socket){})
+{
+    worker: '{function} will be scale between all clusters. (must be provided)',
+    workers: '{number} amount of workers/clusters. (default 1)',
+    port: '{number} port on which main process will listen. (default 80)',
+    restartOnFail: '{bool} in development. (dafault false)',
+    brokerPort: '{number} dont change if it is not needed. (default 9346)',
+    pingInterval: '{number} how often ping will be send to the client. (default 20000) in ms'
+}
 ```
 
-### 3. Connecting http server (express)
-
-Before connecting `express` to the ClusterWS you have to install it with: 
-
+### 2. Connecting http library
+You can connect any http library you like *Express*, *Koa*, *etc.* With `httpServer` method:
 ```js
-npm install --save express
-```
-
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server3.gif"></div>
-
-#### **Code:**
-
-Make import at the top of the `'server.js'` file:
-
-```js
+var cws = require('clusterws').ClusterWS
 var express = require('express')
+
+var cws = new ClusterWS({
+    worker: Worker
+})
+
+function Worker() { 
+    var httpServer = this.httpServer
+    var socketServer = this.socketServer
+
+    var app = express()
+    // Express code as usualy
+    httpServer.on('request', app) // for koa use app.callback()
+
+    // Listen on connection to the WebSocket
+    socketServer.on('connection', function(socket){})
+}
 ```
 
-then in the `'Worker'` function add:
+**Done you have set up basic server** :sunglasses:
 
-```js
-var httpServer = this.httpServer
-var app = express()
-
-// any usuall express code 
-
-httpServer.on('request', app)
-
+To start server run:
 ```
-
-### 4. Run server
-
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server4.gif"></div>
-
-To run our server just type in `'cmd/terminal'`
-
-```js
 node server.js
 ```
+*After that you should see blue text in the terminal*
 
-If you see blue color text like on gif above then
-
-#### Congratulations you have set up basic server :sunglasses:
-
-## Socket
-
-All code will be inside of the :
-
-```js 
+## Handle Sockets
+All code below will be written inside of 
+```js
 socketServer.on('connection', function(socket){
-    // HERE  
-});
-```
-
-### 1. Listen on events from the connected user:
-
-To listen on events use `'on'` method which is provided by socket:
-
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server5.gif"></div>
-
-#### **Code:**
-
-```js
-socket.on('myevent', function(data){
-    //write what to do if this event fires
+    // Here
 })
 ```
 
-*You can listen on any events which you emit from the clients and you can also listen on **Reserved events** which are emitted automatically by the server*
+### 1. Listen on events
+To listen on events from the connected client use `on` method witch is provided by `socket`
+```js
+/**
+    event name: string - can be any string you wish
+    data: any - is what you send from the client
+*/
+socket.on('event name', function(data){
+    // in here you can write any logic
+})
+```
 
-*Data which you get in `function(data){}` is what you send with events, you can send `any type of data`.*
-
-***Reserved events**: `'connection'`, `'error'`, `'disconnect'`*
+*Also `socket` gets **Reserved Events** such as `'error'` and `'disconnect'`*
 
 ```js
+
+/**
+    error: any - display the problem with your weboscket
+*/
 socket.on('error', function(err){
-    //write what to do on error
+    // in here you can write any logic
 })
 
-socket.on('disconnect', function(code, msg){
-    //write what to do on disconnect
+/**
+    code: number - represent the reason in number
+    reason: string - reason why your socket was disconnected
+*/
+socket.on('disconnect', function(code, reason){
+    // in here you can write any logic
 })
 ```
 
-### 2. Emit an event with or without data to the user:
-
-To emit events to the connected users you should use `'send'` method which is provided by socket:
-
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server6.gif"></div>
-
-#### **Code:**
-
+### 2. Send events
+To send events from the server to the connected client use `send` method witch is provided by `socket`
 ```js
-socket.send('myevent', 'any type of data')
+/**
+    event name: string - can be any string you wish (client must listen on this event name)
+    data: any - is what you want to send to the client
+*/
+socket.send('event name', data)
 ```
 
-*`'any type of data'` can be any type you want such as `array`, `string`, `object`, `...`*
+*Avoid emitting **Reserved Events** such as `'error'` and `'disconnect'`. Also avoid emitting `'connect'` event and events with `'#'` at the start.*
 
-***Try to avoid emitting reserved events**: `'connection'`, `'error'`, `'disconnect'`, or any events which start with `'#'`*
+## Pub/Sub
+To make WebSocket scalable between clusters we need to use `Pub/Sub system`. Why? Because it is easy. This library does not have `broadcast` function, because `broadcast` is not scalable between Node JS Clusters. With `ClusterWS Pub/Sub System` you can implement your own `broadcast` very easy, also you can make different channels and group different people in there or you can give each user his/her own(private) channel.
 
-## Pub/Sub System
+`ClusterWS Server` library does not allow to subscribe user from inside (bad practice), but you can learn about how to subscribe to the channels in `client libraries` (shown above)
 
-The publish-subscribe pattern (or pub/sub, for short) is messaging pattern where senders of messages (`publishers`), do not program the messages to be sent directly to specific receivers (`subscribers`). Instead, the programmer `publishes` messages (events), without any knowledge of any subscribers there may be. [Author](https://www.toptal.com/ruby-on-rails/the-publish-subscribe-pattern-on-rails)
-
-`ClusterWS` contains own written `Pub/Sub system` which allows to send messages between node js workers to every user who is subscribed to the channel.
-
-Each connected client can have as many channels as you want (I don't think that it will be more then 100 - 200 channels per client). Each client can even have their own unique channels. It all depends from how you want to design your application. Server does not allow to subscribe clients to the channels from inside of the server. Only request from the client will subscribe him to the channel, therefore all information about subscription to the channels can be found in client libraries.
-
-
-To publish data from the server to the channels you can use `'publish'` method which is provided by `'socketServer'`:
-
-<div style="text-align:center"><img  src ="https://u.cubeupload.com/goriunovd/server7.gif"></div>
-
-#### **Code:**
-
+### 1. Publish message to the channel
+To publish message from the server to all users who are subscribed to the channel you should use `publish` method which is provided by `socketServer`
 ```js
-socketServer.publish('mychannel', 'any type of data')
+/**
+    channel name: string - the name of the channel on which you wan to send data
+    data: any - is what you want to send to the clients you are subscribed to the channel
+*/
+socketServer.publish('channel name', data)
 ```
 
-*`'any type of data'` can be any type you want such as `array`, `string`, `object`, `...`*
+### 2. Handle clients subscription (allow/reject)
+To be able to control who is connecting to the channel you can use middleware function
+```js
+var cws = require('clusterws').ClusterWS
+var express = require('express')
 
-### This document is under development
+var cws = new ClusterWS({
+    worker: Worker
+})
+
+function Worker() { 
+    var httpServer = this.httpServer
+    var socketServer = this.socketServer
+
+    var app = express()
+    // Express code as usualy
+    httpServer.on('request', app) // for Koa use app.callback()
+
+    /**
+        Subscription middleware
+        socket: Socket - the instanse of Socket which is trying to subscribe
+        channelName: string - channel to which socket is trying to subscribe
+        next: function - is using to allow or reject subsciption
+    */
+    socketServer.middleware.onSubscribe = function(socket, channelName, next){
+        // this will allow to subscribe
+        next() 
+        next(false)
+        // this will reject subsciption
+        next('any thing excep of false')
+    }
+
+
+    // Listen on connection to the WebSocket
+    socketServer.on('connection', function(socket){})
+}
+```
+
+
+*Docs is still under development.*
 
 ## Happy codding !!! :sunglasses:

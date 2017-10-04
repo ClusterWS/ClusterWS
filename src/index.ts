@@ -1,26 +1,23 @@
-import { Options } from './lib/options'
 import { isMaster } from 'cluster'
-import { processMaster } from './lib/processMaster'
-import { processWorker } from './lib/processWorker'
+import { processWorker } from './modules/worker.process'
+import { processMaster } from './modules/master.process'
+import { Options, UserOptions } from './modules/common/interfaces'
 
-/**
- * Main file which get configurations from the user,
- * check them and pass it
- * to the worker and master
- *
- * If configurations is not provided then make
- * it empty object.
- *
- * If instance already existdo nothing
- */
 export class ClusterWS {
     private static instance: ClusterWS
 
-    constructor(configurations: any) {
+    constructor(configurations: UserOptions) {
         if (ClusterWS.instance) return
         ClusterWS.instance = this
 
-        let options = new Options(configurations || {})
+        const options: Options = {
+            port: configurations.port || 80,
+            worker: configurations.worker,
+            workers: configurations.workers || 1,
+            brokerPort: configurations.brokerPort || 9346,
+            pingInterval: configurations.pingInterval || 20000,
+            restartOnFail: configurations.restartOnFail || false
+        }
         isMaster ? processMaster(options) : processWorker(options)
     }
 }

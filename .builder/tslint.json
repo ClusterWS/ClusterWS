@@ -1,0 +1,106 @@
+{
+    "rules": {
+        "no-any": false,
+        "no-empty-interface": true,
+        "no-unnecessary-type-assertion": true,
+        "only-arrow-functions": [
+            true,
+            "allow-declarations",
+            "allow-named-functions"
+        ],
+        "promise-function-async": true,
+        "typedef": [
+            true,
+            "call-signature",
+            "arrow-call-signature",
+            "parameter",
+            "arrow-parameter",
+            "property-declaration",
+            "variable-declaration",
+            "member-variable-declaration",
+            "object-destructuring",
+            "array-destructuring"
+        ],
+        "typedef-whitespace": [
+            true,
+            {
+                "call-signature": "nospace",
+                "index-signature": "nospace",
+                "parameter": "nospace",
+                "property-declaration": "nospace",
+                "variable-declaration": "nospace"
+            },
+            {
+                "call-signature": "onespace",
+                "index-signature": "onespace",
+                "parameter": "onespace",
+                "property-declaration": "onespace",
+                "variable-declaration": "onespace"
+            }
+        ],
+        "curly": [
+            true,
+            "ignore-same-line"
+        ],
+        "no-empty": [
+            true,
+            "allow-empty-catch"
+        ],
+        "no-eval": true,
+        "no-var-keyword": true,
+        "cyclomatic-complexity": [
+            true,
+            20
+        ],
+        "no-duplicate-imports": true,
+        "arrow-return-shorthand": [
+            true,
+            "multiline"
+        ],
+        "class-name": true,
+        "import-spacing": true,
+        "jsdoc-format": true,
+        "newline-before-return": true,
+        "no-unnecessary-callback-wrapper": true,
+        "return-undefined": true,
+        "object-literal-shorthand": true,
+        "object-literal-key-quotes": [
+            true,
+            "consistent"
+        ],
+        "number-literal-format": true,
+        "one-variable-per-declaration": [
+            true,
+            "ignore-for-loop"
+        ],
+        "prefer-method-signature": true,
+        "prefer-switch": [
+            true,
+            {
+                "min-cases": 2
+            }
+        ],
+        "switch-final-break": [
+            true,
+            "always"
+        ],
+        "whitespace": [
+            true,
+            "check-branch",
+            "check-decl",
+            "check-operator",
+            "check-module",
+            "check-separator",
+            "check-rest-spread",
+            "check-type",
+            "check-typecast",
+            "check-type-operator",
+            "check-preblock"
+        ],
+        "prefer-const": true,
+        "semicolon": [
+            true,
+            "never"
+        ]
+    }
+}
