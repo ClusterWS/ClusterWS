@@ -105,7 +105,7 @@ socket.on('event name', function(data){
 ```js
 
 /**
-    error: any - display the problem with your weboscket
+    err: any - display the problem with your weboscket
 */
 socket.on('error', function(err){
     // in here you can write any logic

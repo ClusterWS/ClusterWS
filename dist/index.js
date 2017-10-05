@@ -287,7 +287,9 @@ module.exports = function(e) {
                 if (c++ > 2) return r.disconnect(3001, "Did not get pongs");
                 r.send("#0", null, "ping");
             }, this.server.options.pingInterval);
-            this.events = new o.EventEmitter(), this.channels = [], this.socket.on("message", function(e) {
+            this.send("configuration", {
+                ping: t.options.pingInterval
+            }, "system"), this.events = new o.EventEmitter(), this.channels = [], this.socket.on("message", function(e) {
                 if ("#1" === e) return c = 0;
                 try {
                     e = JSON.parse(e);
