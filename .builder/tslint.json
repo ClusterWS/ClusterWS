@@ -60,7 +60,7 @@
         "class-name": true,
         "import-spacing": true,
         "jsdoc-format": true,
-        "newline-before-return": true,
+        "newline-before-return": false,
         "no-unnecessary-callback-wrapper": true,
         "return-undefined": true,
         "object-literal-shorthand": true,
