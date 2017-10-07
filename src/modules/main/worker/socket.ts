@@ -17,6 +17,8 @@ export class Socket {
             this.send('#0', null, 'ping')
         }, this.server.options.pingInterval)
 
+        this.send('configuration', { ping: server.options.pingInterval }, 'system')
+
         this.events = new EventEmitter()
         this.channels = []
 
