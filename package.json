@@ -7,7 +7,7 @@
   "scripts": {
     "build": "webpack --config ./.builder/webpack.config.js",
     "build:watch": "webpack --watch --config ./.builder/webpack.config.js",
-    "publish": "npm run build&& cd dist && npm publish && cd .."    
+    "publish": "npm run build && cd dist && npm publish && cd .."    
   },
   "license": "MIT",
   "repository": {
