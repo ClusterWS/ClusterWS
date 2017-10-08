@@ -3,17 +3,41 @@ import { Socket, connect } from 'net'
 
 export class TcpSocket extends EventEmitter {
     socket: Socket
+    backlog: any[]
+    isSocket: Boolean
+    inReconnect: Boolean
 
-    constructor(socketOrPort: any, host?: string) {
+    constructor(public socketOrPort: any, public host?: string) {
         super()
 
-        socketOrPort instanceof Socket ? this.socket = socketOrPort : this.socket = connect(socketOrPort, host)
+        this.backlog = []
+        this.isSocket = this.socketOrPort instanceof Socket
+        this.create()
+    }
+
+    create(): void {
+        this.isSocket ? this.socket = this.socketOrPort : this.socket = connect(this.socketOrPort, this.host)
 
         this.socket.setKeepAlive(true, 20000)
 
-        this.socket.on('end', (): void => this.emit('disconnect'))
-        this.socket.on('error', (err: any): void => this.emit('error', err))
-        this.socket.on('connect', (): void => this.emit('connect'))
+        this.socket.on('end', (): void => {
+            this.emit('end')
+            this.reconnect()
+        })
+        this.socket.on('error', (err: any): void => {
+            this.emit('error', err)
+            this.reconnect()
+        })
+        this.socket.on('close', (): void => {
+            this.emit('disconnect')
+            this.reconnect()
+        })
+        this.socket.on('timeout', (): void => {
+            this.emit('timeout')
+            this.reconnect()
+        })
+
+        this.socket.on('connect', (): void => this.connect())
 
         let buffer: String = ''
 
@@ -33,7 +57,24 @@ export class TcpSocket extends EventEmitter {
         })
     }
 
-    send(data: any): void {
-        this.socket.write(data + '\n')
+    connect(): void {
+        this.emit('connect')
+        if (this.backlog.length) {
+            const array: any[] = Array.prototype.slice.call(this.backlog)
+            this.backlog.length = 0
+            for (let i: number = 0, len: number = array.length; len > i; i++) this.socket.write(array[i])
+        }
+    }
+
+    send(data: any): any {
+        if (this.socket.writable) {
+            return this.socket.write(data + '\n')
+        }
+        this.backlog.push(data + '\n')
+    }
+
+    reconnect(): void {
+        if (this.isSocket) return
+        this.create()
     }
 }
