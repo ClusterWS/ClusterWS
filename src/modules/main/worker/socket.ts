@@ -13,7 +13,7 @@ export class Socket {
 
         let lost: number = 0
         const pingInterval: any = setInterval(() => {
-            if (lost++ > 2) return this.disconnect(3001, 'Did not get pongs')
+            if (lost++ > 2) return this.disconnect(4001, 'Did not get pongs')
             this.send('#0', null, 'ping')
         }, this.server.options.pingInterval)
 

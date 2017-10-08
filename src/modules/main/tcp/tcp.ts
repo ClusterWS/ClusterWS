@@ -12,7 +12,6 @@ export class TcpSocket extends EventEmitter {
 
         this.backlog = []
         this.isSocket = this.socketOrPort instanceof Socket
-
         this.create()
     }
 

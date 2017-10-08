@@ -299,7 +299,7 @@ module.exports = function(e) {
             };
             this.server.socketServer.emitter.on("#publish", i);
             var c = 0, u = setInterval(function() {
-                if (c++ > 2) return r.disconnect(3001, "Did not get pongs");
+                if (c++ > 2) return r.disconnect(4001, "Did not get pongs");
                 r.send("#0", null, "ping");
             }, this.server.options.pingInterval);
             this.send("configuration", {
