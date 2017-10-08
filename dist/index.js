@@ -289,7 +289,6 @@ module.exports = function(e) {
                 ping: r.options.pingInterval
             }, "system"), this.events = new o.EventEmitter(), this.channels = [], this.socket.on("message", function(e) {
                 if ("#1" === e) return c = 0;
-                console.log(e);
                 try {
                     e = JSON.parse(e);
                 } catch (e) {
