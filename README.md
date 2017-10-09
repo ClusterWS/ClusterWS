@@ -177,7 +177,7 @@ function Worker() {
         next() 
         next(false)
         // this will reject subsciption
-        next('any thing excep of false')
+        next('any thing except for false')
     }
 
 
@@ -189,4 +189,4 @@ function Worker() {
 
 *Docs is still under development.*
 
-## Happy codding !!! :sunglasses:
+## Happy coding !!! :sunglasses:
