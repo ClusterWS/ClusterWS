@@ -23,7 +23,7 @@ npm install --save clusterws
 ### 1. Creating server
 First of all you need to create `server.js` file with: 
 ```js
-var cws = require('clusterws').ClusterWS
+var ClusterWS = require('clusterws').ClusterWS
 
 var cws = new ClusterWS({
     worker: Worker
@@ -53,7 +53,7 @@ function Worker() {
 ### 2. Connecting http library
 You can connect any http library you like *Express*, *Koa*, *etc.* With `httpServer` method:
 ```js
-var cws = require('clusterws').ClusterWS
+var ClusterWS = require('clusterws').ClusterWS
 var express = require('express')
 
 var cws = new ClusterWS({
@@ -151,7 +151,7 @@ socketServer.publish('channel name', data)
 ### 2. Handle clients subscription (allow/reject)
 To be able to control who is connecting to the channel you can use middleware function
 ```js
-var cws = require('clusterws').ClusterWS
+var ClusterWS = require('clusterws').ClusterWS
 var express = require('express')
 
 var cws = new ClusterWS({
