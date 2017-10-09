@@ -151,7 +151,7 @@ socketServer.publish('channel name', data)
 ### 2. Handle clients subscription (allow/reject)
 To be able to control who is connecting to the channel you can use middleware function
 ```js
-var cws = require('clusterws').ClusterWS
+var ClusterWS = require('clusterws').ClusterWS
 var express = require('express')
 
 var cws = new ClusterWS({
