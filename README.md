@@ -13,7 +13,6 @@ Additional info:
 * [ClusterWS Tests](https://github.com/goriunov/ClusterWS-Tests)
 * [ClusterWS Example Chat](https://github.com/goriunov/ClusterWS-Chat-Example)
 
-
 ### ClusterWS client libraries:
 * [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
 * [Java](https://github.com/Yegorisa/ClusterWS-Client-Java) 
