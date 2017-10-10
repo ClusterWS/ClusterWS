@@ -8,12 +8,16 @@ ClusterWS - is a minimal **Node JS http & real-time** framework which allows to 
 
 *Node JS Cluster - is a single instance of Node JS runs in a single thread. To take advantage of multi-core systems the user will sometimes want to launch a cluster of Node JS processes to handle the load. To learn more about Node JS Cluster read official Node JS docs [here](https://nodejs.org/api/cluster.html). **Also Worker === Cluster.***
 
-For more information about ClusterWS check [Medium ClusterWS](https://medium.com/clusterws)
+Additional info:
+* [Medium ClusterWS](https://medium.com/clusterws)
+* [ClusterWS Tests](https://github.com/goriunov/ClusterWS-Tests)
+* [ClusterWS Example Chat](https://github.com/goriunov/ClusterWS-Chat-Example)
+
 
 ### ClusterWS client libraries:
-1. [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
-2. [Java](https://github.com/Yegorisa/ClusterWS-Client-Java)
-3. [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
+* [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
+* [Java](https://github.com/Yegorisa/ClusterWS-Client-Java) 
+* [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
 
 ### Installation
 To install ClusterWS run:
