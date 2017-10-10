@@ -24,6 +24,7 @@ export class Socket {
 
         this.socket.on('message', (message: any) => {
             if (message === '#1') return lost = 0
+            if (message === '#4') return this.send('#3', null, 'ping')
 
             try {
                 message = JSON.parse(message)
