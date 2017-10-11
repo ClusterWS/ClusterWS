@@ -12,7 +12,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/goriunov/ClusterWS"
+    "url": "https://github.com/ClusterWS/ClusterWS"
   },
   "devDependencies": {
     "@types/node": "^8.0.31",
