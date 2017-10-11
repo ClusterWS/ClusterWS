@@ -4,21 +4,17 @@
 
 ![](https://u.cubeupload.com/goriunovd/6cdmain.gif)
 
+## Overview
 ClusterWS - is a minimal **Node JS http & real-time** framework which allows to scale WebSocket ([uWS](https://github.com/uNetworking/uWebSockets) - one of the fastest WebSocket libraries) between **Workers** in [Node JS Cluster](https://nodejs.org/api/cluster.html) and utilize all available CPU.
 
 *A single instance of Node JS runs in a single thread. To take advantage of multi-core systems the user will sometimes want to launch a cluster of Node JS processes (**Workers**) to handle the load. To learn more about Node JS Cluster read official Node JS docs [here](https://nodejs.org/api/cluster.html).*
 
-Additional info:
-* [Medium ClusterWS](https://medium.com/clusterws)
-* [ClusterWS Tests](https://github.com/goriunov/ClusterWS-Tests)
-* [ClusterWS Example Chat](https://github.com/goriunov/ClusterWS-Chat-Example)
-
 ### ClusterWS client libraries:
-* [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
-* [Java](https://github.com/Yegorisa/ClusterWS-Client-Java) 
+* [JavaScript](https://github.com/ClusterWS/ClusterWS-Client-JS)
+* [Java](https://github.com/ClusterWS/ClusterWS-Client-Java) 
 * [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
 
-### Installation
+## Installation
 To install ClusterWS run:
 ```js
 npm install --save clusterws
@@ -191,6 +187,10 @@ function Worker() {
 }
 ```
 
+## See Also
+* [Medium ClusterWS](https://medium.com/clusterws)
+* [ClusterWS Tests](https://github.com/ClusterWS/ClusterWS-Tests)
+* [ClusterWS Example Chat](https://github.com/goriunov/ClusterWS-Chat-Example)
 
 *Docs is still under development.*
 
