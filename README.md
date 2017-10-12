@@ -1,4 +1,4 @@
-# ClusterWS (Node Cluster WebSocket)
+# ClusterWS "Node JS Cluster & WebSocket"
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 [![GitHub version](https://badge.fury.io/gh/goriunov%2FClusterWS.svg)](https://badge.fury.io/gh/goriunov%2FClusterWS)
 
@@ -10,9 +10,9 @@ ClusterWS - is a minimal **Node JS http & real-time** framework which allows to 
 *A single instance of Node JS runs in a single thread. To take advantage of multi-core systems the user will sometimes want to launch a cluster of Node JS processes (**Workers**) to handle the load. To learn more about Node JS Cluster read official Node JS docs [here](https://nodejs.org/api/cluster.html).*
 
 ### ClusterWS client libraries:
-* [JavaScript](https://github.com/ClusterWS/ClusterWS-Client-JS)
 * [Java](https://github.com/ClusterWS/ClusterWS-Client-Java) 
 * [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
+* [JavaScript](https://github.com/ClusterWS/ClusterWS-Client-JS)
 
 ## Installation
 To install ClusterWS run:
