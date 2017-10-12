@@ -149,7 +149,7 @@ To publish message from the server to all users who are subscribed to the channe
 socketServer.publish('channel name', data)
 ```
 
-### 2. Handle clients subscription (allow/reject)
+### 2. Handle subscription to the channel (allow/reject)
 To be able to control who is connecting to the channel you can use middleware function
 ```js
 var ClusterWS = require('clusterws').ClusterWS
@@ -192,6 +192,6 @@ function Worker() {
 * [ClusterWS Tests](https://github.com/ClusterWS/ClusterWS-Tests)
 * [ClusterWS Example Chat](https://github.com/goriunov/ClusterWS-Chat-Example)
 
-*Docs is still under development.*
+*Docs are still under development. If you have found any errors please submit pull request or leave issue*
 
 ## Happy coding !!! :sunglasses:
