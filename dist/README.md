@@ -1,21 +1,20 @@
-# ClusterWS (Node Cluster WebSocket)
+# ClusterWS "Node JS Cluster & WebSocket"
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 [![GitHub version](https://badge.fury.io/gh/goriunov%2FClusterWS.svg)](https://badge.fury.io/gh/goriunov%2FClusterWS)
 
 ![](https://u.cubeupload.com/goriunovd/6cdmain.gif)
 
-ClusterWS - is a minimal **Node JS http & real-time** framework which allows to scale WebSocket ([uWS](https://github.com/uNetworking/uWebSockets) - one of the fastest WebSocket libraries) between [Node JS Clusters](https://nodejs.org/api/cluster.html) and utilize all available CPU.
+## Overview
+ClusterWS - is a minimal **Node JS http & real-time** framework which allows to scale WebSocket ([uWS](https://github.com/uNetworking/uWebSockets) - one of the fastest WebSocket libraries) between **Workers** in [Node JS Cluster](https://nodejs.org/api/cluster.html) and utilize all available CPU.
 
-*Node JS Cluster - is a single instance of Node JS runs in a single thread. To take advantage of multi-core systems the user will sometimes want to launch a cluster of Node JS processes to handle the load. To learn more about Node JS Cluster read official Node JS docs [here](https://nodejs.org/api/cluster.html). **Also Worker === Cluster.***
-
-For more information about ClusterWS check [Medium ClusterWS](https://medium.com/clusterws)
+*A single instance of Node JS runs in a single thread. To take advantage of multi-core systems the user will sometimes want to launch a cluster of Node JS processes (**Workers**) to handle the load. To learn more about Node JS Cluster read official Node JS docs [here](https://nodejs.org/api/cluster.html).*
 
 ### ClusterWS client libraries:
-1. [JavaScript](https://github.com/goriunov/ClusterWS-Client-JS)
-2. [Java](https://github.com/Yegorisa/ClusterWS-Client-Java)
-3. [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
+* [Java](https://github.com/ClusterWS/ClusterWS-Client-Java) 
+* [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
+* [JavaScript](https://github.com/ClusterWS/ClusterWS-Client-JS)
 
-### Installation
+## Installation
 To install ClusterWS run:
 ```js
 npm install --save clusterws
@@ -136,9 +135,9 @@ socket.send('event name', data)
 *Avoid emitting **Reserved Events** such as `'error'` and `'disconnect'`. Also avoid emitting `'connect'` event and events with `'#'` at the start.*
 
 ## Pub/Sub
-To make WebSocket scalable between clusters we need to use `Pub/Sub system`. Why? Because it is easy. This library does not have `broadcast` function, because `broadcast` is not scalable between Node JS Clusters. With `ClusterWS Pub/Sub System` you can implement your own `broadcast` very easy, also you can make different channels and group different people in there or you can give each user his/her own(private) channel.
+To make WebSocket scalable between Workers in Node JS Cluster we need to use `Pub/Sub system`. Why? Because it is easy. ClusterWS does not have `broadcast` function, because `broadcast` is not scalable between Workers. With `ClusterWS Pub/Sub System` you can implement your own `pubsub-broadcast` very easy, also you can make different channels with different users in there or you can give each user his/her own(private) channel.
 
-`ClusterWS Server` library does not allow to subscribe user from inside (bad practice), but you can learn about how to subscribe to the channels in `client libraries` (shown above)
+`ClusterWS Server` library does not allow to subscribe user from inside (bad practice), but you can learn about how to subscribe to the channels in `Client libraries` (shown above)
 
 ### 1. Publish message to the channel
 To publish message from the server to all users who are subscribed to the channel you should use `publish` method which is provided by `socketServer`
@@ -150,7 +149,7 @@ To publish message from the server to all users who are subscribed to the channe
 socketServer.publish('channel name', data)
 ```
 
-### 2. Handle clients subscription (allow/reject)
+### 2. Handle subscription to the channel (allow/reject)
 To be able to control who is connecting to the channel you can use middleware function
 ```js
 var ClusterWS = require('clusterws').ClusterWS
@@ -188,7 +187,11 @@ function Worker() {
 }
 ```
 
+## See Also
+* [Medium ClusterWS](https://medium.com/clusterws)
+* [ClusterWS Tests](https://github.com/ClusterWS/ClusterWS-Tests)
+* [ClusterWS Example Chat](https://github.com/goriunov/ClusterWS-Chat-Example)
 
-*Docs is still under development.*
+*Docs are still under development. If you have found any errors please submit pull request or leave issue*
 
 ## Happy coding !!! :sunglasses:
