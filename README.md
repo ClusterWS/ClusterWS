@@ -11,7 +11,7 @@ ClusterWS - is a minimal **Node JS http & real-time** framework which allows to 
 
 ### ClusterWS client libraries:
 * [Java](https://github.com/ClusterWS/ClusterWS-Client-Java) 
-* [Swift](https://github.com/davigr/ClusterWS-Client-Swift)
+* [Swift](https://github.com/ClusterWS/ClusterWS-Client-Swift)
 * [JavaScript](https://github.com/ClusterWS/ClusterWS-Client-JS)
 
 ## Installation
