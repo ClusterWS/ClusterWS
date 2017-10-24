@@ -170,11 +170,11 @@ module.exports = function(e) {
         }
         return n(t, e), t.prototype.create = function() {
             var e = this;
-            this.isSocket ? this.socket = this.socketOrPort : this.socket = s.connect(this.socketOrPort, this.host), 
-            this.socket.setKeepAlive(!0, 2e4), this.socket.on("end", function() {
-                e.emit("end"), e.reconnect();
+            this.socket = this.isSocket ? this.socketOrPort : s.connect(this.socketOrPort, this.host), 
+            this.socket.setKeepAlive(!0, 15e3), this.socket.on("end", function() {
+                return e.emit("end");
             }), this.socket.on("error", function(t) {
-                e.emit("error", t), e.reconnect();
+                return e.emit("error", t);
             }), this.socket.on("close", function() {
                 e.emit("disconnect"), e.reconnect();
             }), this.socket.on("timeout", function() {
@@ -192,14 +192,17 @@ module.exports = function(e) {
         }, t.prototype.connect = function() {
             if (this.emit("connect"), this.backlog.length) {
                 var e = Array.prototype.slice.call(this.backlog);
-                this.backlog.length = 0;
+                this.backlog = [];
                 for (var t = 0, r = e.length; r > t; t++) this.socket.write(e[t]);
             }
         }, t.prototype.send = function(e) {
             if (this.socket.writable) return this.socket.write(e + "\n");
             this.backlog.push(e + "\n");
         }, t.prototype.reconnect = function() {
-            this.isSocket || this.create();
+            var e = this;
+            this.isSocket || setTimeout(function() {
+                return e.create();
+            }, 5);
         }, t;
     }(o.EventEmitter);
     t.TcpSocket = i;
@@ -373,8 +376,9 @@ module.exports = function(e) {
                 return e.restartOnFail ? c(t, r) : "";
             }), o.send(s.processMessage(t, r));
         };
-        c("initBroker", 0);
-        for (var u = 1; u <= e.workers; u++) c("initWorker", u);
+        c("initBroker", 0), setTimeout(function() {
+            for (var t = 1; t <= e.workers; t++) c("initWorker", t);
+        }, 10);
     }
     Object.defineProperty(t, "__esModule", {
         value: !0
