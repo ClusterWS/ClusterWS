@@ -24,5 +24,7 @@ export function processMaster(options: Options): void {
     }
 
     launch('initBroker', 0)
-    for (let i: number = 1; i <= options.workers; i++) launch('initWorker', i)
+    setTimeout(() => {
+        for (let i: number = 1; i <= options.workers; i++) launch('initWorker', i)
+    }, 10)
 }
