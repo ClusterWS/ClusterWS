@@ -53,7 +53,7 @@ export class TcpSocket extends EventEmitter {
 
     connect(): void {
         this.emit('connect')
-        if (this.backlog.length) {
+        if (this.backlog.length > 0) {
             const array: any[] = Array.prototype.slice.call(this.backlog)
             this.backlog = []
             for (let i: number = 0, len: number = array.length; len > i; i++) this.socket.write(array[i])
@@ -69,6 +69,6 @@ export class TcpSocket extends EventEmitter {
 
     reconnect(): void {
         if (this.isSocket) return
-        setTimeout(() => this.create(), 5)
+        setTimeout(() => this.create(), Math.floor(Math.random() * 10) + 3)
     }
 }
