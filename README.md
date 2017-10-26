@@ -3,8 +3,10 @@
 ![](http://u.cubeupload.com/goriunovd/new.gif)
 
 <p align="center">
+
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 [![GitHub version](https://badge.fury.io/gh/goriunov%2FClusterWS.svg)](https://badge.fury.io/gh/goriunov%2FClusterWS)
+
 </p>
 
 ## Overview
