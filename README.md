@@ -1,5 +1,6 @@
-# ClusterWS 
-###### WebSocket & Node JS Cluster
+<h1 align="center">ClusterWS</h1> 
+<h6 align="center">WebSocket & Node JS Cluster</h6>
+ 
 
 ![](http://u.cubeupload.com/goriunovd/new.gif)
 
