@@ -20,9 +20,9 @@ export class Broker {
             socket.on('error', (err: any): void => logError('Broker' + ', PID ' + process.pid + '\n' + err.stack + '\n'))
             socket.on('message', (msg: any): any => msg !== '#1' ? this.broadcast(id, msg) : '')
             socket.on('disconnect', (): void => logError('Server ' + id + ' has disconnected'))
-        }).listen(options.brokerPort)
-
-        process.send(processMessage('ready', process.pid))
+        }).listen(options.brokerPort, () => {
+            process.send(processMessage('ready', process.pid))
+        })
     }
 
     broadcast(id: number, msg: any): void {

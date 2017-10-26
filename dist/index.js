@@ -277,11 +277,13 @@ module.exports = function(e) {
                         data: t
                     });
                 }
-            }, this.httpServer = c.createServer().listen(this.options.port), new n.Server({
-                server: this.httpServer
-            }).on("connection", function(e) {
-                return r.socketServer.emitter.emit("connection", new o.Socket(e, r));
-            }), this.options.worker.call(this), process.send(a.processMessage("ready", process.pid));
+            }, this.httpServer = c.createServer().listen(this.options.port, function() {
+                new n.Server({
+                    server: r.httpServer
+                }).on("connection", function(e) {
+                    return r.socketServer.emitter.emit("connection", new o.Socket(e, r));
+                }), console.log(r), r.options.worker.call(r), process.send(a.processMessage("ready", process.pid));
+            });
         }
         return e;
     }();
@@ -352,7 +354,9 @@ module.exports = function(e) {
                 }), t.on("disconnect", function() {
                     return n.logError("Server " + s + " has disconnected");
                 });
-            }).listen(e.brokerPort), process.send(i.processMessage("ready", process.pid));
+            }).listen(e.brokerPort, function() {
+                process.send(i.processMessage("ready", process.pid));
+            });
         }
         return e.prototype.broadcast = function(e, t) {
             for (var r = 0, n = this.servers.length; r < n; r++) r !== e && this.servers[r].send(t);

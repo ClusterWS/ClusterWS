@@ -1,4 +1,4 @@
-# ClusterWS "Node JS Cluster & WebSocket"
+# ClusterWS (WebSocket & Node JS Cluster)
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 [![GitHub version](https://badge.fury.io/gh/goriunov%2FClusterWS.svg)](https://badge.fury.io/gh/goriunov%2FClusterWS)
 
