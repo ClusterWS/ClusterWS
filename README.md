@@ -13,6 +13,9 @@ ClusterWS - is a minimal **Node JS http & real-time** framework which allows to 
 
 *A single instance of Node JS runs in a single thread. To take advantage of multi-core systems the user will sometimes want to launch a cluster of Node JS processes (**Workers**) to handle the load. To learn more about Node JS Cluster read official Node JS docs [here](https://nodejs.org/api/cluster.html).*
 
+#### From author: 
+*We would really appreciate if you give us some stars **(on all our repositories)** this will motivate us to work harder. Thank you :blush:.*
+
 #### ClusterWS client libraries:
 * [Java](https://github.com/ClusterWS/ClusterWS-Client-Java) 
 * [Swift](https://github.com/ClusterWS/ClusterWS-Client-Swift)
@@ -25,7 +28,7 @@ npm install --save clusterws
 ```
 
 ## Setting Up
-#### 1. Creating server
+### 1. Creating server
 First of all you need to create `server.js` file with: 
 ```js
 var ClusterWS = require('clusterws').ClusterWS
@@ -55,7 +58,7 @@ function Worker() {
 }
 ```
 
-#### 2. Connecting http library
+### 2. Connecting http library
 You can connect any http library you like *Express*, *Koa*, *etc.* With `httpServer` method:
 ```js
 var ClusterWS = require('clusterws').ClusterWS
@@ -94,7 +97,7 @@ socketServer.on('connection', function(socket){
 })
 ```
 
-#### 1. Listen on events
+### 1. Listen on events
 To listen on events from the connected client use `on` method witch is provided by `socket`
 ```js
 /**
@@ -126,7 +129,7 @@ socket.on('disconnect', function(code, reason){
 })
 ```
 
-#### 2. Send events
+### 2. Send events
 To send events from the server to the connected client use `send` method witch is provided by `socket`
 ```js
 /**
@@ -143,7 +146,7 @@ To make WebSocket scalable between Workers in Node JS Cluster we need to use `Pu
 
 `ClusterWS Server` library does not allow to subscribe user from inside (bad practice), but you can learn about how to subscribe to the channels in `Client libraries` (shown above)
 
-#### 1. Publish message to the channel
+### 1. Publish message to the channel
 To publish message from the server to all users who are subscribed to the channel you should use `publish` method which is provided by `socketServer`
 ```js
 /**
@@ -153,7 +156,7 @@ To publish message from the server to all users who are subscribed to the channe
 socketServer.publish('channel name', data)
 ```
 
-#### 2. Handle subscription to the channel (allow/reject)
+### 2. Handle subscription to the channel (allow/reject)
 To be able to control who is connecting to the channel you can use middleware function
 ```js
 var ClusterWS = require('clusterws').ClusterWS
