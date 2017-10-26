@@ -2,7 +2,7 @@
 [![npm version](https://badge.fury.io/js/clusterws.svg)](https://badge.fury.io/js/clusterws)
 [![GitHub version](https://badge.fury.io/gh/goriunov%2FClusterWS.svg)](https://badge.fury.io/gh/goriunov%2FClusterWS)
 
-![](https://u.cubeupload.com/goriunovd/6cdmain.gif)
+![](http://u.cubeupload.com/goriunovd/new.gif)
 
 ## Overview
 ClusterWS - is a minimal **Node JS http & real-time** framework which allows to scale WebSocket ([uWS](https://github.com/uNetworking/uWebSockets) - one of the fastest WebSocket libraries) between **Workers** in [Node JS Cluster](https://nodejs.org/api/cluster.html) and utilize all available CPU.

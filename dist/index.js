@@ -190,7 +190,7 @@ module.exports = function(e) {
                 t += r.substring(o);
             });
         }, t.prototype.connect = function() {
-            if (this.emit("connect"), this.backlog.length) {
+            if (this.emit("connect"), this.backlog.length > 0) {
                 var e = Array.prototype.slice.call(this.backlog);
                 this.backlog = [];
                 for (var t = 0, r = e.length; r > t; t++) this.socket.write(e[t]);
@@ -202,7 +202,7 @@ module.exports = function(e) {
             var e = this;
             this.isSocket || setTimeout(function() {
                 return e.create();
-            }, 5);
+            }, Math.floor(10 * Math.random()) + 3);
         }, t;
     }(o.EventEmitter);
     t.TcpSocket = i;
@@ -362,23 +362,24 @@ module.exports = function(e) {
 }, function(e, t, r) {
     "use strict";
     function n(e) {
-        var t = 0, r = [], n = function(n, s) {
-            if (r[n] = 0 === n ? ">>> Broker on: " + e.brokerPort + ", PID " + s : "       Worker: " + n + ", PID " + s, 
-            t++ >= e.workers) {
-                o.logReady(">>> Master on: " + e.port + ", PID " + process.pid);
-                for (var i in r) o.logReady(r[i]);
-            }
-        }, c = function(t, r) {
+        var t = 0, r = [], n = function(t, r) {
             var o = i.fork();
             o.on("message", function(e) {
-                return "ready" === e.event ? n(r, e.data) : "";
+                return "ready" === e.event ? c(r, e.data) : "";
             }), o.on("exit", function() {
-                return e.restartOnFail ? c(t, r) : "";
+                return e.restartOnFail ? n(t, r) : "";
             }), o.send(s.processMessage(t, r));
+        }, c = function(s, i) {
+            if (0 === s) {
+                r[s] = ">>> Broker on: " + e.brokerPort + ", PID " + i;
+                for (var c = 1; c <= e.workers; c++) n("initWorker", c);
+            } else r[s] = "       Worker: " + s + ", PID " + i;
+            if (t++ >= e.workers) {
+                o.logReady(">>> Master on: " + e.port + ", PID " + process.pid);
+                for (var c in r) o.logReady(r[c]);
+            }
         };
-        c("initBroker", 0), setTimeout(function() {
-            for (var t = 1; t <= e.workers; t++) c("initWorker", t);
-        }, 10);
+        n("initBroker", 0);
     }
     Object.defineProperty(t, "__esModule", {
         value: !0
