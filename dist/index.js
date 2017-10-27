@@ -235,10 +235,10 @@ module.exports = function(e) {
         process.on("message", function(t) {
             switch (t.event) {
               case "initWorker":
-                return new s.Broker(e, t.data);
+                return new o.Worker(e, t.data);
 
               case "initBroker":
-                return new o.Worker(e, t.data);
+                return new s.Broker(e, t.data);
             }
         }), process.on("uncaughtException", function(e) {
             return i.logError("PID: " + process.pid + "\n" + e.stack + "\n");
@@ -282,7 +282,7 @@ module.exports = function(e) {
                     server: r.httpServer
                 }).on("connection", function(e) {
                     return r.socketServer.emitter.emit("connection", new o.Socket(e, r));
-                }), console.log(r), r.options.worker.call(r), process.send(a.processMessage("ready", process.pid));
+                }), r.options.worker.call(r), process.send(a.processMessage("ready", process.pid));
             });
         }
         return e;
@@ -374,11 +374,10 @@ module.exports = function(e) {
                 return e.restartOnFail ? n(t, r) : "";
             }), o.send(s.processMessage(t, r));
         }, c = function(s, i) {
-            if (0 === s) {
+            if (0 === s ? function() {
+                for (var t = 1; t <= e.workers; t++) n("initWorker", t);
                 r[s] = ">>> Broker on: " + e.brokerPort + ", PID " + i;
-                for (var c = 1; c <= e.workers; c++) n("initWorker", c);
-            } else r[s] = "       Worker: " + s + ", PID " + i;
-            if (t++ >= e.workers) {
+            }() : r[s] = "       Worker: " + s + ", PID " + i, t++ >= e.workers) {
                 o.logReady(">>> Master on: " + e.port + ", PID " + process.pid);
                 for (var c in r) o.logReady(r[c]);
             }

@@ -16,12 +16,10 @@ export function processMaster(options: Options): void {
     }
 
     const isReady: any = (index: number, pid: number): void => {
-        if (index === 0) {
-            ready[index] = '>>> Broker on: ' + options.brokerPort + ', PID ' + pid
+        index === 0 ? ((): void => {
             for (let i: number = 1; i <= options.workers; i++) launch('initWorker', i)
-        } else {
-            ready[index] = '       Worker: ' + index + ', PID ' + pid
-        }
+            ready[index] = '>>> Broker on: ' + options.brokerPort + ', PID ' + pid
+        })() : ready[index] = '       Worker: ' + index + ', PID ' + pid
 
         if (count++ >= options.workers) {
             logReady('>>> Master on: ' + options.port + ', PID ' + process.pid)

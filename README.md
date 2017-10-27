@@ -1,7 +1,7 @@
 <h1 align="center">ClusterWS</h1> 
 <h6 align="center">WebSocket & Node JS Cluster</h6>
 
-![](http://u.cubeupload.com/goriunovd/new.gif)
+![](https://u.cubeupload.com/goriunovd/ClusterWS.gif)
 
 <p align="center">
  <a title="NPM Version" href="https://badge.fury.io/js/clusterws"><img src="https://badge.fury.io/js/clusterws.svg"></a>
