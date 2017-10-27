@@ -170,11 +170,11 @@ module.exports = function(e) {
         }
         return n(t, e), t.prototype.create = function() {
             var e = this;
-            this.isSocket ? this.socket = this.socketOrPort : this.socket = s.connect(this.socketOrPort, this.host), 
-            this.socket.setKeepAlive(!0, 2e4), this.socket.on("end", function() {
-                e.emit("end"), e.reconnect();
+            this.socket = this.isSocket ? this.socketOrPort : s.connect(this.socketOrPort, this.host), 
+            this.socket.setKeepAlive(!0, 15e3), this.socket.on("end", function() {
+                return e.emit("end");
             }), this.socket.on("error", function(t) {
-                e.emit("error", t), e.reconnect();
+                return e.emit("error", t);
             }), this.socket.on("close", function() {
                 e.emit("disconnect"), e.reconnect();
             }), this.socket.on("timeout", function() {
@@ -190,16 +190,19 @@ module.exports = function(e) {
                 t += r.substring(o);
             });
         }, t.prototype.connect = function() {
-            if (this.emit("connect"), this.backlog.length) {
+            if (this.emit("connect"), this.backlog.length > 0) {
                 var e = Array.prototype.slice.call(this.backlog);
-                this.backlog.length = 0;
+                this.backlog = [];
                 for (var t = 0, r = e.length; r > t; t++) this.socket.write(e[t]);
             }
         }, t.prototype.send = function(e) {
             if (this.socket.writable) return this.socket.write(e + "\n");
             this.backlog.push(e + "\n");
         }, t.prototype.reconnect = function() {
-            this.isSocket || this.create();
+            var e = this;
+            this.isSocket || setTimeout(function() {
+                return e.create();
+            }, Math.floor(10 * Math.random()) + 3);
         }, t;
     }(o.EventEmitter);
     t.TcpSocket = i;
@@ -232,10 +235,10 @@ module.exports = function(e) {
         process.on("message", function(t) {
             switch (t.event) {
               case "initWorker":
-                return new s.Broker(e, t.data);
+                return new o.Worker(e, t.data);
 
               case "initBroker":
-                return new o.Worker(e, t.data);
+                return new s.Broker(e, t.data);
             }
         }), process.on("uncaughtException", function(e) {
             return i.logError("PID: " + process.pid + "\n" + e.stack + "\n");
@@ -274,11 +277,13 @@ module.exports = function(e) {
                         data: t
                     });
                 }
-            }, this.httpServer = c.createServer().listen(this.options.port), new n.Server({
-                server: this.httpServer
-            }).on("connection", function(e) {
-                return r.socketServer.emitter.emit("connection", new o.Socket(e, r));
-            }), this.options.worker.call(this), process.send(a.processMessage("ready", process.pid));
+            }, this.httpServer = c.createServer().listen(this.options.port, function() {
+                new n.Server({
+                    server: r.httpServer
+                }).on("connection", function(e) {
+                    return r.socketServer.emitter.emit("connection", new o.Socket(e, r));
+                }), r.options.worker.call(r), process.send(a.processMessage("ready", process.pid));
+            });
         }
         return e;
     }();
@@ -349,7 +354,9 @@ module.exports = function(e) {
                 }), t.on("disconnect", function() {
                     return n.logError("Server " + s + " has disconnected");
                 });
-            }).listen(e.brokerPort), process.send(i.processMessage("ready", process.pid));
+            }).listen(e.brokerPort, function() {
+                process.send(i.processMessage("ready", process.pid));
+            });
         }
         return e.prototype.broadcast = function(e, t) {
             for (var r = 0, n = this.servers.length; r < n; r++) r !== e && this.servers[r].send(t);
@@ -359,22 +366,23 @@ module.exports = function(e) {
 }, function(e, t, r) {
     "use strict";
     function n(e) {
-        var t = 0, r = [], n = function(n, s) {
-            if (r[n] = 0 === n ? ">>> Broker on: " + e.brokerPort + ", PID " + s : "       Worker: " + n + ", PID " + s, 
-            t++ >= e.workers) {
-                o.logReady(">>> Master on: " + e.port + ", PID " + process.pid);
-                for (var i in r) o.logReady(r[i]);
-            }
-        }, c = function(t, r) {
+        var t = 0, r = [], n = function(t, r) {
             var o = i.fork();
             o.on("message", function(e) {
-                return "ready" === e.event ? n(r, e.data) : "";
+                return "ready" === e.event ? c(r, e.data) : "";
             }), o.on("exit", function() {
-                return e.restartOnFail ? c(t, r) : "";
+                return e.restartOnFail ? n(t, r) : "";
             }), o.send(s.processMessage(t, r));
+        }, c = function(s, i) {
+            if (0 === s ? function() {
+                for (var t = 1; t <= e.workers; t++) n("initWorker", t);
+                r[s] = ">>> Broker on: " + e.brokerPort + ", PID " + i;
+            }() : r[s] = "       Worker: " + s + ", PID " + i, t++ >= e.workers) {
+                o.logReady(">>> Master on: " + e.port + ", PID " + process.pid);
+                for (var c in r) o.logReady(r[c]);
+            }
         };
-        c("initBroker", 0);
-        for (var u = 1; u <= e.workers; u++) c("initWorker", u);
+        n("initBroker", 0);
     }
     Object.defineProperty(t, "__esModule", {
         value: !0

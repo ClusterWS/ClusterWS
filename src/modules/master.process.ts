@@ -7,14 +7,6 @@ export function processMaster(options: Options): void {
     let count: number = 0
     const ready: string[] = []
 
-    const isReady: any = (index: number, pid: number): void => {
-        index === 0 ? ready[index] = '>>> Broker on: ' + options.brokerPort + ', PID ' + pid : ready[index] = '       Worker: ' + index + ', PID ' + pid
-        if (count++ >= options.workers) {
-            logReady('>>> Master on: ' + options.port + ', PID ' + process.pid)
-            for (const i in ready) logReady(ready[i])
-        }
-    }
-
     const launch: any = (event: string, index: number): void => {
         const worker: Worker = fork()
 
@@ -23,6 +15,17 @@ export function processMaster(options: Options): void {
         worker.send(processMessage(event, index))
     }
 
+    const isReady: any = (index: number, pid: number): void => {
+        index === 0 ? ((): void => {
+            for (let i: number = 1; i <= options.workers; i++) launch('initWorker', i)
+            ready[index] = '>>> Broker on: ' + options.brokerPort + ', PID ' + pid
+        })() : ready[index] = '       Worker: ' + index + ', PID ' + pid
+
+        if (count++ >= options.workers) {
+            logReady('>>> Master on: ' + options.port + ', PID ' + process.pid)
+            for (const i in ready) logReady(ready[i])
+        }
+    }
+
     launch('initBroker', 0)
-    for (let i: number = 1; i <= options.workers; i++) launch('initWorker', i)
 }

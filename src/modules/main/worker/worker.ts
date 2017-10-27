@@ -29,12 +29,12 @@ export class Worker {
             }
         }
 
-        this.httpServer = createServer().listen(this.options.port)
+        this.httpServer = createServer().listen(this.options.port, () => {
+            const uws: Server = new Server({ server: this.httpServer })
+            uws.on('connection', (socket: any) => this.socketServer.emitter.emit('connection', new Socket(socket, this)))
 
-        const uws: Server = new Server({ server: this.httpServer })
-        uws.on('connection', (socket: any) => this.socketServer.emitter.emit('connection', new Socket(socket, this)))
-
-        this.options.worker.call(this)
-        process.send(processMessage('ready', process.pid))
+            this.options.worker.call(this)
+            process.send(processMessage('ready', process.pid))
+        })
     }
 }

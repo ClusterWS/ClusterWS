@@ -16,18 +16,12 @@ export class TcpSocket extends EventEmitter {
     }
 
     create(): void {
-        this.isSocket ? this.socket = this.socketOrPort : this.socket = connect(this.socketOrPort, this.host)
+        this.socket = this.isSocket ? this.socketOrPort : connect(this.socketOrPort, this.host)
 
-        this.socket.setKeepAlive(true, 20000)
+        this.socket.setKeepAlive(true, 15000)
 
-        this.socket.on('end', (): void => {
-            this.emit('end')
-            this.reconnect()
-        })
-        this.socket.on('error', (err: any): void => {
-            this.emit('error', err)
-            this.reconnect()
-        })
+        this.socket.on('end', (): void => this.emit('end'))
+        this.socket.on('error', (err: any): void => this.emit('error', err))
         this.socket.on('close', (): void => {
             this.emit('disconnect')
             this.reconnect()
@@ -59,9 +53,9 @@ export class TcpSocket extends EventEmitter {
 
     connect(): void {
         this.emit('connect')
-        if (this.backlog.length) {
+        if (this.backlog.length > 0) {
             const array: any[] = Array.prototype.slice.call(this.backlog)
-            this.backlog.length = 0
+            this.backlog = []
             for (let i: number = 0, len: number = array.length; len > i; i++) this.socket.write(array[i])
         }
     }
@@ -75,6 +69,6 @@ export class TcpSocket extends EventEmitter {
 
     reconnect(): void {
         if (this.isSocket) return
-        this.create()
+        setTimeout(() => this.create(), Math.floor(Math.random() * 10) + 3)
     }
 }
