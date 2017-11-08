@@ -40,7 +40,7 @@ let configs = {
     },
     plugins: [
         new webpack.DefinePlugin({
-            'process.env.NODE_ENV': '"production"'
+            'process.env.NODE_ENV': 'production'
         }),
         new webpack.optimize.UglifyJsPlugin({
             beautify: true
