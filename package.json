@@ -5,11 +5,10 @@
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
-    "build": "webpack --config ./.builder/webpack.config.js",
-    "build:watch": "webpack --watch --config ./.builder/webpack.config.js",
-    "publish": "npm run build && cd dist && npm publish && cd ..",
-    "new": "ts-build-server",
-    "webpack": "webpack"
+    "webpack": "webpack",
+    "build": "ts-builder --server",
+    "build:watch": "ts-builder --server --watch",
+    "publish": "npm run build && cd dist && npm publish && cd .."
   },
   "license": "MIT",
   "repository": {
@@ -19,14 +18,7 @@
   "devDependencies": {
     "@types/node": "^8.0.31",
     "@types/uws": "^0.13.0",
-    "awesome-typescript-loader": "^3.2.3",
-    "copy-pkg-json-webpack-plugin": "0.0.29",
-    "copy-webpack-plugin": "^4.1.0",
-    "tslint": "^5.7.0",
-    "tslint-loader": "^3.5.3",
-    "typescript": "^2.5.3",
-    "webpack": "^3.6.0",
-    "webpack-node-externals": "^1.6.0"
+    "ts-builder": "0.0.28"
   },
   "dependencies": {
     "uws": "^8.14.1"
