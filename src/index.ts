@@ -20,6 +20,7 @@ export class ClusterWS {
             pingInterval: configurations.pingInterval || 20000,
             restartOnFail: configurations.restartOnFail || false
         }
+
         isMaster ? processMaster(options) : processWorker(options)
     }
 }

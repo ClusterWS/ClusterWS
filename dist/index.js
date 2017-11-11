@@ -28,10 +28,10 @@ module.exports = function(e) {
 }([ function(e, t, r) {
     "use strict";
     function n(e) {
-        console.log("[36m%s[0m", e);
+        return console.log("[36m%s[0m", e);
     }
     function o(e) {
-        console.log("[31m%s[0m", e);
+        return console.log("[31m%s[0m", e);
     }
     Object.defineProperty(t, "__esModule", {
         value: !0
@@ -355,7 +355,7 @@ module.exports = function(e) {
                     return n.logError("Server " + s + " has disconnected");
                 });
             }).listen(e.brokerPort, function() {
-                process.send(i.processMessage("ready", process.pid));
+                return process.send(i.processMessage("ready", process.pid));
             });
         }
         return e.prototype.broadcast = function(e, t) {
