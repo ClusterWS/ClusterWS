@@ -2,6 +2,7 @@ import { EventEmitter } from '../../common/emitter'
 import { Socket, connect } from 'net'
 
 export class TcpSocket extends EventEmitter {
+    id: number
     socket: Socket
     backlog: any[]
     isSocket: Boolean
@@ -18,7 +19,7 @@ export class TcpSocket extends EventEmitter {
     create(): void {
         this.socket = this.isSocket ? this.socketOrPort : connect(this.socketOrPort, this.host)
 
-        this.socket.setKeepAlive(true, 15000)
+        this.socket.setKeepAlive(true, 10000)
 
         this.socket.on('end', (): void => this.emit('end'))
         this.socket.on('error', (err: any): void => this.emit('error', err))
@@ -61,10 +62,8 @@ export class TcpSocket extends EventEmitter {
     }
 
     send(data: any): any {
-        if (this.socket.writable) {
-            return this.socket.write(data + '\n')
-        }
-        this.backlog.push(data + '\n')
+        if (this.socket.writable) this.socket.write(data + '\n')
+        if (!this.isSocket) this.backlog.push(data + '\n')
     }
 
     reconnect(): void {

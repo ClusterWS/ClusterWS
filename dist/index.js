@@ -171,7 +171,7 @@ module.exports = function(e) {
         return n(t, e), t.prototype.create = function() {
             var e = this;
             this.socket = this.isSocket ? this.socketOrPort : s.connect(this.socketOrPort, this.host), 
-            this.socket.setKeepAlive(!0, 15e3), this.socket.on("end", function() {
+            this.socket.setKeepAlive(!0, 1e4), this.socket.on("end", function() {
                 return e.emit("end");
             }), this.socket.on("error", function(t) {
                 return e.emit("error", t);
@@ -196,8 +196,7 @@ module.exports = function(e) {
                 for (var t = 0, r = e.length; r > t; t++) this.socket.write(e[t]);
             }
         }, t.prototype.send = function(e) {
-            if (this.socket.writable) return this.socket.write(e + "\n");
-            this.backlog.push(e + "\n");
+            this.socket.writable && this.socket.write(e + "\n"), this.isSocket || this.backlog.push(e + "\n");
         }, t.prototype.reconnect = function() {
             var e = this;
             this.isSocket || setTimeout(function() {
@@ -344,22 +343,30 @@ module.exports = function(e) {
         function e(e, t) {
             var r = this;
             this.options = e, this.id = t, this.servers = [], s.createServer(function(e) {
-                var t = new o.TcpSocket(e), s = r.servers.length;
-                r.servers[s] = t, setInterval(function() {
-                    return t.send("#0");
+                var t = new o.TcpSocket(e);
+                r.setUniqueId(t), setInterval(function() {
+                    console.log(r.servers), t.send("#0");
                 }, 2e4), t.on("error", function(e) {
                     return n.logError("Broker, PID " + process.pid + "\n" + e.stack + "\n");
                 }), t.on("message", function(e) {
-                    return "#1" !== e ? r.broadcast(s, e) : "";
+                    return "#1" !== e ? r.broadcast(t.id, e) : "";
                 }), t.on("disconnect", function() {
-                    return n.logError("Server " + s + " has disconnected");
+                    r.removeSocket(t.id), n.logError("Server " + t.id + " has disconnected");
                 });
             }).listen(e.brokerPort, function() {
                 return process.send(i.processMessage("ready", process.pid));
             });
         }
-        return e.prototype.broadcast = function(e, t) {
-            for (var r = 0, n = this.servers.length; r < n; r++) r !== e && this.servers[r].send(t);
+        return e.prototype.setUniqueId = function(e) {
+            if (e.id = Math.floor(1e5 + 99999999 * Math.random()), 0 === this.servers.length) return this.servers.push(e);
+            for (var t = 0, r = this.servers.length; t < r; t++) {
+                if (this.servers[t].id === e.id) return this.setUniqueId(e);
+                if (t === r - 1) return this.servers.push(e);
+            }
+        }, e.prototype.broadcast = function(e, t) {
+            for (var r = 0, n = this.servers.length; r < n; r++) this.servers[r].id !== e && this.servers[r].send(t);
+        }, e.prototype.removeSocket = function(e) {
+            for (var t = 0, r = this.servers.length; t < r; t++) if (this.servers[t].id === e) return this.servers.splice(t, 1);
         }, e;
     }();
     t.Broker = c;
