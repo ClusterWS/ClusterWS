@@ -345,7 +345,7 @@ module.exports = function(e) {
             this.options = e, this.id = t, this.servers = [], s.createServer(function(e) {
                 var t = new o.TcpSocket(e);
                 r.setUniqueId(t), setInterval(function() {
-                    console.log(r.servers), t.send("#0");
+                    return t.send("#0");
                 }, 2e4), t.on("error", function(e) {
                     return n.logError("Broker, PID " + process.pid + "\n" + e.stack + "\n");
                 }), t.on("message", function(e) {
