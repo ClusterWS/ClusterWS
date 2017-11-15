@@ -5,7 +5,6 @@
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
-    "webpack": "webpack",
     "build": "ts-builder --server",
     "build:watch": "ts-builder --server --watch",
     "publish": "npm run build && cd dist && npm publish && cd .."
@@ -18,7 +17,7 @@
   "devDependencies": {
     "@types/node": "^8.0.31",
     "@types/uws": "^0.13.0",
-    "ts-builder": "^0.1.0"
+    "ts-builder": "^0.2.0"
   },
   "dependencies": {
     "uws": "^8.14.1"
