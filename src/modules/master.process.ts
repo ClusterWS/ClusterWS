@@ -1,31 +1,38 @@
-import { logReady } from './common/console'
-import { processMessage } from './common/messages'
 import { fork, Worker } from 'cluster'
-import { Options, ProcessMessage } from './common/interfaces'
+import { logReady, logWarning } from './utils/logs'
+import { IOptions, IProcessMessage } from './utils/interfaces'
 
-export function processMaster(options: Options): void {
-    let count: number = 0
-    const ready: string[] = []
+export function masterProcess(options: IOptions): void {
+    let hasCompleted: boolean = false
+    const readyProcesses: any = {}
+    const internalKey: string = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 
-    const launch: any = (event: string, index: number): void => {
-        const worker: Worker = fork()
+    launchProcess('Broker', 0)
+    function launchProcess(processName: string, index: number): void {
+        const process: Worker = fork()
 
-        worker.on('message', (message: ProcessMessage): void => message.event === 'ready' ? isReady(index, message.data) : '')
-        worker.on('exit', (): void => options.restartOnFail ? launch(event, index) : '')
-        worker.send(processMessage(event, index))
+        process.on('exit', (): void => {
+            logWarning(processName + ' has been disconnected \n')
+            if (options.restartOnFail) {
+                logWarning(processName + ' is restarting \n')
+                launchProcess(processName, index)
+            }
+        })
+        process.on('message', (message: IProcessMessage): any => message.event === 'Ready' ? isReady(index, message.data, processName) : '')
+        process.send({ name: processName, data: { internalKey, index } })
     }
 
-    const isReady: any = (index: number, pid: number): void => {
-        index === 0 ? ((): void => {
-            for (let i: number = 1; i <= options.workers; i++) launch('initWorker', i)
-            ready[index] = '>>> Broker on: ' + options.brokerPort + ', PID ' + pid
-        })() : ready[index] = '       Worker: ' + index + ', PID ' + pid
-
-        if (count++ >= options.workers) {
-            logReady('>>> Master on: ' + options.port + ', PID ' + process.pid)
-            for (const i in ready) logReady(ready[i])
+    function isReady(index: number, pid: number, processName: string): void | string {
+        if (hasCompleted) {
+            readyProcesses[index] = '       ' + processName + ': ' + index + ', PID: ' + pid
+            return logReady(processName + ' has been restarted')
+        } else if (index === 0) {
+            for (let i: number = 1; i <= options.workers; i++) launchProcess('Worker', i)
+            return readyProcesses[index] = '>>> ' + processName + ' on: ' + options.brokerPort + ', PID ' + pid
+        } else if (Object.keys(readyProcesses).length === options.workers) {
+            hasCompleted = true
+            logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid)
+            for (const key in readyProcesses) if (readyProcesses[key]) logReady(readyProcesses[key])
         }
     }
-
-    launch('initBroker', 0)
 }

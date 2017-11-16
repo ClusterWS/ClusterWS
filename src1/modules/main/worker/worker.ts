@@ -13,7 +13,7 @@ export class Worker {
     httpServer: any
     socketServer: any
 
-    constructor(public options: Options, public id: number) {
+    constructor(public options: Options, public info: number) {
         const broker: TcpSocket = new TcpSocket(this.options.brokerPort, '127.0.0.1')
         broker.on('error', (err: any): void => logError('Worker' + ', PID ' + process.pid + '\n' + err.stack + '\n'))
         broker.on('message', (msg: any): void => msg === '#0' ? broker.send('#1') : this.socketServer.emitter.emit('#publish', JSON.parse(msg)))

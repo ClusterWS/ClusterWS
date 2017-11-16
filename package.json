@@ -15,9 +15,9 @@
     "url": "https://github.com/ClusterWS/ClusterWS"
   },
   "devDependencies": {
-    "@types/node": "^8.0.31",
+    "@types/node": "^8.0.53",
     "@types/uws": "^0.13.0",
-    "ts-builder": "^0.2.0"
+    "ts-builder": "^0.2.7"
   },
   "dependencies": {
     "uws": "^8.14.1"

@@ -1,18 +1,14 @@
 import { isMaster } from 'cluster'
-import { processWorker } from './modules/worker.process'
-import { processMaster } from './modules/master.process'
-import { Options, UserOptions } from './modules/common/interfaces'
-import { logError } from './modules/common/console'
+import { logError } from './modules/utils/logs'
+import { masterProcess } from './modules/master.process'
+import { IOptions, IPassedOptions } from './modules/utils/interfaces'
 
 export class ClusterWS {
-    constructor(configurations: UserOptions) {
+    constructor(configurations: IPassedOptions) {
+        if (!configurations.worker || {}.toString.call(configurations.worker) !== '[object Function]')
+            return logError('Worker must be provided and it must be a function \n \n')
 
-        if (!configurations.worker) {
-            logError('Worker must be provided')
-            return
-        }
-
-        const options: Options = {
+        const options: IOptions = {
             port: configurations.port || 80,
             worker: configurations.worker,
             workers: configurations.workers || 1,
@@ -21,6 +17,6 @@ export class ClusterWS {
             restartOnFail: configurations.restartOnFail || false
         }
 
-        isMaster ? processMaster(options) : processWorker(options)
+        isMaster ? masterProcess(options) : ''
     }
 }

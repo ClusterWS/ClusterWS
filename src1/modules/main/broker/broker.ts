@@ -9,7 +9,7 @@ declare let process: any
 export class Broker {
     servers: TcpSocket[] = []
 
-    constructor(public options: Options, public id: number) {
+    constructor(public options: Options, public info: number) {
         createServer((s: any) => {
             const socket: TcpSocket = new TcpSocket(s)
 
