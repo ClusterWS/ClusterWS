@@ -13,23 +13,23 @@ export function masterProcess(options: IOptions): void {
 
         process.on('exit', (): void => {
             logWarning(processName + ' has been disconnected \n')
-            if (options.restartOnFail) {
+            if (options.restartWorkerOnFail) {
                 logWarning(processName + ' is restarting \n')
                 launchProcess(processName, index)
             }
         })
         process.on('message', (message: IProcessMessage): any => message.event === 'Ready' ? isReady(index, message.data, processName) : '')
-        process.send({ name: processName, data: { internalKey, index } })
+        process.send({ event: processName, data: { internalKey, index } })
     }
 
     function isReady(index: number, pid: number, processName: string): void | string {
-        if (hasCompleted) {
-            readyProcesses[index] = '       ' + processName + ': ' + index + ', PID: ' + pid
-            return logReady(processName + ' has been restarted')
-        } else if (index === 0) {
+        if (hasCompleted) return logReady(processName + ' has been restarted')
+        if (index === 0) {
             for (let i: number = 1; i <= options.workers; i++) launchProcess('Worker', i)
             return readyProcesses[index] = '>>> ' + processName + ' on: ' + options.brokerPort + ', PID ' + pid
-        } else if (Object.keys(readyProcesses).length === options.workers) {
+        } else readyProcesses[index] = '       ' + processName + ': ' + index + ', PID ' + pid
+
+        if (Object.keys(readyProcesses).length === options.workers + 1) {
             hasCompleted = true
             logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid)
             for (const key in readyProcesses) if (readyProcesses[key]) logReady(readyProcesses[key])

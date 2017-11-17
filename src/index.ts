@@ -1,6 +1,7 @@
 import { isMaster } from 'cluster'
 import { logError } from './modules/utils/logs'
 import { masterProcess } from './modules/master.process'
+import { workerProcess } from './modules/worker.process'
 import { IOptions, IPassedOptions } from './modules/utils/interfaces'
 
 export class ClusterWS {
@@ -14,9 +15,9 @@ export class ClusterWS {
             workers: configurations.workers || 1,
             brokerPort: configurations.brokerPort || 9346,
             pingInterval: configurations.pingInterval || 20000,
-            restartOnFail: configurations.restartOnFail || false
+            restartWorkerOnFail: configurations.restartWorkerOnFail || false
         }
 
-        isMaster ? masterProcess(options) : ''
+        isMaster ? masterProcess(options) : workerProcess(options)
     }
 }

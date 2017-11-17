@@ -4,7 +4,7 @@ export interface IOptions {
     workers: number
     brokerPort: number
     pingInterval: number
-    restartOnFail: boolean
+    restartWorkerOnFail: boolean
 }
 
 export interface IPassedOptions {
@@ -13,7 +13,7 @@ export interface IPassedOptions {
     workers?: number
     brokerPort?: number
     pingInterval?: number
-    restartOnFail?: boolean
+    restartWorkerOnFail?: boolean
 }
 
 export interface IProcessMessage {
