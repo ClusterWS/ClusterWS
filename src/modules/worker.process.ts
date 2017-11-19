@@ -1,13 +1,13 @@
 import { logError } from './utils/logs'
 import { IOptions, IProcessMessage } from './utils/interfaces'
 import { Broker } from './broker/broker'
+import { Worker } from './worker/worker'
 
-declare let process: any
 export function workerProcess(options: IOptions): void {
-    process.on('message', (message: IProcessMessage): void => {
+    process.on('message', (message: IProcessMessage): any => {
         switch (message.event) {
-            case 'Broker': return Broker.server(options, message.data)
-            case 'Worker': return
+            case 'Broker': return Broker.Server(options, message.data)
+            case 'Worker': return new Worker(options, message.data)
         }
     })
 

@@ -21,3 +21,8 @@ export class ClusterWS {
         isMaster ? masterProcess(options) : workerProcess(options)
     }
 }
+
+new ClusterWS({
+    worker: () => { },
+    workers: 1
+})
