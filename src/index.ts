@@ -23,7 +23,7 @@ export class ClusterWS {
     }
 }
 
-new ClusterWS({
-    worker: () => { },
-    workers: 1
-})
+// new ClusterWS({
+//     worker: () => { },
+//     workers: 1
+// })

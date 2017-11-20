@@ -53,7 +53,7 @@ module.exports = function(e) {
             i.on("open", function() {
                 return i.send(t);
             }), i.on("message", function(e) {
-                return "#0" === e ? i.send("#1") : s.emit("#publish", JSON.parse(e.toString()));
+                return "#0" === e ? i.send("#1") : s.emit("#publish", JSON.parse(Buffer.from(e).toString()));
             }), i.on("error", function(e) {
                 return o.logError("Socket " + process.pid + " has an issue: \n" + e.stack + "\n");
             }), i.on("close", function(n, i) {
@@ -148,10 +148,7 @@ module.exports = function(e) {
         }
         return e;
     }();
-    r.ClusterWS = c, new c({
-        worker: function() {},
-        workers: 1
-    });
+    r.ClusterWS = c;
 }, function(e, r, t) {
     "use strict";
     function n(e) {
@@ -300,7 +297,7 @@ module.exports = function(e) {
             }), this.socket.on("message", function(e) {
                 if ("#1" === e) return t.missedPing = 0;
                 try {
-                    t.server.options.useBinary && (e = e.toString()), e = JSON.parse(e);
+                    t.server.options.useBinary && (e = Buffer.from(e).toString()), e = JSON.parse(e);
                 } catch (e) {
                     return o.logError("PID: " + process.pid + "\n" + e + "\n");
                 }
@@ -313,6 +310,7 @@ module.exports = function(e) {
         return e.prototype.on = function(e, r) {
             this.events.on(e, r);
         }, e.prototype.send = function(e, r, t) {
+            if (this.server.options.useBinary && "configuration" !== e) return this.socket.send(Buffer.from(s.socketEncodeMessages(e, r, t || "emit")));
             this.socket.send(s.socketEncodeMessages(e, r, t || "emit"));
         }, e.prototype.disconnect = function(e, r) {
             this.socket.close(e, r);

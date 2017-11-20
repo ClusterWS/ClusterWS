@@ -22,7 +22,7 @@ export class Socket {
         this.socket.on('message', (message: any): any => {
             if (message === '#1') return this.missedPing = 0
             try {
-                if (this.server.options.useBinary) message = message.toString()
+                if (this.server.options.useBinary) message = Buffer.from(message).toString()
                 message = JSON.parse(message)
             } catch (e) { return logError('PID: ' + process.pid + '\n' + e + '\n') }
 
@@ -42,7 +42,7 @@ export class Socket {
     }
 
     public send(event: string, data: any, type?: string): void {
-        if (this.server.options.useBinary) return this.socket.send(Buffer.from(socketEncodeMessages(event, data, type || 'emit')))
+        if (this.server.options.useBinary && event !== 'configuration') return this.socket.send(Buffer.from(socketEncodeMessages(event, data, type || 'emit')))
         this.socket.send(socketEncodeMessages(event, data, type || 'emit'))
     }
 

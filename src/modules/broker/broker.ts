@@ -10,7 +10,7 @@ export class Broker {
         const websocket: WebSocket = new WebSocket(url)
 
         websocket.on('open', (): void => websocket.send(key))
-        websocket.on('message', (message: any): void => message === '#0' ? websocket.send('#1') : socketServer.emit('#publish', JSON.parse(message.toString())))
+        websocket.on('message', (message: any): void => message === '#0' ? websocket.send('#1') : socketServer.emit('#publish', JSON.parse(Buffer.from(message).toString())))
         websocket.on('error', (err: any) => logError('Socket ' + process.pid + ' has an issue: ' + '\n' + err.stack + '\n'))
         websocket.on('close', (code: number, reason: string): void => {
             if (code === 4000) return logError('Socket had been disconnected please contact developers to fix this bug')
