@@ -18,7 +18,8 @@ export class ClusterWS {
             workers: configurations.workers || 1,
             brokerPort: configurations.brokerPort || 9346,
             pingInterval: configurations.pingInterval || 20000,
-            restartOnFail: configurations.restartOnFail || false
+            restartOnFail: configurations.restartOnFail || false,
+            sendInBinary: configurations
         }
 
         isMaster ? processMaster(options) : processWorker(options)

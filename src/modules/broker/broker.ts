@@ -1,7 +1,7 @@
 import * as WebSocket from 'uws'
 import { logError, logWarning } from '../utils/logs'
 import { IOptions, IProcessMessage } from '../utils/interfaces'
-import { SocketServer } from '../worker/socket'
+import { SocketServer } from '../worker/socket/socketServer'
 
 declare let process: any
 

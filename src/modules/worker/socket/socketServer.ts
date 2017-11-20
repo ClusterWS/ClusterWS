@@ -1,18 +1,11 @@
 import * as WebSocket from 'uws'
-import { EventEmitter } from '../common/emitter'
+import { EventEmitter } from '../../common/emitter'
 
 export class SocketServer extends EventEmitter {
     public middleware: any = {}
-
     private brokerSocket: WebSocket
 
-    constructor() {
-        super()
-    }
-
-    public createSocket(socket: any): void {
-
-    }
+    constructor() { super() }
 
     public publish(channel: string, data: any): void {
         this.brokerSocket.send(Buffer.from(JSON.stringify({ channel, data })))
