@@ -54,7 +54,8 @@ function Worker() {
     port: '{number} port on which main process will listen. (default 80)',
     restartWorkerOnFail: '{bool} will automatically restart broken workers. (dafault false)',
     brokerPort: '{number} dont change if it is not needed. (default 9346)',
-    pingInterval: '{number} how often ping will be send to the client. (default 20000) in ms'
+    pingInterval: '{number} how often ping will be send to the client. (default 20000) in ms',
+    useBinary: '{boolean} will send messages between server and client in binrary good to use for production. (default false) '
 }
 ```
 
