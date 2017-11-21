@@ -259,7 +259,7 @@ module.exports = function(e) {
             return r.middleware = {}, r;
         }
         return n(r, e), r.prototype.publish = function(e, r) {
-            this.brokerSocket.send(Buffer.from(JSON.stringify({
+            this.socketBroker.send(Buffer.from(JSON.stringify({
                 channel: e,
                 data: r
             }))), this.emit("#publish", {
@@ -267,7 +267,7 @@ module.exports = function(e) {
                 data: r
             });
         }, r.prototype.setBroker = function(e) {
-            this.brokerSocket = e;
+            this.socketBroker = e;
         }, r;
     }(o.EventEmitter);
     r.SocketServer = s;
