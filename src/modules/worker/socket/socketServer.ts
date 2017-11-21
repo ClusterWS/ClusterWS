@@ -1,5 +1,5 @@
 import * as WebSocket from 'uws'
-import { EventEmitter } from '../../common/emitter'
+import { EventEmitter } from '../../utils/emitter'
 
 export class SocketServer extends EventEmitter {
     public middleware: any = {}

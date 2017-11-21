@@ -295,9 +295,10 @@ module.exports = function(e) {
             }, "system"), this.socket.on("error", function(e) {
                 return t.events.emit("error", e);
             }), this.socket.on("message", function(e) {
-                if ("#1" === e) return t.missedPing = 0;
+                if (t.server.options.useBinary && "string" != typeof e && (e = Buffer.from(e).toString()), 
+                "#" === e[0] && "1" === e[1]) return t.missedPing = 0;
                 try {
-                    t.server.options.useBinary && (e = Buffer.from(e).toString()), e = JSON.parse(e);
+                    e = JSON.parse(e);
                 } catch (e) {
                     return o.logError("PID: " + process.pid + "\n" + e + "\n");
                 }
