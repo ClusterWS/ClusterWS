@@ -1,25 +1,31 @@
 import * as WebSocket from 'uws'
-import { logError, logWarning } from '../utils/logs'
+import { logError, logWarning, logReady } from '../utils/logs'
 import { IOptions, IProcessMessage } from '../utils/interfaces'
 import { SocketServer } from '../worker/socket/socketServer'
 
 declare let process: any
 
 export class Broker {
-    public static Client(url: string, key: string, broadcaster: SocketServer | any): void {
+    public static Client(url: string, key: string, broadcaster: SocketServer | any, isReconnected?: boolean): void {
         const websocket: WebSocket = new WebSocket(url)
         const isSocket: boolean = broadcaster instanceof SocketServer
 
-        websocket.on('open', (): void => websocket.send(key))
-        websocket.on('error', (err: any) => logError('Socket ' + process.pid + ' has an issue: ' + '\n' + err.stack + '\n'))
+        websocket.on('open', (): void => {
+            if (isReconnected) logReady('Socket has been reconnected')
+            websocket.send(key)
+        })
+        websocket.on('error', (err: any) => {
+            if (err.stack === 'uWs client connection error') return Broker.Client(url, key, broadcaster, true)
+            logError('Socket ' + process.pid + ' has an issue: ' + '\n' + err.stack + '\n')
+        })
         websocket.on('message', (message: any): void => {
             if (message === '#0') return websocket.send('#1')
             isSocket ? broadcaster.emit('#publish', JSON.parse(Buffer.from(message).toString())) : broadcaster.send('', message)
         })
         websocket.on('close', (code: number, reason: string): void => {
-            if (code === 4000) return logError('Socket had been disconnected with error 4000 please contact developers to fix this bug')
-            logWarning('Something went wrong, socket will be reconnected')
-            Broker.Client(url, key, broadcaster)
+            if (code === 4000) return logError('Wrong or no authenticated key was provided')
+            logWarning('Something went wrong, socket will be reconnected as soon as possible')
+            Broker.Client(url, key, broadcaster, true)
         })
         broadcaster.setBroker(websocket)
     }

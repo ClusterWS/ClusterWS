@@ -48,32 +48,34 @@ module.exports = function(e) {
     });
     var t = n(3), o = n(0), s = n(4), i = function() {
         function e() {}
-        return e.Client = function(r, n, i) {
-            var c = new t(r), u = i instanceof s.SocketServer;
-            c.on("open", function() {
-                return c.send(n);
-            }), c.on("error", function(e) {
-                return o.logError("Socket " + process.pid + " has an issue: \n" + e.stack + "\n");
-            }), c.on("message", function(e) {
-                if ("#0" === e) return c.send("#1");
+        return e.Client = function(r, n, i, c) {
+            var a = new t(r), u = i instanceof s.SocketServer;
+            a.on("open", function() {
+                c && o.logReady("Socket has been reconnected"), a.send(n);
+            }), a.on("error", function(t) {
+                if ("uWs client connection error" === t.stack) return e.Client(r, n, i, !0);
+                o.logError("Socket " + process.pid + " has an issue: \n" + t.stack + "\n");
+            }), a.on("message", function(e) {
+                if ("#0" === e) return a.send("#1");
                 u ? i.emit("#publish", JSON.parse(Buffer.from(e).toString())) : i.send("", e);
-            }), c.on("close", function(t, s) {
-                if (4e3 === t) return o.logError("Socket had been disconnected with error 4000 please contact developers to fix this bug");
-                o.logWarning("Something went wrong, socket will be reconnected"), e.Client(r, n, i);
-            }), i.setBroker(c);
+            }), a.on("close", function(t, s) {
+                if (4e3 === t) return o.logError("Wrong or no authenticated key was provided");
+                o.logWarning("Something went wrong, socket will be reconnected as soon as possible"), 
+                e.Client(r, n, i, !0);
+            }), i.setBroker(a);
         }, e.Server = function(r, n) {
             function s(e, r) {
-                for (var n = 0, t = u.length; n < t; n++) u[n].id !== e && u[n].send(r);
+                for (var n = 0, t = a.length; n < t; n++) a[n].id !== e && a[n].send(r);
             }
             function i(e) {
                 if (e.id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15), 
-                0 === u.length) return u.push(e);
-                for (var r = 0, n = u.length; r < n; r++) {
-                    if (u[r].id === e.id) return i(e);
-                    if (r === n - 1) return u.push(e);
+                0 === a.length) return a.push(e);
+                for (var r = 0, n = a.length; r < n; r++) {
+                    if (a[r].id === e.id) return i(e);
+                    if (r === n - 1) return a.push(e);
                 }
             }
-            var c, u = [], a = new t.Server({
+            var c, a = [], u = new t.Server({
                 port: r
             }, function() {
                 return process.send({
@@ -81,7 +83,7 @@ module.exports = function(e) {
                     data: process.pid
                 });
             });
-            if (a.on("connection", function(e) {
+            if (u.on("connection", function(e) {
                 var r = !1, t = setTimeout(function() {
                     return e.close(4e3, "Not Authenticated");
                 }, 5e3), o = setInterval(function() {
@@ -91,7 +93,7 @@ module.exports = function(e) {
                     if ("#1" !== o) return o === n.key ? (r = !0, i(e), clearTimeout(t)) : void (r && (s(e.id, o), 
                     n.machineScale && c.send(o)));
                 }), e.on("close", function() {
-                    if (clearTimeout(t), clearInterval(o), r) for (var n = 0, s = u.length; n < s; n++) if (u[n].id === e.id) return u.splice(n, 1);
+                    if (clearTimeout(t), clearInterval(o), r) for (var n = 0, s = a.length; n < s; n++) if (a[n].id === e.id) return a.splice(n, 1);
                 });
             }), n.machineScale) {
                 var f = n.machineScale.master ? "127.0.0.1:" : n.machineScale.url + ":";
@@ -102,7 +104,7 @@ module.exports = function(e) {
                     }
                 });
             }
-            a.on("error", function(e) {
+            u.on("error", function(e) {
                 return o.logError("Broker " + process.pid + " has an issue: \n" + e.stack + "\n");
             });
         }, e;
@@ -204,13 +206,13 @@ module.exports = function(e) {
     "use strict";
     function t(e) {
         function r(t, i) {
-            var u = o.fork();
-            u.on("exit", function() {
+            var a = o.fork();
+            a.on("exit", function() {
                 s.logWarning(t + " has been disconnected \n"), e.restartWorkerOnFail && (s.logWarning(t + " is restarting \n"), 
                 r(t, i));
-            }), u.on("message", function(e) {
+            }), a.on("message", function(e) {
                 return "Ready" === e.event ? n(i, e.data, t) : "";
-            }), u.send({
+            }), a.send({
                 event: t,
                 data: {
                     internalKey: c,
@@ -222,12 +224,12 @@ module.exports = function(e) {
             if (t) return s.logReady(c + " has been restarted");
             if (-1 === n) return r("Broker", 0);
             if (0 === n) {
-                for (var u = 1; u <= e.workers; u++) r("Worker", u);
+                for (var a = 1; a <= e.workers; a++) r("Worker", a);
                 return i[n] = ">>> " + c + " on: " + e.brokerPort + ", PID " + o;
             }
             if (i[n] = "       " + c + ": " + n + ", PID " + o, Object.keys(i).length === e.workers + 1) {
                 t = !0, s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid);
-                for (var a in i) i[a] && s.logReady(i[a]);
+                for (var u in i) i[u] && s.logReady(i[u]);
             }
         }
         var t = !1, i = {}, c = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -271,7 +273,7 @@ module.exports = function(e) {
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var t = n(3), o = n(2), s = n(10), i = n(4), c = n(11), u = function() {
+    var t = n(3), o = n(2), s = n(10), i = n(4), c = n(11), a = function() {
         function e(e, r) {
             var n = this;
             this.options = e, this.httpServer = s.createServer(), this.socketServer = new i.SocketServer(), 
@@ -289,7 +291,7 @@ module.exports = function(e) {
         }
         return e;
     }();
-    r.Worker = u;
+    r.Worker = a;
 }, function(e, r) {
     e.exports = require("http");
 }, function(e, r, n) {
