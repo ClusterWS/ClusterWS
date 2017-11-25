@@ -46,25 +46,25 @@ module.exports = function(e) {
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var t = n(3), o = n(0), s = n(4), i = function() {
+    var t = n(3), o = n(4), s = n(0), i = function() {
         function e() {}
         return e.Client = function(r, n, i, c) {
-            var a = new t(r), u = i instanceof s.SocketServer;
+            var a = new t(r), u = i instanceof o.SocketServer;
             a.on("open", function() {
-                c && o.logReady("Socket has been reconnected"), a.send(n);
+                c && s.logReady("Socket has been reconnected"), a.send(n);
             }), a.on("error", function(t) {
                 if ("uWs client connection error" === t.stack) return e.Client(r, n, i, !0);
-                o.logError("Socket " + process.pid + " has an issue: \n" + t.stack + "\n");
+                s.logError("Socket " + process.pid + " has an issue: \n" + t.stack + "\n");
             }), a.on("message", function(e) {
                 if ("#0" === e) return a.send("#1");
                 u ? i.emit("#publish", JSON.parse(Buffer.from(e).toString())) : i.send("", e);
-            }), a.on("close", function(t, s) {
-                if (4e3 === t) return o.logError("Wrong or no authenticated key was provided");
-                o.logWarning("Something went wrong, socket will be reconnected as soon as possible"), 
+            }), a.on("close", function(t, o) {
+                if (4e3 === t) return s.logError("Wrong or no authenticated key was provided");
+                s.logWarning("Something went wrong, socket will be reconnected as soon as possible"), 
                 e.Client(r, n, i, !0);
             }), i.setBroker(a);
         }, e.Server = function(r, n) {
-            function s(e, r) {
+            function o(e, r) {
                 for (var n = 0, t = a.length; n < t; n++) a[n].id !== e && a[n].send(r);
             }
             function i(e) {
@@ -86,26 +86,26 @@ module.exports = function(e) {
             if (u.on("connection", function(e) {
                 var r = !1, t = setTimeout(function() {
                     return e.close(4e3, "Not Authenticated");
-                }, 5e3), o = setInterval(function() {
+                }, 5e3), s = setInterval(function() {
                     return e.send("#0");
                 }, 2e4);
-                e.on("message", function(o) {
-                    if ("#1" !== o) return o === n.key ? (r = !0, i(e), clearTimeout(t)) : void (r && (s(e.id, o), 
-                    n.machineScale && c.send(o)));
+                e.on("message", function(s) {
+                    if ("#1" !== s) return s === n.key ? (r = !0, i(e), clearTimeout(t)) : void (r && (o(e.id, s), 
+                    n.machineScale && c.send(s)));
                 }), e.on("close", function() {
-                    if (clearTimeout(t), clearInterval(o), r) for (var n = 0, s = a.length; n < s; n++) if (a[n].id === e.id) return a.splice(n, 1);
+                    if (clearTimeout(t), clearInterval(s), r) for (var n = 0, o = a.length; n < o; n++) if (a[n].id === e.id) return a.splice(n, 1);
                 });
             }), n.machineScale) {
                 var f = n.machineScale.master ? "127.0.0.1:" : n.machineScale.url + ":";
                 e.Client("ws://" + f + n.machineScale.port, n.machineScale.externalKey || "", {
-                    send: s,
+                    send: o,
                     setBroker: function(e) {
                         return c = e;
                     }
                 });
             }
             u.on("error", function(e) {
-                return o.logError("Broker " + process.pid + " has an issue: \n" + e.stack + "\n");
+                return s.logError("Broker " + process.pid + " has an issue: \n" + e.stack + "\n");
             });
         }, e;
     }();
@@ -184,9 +184,9 @@ module.exports = function(e) {
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var t = n(1), o = n(0), s = n(7), i = n(8), c = function() {
+    var t = n(1), o = n(7), s = n(8), i = n(0), c = function() {
         function e(e) {
-            if (!e.worker || "[object Function]" !== {}.toString.call(e.worker)) return o.logError("Worker must be provided and it must be a function \n \n");
+            if (!e.worker || "[object Function]" !== {}.toString.call(e.worker)) return i.logError("Worker must be provided and it must be a function \n \n");
             var r = {
                 port: e.port || 80,
                 worker: e.worker,
@@ -197,7 +197,7 @@ module.exports = function(e) {
                 useBinary: e.useBinary || !1,
                 machineScale: e.machineScale
             };
-            t.isMaster ? s.masterProcess(r) : i.workerProcess(r);
+            t.isMaster ? o.masterProcess(r) : s.workerProcess(r);
         }
         return e;
     }();
@@ -246,27 +246,27 @@ module.exports = function(e) {
         process.on("message", function(r) {
             switch (r.event) {
               case "Broker":
-                return s.Broker.Server(e.brokerPort, {
+                return o.Broker.Server(e.brokerPort, {
                     key: r.data.internalKey,
                     machineScale: e.machineScale
                 });
 
               case "Worker":
-                return new i.Worker(e, r.data);
+                return new s.Worker(e, r.data);
 
               case "Scaler":
-                return e.machineScale ? s.Broker.Server(e.machineScale.port, {
+                return e.machineScale ? o.Broker.Server(e.machineScale.port, {
                     key: e.machineScale.externalKey || ""
                 }) : "";
             }
         }), process.on("uncaughtException", function(r) {
-            if (o.logError("PID: " + process.pid + "\n" + r.stack + "\n"), e.restartWorkerOnFail) return process.exit();
+            if (i.logError("PID: " + process.pid + "\n" + r.stack + "\n"), e.restartWorkerOnFail) return process.exit();
         });
     }
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var o = n(0), s = n(2), i = n(9);
+    var o = n(2), s = n(9), i = n(0);
     r.workerProcess = t;
 }, function(e, r, n) {
     "use strict";

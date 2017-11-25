@@ -1,8 +1,7 @@
 import { isMaster } from 'cluster'
-import { logError } from './modules/utils/logs'
 import { masterProcess } from './modules/master.process'
 import { workerProcess } from './modules/worker.process'
-import { IOptions, IPassedOptions } from './modules/utils/interfaces'
+import { IOptions, IPassedOptions, logError } from './modules/utils/utils'
 
 export class ClusterWS {
     constructor(configurations: IPassedOptions) {

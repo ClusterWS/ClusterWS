@@ -1,6 +1,5 @@
 import { fork, Worker } from 'cluster'
-import { logReady, logWarning } from './utils/logs'
-import { IOptions, IProcessMessage } from './utils/interfaces'
+import { IOptions, IProcessMessage, logReady, logWarning  } from './utils/utils'
 
 export function masterProcess(options: IOptions): void {
     let hasCompleted: boolean = false

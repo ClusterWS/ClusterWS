@@ -1,6 +1,6 @@
 import { Server } from 'uws'
 import { Broker } from '../broker/broker'
-import { IOptions } from '../utils/interfaces'
+import { IOptions } from '../utils/utils'
 import { createServer } from 'http'
 import { SocketServer } from './socket/socketServer'
 import { Socket } from './socket/socket'

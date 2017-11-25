@@ -1,6 +1,6 @@
 import { Worker } from '../worker'
 import { EventEmitter } from '../../utils/emitter'
-import { logError } from '../../utils/logs'
+import { logError } from '../../utils/utils'
 import { socketDecodeMessages, socketEncodeMessages } from './messages'
 
 export class Socket {

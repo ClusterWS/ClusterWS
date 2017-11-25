@@ -1,4 +1,4 @@
-import { logError } from '../utils/logs'
+import { logError } from '../utils/utils'
 
 export class EventEmitter {
     private events: any = {}

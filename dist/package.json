@@ -11,5 +11,6 @@
 	},
 	"dependencies": {
 		"uws": "^8.14.1"
-	}
+	},
+	"types": "./index.d.ts"
 }

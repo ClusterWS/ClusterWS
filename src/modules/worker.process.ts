@@ -1,7 +1,6 @@
-import { logError } from './utils/logs'
-import { IOptions, IProcessMessage } from './utils/interfaces'
 import { Broker } from './broker/broker'
 import { Worker } from './worker/worker'
+import { IOptions, IProcessMessage, logError } from './utils/utils'
 
 export function workerProcess(options: IOptions): void {
     process.on('message', (message: IProcessMessage): any => {
