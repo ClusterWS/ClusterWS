@@ -6,6 +6,12 @@ export interface IOptions {
     pingInterval: number
     restartWorkerOnFail: boolean
     useBinary: boolean
+    machineScale?: {
+        master: boolean
+        port: number
+        url?: string
+        externalKey?: string
+    }
 }
 
 export interface IPassedOptions {
@@ -16,6 +22,12 @@ export interface IPassedOptions {
     pingInterval?: number
     restartWorkerOnFail?: boolean
     useBinary?: boolean
+    machineScale?: {
+        master: boolean
+        port: number
+        url?: string
+        externalKey?: string
+    }
 }
 
 export interface IProcessMessage {

@@ -6,8 +6,12 @@ import { Worker } from './worker/worker'
 export function workerProcess(options: IOptions): void {
     process.on('message', (message: IProcessMessage): any => {
         switch (message.event) {
-            case 'Broker': return Broker.Server(options, message.data)
+            case 'Broker': return Broker.Server(options.brokerPort, {
+                key: message.data.internalKey,
+                machineScale: options.machineScale
+            })
             case 'Worker': return new Worker(options, message.data)
+            case 'Scaler': return options.machineScale ? Broker.Server(options.machineScale.port, { key: options.machineScale.externalKey || '' }) : ''
         }
     })
 

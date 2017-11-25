@@ -16,7 +16,8 @@ export class ClusterWS {
             brokerPort: configurations.brokerPort || 9346,
             pingInterval: configurations.pingInterval || 20000,
             restartWorkerOnFail: configurations.restartWorkerOnFail || false,
-            useBinary: configurations.useBinary || false
+            useBinary: configurations.useBinary || false,
+            machineScale: configurations.machineScale
         }
 
         isMaster ? masterProcess(options) : workerProcess(options)

@@ -22,7 +22,6 @@ export class Socket {
         this.socket.on('message', (message: any): any => {
             if (this.server.options.useBinary && typeof message !== 'string') message = Buffer.from(message).toString()
             if (message === '#1') return this.missedPing = 0
-            
             try {
                 message = JSON.parse(message)
             } catch (e) { return logError('PID: ' + process.pid + '\n' + e + '\n') }

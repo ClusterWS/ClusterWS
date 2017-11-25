@@ -7,7 +7,8 @@ export function masterProcess(options: IOptions): void {
     const readyProcesses: any = {}
     const internalKey: string = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 
-    launchProcess('Broker', 0)
+    options.machineScale && options.machineScale.master ? launchProcess('Scaler', -1) : launchProcess('Broker', 0)
+
     function launchProcess(processName: string, index: number): void {
         const process: Worker = fork()
 
@@ -24,6 +25,7 @@ export function masterProcess(options: IOptions): void {
 
     function isReady(index: number, pid: number, processName: string): void | string {
         if (hasCompleted) return logReady(processName + ' has been restarted')
+        if (index === -1) return launchProcess('Broker', 0)
         if (index === 0) {
             for (let i: number = 1; i <= options.workers; i++) launchProcess('Worker', i)
             return readyProcesses[index] = '>>> ' + processName + ' on: ' + options.brokerPort + ', PID ' + pid
