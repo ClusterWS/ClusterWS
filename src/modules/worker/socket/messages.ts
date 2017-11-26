@@ -1,14 +1,4 @@
-import { Socket } from '../main/worker/socket'
-import { ProcessMessage } from './interfaces'
-
-export function processMessage(event: string, data?: any): ProcessMessage {
-    return { event, data }
-}
-
-export function brokerMessage(channel: string, data?: any): any {
-    return JSON.stringify({ channel, data })
-}
-
+import { Socket } from './socket'
 
 export function socketEncodeMessages(event: string, data: any, type: string): any {
     switch (type) {

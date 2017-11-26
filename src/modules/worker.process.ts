@@ -1,16 +1,21 @@
-import { Worker } from './main/worker/worker'
-import { Broker } from './main/broker/broker'
+import { Broker } from './broker/broker'
+import { Worker } from './worker/worker'
+import { IOptions, IProcessMessage, logError } from './utils/utils'
 
-import { logError } from './common/console'
-import { Options, ProcessMessage } from './common/interfaces'
-
-export function processWorker(options: Options): void {
-    process.on('message', (message: ProcessMessage): any => {
+export function workerProcess(options: IOptions): void {
+    process.on('message', (message: IProcessMessage): any => {
         switch (message.event) {
-            case 'initWorker': return new Worker(options, message.data)
-            case 'initBroker': return new Broker(options, message.data)
-            default: break
+            case 'Broker': return Broker.Server(options.brokerPort, {
+                key: message.data.internalKey,
+                machineScale: options.machineScale
+            })
+            case 'Worker': return new Worker(options, message.data)
+            case 'Scaler': return options.machineScale ? Broker.Server(options.machineScale.port, { key: options.machineScale.externalKey || '' }) : ''
         }
     })
-    process.on('uncaughtException', (err: any): void => logError('PID: ' + process.pid + '\n' + err.stack + '\n'))
+
+    process.on('uncaughtException', (err: any): void => {
+        logError('PID: ' + process.pid + '\n' + err.stack + '\n')
+        if (options.restartWorkerOnFail) return process.exit()
+    })
 }
