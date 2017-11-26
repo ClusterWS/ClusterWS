@@ -11,6 +11,8 @@
 ## Overview
 ClusterWS - is a minimal **Node JS http & real-time** framework which allows to scale WebSocket ([uWS](https://github.com/uNetworking/uWebSockets) - one of the fastest WebSocket libraries) between **Workers** in [Node JS Cluster](https://nodejs.org/api/cluster.html) and utilize all available CPU.
 
+*We have added machine scale as well, look at the bottom of README for more information*
+
 *A single instance of Node JS runs in a single thread. To take advantage of multi-core systems the user will sometimes want to launch a cluster of Node JS processes (**Workers**) to handle the load. To learn more about Node JS Cluster read official Node JS docs [here](https://nodejs.org/api/cluster.html).*
 
 #### From author: 
@@ -55,7 +57,10 @@ function Worker() {
     restartWorkerOnFail: '{bool} will automatically restart broken workers. (dafault false)',
     brokerPort: '{number} dont change if it is not needed. (default 9346)',
     pingInterval: '{number} how often ping will be send to the client. (default 20000) in ms',
-    useBinary: '{boolean} will send messages between server and client in binrary good to use for production. (default false) '
+    useBinary: '{boolean} will send messages between server and client in binrary good to use for production. (default false) ',
+    machineScale : {
+        // Look at the bottom of README for more information
+    }
 }
 ```
 
@@ -194,6 +199,38 @@ function Worker() {
     socketServer.on('connection', function(socket){})
 }
 ```
+
+
+## Machine-Scale
+To scale websocket across different machine you will need to pass object **`machinescale`**  to ClusterWS options:
+```js
+var cws = new ClusterWS({
+    worker: Worker,
+    machineScale:{
+        // Master option set it true on main server (to which all other servers will connect) you have to have only one master
+        master: true || false  
+        // Set port (any port) to which other servers will be connected if master set true on master you have to set the same port
+        port: 5555
+        // if master is false or not set you have tp pass url to your master server
+        url: 'url to your master server without http:// ,https://, ws://, wss://' ex: 'localhost'
+        // also for better security you can set externalKey (it has to be the same across all servers)
+        externalKey: ''
+    }
+})
+```
+
+**if you would like to test it localy make sure you set different ports on each execution for ClusterWS and Broker**
+
+## Performance Tips
+This part is just suggestions about how to improve performance and stability of your app.
+
+When you start your ClusterWS app, it will create one broker and workers amount which you set in options
+for example you set 5 workers, so eventualy you will have 6 workers (because one of them is broker) therefore if you are not using machine scale module you better set
+workers amount on one less then you have CPU on your machine.
+
+In case if you have Machine Scaling module only on master process's app creates one more broker to handle messages to everyone, therefore only where you set `master:true` you will need to set workers on one more less then above, for example you have 5 cores on you computer you better set **only for matser:true** :  workers to 3 because 1 will be internal Broker and another one external Broker all together is 5. For servers which are not masters you have to follow standards above.
+
+This is just my suggestions you may set workers as many as you want even if you have 1 core but it will not give you any advantages (just usless). 
 
 ## See Also
 * [Medium ClusterWS](https://medium.com/clusterws)

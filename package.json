@@ -1,6 +1,6 @@
 {
   "name": "clusterws",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "ClusterWS - is a minimal Node JS http & real-time framework which allows to scale WebSocket between Workers in Node JS Cluster and utilize all available CPU.",
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
