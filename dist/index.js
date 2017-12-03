@@ -196,7 +196,7 @@ module.exports = function(e) {
                 return c[t] = ">>> " + i + " on: " + e.brokerPort + ", PID " + o;
             }
             if (0 !== t && (c[t] = "       " + i + ": " + t + ", PID " + o), Object.keys(c).length === e.workers + 1) {
-                n = !0, e.secureProtocolOptions ? s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid + ", HTTPS: " + e.secureProtocolOptions.port) : s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid);
+                n = !0, e.secureProtocolOptions ? s.logReady(">>> Master on: " + e.secureProtocolOptions.port + ", PID: " + process.pid + " (secure)") : s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid);
                 for (var a in c) c[a] && s.logReady(c[a]);
             }
         }
@@ -244,17 +244,19 @@ module.exports = function(e) {
     var n = t(2), o = t(9), s = t(10), i = t(4), c = t(11), u = t(12), a = function() {
         function e(e, r) {
             var t = this;
-            this.options = e, this.httpServer = u.createServer(), this.socketServer = new c.SocketServer(), 
-            i.Broker.Client("ws://127.0.0.1:" + e.brokerPort, r.internalKey, this.socketServer), 
-            this.options.secureProtocolOptions && (this.httpsServer = o.createServer({
+            this.options = e, this.socketServer = new c.SocketServer(), i.Broker.Client("ws://127.0.0.1:" + e.brokerPort, r.internalKey, this.socketServer), 
+            this.options.secureProtocolOptions;
+            var a = this.options.secureProtocolOptions ? o.createServer({
                 key: this.options.secureProtocolOptions.key,
                 cert: this.options.secureProtocolOptions.cert,
                 ca: this.options.secureProtocolOptions.ca
-            }), this.httpsServer.listen(this.options.secureProtocolOptions.port)), new n.Server({
-                server: this.options.secureProtocolOptions ? this.httpsServer : this.httpServer
+            }) : u.createServer();
+            new n.Server({
+                server: a
             }).on("connection", function(e) {
                 return t.socketServer.emit("connection", new s.Socket(e, t));
-            }), this.httpServer.listen(this.options.port, function() {
+            }), this.options.secureProtocolOptions ? this.httpsServer = a : this.httpServer = a, 
+            a.listen(this.options.secureProtocolOptions ? this.options.secureProtocolOptions.port : this.options.port, function() {
                 t.options.worker.call(t), process.send({
                     event: "READY",
                     data: process.pid

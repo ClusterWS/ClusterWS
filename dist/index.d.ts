@@ -99,8 +99,8 @@ export class Socket {
 
 export class Worker {
     options: IOptions;
-    httpServer: Server;
-    httpsServer: HTTPS.Server;
+    httpServer: Server | HTTPS.Server;
+    httpsServer: Server | HTTPS.Server;
     socketServer: SocketServer;
     constructor(options: IOptions, serverConfigs: IObject);
 }

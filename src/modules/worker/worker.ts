@@ -10,28 +10,29 @@ import { IOptions, IObject } from '../utils/utils'
 declare const process: any
 
 export class Worker {
-    public httpServer: Server = createServer()
-    public httpsServer: HTTPS.Server
+    public httpServer: Server | HTTPS.Server
+    public httpsServer: Server | HTTPS.Server
     public socketServer: SocketServer = new SocketServer()
 
     constructor(public options: IOptions, serverConfigs: IObject) {
         Broker.Client('ws://127.0.0.1:' + options.brokerPort, serverConfigs.internalKey, this.socketServer)
+        this.options.secureProtocolOptions
 
-        if (this.options.secureProtocolOptions) {
-            this.httpsServer = HTTPS.createServer({
+        const server: Server | HTTPS.Server = this.options.secureProtocolOptions ?
+            HTTPS.createServer({
                 key: this.options.secureProtocolOptions.key,
                 cert: this.options.secureProtocolOptions.cert,
                 ca: this.options.secureProtocolOptions.ca
-            })
-            this.httpsServer.listen(this.options.secureProtocolOptions.port)
-        }
+            }) : createServer()
 
-        new WebSocket.Server({ server: this.options.secureProtocolOptions ? this.httpsServer : this.httpServer })
+        new WebSocket.Server({ server })
             .on('connection', (socket: WebSocket) => this.socketServer.emit('connection', new Socket(socket, this)))
 
-        this.httpServer.listen(this.options.port, (): void => {
+        this.options.secureProtocolOptions ? this.httpsServer = server : this.httpServer = server
+        server.listen(this.options.secureProtocolOptions ? this.options.secureProtocolOptions.port : this.options.port, (): void => {
             this.options.worker.call(this)
             process.send({ event: 'READY', data: process.pid })
         })
+
     }
 }
