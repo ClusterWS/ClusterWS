@@ -98,14 +98,14 @@ module.exports = function(e) {
             }), s.setBroker(c);
         }, e.Server = function(r, t) {
             function s(e, r) {
-                for (var t = 0, n = a.length; t < n; t++) a[t].id !== e && a[t].send(r);
+                for (var t = 0, n = u.length; t < n; t++) u[t].id !== e && u[t].send(r);
             }
             function i(e) {
-                if (e.id = o.randomString(!1), a.length) return a.push(e);
-                for (var r = 0, t = a.length; r < t; r++) if (a[r].id === e.id) return i(e);
-                a.push(e);
+                if (e.id = o.randomString(!1), u.length) return u.push(e);
+                for (var r = 0, t = u.length; r < t; r++) if (u[r].id === e.id) return i(e);
+                u.push(e);
             }
-            var c, a = [], u = new n.Server({
+            var c, u = [], a = new n.Server({
                 port: r
             }, function() {
                 return process.send({
@@ -113,7 +113,7 @@ module.exports = function(e) {
                     data: process.pid
                 });
             });
-            u.on("connection", function(e) {
+            a.on("connection", function(e) {
                 var r = !1, n = setTimeout(function() {
                     return e.close(4e3, "Not Authenticated");
                 }, 5e3), o = setInterval(function() {
@@ -123,9 +123,9 @@ module.exports = function(e) {
                     if ("#1" !== o) return o === t.key ? (r = !0, i(e), clearTimeout(n)) : void (r && (s(e.id, o), 
                     t.machineScale && c.send(o)));
                 }), e.on("close", function() {
-                    if (clearTimeout(n), clearInterval(o), r) for (var t = 0, s = a.length; t < s; t++) if (a[t].id === e.id) return a.splice(t, 1);
+                    if (clearTimeout(n), clearInterval(o), r) for (var t = 0, s = u.length; t < s; t++) if (u[t].id === e.id) return u.splice(t, 1);
                 });
-            }), u.on("error", function(e) {
+            }), a.on("error", function(e) {
                 return o.logError("Broker " + process.pid + " has an issue: \n" + e.stack + "\n");
             }), function() {
                 if (t.machineScale) {
@@ -157,11 +157,11 @@ module.exports = function(e) {
                 pingInterval: e.pingInterval || 2e4,
                 restartWorkerOnFail: e.restartWorkerOnFail || !1,
                 useBinary: e.useBinary || !1,
-                sslOptions: !!e.sslOptions && {
-                    port: e.sslOptions.port || 443,
-                    key: e.sslOptions.key,
-                    cert: e.sslOptions.cert,
-                    ca: e.sslOptions.ca
+                secureProtocolOptions: !!e.secureProtocolOptions && {
+                    port: e.secureProtocolOptions.port || 443,
+                    key: e.secureProtocolOptions.key,
+                    cert: e.secureProtocolOptions.cert,
+                    ca: e.secureProtocolOptions.ca
                 },
                 machineScale: e.machineScale
             };
@@ -174,16 +174,16 @@ module.exports = function(e) {
     "use strict";
     function n(e) {
         function r(n, c) {
-            var a = o.fork();
-            a.send({
+            var u = o.fork();
+            u.send({
                 event: n,
                 data: {
                     internalKey: i,
                     id: c
                 }
-            }), a.on("message", function(e) {
+            }), u.on("message", function(e) {
                 return "READY" === e.event ? t(c, e.data, n) : "";
-            }), a.on("exit", function() {
+            }), u.on("exit", function() {
                 s.logWarning(n + " has been disconnected \n"), e.restartWorkerOnFail && (s.logWarning(n + " is restarting \n"), 
                 r(n, c));
             });
@@ -192,12 +192,12 @@ module.exports = function(e) {
             if (n) return s.logReady(i + " is restarted");
             if (-1 === t) return r("Broker", 0);
             if (0 === t) {
-                for (var a = 1; a <= e.workers; a++) r("Worker", a);
+                for (var u = 1; u <= e.workers; u++) r("Worker", u);
                 return c[t] = ">>> " + i + " on: " + e.brokerPort + ", PID " + o;
             }
             if (0 !== t && (c[t] = "       " + i + ": " + t + ", PID " + o), Object.keys(c).length === e.workers + 1) {
-                n = !0, e.sslOptions ? s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid + ", HTTPS: " + e.sslOptions.port) : s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid);
-                for (var u in c) c[u] && s.logReady(c[u]);
+                n = !0, e.secureProtocolOptions ? s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid + ", HTTPS: " + e.secureProtocolOptions.port) : s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid);
+                for (var a in c) c[a] && s.logReady(c[a]);
             }
         }
         var n = !1, i = s.randomString(), c = {};
@@ -241,17 +241,17 @@ module.exports = function(e) {
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var n = t(2), o = t(9), s = t(10), i = t(4), c = t(11), a = t(12), u = function() {
+    var n = t(2), o = t(9), s = t(10), i = t(4), c = t(11), u = t(12), a = function() {
         function e(e, r) {
             var t = this;
-            this.options = e, this.httpServer = a.createServer(), this.socketServer = new c.SocketServer(), 
+            this.options = e, this.httpServer = u.createServer(), this.socketServer = new c.SocketServer(), 
             i.Broker.Client("ws://127.0.0.1:" + e.brokerPort, r.internalKey, this.socketServer), 
-            this.options.sslOptions && (this.httpsServer = o.createServer({
-                key: this.options.sslOptions.key,
-                cert: this.options.sslOptions.cert,
-                ca: this.options.sslOptions.ca
-            }), this.httpsServer.listen(this.options.sslOptions.port)), new n.Server({
-                server: this.options.sslOptions ? this.httpsServer : this.httpServer
+            this.options.secureProtocolOptions && (this.httpsServer = o.createServer({
+                key: this.options.secureProtocolOptions.key,
+                cert: this.options.secureProtocolOptions.cert,
+                ca: this.options.secureProtocolOptions.ca
+            }), this.httpsServer.listen(this.options.secureProtocolOptions.port)), new n.Server({
+                server: this.options.secureProtocolOptions ? this.httpsServer : this.httpServer
             }).on("connection", function(e) {
                 return t.socketServer.emit("connection", new s.Socket(e, t));
             }), this.httpServer.listen(this.options.port, function() {
@@ -263,7 +263,7 @@ module.exports = function(e) {
         }
         return e;
     }();
-    r.Worker = u;
+    r.Worker = a;
 }, function(e, r) {
     e.exports = require("https");
 }, function(e, r, t) {

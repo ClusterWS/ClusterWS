@@ -16,11 +16,11 @@ export class ClusterWS {
             pingInterval: configuration.pingInterval || 20000,
             restartWorkerOnFail: configuration.restartWorkerOnFail || false,
             useBinary: configuration.useBinary || false,
-            sslOptions: configuration.sslOptions ? {
-                port: configuration.sslOptions.port || 443,
-                key: configuration.sslOptions.key,
-                cert: configuration.sslOptions.cert,
-                ca: configuration.sslOptions.ca
+            secureProtocolOptions: configuration.secureProtocolOptions ? {
+                port: configuration.secureProtocolOptions.port || 443,
+                key: configuration.secureProtocolOptions.key,
+                cert: configuration.secureProtocolOptions.cert,
+                ca: configuration.secureProtocolOptions.ca
             } : false,
             machineScale: configuration.machineScale
         }

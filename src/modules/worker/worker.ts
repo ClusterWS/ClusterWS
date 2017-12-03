@@ -17,16 +17,16 @@ export class Worker {
     constructor(public options: IOptions, serverConfigs: IObject) {
         Broker.Client('ws://127.0.0.1:' + options.brokerPort, serverConfigs.internalKey, this.socketServer)
 
-        if (this.options.sslOptions) {
+        if (this.options.secureProtocolOptions) {
             this.httpsServer = HTTPS.createServer({
-                key: this.options.sslOptions.key,
-                cert: this.options.sslOptions.cert,
-                ca: this.options.sslOptions.ca
+                key: this.options.secureProtocolOptions.key,
+                cert: this.options.secureProtocolOptions.cert,
+                ca: this.options.secureProtocolOptions.ca
             })
-            this.httpsServer.listen(this.options.sslOptions.port)
+            this.httpsServer.listen(this.options.secureProtocolOptions.port)
         }
 
-        new WebSocket.Server({ server: this.options.sslOptions ? this.httpsServer : this.httpServer })
+        new WebSocket.Server({ server: this.options.secureProtocolOptions ? this.httpsServer : this.httpServer })
             .on('connection', (socket: WebSocket) => this.socketServer.emit('connection', new Socket(socket, this)))
 
         this.httpServer.listen(this.options.port, (): void => {

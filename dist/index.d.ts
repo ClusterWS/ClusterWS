@@ -47,7 +47,7 @@ export interface IMachineScale {
     url?: string;
     securityKey?: string;
 }
-export interface IsslOptions {
+export interface IsecureProtocolOptions {
     port?: number;
     key: string;
     cert: string;
@@ -61,7 +61,7 @@ export interface IOptions {
     pingInterval: number;
     restartWorkerOnFail: boolean;
     useBinary: boolean;
-    sslOptions: IsslOptions | false;
+    secureProtocolOptions: IsecureProtocolOptions | false;
     machineScale?: IMachineScale;
 }
 export interface IUserOptions {
@@ -72,7 +72,7 @@ export interface IUserOptions {
     pingInterval?: number;
     restartWorkerOnFail?: boolean;
     useBinary?: boolean;
-    sslOptions?: IsslOptions | false;
+    secureProtocolOptions?: IsecureProtocolOptions | false;
     machineScale?: IMachineScale;
 }
 

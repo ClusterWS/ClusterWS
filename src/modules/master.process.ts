@@ -32,8 +32,8 @@ export function masterProcess(options: IOptions): void {
         if (id !== 0) readyProcesses[id] = '       ' + name + ': ' + id + ', PID ' + pid
         if (Object.keys(readyProcesses).length === options.workers + 1) {
             loadingCompleted = true
-            options.sslOptions ?
-                logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid + ', HTTPS: ' + options.sslOptions.port) :
+            options.secureProtocolOptions ?
+                logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid + ', HTTPS: ' + options.secureProtocolOptions.port) :
                 logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid)
 
             for (const key in readyProcesses) readyProcesses[key] ? logReady(readyProcesses[key]) : ''
