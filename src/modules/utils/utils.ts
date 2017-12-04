@@ -38,7 +38,6 @@ export interface IMachineScale {
 }
 
 export interface IsecureProtocolOptions {
-    port?: number,
     key: string,
     cert: string,
     ca?: any

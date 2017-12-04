@@ -3,9 +3,8 @@ import * as HTTPS from 'https'
 import { Socket } from './socket/socket'
 import { Broker } from '../broker/broker'
 import { SocketServer } from './socket/server'
-import { Server, createServer } from 'http'
-
 import { IOptions, IObject } from '../utils/utils'
+import { Server, createServer } from 'http'
 
 declare const process: any
 
@@ -29,10 +28,9 @@ export class Worker {
             .on('connection', (socket: WebSocket) => this.socketServer.emit('connection', new Socket(socket, this)))
 
         this.options.secureProtocolOptions ? this.httpsServer = server : this.httpServer = server
-        server.listen(this.options.secureProtocolOptions ? this.options.secureProtocolOptions.port : this.options.port, (): void => {
+        server.listen(this.options.port, (): void => {
             this.options.worker.call(this)
             process.send({ event: 'READY', data: process.pid })
         })
-
     }
 }

@@ -150,7 +150,7 @@ module.exports = function(e) {
         function e(e) {
             if ("[object Function]" !== {}.toString.call(e.worker)) return i.logError("Worker must be provided and it must be a function \n \n");
             var r = {
-                port: e.port || 80,
+                port: e.port || e.secureProtocolOptions ? 443 : 80,
                 worker: e.worker,
                 workers: e.workers || 1,
                 brokerPort: e.brokerPort || 9346,
@@ -158,7 +158,6 @@ module.exports = function(e) {
                 restartWorkerOnFail: e.restartWorkerOnFail || !1,
                 useBinary: e.useBinary || !1,
                 secureProtocolOptions: !!e.secureProtocolOptions && {
-                    port: e.secureProtocolOptions.port || 443,
                     key: e.secureProtocolOptions.key,
                     cert: e.secureProtocolOptions.cert,
                     ca: e.secureProtocolOptions.ca
@@ -196,7 +195,7 @@ module.exports = function(e) {
                 return c[t] = ">>> " + i + " on: " + e.brokerPort + ", PID " + o;
             }
             if (0 !== t && (c[t] = "       " + i + ": " + t + ", PID " + o), Object.keys(c).length === e.workers + 1) {
-                n = !0, e.secureProtocolOptions ? s.logReady(">>> Master on: " + e.secureProtocolOptions.port + ", PID: " + process.pid + " (secure)") : s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid);
+                n = !0, s.logReady(" (secure)");
                 for (var a in c) c[a] && s.logReady(c[a]);
             }
         }
@@ -256,7 +255,7 @@ module.exports = function(e) {
             }).on("connection", function(e) {
                 return t.socketServer.emit("connection", new s.Socket(e, t));
             }), this.options.secureProtocolOptions ? this.httpsServer = a : this.httpServer = a, 
-            a.listen(this.options.secureProtocolOptions ? this.options.secureProtocolOptions.port : this.options.port, function() {
+            a.listen(this.options.port, function() {
                 t.options.worker.call(t), process.send({
                     event: "READY",
                     data: process.pid

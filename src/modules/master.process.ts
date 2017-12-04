@@ -32,10 +32,7 @@ export function masterProcess(options: IOptions): void {
         if (id !== 0) readyProcesses[id] = '       ' + name + ': ' + id + ', PID ' + pid
         if (Object.keys(readyProcesses).length === options.workers + 1) {
             loadingCompleted = true
-            options.secureProtocolOptions ?
-                logReady('>>> Master on: ' + options.secureProtocolOptions.port + ', PID: ' + process.pid + ' (secure)') :
-                logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid)
-
+            logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid + options.secureProtocolOptions ? ' (secure)' : '')
             for (const key in readyProcesses) readyProcesses[key] ? logReady(readyProcesses[key]) : ''
         }
     }
