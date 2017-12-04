@@ -149,8 +149,8 @@ module.exports = function(e) {
     var n = t(1), o = t(6), s = t(7), i = t(0), c = function() {
         function e(e) {
             if ("[object Function]" !== {}.toString.call(e.worker)) return i.logError("Worker must be provided and it must be a function \n \n");
-            var r = {
-                port: e.port || e.secureProtocolOptions ? 443 : 80,
+            var r = e.secureProtocolOptions ? 443 : 80, t = {
+                port: e.port || r,
                 worker: e.worker,
                 workers: e.workers || 1,
                 brokerPort: e.brokerPort || 9346,
@@ -164,7 +164,7 @@ module.exports = function(e) {
                 },
                 machineScale: e.machineScale
             };
-            n.isMaster ? o.masterProcess(r) : s.workerProcess(r);
+            n.isMaster ? o.masterProcess(t) : s.workerProcess(t);
         }
         return e;
     }();
@@ -195,8 +195,10 @@ module.exports = function(e) {
                 return c[t] = ">>> " + i + " on: " + e.brokerPort + ", PID " + o;
             }
             if (0 !== t && (c[t] = "       " + i + ": " + t + ", PID " + o), Object.keys(c).length === e.workers + 1) {
-                n = !0, s.logReady(" (secure)");
-                for (var a in c) c[a] && s.logReady(c[a]);
+                n = !0;
+                var a = e.secureProtocolOptions ? " (secure)" : "";
+                s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid + a);
+                for (var l in c) c[l] && s.logReady(c[l]);
             }
         }
         var n = !1, i = s.randomString(), c = {};

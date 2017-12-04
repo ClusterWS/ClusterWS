@@ -93,7 +93,7 @@ export class Socket {
     constructor(socket: WebSocket, server: Worker);
     send(event: string, data: any, type?: string): void;
     on(event: string, listener: TListener): void;
-    disconnect(code: number, reason: string): void;
+    disconnect(code?: number, reason?: string): void;
 }
 
 export class Worker {
