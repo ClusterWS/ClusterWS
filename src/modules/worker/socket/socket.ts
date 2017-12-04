@@ -74,7 +74,7 @@ export class Socket {
         this.events.on(event, listener)
     }
 
-    public disconnect(code: number, reason: string): void {
+    public disconnect(code?: number, reason?: string): void {
         this.socket.close(code, reason)
     }
 }
