@@ -28,12 +28,13 @@ export class Socket {
             case 'ping': return event
             case 'emit': return JSON.stringify({ '#': ['e', event, data] })
             case 'publish': return JSON.stringify({ '#': ['p', event, data] })
-            case 'system': switch (event) {
-                case 'subsribe': return JSON.stringify({ '#': ['s', 's', data] })
-                case 'unsubscribe': return JSON.stringify({ '#': ['s', 'u', data] })
-                case 'configuration': return JSON.stringify({ '#': ['s', 'c', data] })
-                default: break
-            }
+            case 'system':
+                switch (event) {
+                    case 'subsribe': return JSON.stringify({ '#': ['s', 's', data] })
+                    case 'unsubscribe': return JSON.stringify({ '#': ['s', 'u', data] })
+                    case 'configuration': return JSON.stringify({ '#': ['s', 'c', data] })
+                    default: break
+                }
             default: break
         }
     }

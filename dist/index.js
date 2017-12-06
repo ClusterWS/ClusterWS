@@ -57,7 +57,7 @@ module.exports = function(e) {
         }
         return e.prototype.on = function(e, r) {
             if ("[object Function]" !== {}.toString.call(r)) return n.logError("Listener must be a function");
-            this.events[e] ? this.events[e].push(r) : this.events[e] = [ r ];
+            this.events[e] ? "verifyConnection" === e ? this.events[e][0] = r : this.events[e].push(r) : this.events[e] = [ r ];
         }, e.prototype.emit = function(e) {
             for (var r = [], t = 1; t < arguments.length; t++) r[t - 1] = arguments[t];
             var n = this.events[e];
@@ -253,9 +253,14 @@ module.exports = function(e) {
                 ca: this.options.secureProtocolOptions.ca
             }) : u.createServer();
             new n.Server({
-                server: a
+                server: a,
+                verifyClient: function(e, r) {
+                    return t.socketServer.emit("verifyConnection", e, r);
+                }
             }).on("connection", function(e) {
                 return t.socketServer.emit("connection", new s.Socket(e, t));
+            }), this.socketServer.on("verifyConnection", function(e, r) {
+                return r(!0);
             }), this.options.secureProtocolOptions ? this.httpsServer = a : this.httpServer = a, 
             a.listen(this.options.port, function() {
                 t.options.worker.call(t), process.send({
