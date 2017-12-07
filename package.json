@@ -1,7 +1,7 @@
 {
   "name": "clusterws",
   "version": "1.3.0",
-  "description": "ClusterWS - is a minimal Node JS http & real-time framework which allows to scale WebSocket between Workers in Node JS Cluster and utilize all available CPU.",
+  "description": "ClusterWS - lightweight, fast and powerful framework for building horizontally & vertically scalable WebSocket applications in Node.js.",
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
@@ -17,7 +17,7 @@
   "devDependencies": {
     "@types/node": "^8.0.53",
     "@types/uws": "^0.13.0",
-    "ts-builder": "^0.2.19"
+    "ts-builder": "^0.2.20"
   },
   "dependencies": {
     "uws": "^8.14.1"
