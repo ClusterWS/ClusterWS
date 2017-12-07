@@ -216,8 +216,8 @@ var cws = new ClusterWS({
         port: 5555
         // if master is false or not set you have tp pass url to your master server
         url: 'url to your master server without http:// ,https://, ws://, wss://' ex: 'localhost'
-        // also for better security you can set externalKey (it has to be the same across all servers)
-        externalKey: ''
+        // also for better security you can set securityKey (it has to be the same across all servers)
+        securityKey: ''
     }
 })
 ```

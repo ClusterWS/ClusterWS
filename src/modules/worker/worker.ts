@@ -1,25 +1,38 @@
-import { Server } from 'uws'
-import { Broker } from '../broker/broker'
-import { IOptions } from '../utils/utils'
-import { createServer } from 'http'
-import { SocketServer } from './socket/socketServer'
+import * as WebSocket from 'uws'
+import * as HTTPS from 'https'
 import { Socket } from './socket/socket'
+import { Broker } from '../broker/broker'
+import { SocketServer } from './socket/server'
+import { IOptions, IObject, TListener } from '../utils/utils'
+import { Server, createServer } from 'http'
 
-declare let process: any
+declare const process: any
 
 export class Worker {
-    public httpServer: any = createServer()
+    public httpServer: Server | HTTPS.Server
+    public httpsServer: Server | HTTPS.Server
     public socketServer: SocketServer = new SocketServer()
 
-    constructor(public options: IOptions, info: any) {
-        Broker.Client('ws://127.0.0.1:' + options.brokerPort, info.internalKey, this.socketServer)
+    constructor(public options: IOptions, serverConfigs: IObject) {
+        Broker.Client('ws://127.0.0.1:' + options.brokerPort, serverConfigs.internalKey, this.socketServer)
+        this.options.secureProtocolOptions
 
-        const uws: Server = new Server({ server: this.httpServer })
-        uws.on('connection', (socket: any) => this.socketServer.emit('connection', new Socket(socket, this)))
+        const server: Server | HTTPS.Server = this.options.secureProtocolOptions ?
+            HTTPS.createServer({
+                key: this.options.secureProtocolOptions.key,
+                cert: this.options.secureProtocolOptions.cert,
+                ca: this.options.secureProtocolOptions.ca
+            }) : createServer()
 
-        this.httpServer.listen(this.options.port, (): void => {
+        new WebSocket.Server({ server, verifyClient: (info: IObject, callback: TListener): void => this.socketServer.emit('verifyConnection', info, callback) })
+            .on('connection', (socket: WebSocket) => this.socketServer.emit('connection', new Socket(socket, this)))
+
+        this.socketServer.on('verifyConnection', (info: IObject, callback: TListener) => callback(true))
+
+        this.options.secureProtocolOptions ? this.httpsServer = server : this.httpServer = server
+        server.listen(this.options.port, (): void => {
             this.options.worker.call(this)
-            process.send({ event: 'Ready', data: process.pid })
+            process.send({ event: 'READY', data: process.pid })
         })
     }
 }

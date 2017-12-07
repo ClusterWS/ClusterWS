@@ -1,25 +1,22 @@
-import * as WebSocket from 'uws'
-import { SocketServer } from '../worker/socket/socketServer'
-import { logError, logWarning, logReady, IOptions, IProcessMessage } from '../utils/utils'
 
-declare let process: any
+import * as WebSocket from 'uws'
+import { SocketServer } from '../worker/socket/server'
+import { TSocketMessage, IObject, logReady, logError, logWarning, randomString } from '../utils/utils'
+
+declare const process: any
 
 export class Broker {
     public static Client(url: string, key: string, broadcaster: SocketServer | any, isReconnected?: boolean): void {
         const websocket: WebSocket = new WebSocket(url)
-        const isSocket: boolean = broadcaster instanceof SocketServer
 
+        websocket.on('message', (message: TSocketMessage): void => message === '#0' ? websocket.send('#1') : broadcaster.broadcastMessage('', message))
         websocket.on('open', (): void => {
             if (isReconnected) logReady('Socket has been reconnected')
             websocket.send(key)
         })
-        websocket.on('error', (err: any) => {
+        websocket.on('error', (err: Error): void => {
             if (err.stack === 'uWs client connection error') return Broker.Client(url, key, broadcaster, true)
             logError('Socket ' + process.pid + ' has an issue: ' + '\n' + err.stack + '\n')
-        })
-        websocket.on('message', (message: any): void => {
-            if (message === '#0') return websocket.send('#1')
-            isSocket ? broadcaster.emit('#publish', JSON.parse(Buffer.from(message).toString())) : broadcaster.send('', message)
         })
         websocket.on('close', (code: number, reason: string): void => {
             if (code === 4000) return logError('Wrong or no authenticated key was provided')
@@ -29,26 +26,26 @@ export class Broker {
         broadcaster.setBroker(websocket)
     }
 
-    public static Server(port: number, info: any): void {
-        let socketBroker: WebSocket
-        const sockets: any[] = []
-        const server: WebSocket.Server = new WebSocket.Server({ port }, (): void => process.send({ event: 'Ready', data: process.pid }))
+    public static Server(port: number, serverConfigs: IObject): void {
+        let externalBroker: IObject
+        const sockets: IObject[] = []
+        const brokerServer: WebSocket.Server = new WebSocket.Server({ port }, (): void => process.send({ event: 'READY', data: process.pid }))
 
-        server.on('connection', (socket: any) => {
+        brokerServer.on('connection', (socket: IObject): void => {
             let authenticated: boolean = false
-            const timeout: any = setTimeout((): void => socket.close(4000, 'Not Authenticated'), 5000)
-            const interval: any = setInterval((): void => socket.send('#0'), 20000)
+            const timeout: NodeJS.Timer = setTimeout((): void => socket.close(4000, 'Not Authenticated'), 5000)
+            const interval: NodeJS.Timer = setInterval((): void => socket.send('#0'), 20000)
 
-            socket.on('message', (message: any) => {
+            socket.on('message', (message: TSocketMessage): void | boolean => {
                 if (message === '#1') return
-                if (message === info.key) {
+                if (message === serverConfigs.key) {
                     authenticated = true
-                    setUniqueId(socket)
+                    authorizeSocket(socket)
                     return clearTimeout(timeout)
                 }
                 if (authenticated) {
                     broadcast(socket.id, message)
-                    if (info.machineScale) socketBroker.send(message)
+                    serverConfigs.machineScale ? externalBroker.send(message) : ''
                 }
             })
 
@@ -61,27 +58,31 @@ export class Broker {
             })
         })
 
-        if (info.machineScale) {
-            const url: string = info.machineScale.master ? '127.0.0.1:' : info.machineScale.url + ':'
-            Broker.Client('ws://' + url + info.machineScale.port, info.machineScale.externalKey || '', {
-                send: broadcast,
-                setBroker: (broker: WebSocket): any => socketBroker = broker
-            })
-        }
+        brokerServer.on('error', (err: Error): void => logError('Broker ' + process.pid + ' has an issue: ' + '\n' + err.stack + '\n'))
 
-        function broadcast(id: any, message: any): void {
+        connectToExternalBroker()
+
+        function broadcast(id: string, message: TSocketMessage): void {
             for (let i: number = 0, len: number = sockets.length; i < len; i++)
                 if (sockets[i].id !== id) sockets[i].send(message)
         }
 
-        function setUniqueId(socket: any): void | any {
-            socket.id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-            if (sockets.length === 0) return sockets.push(socket)
-            for (let i: number = 0, len: number = sockets.length; i < len; i++) {
-                if (sockets[i].id === socket.id) return setUniqueId(socket)
-                if (i === len - 1) return sockets.push(socket)
+        function authorizeSocket(socket: IObject): void | number {
+            socket.id = randomString(false)
+            if (sockets.length) return sockets.push(socket)
+            for (let i: number = 0, len: number = sockets.length; i < len; i++)
+                if (sockets[i].id === socket.id) return authorizeSocket(socket)
+            sockets.push(socket)
+        }
+
+        function connectToExternalBroker(): void {
+            if (serverConfigs.machineScale) {
+                const url: string = serverConfigs.machineScale.master ? '127.0.0.1:' : serverConfigs.machineScale.url + ':'
+                Broker.Client('ws://' + url + serverConfigs.machineScale.port, serverConfigs.machineScale.securityKey || '', {
+                    broadcastMessage: broadcast,
+                    setBroker: (broker: WebSocket): IObject => externalBroker = broker
+                })
             }
         }
-        server.on('error', (err: any) => logError('Broker ' + process.pid + ' has an issue: ' + '\n' + err.stack + '\n'))
     }
 }
