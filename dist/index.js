@@ -324,7 +324,7 @@ module.exports = function(e) {
                         return -1 === e.channels.indexOf(r["#"][2]) ? e.channels.push(r["#"][2]) : "";
                     };
                     return e.server.socketServer.middleware.onsubscribe ? e.server.socketServer.middleware.onsubscribe(e, r["#"][2], function(e) {
-                        return e ? "" : t();
+                        return e ? t() : "";
                     }) : t();
 
                   case "u":
