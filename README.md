@@ -1,5 +1,5 @@
 <h1 align="center">ClusterWS</h1> 
-<h6 align="center">Scalable WebSocket Applications</h6>
+<h6 align="center">Build Scalable WebSocket Applications</h6>
 
 ![](https://u.cubeupload.com/goriunovd/ClusterWS.gif)
 
