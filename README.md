@@ -10,7 +10,7 @@
 
 
 <p align="center">
-    <strong>Lightweight, fast and powerful framework</strong> for building <strong>horizontally & vertically<strong> scalable WebSocket applications in Node.js. ClusterWS uses most lightweight, efficient & scalable WebSocket library uWebSockets.
+    <i>Lightweight, fast and powerful framework for building horizontally & vertically calable WebSocket applications in Node.js. ClusterWS uses most lightweight, efficient & scalable WebSocket library uWebSockets.</i>
 </p>
 
 <p align="center">
