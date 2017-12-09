@@ -1,5 +1,5 @@
 <h1 align="center">ClusterWS</h1> 
-<h6 align="center">WebSocket & Node JS Cluster</h6>
+<h6 align="center">Scalable WebSocket Applications</h6>
 
 ![](https://u.cubeupload.com/goriunovd/ClusterWS.gif)
 
@@ -10,9 +10,9 @@
 
 
 <p align="center">
-    <i>Lightweight, fast and powerful framework for building horizontally & vertically calable WebSocket applications in Node.js. ClusterWS uses most lightweight, efficient & scalable WebSocket library uWebSockets.</i>
+    <i>Lightweight, fast and powerful framework for building horizontally & vertically scalable WebSocket applications in Node.js. ClusterWS uses most lightweight, efficient & scalable WebSocket library uWebSockets.</i>
 </p>
 
 <p align="center">
-    <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>Check Documentation on Wiki</strong></a>
+    <a href="/wiki"><strong>Check Documentation on Wiki</strong></a>
 </p>
