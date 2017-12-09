@@ -8,7 +8,10 @@
  <a title="GitHub version" href="https://badge.fury.io/gh/goriunov%2FClusterWS"><img src="https://badge.fury.io/gh/goriunov%2FClusterWS.svg"></a>
 </p>
 
-***Lightweight, fast and powerful** framework for building **horizontally & vertically** scalable WebSocket applications in [Node.js](https://nodejs.org/en/). ClusterWS uses most lightweight, efficient & scalable WebSocket library uWebSockets.*
+
+<p align="center">
+    <strong>Lightweight, fast and powerful framework</strong> for building <strong>horizontally & vertically<strong> scalable WebSocket applications in Node.js. ClusterWS uses most lightweight, efficient & scalable WebSocket library uWebSockets.
+</p>
 
 <p align="center">
     <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>Check Documentation on Wiki</strong></a>
