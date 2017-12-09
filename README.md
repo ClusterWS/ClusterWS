@@ -14,5 +14,5 @@
 </p>
 
 <p align="center">
-    <a href="/wiki"><strong>Check Documentation on Wiki</strong></a>
+    <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>Check Documentation on Wiki</strong></a>
 </p>
