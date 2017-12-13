@@ -57,7 +57,7 @@ module.exports = function(e) {
         }
         return e.prototype.on = function(e, r) {
             if ("[object Function]" !== {}.toString.call(r)) return n.logError("Listener must be a function");
-            this.events[e] ? "verifyConnection" === e ? this.events[e][0] = r : this.events[e].push(r) : this.events[e] = [ r ];
+            this.events[e] ? this.events[e].push(r) : this.events[e] = [ r ];
         }, e.prototype.emit = function(e) {
             for (var r = [], t = 1; t < arguments.length; t++) r[t - 1] = arguments[t];
             var n = this.events[e];
@@ -255,12 +255,10 @@ module.exports = function(e) {
             new n.Server({
                 server: a,
                 verifyClient: function(e, r) {
-                    return t.socketServer.emit("verifyConnection", e, r);
+                    return t.socketServer.middleware.verifyConnection ? t.socketServer.middleware.verifyConnection.call(null, e, r) : r(!0);
                 }
             }).on("connection", function(e) {
                 return t.socketServer.emit("connection", new s.Socket(e, t));
-            }), this.socketServer.on("verifyConnection", function(e, r) {
-                return r(!0);
             }), this.options.secureProtocolOptions ? this.httpsServer = a : this.httpServer = a, 
             a.listen(this.options.port, function() {
                 t.options.worker.call(t), process.send({
@@ -324,7 +322,7 @@ module.exports = function(e) {
                         return -1 === e.channels.indexOf(r["#"][2]) ? e.channels.push(r["#"][2]) : "";
                     };
                     return e.server.socketServer.middleware.onsubscribe ? e.server.socketServer.middleware.onsubscribe(e, r["#"][2], function(e) {
-                        return e ? "" : t();
+                        return e ? t() : "";
                     }) : t();
 
                   case "u":

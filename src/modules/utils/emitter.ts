@@ -5,11 +5,7 @@ export class EventEmitter {
 
     public on(event: string, listener: TListener): void {
         if ({}.toString.call(listener) !== '[object Function]') return logError('Listener must be a function')
-        this.events[event] ?
-            event === 'verifyConnection' ?
-                this.events[event][0] = listener :
-                this.events[event].push(listener) :
-            this.events[event] = [listener]
+        this.events[event] ? this.events[event].push(listener) : this.events[event] = [listener]
     }
 
     public emit(event: string, ...args: any[]): void {

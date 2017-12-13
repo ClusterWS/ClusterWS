@@ -13,7 +13,7 @@ export class Socket {
                     case 's':
                         const subscribe: any = (): number | string => socket.channels.indexOf(message['#'][2]) === -1 ? socket.channels.push(message['#'][2]) : ''
                         if (!socket.server.socketServer.middleware.onsubscribe) return subscribe()
-                        return socket.server.socketServer.middleware.onsubscribe(socket, message['#'][2], (decline: boolean): void => decline ? '' : subscribe())
+                        return socket.server.socketServer.middleware.onsubscribe(socket, message['#'][2], (decline: boolean): void => decline ? subscribe() : '')
                     case 'u':
                         const index: number = socket.channels.indexOf(message['#'][2])
                         return index !== -1 ? socket.channels.splice(index, 1) : ''

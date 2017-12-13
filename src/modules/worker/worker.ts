@@ -24,10 +24,13 @@ export class Worker {
                 ca: this.options.secureProtocolOptions.ca
             }) : createServer()
 
-        new WebSocket.Server({ server, verifyClient: (info: IObject, callback: TListener): void => this.socketServer.emit('verifyConnection', info, callback) })
-            .on('connection', (socket: WebSocket) => this.socketServer.emit('connection', new Socket(socket, this)))
-
-        this.socketServer.on('verifyConnection', (info: IObject, callback: TListener) => callback(true))
+        new WebSocket.Server({
+            server,
+            verifyClient: (info: IObject, callback: TListener): void =>
+                this.socketServer.middleware.verifyConnection ?
+                    this.socketServer.middleware.verifyConnection.call(null, info, callback) :
+                    callback(true)
+        }).on('connection', (socket: WebSocket) => this.socketServer.emit('connection', new Socket(socket, this)))
 
         this.options.secureProtocolOptions ? this.httpsServer = server : this.httpServer = server
         server.listen(this.options.port, (): void => {
