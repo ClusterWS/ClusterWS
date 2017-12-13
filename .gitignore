@@ -1,7 +1,5 @@
 .npm
 .idea/
 .vscode/
-
 node_modules/
-
 package-lock.json
