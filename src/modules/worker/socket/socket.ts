@@ -1,22 +1,22 @@
 import * as WebSocket from 'uws'
 import { Worker } from '../worker'
 import { EventEmitter } from '../../utils/emitter'
-import { TSocketMessage, TListener, logError } from '../../utils/utils'
+import { TSocketMessage, TListener, logError, IObject } from '../../utils/utils'
 
 export class Socket {
-    private static decode(socket: Socket, message: TSocketMessage): any {
+    private static decode(socket: Socket, message: TSocketMessage): null | void | string[] {
         switch (message['#'][0]) {
             case 'e': return socket.events.emit(message['#'][1], message['#'][2])
-            case 'p': return socket.channels.indexOf(message['#'][1]) !== -1 ? socket.server.socketServer.publish(message['#'][1], message['#'][2]) : ''
+            case 'p': return socket.channels.indexOf(message['#'][1]) !== -1 ? socket.server.socketServer.publish(message['#'][1], message['#'][2]) : null
             case 's':
                 switch (message['#'][1]) {
                     case 's':
-                        const subscribe: any = (): number | string => socket.channels.indexOf(message['#'][2]) === -1 ? socket.channels.push(message['#'][2]) : ''
+                        const subscribe: any = (): number | null => socket.channels.indexOf(message['#'][2]) === -1 ? socket.channels.push(message['#'][2]) : null
                         if (!socket.server.socketServer.middleware.onsubscribe) return subscribe()
-                        return socket.server.socketServer.middleware.onsubscribe(socket, message['#'][2], (decline: boolean): void => decline ? subscribe() : '')
+                        return socket.server.socketServer.middleware.onsubscribe(socket, message['#'][2], (decline: boolean): void | null => decline ? subscribe() : null)
                     case 'u':
                         const index: number = socket.channels.indexOf(message['#'][2])
-                        return index !== -1 ? socket.channels.splice(index, 1) : ''
+                        return index !== -1 ? socket.channels.splice(index, 1) : null
                     default: break
                 }
             default: break
@@ -44,7 +44,7 @@ export class Socket {
     public events: EventEmitter = new EventEmitter()
 
     constructor(public socket: WebSocket, private server: Worker) {
-        const onPublish: any = (message: TSocketMessage): void | string => this.channels.indexOf(message.channel) !== -1 ? this.send(message.channel, message.data, 'publish') : ''
+        const onPublish: any = (message: TSocketMessage): void | null => this.channels.indexOf(message.channel) !== -1 ? this.send(message.channel, message.data, 'publish') : null
         this.server.socketServer.on('#publish', onPublish)
 
         const pingInterval: NodeJS.Timer = setInterval((): void => this.missedPing++ > 2 ? this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'), this.server.options.pingInterval)
@@ -56,7 +56,7 @@ export class Socket {
             this.events.emit('disconnect', code, reason)
             this.server.socketServer.removeListener('#publish', onPublish)
 
-            for (const key in this) this.hasOwnProperty(key) ? delete this[key] : ''
+            for (const key in this) this.hasOwnProperty(key) ? this[key] = null : null
         })
         this.socket.on('message', (message: TSocketMessage): void | number => {
             if (this.server.options.useBinary && typeof message !== 'string') message = Buffer.from(message).toString()

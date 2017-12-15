@@ -17,8 +17,8 @@ export function logWarning<T>(data: T): any {
     return console.log('\x1b[33m%s\x1b[0m', data)
 }
 
-export type TWorkerFunction = () => void
 export type TSocketMessage = any
+export type TWorkerFunction = () => void
 export type TListener = (...args: any[]) => void
 
 export interface IProcessMessage {

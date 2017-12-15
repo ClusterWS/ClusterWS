@@ -242,25 +242,24 @@ module.exports = function(e) {
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var n = t(2), o = t(9), s = t(10), i = t(4), c = t(11), u = t(12), a = function() {
+    var n = t(9), o = t(10), s = t(2), i = t(11), c = t(4), u = t(12), a = function() {
         function e(e, r) {
             var t = this;
-            this.options = e, this.socketServer = new c.SocketServer(), i.Broker.Client("ws://127.0.0.1:" + e.brokerPort, r.internalKey, this.socketServer), 
+            this.options = e, this.socketServer = new u.SocketServer(), c.Broker.Client("ws://127.0.0.1:" + e.brokerPort, r.internalKey, this.socketServer), 
             this.options.secureProtocolOptions;
             var a = this.options.secureProtocolOptions ? o.createServer({
                 key: this.options.secureProtocolOptions.key,
                 cert: this.options.secureProtocolOptions.cert,
                 ca: this.options.secureProtocolOptions.ca
-            }) : u.createServer();
-            new n.Server({
+            }) : n.createServer();
+            new s.Server({
                 server: a,
                 verifyClient: function(e, r) {
                     return t.socketServer.middleware.verifyConnection ? t.socketServer.middleware.verifyConnection.call(null, e, r) : r(!0);
                 }
             }).on("connection", function(e) {
-                return t.socketServer.emit("connection", new s.Socket(e, t));
-            }), this.options.secureProtocolOptions ? this.httpsServer = a : this.httpServer = a, 
-            a.listen(this.options.port, function() {
+                return t.socketServer.emit("connection", new i.Socket(e, t));
+            }), a instanceof o.Server ? this.httpsServer = a : this.httpServer = a, a.listen(this.options.port, function() {
                 t.options.worker.call(t), process.send({
                     event: "READY",
                     data: process.pid
@@ -270,6 +269,8 @@ module.exports = function(e) {
         return e;
     }();
     r.Worker = a;
+}, function(e, r) {
+    e.exports = require("http");
 }, function(e, r) {
     e.exports = require("https");
 }, function(e, r, t) {
@@ -282,7 +283,7 @@ module.exports = function(e) {
             var s = this;
             this.socket = r, this.server = t, this.missedPing = 0, this.channels = [], this.events = new n.EventEmitter();
             var i = function(e) {
-                return -1 !== s.channels.indexOf(e.channel) ? s.send(e.channel, e.data, "publish") : "";
+                return -1 !== s.channels.indexOf(e.channel) ? s.send(e.channel, e.data, "publish") : null;
             };
             this.server.socketServer.on("#publish", i);
             var c = setInterval(function() {
@@ -295,7 +296,7 @@ module.exports = function(e) {
                 return s.events.emit("error", e);
             }), this.socket.on("close", function(e, r) {
                 clearInterval(c), s.events.emit("disconnect", e, r), s.server.socketServer.removeListener("#publish", i);
-                for (var t in s) s.hasOwnProperty(t) && delete s[t];
+                for (var t in s) s.hasOwnProperty(t) && (s[t] = null);
             }), this.socket.on("message", function(r) {
                 if (s.server.options.useBinary && "string" != typeof r && (r = Buffer.from(r).toString()), 
                 "#1" === r) return s.missedPing = 0;
@@ -313,21 +314,21 @@ module.exports = function(e) {
                 return e.events.emit(r["#"][1], r["#"][2]);
 
               case "p":
-                return -1 !== e.channels.indexOf(r["#"][1]) ? e.server.socketServer.publish(r["#"][1], r["#"][2]) : "";
+                return -1 !== e.channels.indexOf(r["#"][1]) ? e.server.socketServer.publish(r["#"][1], r["#"][2]) : null;
 
               case "s":
                 switch (r["#"][1]) {
                   case "s":
                     var t = function() {
-                        return -1 === e.channels.indexOf(r["#"][2]) ? e.channels.push(r["#"][2]) : "";
+                        return -1 === e.channels.indexOf(r["#"][2]) ? e.channels.push(r["#"][2]) : null;
                     };
                     return e.server.socketServer.middleware.onsubscribe ? e.server.socketServer.middleware.onsubscribe(e, r["#"][2], function(e) {
-                        return e ? t() : "";
+                        return e ? t() : null;
                     }) : t();
 
                   case "u":
                     var n = e.channels.indexOf(r["#"][2]);
-                    return -1 !== n ? e.channels.splice(n, 1) : "";
+                    return -1 !== n ? e.channels.splice(n, 1) : null;
                 }
             }
         }, e.encode = function(e, r, t) {
@@ -415,6 +416,4 @@ module.exports = function(e) {
         }, r;
     }(o.EventEmitter);
     r.SocketServer = s;
-}, function(e, r) {
-    e.exports = require("http");
 } ]);
