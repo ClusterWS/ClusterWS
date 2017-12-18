@@ -17,11 +17,7 @@ export class ClusterWS {
             pingInterval: configuration.pingInterval || 20000,
             restartWorkerOnFail: configuration.restartWorkerOnFail || false,
             useBinary: configuration.useBinary || false,
-            secureProtocolOptions: configuration.secureProtocolOptions ? {
-                key: configuration.secureProtocolOptions.key,
-                cert: configuration.secureProtocolOptions.cert,
-                ca: configuration.secureProtocolOptions.ca
-            } : false,
+            secureProtocolOptions: configuration.secureProtocolOptions ? configuration.secureProtocolOptions : false,
             machineScale: configuration.machineScale
         }
         isMaster ? masterProcess(options) : workerProcess(options)

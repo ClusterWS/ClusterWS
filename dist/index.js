@@ -157,11 +157,7 @@ module.exports = function(e) {
                 pingInterval: e.pingInterval || 2e4,
                 restartWorkerOnFail: e.restartWorkerOnFail || !1,
                 useBinary: e.useBinary || !1,
-                secureProtocolOptions: !!e.secureProtocolOptions && {
-                    key: e.secureProtocolOptions.key,
-                    cert: e.secureProtocolOptions.cert,
-                    ca: e.secureProtocolOptions.ca
-                },
+                secureProtocolOptions: !!e.secureProtocolOptions && e.secureProtocolOptions,
                 machineScale: e.machineScale
             };
             n.isMaster ? o.masterProcess(t) : s.workerProcess(t);
