@@ -8,9 +8,8 @@ export class ClusterWS {
         if ({}.toString.call(configuration.worker) !== '[object Function]')
             return logError('Worker must be provided and it must be a function \n \n')
 
-        const defaultPort: number = configuration.secureProtocolOptions ? 443 : 80
         const options: IOptions = {
-            port: configuration.port || defaultPort,
+            port: configuration.port || (configuration.secureProtocolOptions ? 443 : 80),
             worker: configuration.worker,
             workers: configuration.workers || 1,
             brokerPort: configuration.brokerPort || 9346,
@@ -18,7 +17,7 @@ export class ClusterWS {
             restartWorkerOnFail: configuration.restartWorkerOnFail || false,
             useBinary: configuration.useBinary || false,
             secureProtocolOptions: configuration.secureProtocolOptions || false,
-            machineScale: configuration.machineScale
+            machineScale: configuration.machineScale || false
         }
         isMaster ? masterProcess(options) : workerProcess(options)
     }

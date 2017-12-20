@@ -1,5 +1,6 @@
 
 import * as WebSocket from 'uws'
+
 import { SocketServer } from '../worker/socket/server'
 import { TSocketMessage, IObject, logReady, logError, logWarning, randomString } from '../utils/utils'
 
@@ -9,7 +10,8 @@ export class Broker {
     public static Client(url: string, key: string, broadcaster: SocketServer | any, isReconnected?: boolean): void {
         const websocket: WebSocket = new WebSocket(url)
 
-        websocket.on('message', (message: TSocketMessage): void => message === '#0' ? websocket.send('#1') : broadcaster.broadcastMessage('', message))
+        websocket.on('message', (message: TSocketMessage): void => message === '#0' ?
+            websocket.send('#1') : broadcaster.broadcastMessage('', message))
         websocket.on('open', (): void => {
             if (isReconnected) logReady('Socket has been reconnected')
             websocket.send(key)
@@ -19,7 +21,7 @@ export class Broker {
             logError('Socket ' + process.pid + ' has an issue: ' + '\n' + err.stack + '\n')
         })
         websocket.on('close', (code: number, reason: string): void => {
-            if (code === 4000) return logError('Wrong or no authenticated key was provided')
+            if (code === 4000) return logError('Wrong authorization key was provided')
             logWarning('Something went wrong, socket will be reconnected as soon as possible')
             Broker.Client(url, key, broadcaster, true)
         })
@@ -45,7 +47,7 @@ export class Broker {
                 }
                 if (authenticated) {
                     broadcast(socket.id, message)
-                    serverConfigs.machineScale ? externalBroker.send(message) : ''
+                    serverConfigs.machineScale ? externalBroker.send(message) : null
                 }
             })
 
@@ -69,7 +71,7 @@ export class Broker {
 
         function authorizeSocket(socket: IObject): void | number {
             socket.id = randomString(false)
-            if (sockets.length) return sockets.push(socket)
+            if (sockets.length === 0) return sockets.push(socket)
             for (let i: number = 0, len: number = sockets.length; i < len; i++)
                 if (sockets[i].id === socket.id) return authorizeSocket(socket)
             sockets.push(socket)
@@ -77,8 +79,9 @@ export class Broker {
 
         function connectToExternalBroker(): void {
             if (serverConfigs.machineScale) {
-                const url: string = serverConfigs.machineScale.master ? '127.0.0.1:' : serverConfigs.machineScale.url + ':'
-                Broker.Client('ws://' + url + serverConfigs.machineScale.port, serverConfigs.machineScale.securityKey || '', {
+                const url: string = 'ws://' + (serverConfigs.machineScale.master ?
+                    '127.0.0.1:' : serverConfigs.machineScale.url + ':') + serverConfigs.machineScale.port
+                Broker.Client(url, serverConfigs.machineScale.securityKey || '', {
                     broadcastMessage: broadcast,
                     setBroker: (broker: WebSocket): IObject => externalBroker = broker
                 })

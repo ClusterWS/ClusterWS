@@ -3,14 +3,15 @@ import { Broker } from './broker/broker'
 import { IOptions, IProcessMessage, logError } from './utils/utils'
 
 export function workerProcess(options: IOptions): void {
-    process.on('message', (message: IProcessMessage): void | string | Worker => {
+    process.on('message', (message: IProcessMessage): void | null | Worker => {
         switch (message.event) {
             case 'Worker': return new Worker(options, message.data)
             case 'Broker': return Broker.Server(options.brokerPort, {
                 key: message.data.internalKey,
                 machineScale: options.machineScale
             })
-            case 'Scaler': return options.machineScale ? Broker.Server(options.machineScale.port, { key: options.machineScale.securityKey || '' }) : ''
+            case 'Scaler': return options.machineScale ?
+                Broker.Server(options.machineScale.port, { key: options.machineScale.securityKey || '' }) : null
         }
     })
 

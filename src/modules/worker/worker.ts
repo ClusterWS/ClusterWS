@@ -19,18 +19,13 @@ export class Worker {
         this.options.secureProtocolOptions
 
         const server: HTTP.Server | HTTPS.Server = this.options.secureProtocolOptions ?
-            HTTPS.createServer({
-                key: this.options.secureProtocolOptions.key,
-                cert: this.options.secureProtocolOptions.cert,
-                ca: this.options.secureProtocolOptions.ca
-            }) : HTTP.createServer()
+            HTTPS.createServer(this.options.secureProtocolOptions) : HTTP.createServer()
 
         new WebSocket.Server({
             server,
             verifyClient: (info: IObject, callback: TListener): void =>
                 this.socketServer.middleware.verifyConnection ?
-                    this.socketServer.middleware.verifyConnection.call(null, info, callback) :
-                    callback(true)
+                    this.socketServer.middleware.verifyConnection.call(null, info, callback) : callback(true)
         }).on('connection', (socket: WebSocket) => this.socketServer.emit('connection', new Socket(socket, this)))
 
         server instanceof HTTPS.Server ? this.httpsServer = server : this.httpServer = server

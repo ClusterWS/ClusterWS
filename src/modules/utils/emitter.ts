@@ -5,7 +5,8 @@ export class EventEmitter {
 
     public on(event: string, listener: TListener): void {
         if ({}.toString.call(listener) !== '[object Function]') return logError('Listener must be a function')
-        this.events[event] ? this.events[event].push(listener) : this.events[event] = [listener]
+        this.events[event] ?
+            this.events[event].push(listener) : this.events[event] = [listener]
     }
 
     public emit(event: string, ...args: any[]): void {
@@ -15,9 +16,10 @@ export class EventEmitter {
     }
 
     public removeListener(event: string, listener: TListener): any {
-        const listeners: any[] = this.events[event]
+        const listeners: TListener[] = this.events[event]
         if (!listeners) return
-        for (let i: number = 0, len: number = listeners.length; i < len; i++) if (listeners[i] === listener) return listeners.splice(i, 1)
+        for (let i: number = 0, len: number = listeners.length; i < len; i++)
+            if (listeners[i] === listener) return listeners.splice(i, 1)
     }
 
     public removeEvent(event: string): void {

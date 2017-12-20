@@ -29,12 +29,12 @@ export function masterProcess(options: IOptions): void {
             for (let i: number = 1; i <= options.workers; i++) processLauncher('Worker', i)
             return readyProcesses[id] = '>>> ' + name + ' on: ' + options.brokerPort + ', PID ' + pid
         }
-        if (id !== 0) readyProcesses[id] = '       ' + name + ': ' + id + ', PID ' + pid
+        readyProcesses[id] = '       ' + name + ': ' + id + ', PID ' + pid
+
         if (Object.keys(readyProcesses).length === options.workers + 1) {
             loadingCompleted = true
-            const security: string = options.secureProtocolOptions ? ' (secure)' : ''
-            logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid + security)
-            for (const key in readyProcesses) readyProcesses[key] ? logReady(readyProcesses[key]) : ''
+            logReady('>>> Master on: ' + options.port + ', PID: ' + process.pid + (options.secureProtocolOptions ? ' (secure)' : ''))
+            for (const key in readyProcesses) readyProcesses[key] ? logReady(readyProcesses[key]) : null
         }
     }
 }

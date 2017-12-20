@@ -11,7 +11,8 @@ export class Socket {
             case 's':
                 switch (message['#'][1]) {
                     case 's':
-                        const subscribe: any = (): number | null => socket.channels.indexOf(message['#'][2]) === -1 ? socket.channels.push(message['#'][2]) : null
+                        const subscribe: any = (): number | null => socket.channels.indexOf(message['#'][2]) === -1 ?
+                            socket.channels.push(message['#'][2]) : null
                         if (!socket.server.socketServer.middleware.onsubscribe) return subscribe()
                         return socket.server.socketServer.middleware.onsubscribe(socket, message['#'][2], (decline: boolean): void | null => decline ? subscribe() : null)
                     case 'u':
@@ -44,10 +45,14 @@ export class Socket {
     public events: EventEmitter = new EventEmitter()
 
     constructor(public socket: WebSocket, private server: Worker) {
-        const onPublish: any = (message: TSocketMessage): void | null => this.channels.indexOf(message.channel) !== -1 ? this.send(message.channel, message.data, 'publish') : null
-        this.server.socketServer.on('#publish', onPublish)
+        const onPublish: any = (message: TSocketMessage): void | null =>
+            this.channels.indexOf(message.channel) !== -1 ? this.send(message.channel, message.data, 'publish') : null
 
-        const pingInterval: NodeJS.Timer = setInterval((): void => this.missedPing++ > 2 ? this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'), this.server.options.pingInterval)
+        const pingInterval: NodeJS.Timer = setInterval((): void =>
+            this.missedPing++ > 2 ? this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'),
+            this.server.options.pingInterval)
+
+        this.server.socketServer.on('#publish', onPublish)
         this.send('configuration', { ping: this.server.options.pingInterval, binary: this.server.options.useBinary }, 'system')
 
         this.socket.on('error', (err: Error): void => this.events.emit('error', err))
@@ -55,20 +60,22 @@ export class Socket {
             clearInterval(pingInterval)
             this.events.emit('disconnect', code, reason)
             this.server.socketServer.removeListener('#publish', onPublish)
-
-            for (const key in this) this.hasOwnProperty(key) ? this[key] = null : null
+            for (const key in this) this[key] ? this[key] = null : null
         })
         this.socket.on('message', (message: TSocketMessage): void | number => {
             if (this.server.options.useBinary && typeof message !== 'string') message = Buffer.from(message).toString()
             if (message === '#1') return this.missedPing = 0
-            try { message = JSON.parse(message) } catch (e) { return logError('PID: ' + process.pid + '\n' + e + '\n') }
+            try {
+                message = JSON.parse(message)
+            } catch (e) { return logError('PID: ' + process.pid + '\n' + e + '\n') }
 
             Socket.decode(this, message)
         })
     }
 
     public send(event: string, data: any, type: string = 'emit'): void {
-        this.socket.send(this.server.options.useBinary && event !== 'configuration' ? Buffer.from(Socket.encode(event, data, type)) : Socket.encode(event, data, type))
+        this.socket.send(this.server.options.useBinary && event !== 'configuration' ?
+            Buffer.from(Socket.encode(event, data, type)) : Socket.encode(event, data, type))
     }
 
     public on(event: string, listener: TListener): void {

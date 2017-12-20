@@ -52,7 +52,7 @@ export interface IOptions {
     restartWorkerOnFail: boolean
     useBinary: boolean
     secureProtocolOptions: IsecureProtocolOptions | false
-    machineScale?: IMachineScale
+    machineScale: IMachineScale | false
 }
 
 export interface IUserOptions {

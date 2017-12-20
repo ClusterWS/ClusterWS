@@ -1,33 +1,33 @@
 module.exports = function(e) {
-    function r(n) {
-        if (t[n]) return t[n].exports;
-        var o = t[n] = {
-            i: n,
+    function r(t) {
+        if (n[t]) return n[t].exports;
+        var o = n[t] = {
+            i: t,
             l: !1,
             exports: {}
         };
-        return e[n].call(o.exports, o, o.exports, r), o.l = !0, o.exports;
+        return e[t].call(o.exports, o, o.exports, r), o.l = !0, o.exports;
     }
-    var t = {};
-    return r.m = e, r.c = t, r.d = function(e, t, n) {
-        r.o(e, t) || Object.defineProperty(e, t, {
+    var n = {};
+    return r.m = e, r.c = n, r.d = function(e, n, t) {
+        r.o(e, n) || Object.defineProperty(e, n, {
             configurable: !1,
             enumerable: !0,
-            get: n
+            get: t
         });
     }, r.n = function(e) {
-        var t = e && e.__esModule ? function() {
+        var n = e && e.__esModule ? function() {
             return e.default;
         } : function() {
             return e;
         };
-        return r.d(t, "a", t), t;
+        return r.d(n, "a", n), n;
     }, r.o = function(e, r) {
         return Object.prototype.hasOwnProperty.call(e, r);
     }, r.p = "", r(r.s = 5);
-}([ function(e, r, t) {
+}([ function(e, r, n) {
     "use strict";
-    function n(e) {
+    function t(e) {
         return void 0 === e && (e = !0), e ? Math.random().toString(16).substr(2) + "-" + Math.random().toString(16).substr(2) + "-" + Math.random().toString(16).substr(2) + "-" + Math.random().toString(16).substr(2) + "-" + Math.random().toString(16).substr(2) + "-" + Math.random().toString(16).substr(2) : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
     function o(e) {
@@ -41,33 +41,33 @@ module.exports = function(e) {
     }
     Object.defineProperty(r, "__esModule", {
         value: !0
-    }), r.randomString = n, r.logError = o, r.logReady = s, r.logWarning = i;
+    }), r.randomString = t, r.logError = o, r.logReady = s, r.logWarning = i;
 }, function(e, r) {
     e.exports = require("cluster");
 }, function(e, r) {
     e.exports = require("uws");
-}, function(e, r, t) {
+}, function(e, r, n) {
     "use strict";
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var n = t(0), o = function() {
+    var t = n(0), o = function() {
         function e() {
             this.events = {};
         }
         return e.prototype.on = function(e, r) {
-            if ("[object Function]" !== {}.toString.call(r)) return n.logError("Listener must be a function");
+            if ("[object Function]" !== {}.toString.call(r)) return t.logError("Listener must be a function");
             this.events[e] ? this.events[e].push(r) : this.events[e] = [ r ];
         }, e.prototype.emit = function(e) {
-            for (var r = [], t = 1; t < arguments.length; t++) r[t - 1] = arguments[t];
-            var n = this.events[e];
-            if (n) {
-                for (var o = 0, s = n.length; o < s; o++) (i = n[o]).call.apply(i, [ null ].concat(r));
+            for (var r = [], n = 1; n < arguments.length; n++) r[n - 1] = arguments[n];
+            var t = this.events[e];
+            if (t) {
+                for (var o = 0, s = t.length; o < s; o++) (i = t[o]).call.apply(i, [ null ].concat(r));
                 var i;
             }
         }, e.prototype.removeListener = function(e, r) {
-            var t = this.events[e];
-            if (t) for (var n = 0, o = t.length; n < o; n++) if (t[n] === r) return t.splice(n, 1);
+            var n = this.events[e];
+            if (n) for (var t = 0, o = n.length; t < o; t++) if (n[t] === r) return n.splice(t, 1);
         }, e.prototype.removeEvent = function(e) {
             this.events[e] = null;
         }, e.prototype.removeEvents = function() {
@@ -75,37 +75,37 @@ module.exports = function(e) {
         }, e;
     }();
     r.EventEmitter = o;
-}, function(e, r, t) {
+}, function(e, r, n) {
     "use strict";
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var n = t(2), o = t(0), s = function() {
+    var t = n(2), o = n(0), s = function() {
         function e() {}
-        return e.Client = function(r, t, s, i) {
-            var c = new n(r);
+        return e.Client = function(r, n, s, i) {
+            var c = new t(r);
             c.on("message", function(e) {
                 return "#0" === e ? c.send("#1") : s.broadcastMessage("", e);
             }), c.on("open", function() {
-                i && o.logReady("Socket has been reconnected"), c.send(t);
-            }), c.on("error", function(n) {
-                if ("uWs client connection error" === n.stack) return e.Client(r, t, s, !0);
-                o.logError("Socket " + process.pid + " has an issue: \n" + n.stack + "\n");
-            }), c.on("close", function(n, i) {
-                if (4e3 === n) return o.logError("Wrong or no authenticated key was provided");
+                i && o.logReady("Socket has been reconnected"), c.send(n);
+            }), c.on("error", function(t) {
+                if ("uWs client connection error" === t.stack) return e.Client(r, n, s, !0);
+                o.logError("Socket " + process.pid + " has an issue: \n" + t.stack + "\n");
+            }), c.on("close", function(t, i) {
+                if (4e3 === t) return o.logError("Wrong authorization key was provided");
                 o.logWarning("Something went wrong, socket will be reconnected as soon as possible"), 
-                e.Client(r, t, s, !0);
+                e.Client(r, n, s, !0);
             }), s.setBroker(c);
-        }, e.Server = function(r, t) {
+        }, e.Server = function(r, n) {
             function s(e, r) {
-                for (var t = 0, n = u.length; t < n; t++) u[t].id !== e && u[t].send(r);
+                for (var n = 0, t = u.length; n < t; n++) u[n].id !== e && u[n].send(r);
             }
             function i(e) {
-                if (e.id = o.randomString(!1), u.length) return u.push(e);
-                for (var r = 0, t = u.length; r < t; r++) if (u[r].id === e.id) return i(e);
+                if (e.id = o.randomString(!1), 0 === u.length) return u.push(e);
+                for (var r = 0, n = u.length; r < n; r++) if (u[r].id === e.id) return i(e);
                 u.push(e);
             }
-            var c, u = [], a = new n.Server({
+            var c, u = [], a = new t.Server({
                 port: r
             }, function() {
                 return process.send({
@@ -114,23 +114,23 @@ module.exports = function(e) {
                 });
             });
             a.on("connection", function(e) {
-                var r = !1, n = setTimeout(function() {
+                var r = !1, t = setTimeout(function() {
                     return e.close(4e3, "Not Authenticated");
                 }, 5e3), o = setInterval(function() {
                     return e.send("#0");
                 }, 2e4);
                 e.on("message", function(o) {
-                    if ("#1" !== o) return o === t.key ? (r = !0, i(e), clearTimeout(n)) : void (r && (s(e.id, o), 
-                    t.machineScale && c.send(o)));
+                    if ("#1" !== o) return o === n.key ? (r = !0, i(e), clearTimeout(t)) : void (r && (s(e.id, o), 
+                    n.machineScale && c.send(o)));
                 }), e.on("close", function() {
-                    if (clearTimeout(n), clearInterval(o), r) for (var t = 0, s = u.length; t < s; t++) if (u[t].id === e.id) return u.splice(t, 1);
+                    if (clearTimeout(t), clearInterval(o), r) for (var n = 0, s = u.length; n < s; n++) if (u[n].id === e.id) return u.splice(n, 1);
                 });
             }), a.on("error", function(e) {
                 return o.logError("Broker " + process.pid + " has an issue: \n" + e.stack + "\n");
             }), function() {
-                if (t.machineScale) {
-                    var r = t.machineScale.master ? "127.0.0.1:" : t.machineScale.url + ":";
-                    e.Client("ws://" + r + t.machineScale.port, t.machineScale.securityKey || "", {
+                if (n.machineScale) {
+                    var r = "ws://" + (n.machineScale.master ? "127.0.0.1:" : n.machineScale.url + ":") + n.machineScale.port;
+                    e.Client(r, n.machineScale.securityKey || "", {
                         broadcastMessage: s,
                         setBroker: function(e) {
                             return c = e;
@@ -141,73 +141,71 @@ module.exports = function(e) {
         }, e;
     }();
     r.Broker = s;
-}, function(e, r, t) {
+}, function(e, r, n) {
     "use strict";
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var n = t(1), o = t(6), s = t(7), i = t(0), c = function() {
+    var t = n(1), o = n(6), s = n(7), i = n(0), c = function() {
         function e(e) {
             if ("[object Function]" !== {}.toString.call(e.worker)) return i.logError("Worker must be provided and it must be a function \n \n");
-            var r = e.secureProtocolOptions ? 443 : 80, t = {
-                port: e.port || r,
+            var r = {
+                port: e.port || (e.secureProtocolOptions ? 443 : 80),
                 worker: e.worker,
                 workers: e.workers || 1,
                 brokerPort: e.brokerPort || 9346,
                 pingInterval: e.pingInterval || 2e4,
                 restartWorkerOnFail: e.restartWorkerOnFail || !1,
                 useBinary: e.useBinary || !1,
-                secureProtocolOptions: !!e.secureProtocolOptions && e.secureProtocolOptions,
-                machineScale: e.machineScale
+                secureProtocolOptions: e.secureProtocolOptions || !1,
+                machineScale: e.machineScale || !1
             };
-            n.isMaster ? o.masterProcess(t) : s.workerProcess(t);
+            t.isMaster ? o.masterProcess(r) : s.workerProcess(r);
         }
         return e;
     }();
     r.ClusterWS = c;
-}, function(e, r, t) {
+}, function(e, r, n) {
     "use strict";
-    function n(e) {
-        function r(n, c) {
+    function t(e) {
+        function r(t, c) {
             var u = o.fork();
             u.send({
-                event: n,
+                event: t,
                 data: {
                     internalKey: i,
                     id: c
                 }
             }), u.on("message", function(e) {
-                return "READY" === e.event ? t(c, e.data, n) : "";
+                return "READY" === e.event ? n(c, e.data, t) : "";
             }), u.on("exit", function() {
-                s.logWarning(n + " has been disconnected \n"), e.restartWorkerOnFail && (s.logWarning(n + " is restarting \n"), 
-                r(n, c));
+                s.logWarning(t + " has been disconnected \n"), e.restartWorkerOnFail && (s.logWarning(t + " is restarting \n"), 
+                r(t, c));
             });
         }
-        function t(t, o, i) {
-            if (n) return s.logReady(i + " is restarted");
-            if (-1 === t) return r("Broker", 0);
-            if (0 === t) {
+        function n(n, o, i) {
+            if (t) return s.logReady(i + " is restarted");
+            if (-1 === n) return r("Broker", 0);
+            if (0 === n) {
                 for (var u = 1; u <= e.workers; u++) r("Worker", u);
-                return c[t] = ">>> " + i + " on: " + e.brokerPort + ", PID " + o;
+                return c[n] = ">>> " + i + " on: " + e.brokerPort + ", PID " + o;
             }
-            if (0 !== t && (c[t] = "       " + i + ": " + t + ", PID " + o), Object.keys(c).length === e.workers + 1) {
-                n = !0;
-                var a = e.secureProtocolOptions ? " (secure)" : "";
-                s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid + a);
-                for (var l in c) c[l] && s.logReady(c[l]);
+            if (c[n] = "       " + i + ": " + n + ", PID " + o, Object.keys(c).length === e.workers + 1) {
+                t = !0, s.logReady(">>> Master on: " + e.port + ", PID: " + process.pid + (e.secureProtocolOptions ? " (secure)" : ""));
+                for (var a in c) c[a] && s.logReady(c[a]);
             }
         }
-        var n = !1, i = s.randomString(), c = {};
+        var t = !1, i = s.randomString(), c = {};
         e.machineScale && e.machineScale.master ? r("Scaler", -1) : r("Broker", 0);
     }
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var o = t(1), s = t(0);
-    r.masterProcess = n;
-}, function(e, r, t) {
+    var o = n(1), s = n(0);
+    r.masterProcess = t;
+}, function(e, r, n) {
     "use strict";
-    function n(e) {
+    function t(e) {
         process.on("message", function(r) {
             switch (r.event) {
               case "Worker":
@@ -222,7 +220,7 @@ module.exports = function(e) {
               case "Scaler":
                 return e.machineScale ? s.Broker.Server(e.machineScale.port, {
                     key: e.machineScale.securityKey || ""
-                }) : "";
+                }) : null;
             }
         }), process.on("uncaughtException", function(e) {
             return i.logError("PID: " + process.pid + "\n" + e.stack + "\n"), process.exit();
@@ -231,32 +229,28 @@ module.exports = function(e) {
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var o = t(8), s = t(4), i = t(0);
-    r.workerProcess = n;
-}, function(e, r, t) {
+    var o = n(8), s = n(4), i = n(0);
+    r.workerProcess = t;
+}, function(e, r, n) {
     "use strict";
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var n = t(9), o = t(10), s = t(2), i = t(11), c = t(4), u = t(12), a = function() {
+    var t = n(9), o = n(10), s = n(2), i = n(11), c = n(4), u = n(12), a = function() {
         function e(e, r) {
-            var t = this;
+            var n = this;
             this.options = e, this.socketServer = new u.SocketServer(), c.Broker.Client("ws://127.0.0.1:" + e.brokerPort, r.internalKey, this.socketServer), 
             this.options.secureProtocolOptions;
-            var a = this.options.secureProtocolOptions ? o.createServer({
-                key: this.options.secureProtocolOptions.key,
-                cert: this.options.secureProtocolOptions.cert,
-                ca: this.options.secureProtocolOptions.ca
-            }) : n.createServer();
+            var a = this.options.secureProtocolOptions ? o.createServer(this.options.secureProtocolOptions) : t.createServer();
             new s.Server({
                 server: a,
                 verifyClient: function(e, r) {
-                    return t.socketServer.middleware.verifyConnection ? t.socketServer.middleware.verifyConnection.call(null, e, r) : r(!0);
+                    return n.socketServer.middleware.verifyConnection ? n.socketServer.middleware.verifyConnection.call(null, e, r) : r(!0);
                 }
             }).on("connection", function(e) {
-                return t.socketServer.emit("connection", new i.Socket(e, t));
+                return n.socketServer.emit("connection", new i.Socket(e, n));
             }), a instanceof o.Server ? this.httpsServer = a : this.httpServer = a, a.listen(this.options.port, function() {
-                t.options.worker.call(t), process.send({
+                n.options.worker.call(n), process.send({
                     event: "READY",
                     data: process.pid
                 });
@@ -269,30 +263,28 @@ module.exports = function(e) {
     e.exports = require("http");
 }, function(e, r) {
     e.exports = require("https");
-}, function(e, r, t) {
+}, function(e, r, n) {
     "use strict";
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var n = t(3), o = t(0), s = function() {
-        function e(r, t) {
+    var t = n(3), o = n(0), s = function() {
+        function e(r, n) {
             var s = this;
-            this.socket = r, this.server = t, this.missedPing = 0, this.channels = [], this.events = new n.EventEmitter();
+            this.socket = r, this.server = n, this.missedPing = 0, this.channels = [], this.events = new t.EventEmitter();
             var i = function(e) {
                 return -1 !== s.channels.indexOf(e.channel) ? s.send(e.channel, e.data, "publish") : null;
-            };
-            this.server.socketServer.on("#publish", i);
-            var c = setInterval(function() {
+            }, c = setInterval(function() {
                 return s.missedPing++ > 2 ? s.disconnect(4001, "No pongs") : s.send("#0", null, "ping");
             }, this.server.options.pingInterval);
-            this.send("configuration", {
+            this.server.socketServer.on("#publish", i), this.send("configuration", {
                 ping: this.server.options.pingInterval,
                 binary: this.server.options.useBinary
             }, "system"), this.socket.on("error", function(e) {
                 return s.events.emit("error", e);
             }), this.socket.on("close", function(e, r) {
                 clearInterval(c), s.events.emit("disconnect", e, r), s.server.socketServer.removeListener("#publish", i);
-                for (var t in s) s.hasOwnProperty(t) && (s[t] = null);
+                for (var n in s) s[n] && (s[n] = null);
             }), this.socket.on("message", function(r) {
                 if (s.server.options.useBinary && "string" != typeof r && (r = Buffer.from(r).toString()), 
                 "#1" === r) return s.missedPing = 0;
@@ -315,20 +307,20 @@ module.exports = function(e) {
               case "s":
                 switch (r["#"][1]) {
                   case "s":
-                    var t = function() {
+                    var n = function() {
                         return -1 === e.channels.indexOf(r["#"][2]) ? e.channels.push(r["#"][2]) : null;
                     };
                     return e.server.socketServer.middleware.onsubscribe ? e.server.socketServer.middleware.onsubscribe(e, r["#"][2], function(e) {
-                        return e ? t() : null;
-                    }) : t();
+                        return e ? n() : null;
+                    }) : n();
 
                   case "u":
-                    var n = e.channels.indexOf(r["#"][2]);
-                    return -1 !== n ? e.channels.splice(n, 1) : null;
+                    var t = e.channels.indexOf(r["#"][2]);
+                    return -1 !== t ? e.channels.splice(t, 1) : null;
                 }
             }
-        }, e.encode = function(e, r, t) {
-            switch (t) {
+        }, e.encode = function(e, r, n) {
+            switch (n) {
               case "ping":
                 return e;
 
@@ -360,8 +352,8 @@ module.exports = function(e) {
                     });
                 }
             }
-        }, e.prototype.send = function(r, t, n) {
-            void 0 === n && (n = "emit"), this.socket.send(this.server.options.useBinary && "configuration" !== r ? Buffer.from(e.encode(r, t, n)) : e.encode(r, t, n));
+        }, e.prototype.send = function(r, n, t) {
+            void 0 === t && (t = "emit"), this.socket.send(this.server.options.useBinary && "configuration" !== r ? Buffer.from(e.encode(r, n, t)) : e.encode(r, n, t));
         }, e.prototype.on = function(e, r) {
             this.events.on(e, r);
         }, e.prototype.disconnect = function(e, r) {
@@ -369,33 +361,33 @@ module.exports = function(e) {
         }, e;
     }();
     r.Socket = s;
-}, function(e, r, t) {
+}, function(e, r, n) {
     "use strict";
-    var n = this && this.__extends || function() {
+    var t = this && this.__extends || function() {
         var e = Object.setPrototypeOf || {
             __proto__: []
         } instanceof Array && function(e, r) {
             e.__proto__ = r;
         } || function(e, r) {
-            for (var t in r) r.hasOwnProperty(t) && (e[t] = r[t]);
+            for (var n in r) r.hasOwnProperty(n) && (e[n] = r[n]);
         };
-        return function(r, t) {
-            function n() {
+        return function(r, n) {
+            function t() {
                 this.constructor = r;
             }
-            e(r, t), r.prototype = null === t ? Object.create(t) : (n.prototype = t.prototype, 
-            new n());
+            e(r, n), r.prototype = null === n ? Object.create(n) : (t.prototype = n.prototype, 
+            new t());
         };
     }();
     Object.defineProperty(r, "__esModule", {
         value: !0
     });
-    var o = t(3), s = function(e) {
+    var o = n(3), s = function(e) {
         function r() {
             var r = null !== e && e.apply(this, arguments) || this;
             return r.middleware = {}, r;
         }
-        return n(r, e), r.prototype.setMiddleware = function(e, r) {
+        return t(r, e), r.prototype.setMiddleware = function(e, r) {
             this.middleware[e] = r;
         }, r.prototype.publish = function(e, r) {
             this.brokerSocket.send(Buffer.from(JSON.stringify({
