@@ -74,7 +74,7 @@ export class Socket {
     }
 
     public send(event: string, data: any, type: string = 'emit'): void {
-        this.socket.send(this.server.options.useBinary && event !== 'configuration' ?
+        this.socket.send(this.server.options.useBinary ?
             Buffer.from(Socket.encode(event, data, type)) : Socket.encode(event, data, type))
     }
 

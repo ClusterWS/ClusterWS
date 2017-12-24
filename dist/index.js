@@ -353,7 +353,7 @@ module.exports = function(e) {
                 }
             }
         }, e.prototype.send = function(r, n, t) {
-            void 0 === t && (t = "emit"), this.socket.send(this.server.options.useBinary && "configuration" !== r ? Buffer.from(e.encode(r, n, t)) : e.encode(r, n, t));
+            void 0 === t && (t = "emit"), this.socket.send(this.server.options.useBinary ? Buffer.from(e.encode(r, n, t)) : e.encode(r, n, t));
         }, e.prototype.on = function(e, r) {
             this.events.on(e, r);
         }, e.prototype.disconnect = function(e, r) {
