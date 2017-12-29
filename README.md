@@ -1,5 +1,5 @@
 <h1 align="center">ClusterWS</h1> 
-<h6 align="center">Build Scalable WebSocket Applications</h6>
+<h6 align="center">Build Scalable Node.js WebSocket Applications</h6>
 
 ![](https://u.cubeupload.com/goriunovd/ClusterWS.gif)
 
@@ -17,17 +17,10 @@
 </h3>
 
 <p align="center">
-<a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://u.cubeupload.com/goriunovd/swift.png" /></a>
-<a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img src="https://u.cubeupload.com/goriunovd/java.png" /></a>
-<a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://u.cubeupload.com/goriunovd/javascript.png" /></a>
-
-<a>JavaScript</a>
-<a>Swift</a>
+    <a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://u.cubeupload.com/goriunovd/swift.png" /></a>
+    <a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img src="https://u.cubeupload.com/goriunovd/java.png" /></a>
+    <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://u.cubeupload.com/goriunovd/javascript.png" /></a>
 </p>
-
-[Java](https://github.com/ClusterWS/ClusterWS-Client-Java)
-[Swift](https://github.com/ClusterWS/ClusterWS-Client-Swift)
-[JavaScript](https://github.com/ClusterWS/ClusterWS-Client-JS)
 
 <h3 align="center">
     Documentation
@@ -38,8 +31,3 @@
 3. [Pub/Sub System](https://github.com/ClusterWS/ClusterWS/wiki/Pub-Sub-System)
 4. [Machine Scale](https://github.com/ClusterWS/ClusterWS/wiki/Machine-Scale)
 5. [Performance Tips](https://github.com/ClusterWS/ClusterWS/wiki/Performance-Tips)
-
-<!-- 
-<h3 align="center">
-    <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>ClusterWS's Documentation</strong></a>
-</h3> -->
