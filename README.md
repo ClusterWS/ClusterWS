@@ -22,12 +22,8 @@
     <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://u.cubeupload.com/goriunovd/javascript.png" /></a>
 </p>
 
-<h3 align="center">
-    Documentation
-</h3>
+<hr>
 
-1. [Installation and Configuration](https://github.com/ClusterWS/ClusterWS/wiki/Installation-and-Configuration)
-2. [Handle Sockets](https://github.com/ClusterWS/ClusterWS/wiki/Handle-Sockets)
-3. [Pub/Sub System](https://github.com/ClusterWS/ClusterWS/wiki/Pub-Sub-System)
-4. [Machine Scale](https://github.com/ClusterWS/ClusterWS/wiki/Machine-Scale)
-5. [Performance Tips](https://github.com/ClusterWS/ClusterWS/wiki/Performance-Tips)
+<h4 align="center">
+    <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>ClusterWS's Documentation</strong></a>
+</h4>
