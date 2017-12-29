@@ -22,8 +22,7 @@
     <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://u.cubeupload.com/goriunovd/javascript.png" /></a>
 </p>
 
-<hr>
-
+<h1></h1>
 <h4 align="center">
     <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>ClusterWS's Documentation</strong></a>
 </h4>
