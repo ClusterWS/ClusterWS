@@ -17,9 +17,9 @@
 </h3>
 
 <p align="center">
-<a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img style="width:100px; margin: 10px;" src="https://u.cubeupload.com/goriunovd/appleswiftlogo.png" /></a>
-<a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img style="width:100px; margin: 10px;" src="https://u.cubeupload.com/goriunovd/javalogovector.png" /></a>
-<a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img style="width:100px; margin: 10px;" src="https://u.cubeupload.com/goriunovd/240pxUnofficialJavaS.png" /></a>
+<a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://u.cubeupload.com/goriunovd/swift.png" /></a>
+<a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img src="https://u.cubeupload.com/goriunovd/java.png" /></a>
+<a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://u.cubeupload.com/goriunovd/javascript.png" /></a>
 
 <a>JavaScript</a>
 <a>Swift</a>
