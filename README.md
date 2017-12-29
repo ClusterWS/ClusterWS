@@ -12,9 +12,9 @@
     <i>Lightweight, fast and powerful framework for building horizontally & vertically scalable WebSocket applications in Node.js. ClusterWS uses <a href="https://github.com/uNetworking/uWebSockets">uWebSockets</a> - one of the most lightweight, efficient & scalable WebSocket library.</i>
 </p>
 
-<h3 align="center">
+<h4 align="center">
     Client Libraries
-</h3>
+</h4>
 
 <p align="center">
     <a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://u.cubeupload.com/goriunovd/swift.png" /></a>
@@ -23,6 +23,6 @@
 </p>
 
 <h1></h1>
-<h4 align="center">
+<h3 align="center">
     <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>ClusterWS's Documentation</strong></a>
-</h4>
+</h3>
