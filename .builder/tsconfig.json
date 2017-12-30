@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "removeComments": true,
+        "moduleResolution": "node",
+        "declaration": true,
+        "declarationDir": "../src"
+    },
+    "files": [
+        "../node_modules/@types/node/index.d.ts",
+        "../node_modules/@types/uws/index.d.ts"
+    ],
+    "include": [
+        "../src/**/*.ts"
+    ]
+}
