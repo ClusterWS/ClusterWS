@@ -5,7 +5,7 @@
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
-    "build": "rollup -c ./.builder/rollup.config.js && node ./.builder/tds.builder.js",
+    "build": "node ./.builder/rollup.config.js",
     "publish": "npm run build && cd dist && npm publish && cd .."
   },
   "license": "MIT",

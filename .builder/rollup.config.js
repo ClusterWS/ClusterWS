@@ -1,7 +1,8 @@
-import fs from 'fs'
-import path from 'path'
-import uglify from 'rollup-plugin-uglify'
-import typescriptPlugin from 'rollup-plugin-typescript2'
+const fs = require('fs')
+const path = require('path')
+const rollup = require('rollup').rollup
+const uglify = require('rollup-plugin-uglify')
+const typescriptPlugin = require('rollup-plugin-typescript2')
 
 const copyPlugin = function (options) {
     return {
@@ -22,7 +23,7 @@ const copyPlugin = function (options) {
     }
 }
 
-export default {
+return rollup({
     input: './src/index.ts',
     plugins: [
         typescriptPlugin({
@@ -50,6 +51,19 @@ export default {
             targ: './dist/LICENSE',
         })
     ],
-    external: ['cluster', 'http', 'https', 'uws'],
-    output: { format: 'cjs', file: './dist/index.js', name: 'ClusterWS' }
-}
+    external: ['cluster', 'http', 'https', 'uws']
+}).then((bundle) => {
+    bundle.write({ format: 'cjs', file: './dist/index.js', name: 'ClusterWS' }).then(() => {
+        const dts = require('dts-bundle')
+        dts.bundle({
+            externals: false,
+            referenceExternals: false,
+            name: "index",
+            main: './src/**/*.d.ts',
+            out: '../dist/index.d.ts',
+            removeSource: true,
+            outputAsModuleFolder: true,
+            emitOnIncludedFileNotFound: true
+        })
+    })
+})
