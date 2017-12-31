@@ -1,8 +1,6 @@
 .npm
 .idea/
 .vscode/
-.builder/cache/
 
 node_modules/
 package-lock.json
-
