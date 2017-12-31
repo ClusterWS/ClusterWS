@@ -3,7 +3,7 @@ import { masterProcess } from './modules/master.process'
 import { workerProcess } from './modules/worker.process'
 import { IUserOptions, IOptions, logError } from './modules/utils/utils'
 
-export class ClusterWS {
+export default class ClusterWS {
     constructor(configuration: IUserOptions) {
         if ({}.toString.call(configuration.worker) !== '[object Function]')
             return logError('Worker must be provided and it must be a function \n \n')

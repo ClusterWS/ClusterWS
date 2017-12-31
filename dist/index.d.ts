@@ -8,7 +8,7 @@ import * as WebSocket from 'uws';
 import * as HTTP from 'http';
 import * as HTTPS from 'https';
 
-export class ClusterWS {
+export default class ClusterWS {
     constructor(configuration: IUserOptions);
 }
 

@@ -1,9 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-    value: !0
-});
-
 var cluster = require("cluster"), HTTP = require("http"), HTTPS = require("https"), WebSocket = require("uws");
 
 function randomString(e) {
@@ -323,4 +319,4 @@ var ClusterWS = function() {
     };
 }();
 
-exports.ClusterWS = ClusterWS;
+module.exports = ClusterWS;
