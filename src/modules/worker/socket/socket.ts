@@ -7,14 +7,17 @@ export class Socket {
     private static decode(socket: Socket, message: TSocketMessage): null | void | string[] {
         switch (message['#'][0]) {
             case 'e': return socket.events.emit(message['#'][1], message['#'][2])
-            case 'p': return socket.channels.indexOf(message['#'][1]) !== -1 ? socket.server.socketServer.publish(message['#'][1], message['#'][2]) : null
+            case 'p': return socket.channels.indexOf(message['#'][1]) !== -1 ?
+                socket.server.socketServer.publish(message['#'][1], message['#'][2]) : null
             case 's':
                 switch (message['#'][1]) {
                     case 's':
                         const subscribe: any = (): number | null => socket.channels.indexOf(message['#'][2]) === -1 ?
                             socket.channels.push(message['#'][2]) : null
                         if (!socket.server.socketServer.middleware.onsubscribe) return subscribe()
-                        return socket.server.socketServer.middleware.onsubscribe(socket, message['#'][2], (decline: boolean): void | null => decline ? subscribe() : null)
+                        return socket.server.socketServer.middleware.onsubscribe(
+                            socket,
+                            message['#'][2], (decline: boolean): void | null => decline ? subscribe() : null)
                     case 'u':
                         const index: number = socket.channels.indexOf(message['#'][2])
                         return index !== -1 ? socket.channels.splice(index, 1) : null

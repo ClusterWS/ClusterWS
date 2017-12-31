@@ -5,7 +5,8 @@
   "main": "index.js",
   "author": "Dmitrii Goriunov <goriunovd@gmail.com>",
   "scripts": {
-    "build": "node ./.builder/rollup.config.js",
+    "lint": "tslint -c ./.builder/tslint.json ./src/**/*.ts",
+    "build": "npm run lint && node ./.builder/rollup.config.js",
     "publish": "npm run build && cd dist && npm publish && cd .."
   },
   "license": "MIT",
@@ -20,6 +21,7 @@
     "rollup": "^0.53.1",
     "rollup-plugin-typescript2": "^0.9.0",
     "rollup-plugin-uglify": "^2.0.1",
+    "tslint": "^5.8.0",
     "typescript": "^2.6.2"
   },
   "dependencies": {
