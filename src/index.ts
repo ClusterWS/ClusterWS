@@ -76,6 +76,9 @@ export default class ClusterWS {
                     return options.scaleOptions && Broker.Server(options.scaleOptions.port, options.scaleOptions.key || '')
             }
         })
-        process.on('uncaughtException', (err: Error): void => logError('PID: ' + process.pid + '\n' + err.stack + '\n') && process.exit())
+        process.on('uncaughtException', (err: Error): void => {
+            logError('PID: ' + process.pid + '\n' + err.stack + '\n')
+            return process.exit()
+        })
     }
 }

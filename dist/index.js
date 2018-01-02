@@ -303,7 +303,7 @@ var WSServer = function(e) {
                 return e.scaleOptions && Broker.Server(e.scaleOptions.port, e.scaleOptions.key || "");
             }
         }), process.on("uncaughtException", function(e) {
-            return logError("PID: " + process.pid + "\n" + e.stack + "\n") && process.exit();
+            return logError("PID: " + process.pid + "\n" + e.stack + "\n"), process.exit();
         });
     }, e;
 }();
