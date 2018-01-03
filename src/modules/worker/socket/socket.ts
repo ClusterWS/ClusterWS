@@ -1,15 +1,17 @@
 import * as WebSocket from 'uws'
 
 import { Worker } from '../worker'
-import { Listener, CustomObject, logError } from '../../../utils/utils'
 import { EventEmitter } from '../../emitter/emitter'
+import { decode, encode } from './parser/parser'
+import { Listener, CustomObject, logError } from '../../../utils/utils'
 
 export class Socket {
-    private missedPing: number = 0
-    private channels: CustomObject = {}
-    private events: EventEmitter = new EventEmitter()
+    public channels: CustomObject = {}
+    public events: EventEmitter = new EventEmitter()
 
-    constructor(private worker: Worker, private socket: WebSocket) {
+    private missedPing: number = 0
+
+    constructor(public worker: Worker, private socket: WebSocket) {
         const onPublish: any = (message: any): void =>
             this.channels[message.channel] && this.send(message.channel, message.data, 'publish')
         const pingInterval: NodeJS.Timer = setInterval((): void => this.missedPing++ > 2 ?
@@ -34,7 +36,7 @@ export class Socket {
                 message = JSON.parse(message)
             } catch (e) { return logError('PID: ' + process.pid + '\n' + e + '\n') }
 
-            Socket.decode(this, message)
+            decode(this, message)
         })
     }
 
@@ -43,43 +45,10 @@ export class Socket {
     }
 
     public send(event: string, data: any, type: string = 'emit'): void {
-        this.socket.send(this.worker.options.useBinary ? Buffer.from(Socket.encode(event, data, type)) : Socket.encode(event, data, type))
+        this.socket.send(this.worker.options.useBinary ? Buffer.from(encode(event, data, type)) : encode(event, data, type))
     }
 
     public disconnect(code?: number, reason?: string): void {
         this.socket.close(code, reason)
-    }
-
-    private static encode(event: string, data: any, type: string): any {
-        switch (type) {
-            case 'ping': return event
-            case 'emit': return JSON.stringify({ '#': ['e', event, data] })
-            case 'publish': return JSON.stringify({ '#': ['p', event, data] })
-            case 'system':
-                switch (event) {
-                    case 'subsribe': return JSON.stringify({ '#': ['s', 's', data] })
-                    case 'unsubscribe': return JSON.stringify({ '#': ['s', 'u', data] })
-                    case 'configuration': return JSON.stringify({ '#': ['s', 'c', data] })
-                    default: break
-                }
-            default: break
-        }
-    }
-
-    private static decode(socket: Socket, message: any): any {
-        switch (message['#'][0]) {
-            case 'e': return socket.events.emit(message['#'][1], message['#'][2])
-            case 'p': return socket.channels[message['#'][1]] && socket.worker.wss.publish(message['#'][1], message['#'][2])
-            case 's':
-                switch (message['#'][1]) {
-                    case 's':
-                        const subscribe: any = (): number => socket.channels[message['#'][2]] = 1
-                        return !socket.worker.wss.middleware.onsubscribe ? subscribe() :
-                            socket.worker.wss.middleware.onsubscribe(socket, message['#'][2], (allow: boolean): void => allow && subscribe())
-                    case 'u': return socket.channels[message['#'][2]] = null
-                    default: break
-                }
-            default: break
-        }
     }
 }

@@ -27,7 +27,13 @@ export class EventEmitter {
     removeEvents(): void;
 }
 
+export function encode(event: string, data: any, type: string): any;
+export function decode(socket: Socket, message: any): any;
+
 export class Socket {
+    worker: Worker;
+    channels: CustomObject;
+    events: EventEmitter;
     constructor(worker: Worker, socket: WebSocket);
     on(event: string, listener: Listener): void;
     send(event: string, data: any, type?: string): void;

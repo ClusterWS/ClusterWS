@@ -47,95 +47,102 @@ var EventEmitter = function() {
     }, e.prototype.removeEvents = function() {
         this.events = {};
     }, e;
-}(), Socket = function() {
-    function e(r, n) {
-        var t = this;
-        this.worker = r, this.socket = n, this.missedPing = 0, this.channels = {}, this.events = new EventEmitter();
-        var o = function(e) {
-            return t.channels[e.channel] && t.send(e.channel, e.data, "publish");
-        }, s = setInterval(function() {
-            return t.missedPing++ > 2 ? t.disconnect(4001, "No pongs") : t.send("#0", null, "ping");
+}();
+
+function encode(e, r, n) {
+    switch (n) {
+      case "ping":
+        return e;
+
+      case "emit":
+        return JSON.stringify({
+            "#": [ "e", e, r ]
+        });
+
+      case "publish":
+        return JSON.stringify({
+            "#": [ "p", e, r ]
+        });
+
+      case "system":
+        switch (e) {
+          case "subsribe":
+            return JSON.stringify({
+                "#": [ "s", "s", r ]
+            });
+
+          case "unsubscribe":
+            return JSON.stringify({
+                "#": [ "s", "u", r ]
+            });
+
+          case "configuration":
+            return JSON.stringify({
+                "#": [ "s", "c", r ]
+            });
+        }
+    }
+}
+
+function decode(e, r) {
+    switch (r["#"][0]) {
+      case "e":
+        return e.events.emit(r["#"][1], r["#"][2]);
+
+      case "p":
+        return e.channels[r["#"][1]] && e.worker.wss.publish(r["#"][1], r["#"][2]);
+
+      case "s":
+        switch (r["#"][1]) {
+          case "s":
+            var n = function() {
+                return e.channels[r["#"][2]] = 1;
+            };
+            return e.worker.wss.middleware.onsubscribe ? e.worker.wss.middleware.onsubscribe(e, r["#"][2], function(e) {
+                return e && n();
+            }) : n();
+
+          case "u":
+            return e.channels[r["#"][2]] = null;
+        }
+    }
+}
+
+var Socket = function() {
+    function e(e, r) {
+        var n = this;
+        this.worker = e, this.socket = r, this.channels = {}, this.events = new EventEmitter(), 
+        this.missedPing = 0;
+        var t = function(e) {
+            return n.channels[e.channel] && n.send(e.channel, e.data, "publish");
+        }, o = setInterval(function() {
+            return n.missedPing++ > 2 ? n.disconnect(4001, "No pongs") : n.send("#0", null, "ping");
         }, this.worker.options.pingInterval);
-        this.worker.wss.onmany("#publish", o), this.send("configuration", {
+        this.worker.wss.onmany("#publish", t), this.send("configuration", {
             ping: this.worker.options.pingInterval,
             binary: this.worker.options.useBinary
         }, "system"), this.socket.on("error", function(e) {
-            return t.events.emit("error", e);
+            return n.events.emit("error", e);
         }), this.socket.on("close", function(e, r) {
-            clearInterval(s), t.events.emit("disconnect", e, r), t.worker.wss.removeListener("#publish", o);
-            for (var n in t) t[n] && (t[n] = null);
-        }), this.socket.on("message", function(r) {
-            if (t.worker.options.useBinary && "string" != typeof r && (r = Buffer.from(r).toString()), 
-            "#1" === r) return t.missedPing = 0;
+            clearInterval(o), n.events.emit("disconnect", e, r), n.worker.wss.removeListener("#publish", t);
+            for (var s in n) n[s] && (n[s] = null);
+        }), this.socket.on("message", function(e) {
+            if (n.worker.options.useBinary && "string" != typeof e && (e = Buffer.from(e).toString()), 
+            "#1" === e) return n.missedPing = 0;
             try {
-                r = JSON.parse(r);
+                e = JSON.parse(e);
             } catch (e) {
                 return logError("PID: " + process.pid + "\n" + e + "\n");
             }
-            e.decode(t, r);
+            decode(n, e);
         });
     }
     return e.prototype.on = function(e, r) {
         this.events.on(e, r);
-    }, e.prototype.send = function(r, n, t) {
-        void 0 === t && (t = "emit"), this.socket.send(this.worker.options.useBinary ? Buffer.from(e.encode(r, n, t)) : e.encode(r, n, t));
+    }, e.prototype.send = function(e, r, n) {
+        void 0 === n && (n = "emit"), this.socket.send(this.worker.options.useBinary ? Buffer.from(encode(e, r, n)) : encode(e, r, n));
     }, e.prototype.disconnect = function(e, r) {
         this.socket.close(e, r);
-    }, e.encode = function(e, r, n) {
-        switch (n) {
-          case "ping":
-            return e;
-
-          case "emit":
-            return JSON.stringify({
-                "#": [ "e", e, r ]
-            });
-
-          case "publish":
-            return JSON.stringify({
-                "#": [ "p", e, r ]
-            });
-
-          case "system":
-            switch (e) {
-              case "subsribe":
-                return JSON.stringify({
-                    "#": [ "s", "s", r ]
-                });
-
-              case "unsubscribe":
-                return JSON.stringify({
-                    "#": [ "s", "u", r ]
-                });
-
-              case "configuration":
-                return JSON.stringify({
-                    "#": [ "s", "c", r ]
-                });
-            }
-        }
-    }, e.decode = function(e, r) {
-        switch (r["#"][0]) {
-          case "e":
-            return e.events.emit(r["#"][1], r["#"][2]);
-
-          case "p":
-            return e.channels[r["#"][1]] && e.worker.wss.publish(r["#"][1], r["#"][2]);
-
-          case "s":
-            switch (r["#"][1]) {
-              case "s":
-                var n = function() {
-                    return e.channels[r["#"][2]] = 1;
-                };
-                return e.worker.wss.middleware.onsubscribe ? e.worker.wss.middleware.onsubscribe(e, r["#"][2], function(e) {
-                    return e && n();
-                }) : n();
-
-              case "u":
-                return e.channels[r["#"][2]] = null;
-            }
-        }
     }, e;
 }(), Broker = function() {
     function e() {}
