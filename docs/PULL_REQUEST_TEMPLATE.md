@@ -5,4 +5,4 @@
 - [ ] Other
 
 ### Details
-<!-- Desescribe what you are submitting as clear as possible -->
+<!-- Describe what you are submitting as clear as possible -->
