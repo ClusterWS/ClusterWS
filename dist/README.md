@@ -26,5 +26,5 @@
 
 <h1></h1>
 <h3 align="center">
-    <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>ClusterWS's Documentation</strong></a>
+    <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>Open ClusterWS Documentation</strong></a>
 </h3>
