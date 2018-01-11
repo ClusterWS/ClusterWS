@@ -83,4 +83,5 @@ export default class ClusterWS {
     }
 }
 
+module.exports = ClusterWS
 module.exports.default = ClusterWS
