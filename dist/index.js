@@ -34,11 +34,8 @@ var EventEmitter = function() {
         this.events[e] ? this.events[e].push(r) : this.events[e] = [ r ];
     }, e.prototype.emitmany = function(e) {
         for (var r = [], n = 1; n < arguments.length; n++) r[n - 1] = arguments[n];
-        var t = this.events[e];
-        if (t) {
-            for (var o = 0, s = t.length; o < s; o++) (i = t[o]).call.apply(i, [ null ].concat(r));
-            var i;
-        }
+        var t, o = this.events[e];
+        if (o) for (var s = 0, i = o.length; s < i; s++) (t = o[s]).call.apply(t, [ null ].concat(r));
     }, e.prototype.removeListener = function(e, r) {
         var n = this.events[e];
         if (n) for (var t = 0, o = n.length; t < o; t++) if (n[t] === r) return n.splice(t, 1);
@@ -162,6 +159,9 @@ var Socket = function() {
         }), t.setBroker(s);
     }, e.Server = function(r, n, t) {
         var o, s = [];
+        function i(e, r) {
+            for (var n = 0, t = s.length; n < t; n++) s[n].id !== e && s[n].send(r);
+        }
         new WebSocket.Server({
             port: r
         }, function() {
@@ -198,9 +198,6 @@ var Socket = function() {
                 return o = e;
             }
         });
-        function i(e, r) {
-            for (var n = 0, t = s.length; n < t; n++) s[n].id !== e && s[n].send(r);
-        }
     }, e;
 }(), extendStatics = Object.setPrototypeOf || {
     __proto__: []
@@ -211,20 +208,19 @@ var Socket = function() {
 };
 
 function __extends(e, r) {
-    extendStatics(e, r);
     function n() {
         this.constructor = e;
     }
-    e.prototype = null === r ? Object.create(r) : (n.prototype = r.prototype, new n());
+    extendStatics(e, r), e.prototype = null === r ? Object.create(r) : (n.prototype = r.prototype, 
+    new n());
 }
 
 var WSServer = function(e) {
-    __extends(r, e);
     function r() {
         var r = null !== e && e.apply(this, arguments) || this;
         return r.middleware = {}, r;
     }
-    return r.prototype.publish = function(e, r) {
+    return __extends(r, e), r.prototype.publish = function(e, r) {
         this.broker.send(Buffer.from(JSON.stringify({
             channel: e,
             data: r
@@ -276,7 +272,6 @@ var WSServer = function(e) {
     }
     return e.master = function(e) {
         var r = !1, n = randomString(16), t = {};
-        e.scaleOptions && e.scaleOptions.master ? o("Scaler", -1) : o("Broker", 0);
         function o(s, i) {
             var c = cluster.fork();
             c.send({
@@ -297,6 +292,7 @@ var WSServer = function(e) {
                 o(s, i));
             });
         }
+        e.scaleOptions && e.scaleOptions.master ? o("Scaler", -1) : o("Broker", 0);
     }, e.worker = function(e) {
         process.on("message", function(r) {
             switch (r.processName) {
@@ -315,4 +311,4 @@ var WSServer = function(e) {
     }, e;
 }();
 
-module.exports = ClusterWS;
+module.exports = ClusterWS, module.exports.default = ClusterWS;
