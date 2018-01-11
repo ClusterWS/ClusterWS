@@ -315,4 +315,4 @@ var WSServer = function(e) {
     }, e;
 }();
 
-module.exports = ClusterWS;
+module.exports = ClusterWS, module.exports.default = ClusterWS;
