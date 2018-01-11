@@ -1,6 +1,6 @@
 {
   "name": "clusterws",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "ClusterWS - lightweight, fast and powerful framework for building horizontally & vertically scalable WebSocket applications in Node.js.",
   "main": "index.js",
   "author": "Dmitrii Goriunov",

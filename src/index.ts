@@ -6,7 +6,7 @@ import { CustomObject, Options, Configurations, logError, logWarning, logReady, 
 
 declare const process: any
 
-class ClusterWS {
+export default class ClusterWS {
     constructor(configurations: Configurations) {
         if ({}.toString.call(configurations.worker) !== '[object Function]')
             return logError('Worker must be provided and it must be a function \n \n')
@@ -83,5 +83,4 @@ class ClusterWS {
     }
 }
 
-module.exports = ClusterWS
 module.exports.default = ClusterWS

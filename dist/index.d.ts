@@ -8,7 +8,9 @@ import * as WebSocket from 'uws';
 import * as HTTP from 'http';
 import * as HTTPS from 'https';
 
-
+export default class ClusterWS {
+    constructor(configurations: Configurations);
+}
 
 export class Broker {
     static Client(url: string, key: string, broadcaster: any, reconnected?: boolean): void;
