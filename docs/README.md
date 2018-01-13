@@ -25,6 +25,6 @@
 </p>
 
 <h1></h1>
-<h2 align="center">
+<h3 align="center">
     Find more about ClusterWS in <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong> documentation</strong></a>.
-</h2>
+</h3>
