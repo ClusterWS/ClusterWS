@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-    <i>We have developed client libraries for different langauges, you will be able to build <code>Android / Java</code>, <code>IOS / Swift</code> and <code>Web / Javascript</code> applications which are connected to the <code>Node.js Server (ClusterWS)</code> and can communicat between each other and server in real-time, with our client libraries.</i>
+    <i>We have developed client libraries for different langauges, you will be able to build <code>Android / Java</code>, <code>IOS / Swift</code> and <code>Web / Javascript</code> applications which are connected to the <code>Node.js Server (ClusterWS)</code> and can communicat between each other and server in real-time.</i>
 </p>
 
 <h1></h1>
