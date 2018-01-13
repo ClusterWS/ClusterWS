@@ -19,13 +19,13 @@
 </h4>
 
 <p align="center">
-    <i>We have developed client libraries for different langauges, you will be able to build <code>Android / Java</code>, <code>IOS / Swift</code> and <code>Web / Javascript</code> applications which are connected to the single <code>Node.js Server</code> and can communicat between each other and server in real-time, with our client libraries:</i>
-</p>
-
-<p align="center">
     <a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://u.cubeupload.com/goriunovd/swift.png" /></a>
     <a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img src="https://u.cubeupload.com/goriunovd/java.png" /></a>
     <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://u.cubeupload.com/goriunovd/javascript.png" /></a>
+</p>
+
+<p align="center">
+    <i>We have developed client libraries for different langauges, you will be able to build <code>Android / Java</code>, <code>IOS / Swift</code> and <code>Web / Javascript</code> applications which are connected to the single <code>Node.js Server</code> and can communicat between each other and server in real-time, with our client libraries.</i>
 </p>
 
 <h1></h1>
