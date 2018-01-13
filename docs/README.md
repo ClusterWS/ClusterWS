@@ -26,5 +26,5 @@
 
 <h1></h1>
 <h3 align="center">
-    Find more about ClusterWS in <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong> documentation</strong></a>.
+    Find more about ClusterWS in <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>"Our Documentation"</strong></a>.
 </h3>
