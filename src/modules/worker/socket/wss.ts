@@ -7,20 +7,21 @@ export class WSServer extends EventEmitter {
     public middleware: CustomObject = {}
     private broker: WebSocket
 
+    public setMiddleware(name: string, listener: Listener): void {
+        this.middleware[name] = listener
+    }
+
     public sendToWorkers(data: any): void {
         this.broker.send(Buffer.from(JSON.stringify({ channel: 'sendToWorkers', data })))
         this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(data)
     }
 
     public publish(channel: string, data: any): void {
+        if (channel === 'sendToWorkers') return
         this.broker.send(Buffer.from(JSON.stringify({ channel, data })))
         if (this.middleware.onpublish)
             this.middleware.onpublish(channel, data)
         this.emitmany('#publish', { channel, data })
-    }
-
-    public setMiddleware(name: string, listener: Listener): void {
-        this.middleware[name] = listener
     }
 
     public broadcastMessage(x: string, message: any): void {
