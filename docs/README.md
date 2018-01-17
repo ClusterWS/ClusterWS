@@ -2,7 +2,7 @@
 <h6 align="center">Build Scalable Node.js WebSocket Applications</h6>
 
 <p align="center">
- <img src="https://cdn.rawgit.com/goriunov/159120ca6a883d8d4e75543ec395d361/raw/f4c3c36ac1ab75beedcf73312272b60dac33ecfa/clusterws.svg" width="500">
+ <img src="https://cdn.rawgit.com/goriunov/159120ca6a883d8d4e75543ec395d361/raw/f4c3c36ac1ab75beedcf73312272b60dac33ecfa/clusterws.svg" width="450">
 </p>
 
 <p align="center">
@@ -15,7 +15,7 @@
 </p>
 
 <h4 align="center">
-    Client Libraries
+    Official Client Libraries
 </h4>
 
 <p align="center">
@@ -24,11 +24,7 @@
     <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://u.cubeupload.com/goriunovd/javascript.png" /></a>
 </p>
 
-<p align="center">
-    <i>We have developed client libraries for different langauges, you will be able to build <code>Android / Java</code>, <code>IOS / Swift</code> and <code>Web / Javascript</code> applications which are connected to the <code>Node.js Server (ClusterWS)</code> and can communicat between each other and server in real-time.</i>
-</p>
-
 <h1></h1>
 <h3 align="center">
-    Find more about ClusterWS in <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>Documentation</strong></a>.
+    Find more about ClusterWS in <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>Wiki Documentation</strong></a>.
 </h3>
