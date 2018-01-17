@@ -220,21 +220,21 @@ var WSServer = function(e) {
         var r = null !== e && e.apply(this, arguments) || this;
         return r.middleware = {}, r;
     }
-    return __extends(r, e), r.prototype.sendToWorkers = function(e) {
+    return __extends(r, e), r.prototype.setMiddleware = function(e, r) {
+        this.middleware[e] = r;
+    }, r.prototype.sendToWorkers = function(e) {
         this.broker.send(Buffer.from(JSON.stringify({
             channel: "sendToWorkers",
             data: e
         }))), this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(e);
     }, r.prototype.publish = function(e, r) {
-        this.broker.send(Buffer.from(JSON.stringify({
+        "sendToWorkers" !== e && (this.broker.send(Buffer.from(JSON.stringify({
             channel: e,
             data: r
         }))), this.middleware.onpublish && this.middleware.onpublish(e, r), this.emitmany("#publish", {
             channel: e,
             data: r
-        });
-    }, r.prototype.setMiddleware = function(e, r) {
-        this.middleware[e] = r;
+        }));
     }, r.prototype.broadcastMessage = function(e, r) {
         var n = JSON.parse(Buffer.from(r).toString());
         if ("sendToWorkers" === n.channel) return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(n.data);

@@ -42,9 +42,9 @@ export class Socket {
 
 export class WSServer extends EventEmitter {
     middleware: CustomObject;
+    setMiddleware(name: string, listener: Listener): void;
     sendToWorkers(data: any): void;
     publish(channel: string, data: any): void;
-    setMiddleware(name: string, listener: Listener): void;
     broadcastMessage(x: string, message: any): void;
     setBroker(br: WebSocket): void;
 }
