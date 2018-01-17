@@ -42,7 +42,7 @@ export class Socket {
 
 export class WSServer extends EventEmitter {
     middleware: CustomObject;
-    sendToWorkers(data: string): void;
+    sendToWorkers(data: any): void;
     publish(channel: string, data: any): void;
     setMiddleware(name: string, listener: Listener): void;
     broadcastMessage(x: string, message: any): void;
