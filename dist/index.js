@@ -1,6 +1,6 @@
 "use strict";
 
-var cluster = require("cluster"), crypto = require("crypto");
+var cluster = require("cluster"), WebSocket = require("uws"), crypto = require("crypto");
 
 function logError(r) {
     return console.log("[31m%s[0m", r);
@@ -16,6 +16,42 @@ function logWarning(r) {
 
 function generateKey(r) {
     return crypto.randomBytes(Math.ceil(r / 2)).toString("hex").slice(0, r);
+}
+
+function BrokerServer(r, e, o) {
+    var n = [];
+    new WebSocket.Server({
+        port: r
+    }, function() {
+        return process.send({
+            event: "READY",
+            pid: process.pid
+        });
+    }).on("connection", function(r) {
+        var o = !1, t = setInterval(function() {
+            return r.send("#0");
+        }, 2e4), s = setTimeout(function() {
+            return r.close(4e3, "Not Authenticated");
+        }, 5e3);
+        r.on("message", function(t) {
+            if ("#1" !== t) {
+                if (t === e) {
+                    if (o) return;
+                    return o = !0, function r(e) {
+                        e.id = generateKey(16);
+                        for (var o = 0, t = n.length; o < t; o++) if (n[o].id === e.id) return r(e);
+                        n.push(e);
+                    }(r), clearTimeout(s);
+                }
+                o && function(r, e) {
+                    for (var o = 0, t = n.length; o < t; o++) n[o].id !== r && n[o].send(e);
+                }(r.id, t);
+            }
+        }), r.on("close", function(e, i) {
+            if (clearTimeout(s), clearInterval(t), o) for (var c = 0, u = n.length; c < u; c++) if (n[c].id === r.id) return n.splice(c, 1);
+            r = null;
+        });
+    });
 }
 
 var ClusterWS = function() {
@@ -40,38 +76,46 @@ var ClusterWS = function() {
 }();
 
 function MasterProcess(r) {
-    var e = !0, o = generateKey(16), s = {}, t = {};
-    if (r.horizontalScaleOptions) i("Scaler", -1); else for (var n = 0; n < r.brokers; n++) i("Broker", n);
-    function i(n, l) {
-        var a = cluster.fork();
-        a.on("message", function(o) {
-            return "READY" === o.event && function(o, n, l) {
-                if (!e) return logReady(o + " PID " + l + " has restarted");
-                "Worker" === o && (t[n] = "       Worker: " + n + ", PID " + l);
-                if ("Scaler" === o) for (var a = 0; a < r.brokers; a++) i("Broker", a);
-                if ("Broker" === o && (s[n] = ">>> Broker on: " + r.brokersPorts[n] + ", PID " + l, 
-                Object.keys(s).length === r.brokers)) for (var a = 0; a < r.workers; a++) i("Worker", a);
-                if (Object.keys(s).length === r.brokers && Object.keys(t).length === r.workers) {
+    var e = !0, o = generateKey(16), n = {}, t = {};
+    if (r.horizontalScaleOptions) i("Scaler", -1); else for (var s = 0; s < r.brokers; s++) i("Broker", s);
+    function i(s, c) {
+        var u = cluster.fork();
+        u.on("message", function(o) {
+            return "READY" === o.event && function(o, s, c) {
+                if (!e) return logReady(o + " PID " + c + " has restarted");
+                "Worker" === o && (t[s] = "       Worker: " + s + ", PID " + c);
+                if ("Scaler" === o) for (var u = 0; u < r.brokers; u++) i("Broker", u);
+                if ("Broker" === o && (n[s] = ">>> Broker on: " + r.brokersPorts[s] + ", PID " + c, 
+                Object.keys(n).length === r.brokers)) for (var u = 0; u < r.workers; u++) i("Worker", u);
+                if (Object.keys(n).length === r.brokers && Object.keys(t).length === r.workers) {
                     e = !1, logReady(">>> Master on: " + r.port + ", PID: " + process.pid + (r.tlsOptions ? " (secure)" : ""));
-                    for (var c in s) s[c] && logReady(s[c]);
-                    for (var c in t) t[c] && logReady(t[c]);
+                    for (var a in n) n[a] && logReady(n[a]);
+                    for (var a in t) t[a] && logReady(t[a]);
                 }
-            }(n, l, o.pid);
-        }), a.on("exit", function() {
-            logError(n + " has been disconnected \n"), r.restartWorkerOnFail && (logWarning(n + " is restarting \n"), 
-            i(n, l)), a = null;
-        }), a.send({
+            }(s, c, o.pid);
+        }), u.on("exit", function() {
+            logError(s + " has been disconnected \n"), r.restartWorkerOnFail && (logWarning(s + " is restarting \n"), 
+            i(s, c)), u = null;
+        }), u.send({
             key: o,
-            processID: l,
-            processName: n
+            processID: c,
+            processName: s
         });
     }
 }
 
 function WorkerProcess(r) {
-    process.send({
-        event: "READY",
-        pid: process.pid
+    process.on("message", function(e) {
+        switch (e.processName) {
+          case "Broker":
+            return BrokerServer(r.brokersPorts[e.processID], e.key, r.horizontalScaleOptions);
+
+          case "Worker":
+            return process.send({
+                event: "READY",
+                pid: process.pid
+            });
+        }
     }), process.on("uncaughtException", function(r) {
         return logError("PID: " + process.pid + "\n" + r.stack + "\n"), process.exit();
     });
@@ -79,6 +123,6 @@ function WorkerProcess(r) {
 
 new ClusterWS({
     worker: function() {},
-    workers: 10,
-    brokers: 15
+    brokers: 2,
+    brokersPorts: [ 9400, 9032 ]
 }), module.exports = ClusterWS, module.exports.default = ClusterWS;

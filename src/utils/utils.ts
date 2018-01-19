@@ -17,6 +17,7 @@ export function generateKey(length: number): string {
 }
 
 export type Message = any
+export type Listener = (...args: any[]) => void
 export type WorkerFunction = () => void
 
 export interface CustomObject {

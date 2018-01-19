@@ -1,4 +1,5 @@
 import * as cluster from 'cluster'
+import { BrokerServer } from './modules/broker/broker'
 import { CustomObject, Configurations, Options, Message, logReady, logError, logWarning, generateKey } from './utils/utils'
 
 export default class ClusterWS {
@@ -56,7 +57,6 @@ function MasterProcess(options: Options): void {
 
     function ready(processName: string, processID: number, pid: number): void {
         if (!loading) return logReady(processName + ' PID ' + pid + ' has restarted')
-
         if (processName === 'Worker') workersReady[processID] = '       Worker: ' + processID + ', PID ' + pid
         if (processName === 'Scaler')
             for (let i: number = 0; i < options.brokers; i++) launchProcess('Broker', i)
@@ -75,8 +75,11 @@ function MasterProcess(options: Options): void {
 }
 
 function WorkerProcess(options: Options): void {
-    process.on('message', (message: Message): void | Worker => {
-        
+    process.on('message', (message: Message): void => {
+        switch (message.processName) {
+            case 'Broker': return BrokerServer(options.brokersPorts[message.processID], message.key, options.horizontalScaleOptions)
+            case 'Worker': return process.send({ event: 'READY', pid: process.pid })
+        }
     })
 
     process.on('uncaughtException', (err: Error): void => {
@@ -84,3 +87,8 @@ function WorkerProcess(options: Options): void {
         return process.exit()
     })
 }
+
+new ClusterWS({
+    worker: (): void => { const a: number = 99 },
+    brokers: 2
+})
