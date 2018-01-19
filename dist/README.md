@@ -14,9 +14,9 @@
     <i>Lightweight, fast and powerful framework for building horizontally & vertically scalable WebSocket applications in Node.js. ClusterWS uses <a href="https://github.com/uNetworking/uWebSockets">uWebSockets</a> - one of the most lightweight, efficient & scalable WebSocket library.</i>
 </p>
 
-<h4 align="center">
+<h3 align="center">
     Official Client Libraries
-</h4>
+</h3>
 
 <p align="center">
     <a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://u.cubeupload.com/goriunovd/swift.png" /></a>
