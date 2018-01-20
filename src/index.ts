@@ -1,4 +1,5 @@
 import * as cluster from 'cluster'
+import { Worker } from './modules/worker/worker'
 import { BrokerServer } from './modules/broker/broker'
 import { CustomObject, Configurations, Options, Message, logReady, logError, logWarning, generateKey } from './utils/utils'
 
@@ -75,20 +76,14 @@ function MasterProcess(options: Options): void {
 }
 
 function WorkerProcess(options: Options): void {
-    process.on('message', (message: Message): void => {
+    process.on('message', (message: Message): void | Worker => {
         switch (message.processName) {
             case 'Broker': return BrokerServer(options.brokersPorts[message.processID], message.key, options.horizontalScaleOptions)
-            case 'Worker': return process.send({ event: 'READY', pid: process.pid })
+            case 'Worker': return new Worker(options, message.key)
         }
     })
-
     process.on('uncaughtException', (err: Error): void => {
         logError('PID: ' + process.pid + '\n' + err.stack + '\n')
         return process.exit()
     })
 }
-
-new ClusterWS({
-    worker: (): void => { const a: number = 99 },
-    brokers: 2
-})
