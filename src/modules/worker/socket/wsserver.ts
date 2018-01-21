@@ -14,9 +14,10 @@ export class WSServer extends EventEmitter {
     private brokersKeys: string[] = []
     private brokersKeysLength: number = 0
 
+    public setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void
     public setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void
-    public setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void
     public setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void
+    public setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void
     public setMiddleware(name: string, listener: Listener): void {
         this.middleware[name] = listener
     }
@@ -44,6 +45,7 @@ export class WSServer extends EventEmitter {
             tryiesOnBrokerError++
             return this.publish(channel, message, tryiesOnBrokerError)
         }
+        this.middleware.onPublish && this.middleware.onPublish.call(null, channel, message)
         this.channels.emitmany(channel, message)
         this.nextBroker >= this.brokersKeysLength - 1 ? this.nextBroker = 0 : this.nextBroker++
     }
@@ -57,6 +59,7 @@ export class WSServer extends EventEmitter {
                 this.middleware.onMessageFromWorker.call(null, JSON.parse(message.slice(devider + 1)).message)
         if (this.channels.exist(channel)) {
             const decodedMessage: any = JSON.parse(message.slice(devider + 1)).message
+            this.middleware.onPublish && this.middleware.onPublish.call(null, channel, decodedMessage)
             return this.channels.emitmany(channel, decodedMessage)
         }
     }

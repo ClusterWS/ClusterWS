@@ -49,9 +49,10 @@ export class Socket {
 export class WSServer extends EventEmitter {
     channels: EventEmitterMany;
     middleware: CustomObject;
+    setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void;
     setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
-    setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
+    setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
     sendToWorkers(message: Message, tryiesOnBrokerError?: number): void | NodeJS.Timer;
     publish(channel: string, message: Message, tryiesOnBrokerError?: number): void | NodeJS.Timer;
     broadcastMessage(x: string, message: Message): void;
