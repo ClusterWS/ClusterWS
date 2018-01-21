@@ -12,7 +12,7 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
-export function BrokerServer(port: number, key: string, horizontalScaleOptions: HorizontalScaleOptions | false): void;
+export function BrokerServer(port: number, key: string, horizontalScaleOptions?: HorizontalScaleOptions | false, type?: string): void;
 export function BrokerClient(url: string, key: string, broadcaster: any, reconnected?: boolean): void;
 
 export class EventEmitter {
@@ -52,8 +52,8 @@ export class WSServer extends EventEmitter {
     setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
     setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
-    sendToWorkers(message: Message): void;
-    publish(channel: string, message: Message): void;
+    sendToWorkers(message: Message, tryiesOnBrokerError?: number): void | NodeJS.Timer;
+    publish(channel: string, message: Message, tryiesOnBrokerError?: number): void | NodeJS.Timer;
     broadcastMessage(x: string, message: Message): void;
     setBroker(br: WebSocket, url: string): void;
 }
@@ -83,7 +83,10 @@ export interface TlsOptions {
     passphrase?: string;
 }
 export interface HorizontalScaleOptions {
-    k: number;
+    masterPort?: number;
+    masterTlsOptions?: TlsOptions;
+    mastersUrls?: string[];
+    key?: string;
 }
 export interface Configurations {
     worker: WorkerFunction;

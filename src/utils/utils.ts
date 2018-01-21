@@ -34,7 +34,10 @@ export interface TlsOptions {
 
 // Work with this part in depth
 export interface HorizontalScaleOptions {
-    k: number
+    masterPort?: number
+    masterTlsOptions?: TlsOptions
+    mastersUrls?: string[]
+    key?: string
 }
 
 export interface Configurations {

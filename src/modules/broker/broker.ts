@@ -1,9 +1,22 @@
+import * as HTTPS from 'https'
 import * as WebSocket from 'uws'
+
 import { HorizontalScaleOptions, Message, CustomObject, generateKey, logReady, logError, logWarning } from '../../utils/utils'
 
-export function BrokerServer(port: number, key: string, horizontalScaleOptions: HorizontalScaleOptions | false): void {
+export function BrokerServer(port: number, key: string, horizontalScaleOptions?: HorizontalScaleOptions | false, type?: string): void {
+    let server: WebSocket.Server
+    let nextBroker: number = 0
+    let brokersKeys: string[] = []
+    let brokersKeysLength: number = 0
+
     const sockets: CustomObject[] = []
-    const server: WebSocket.Server = new WebSocket.Server({ port }, (): void => process.send({ event: 'READY', pid: process.pid }))
+    const brokers: CustomObject = {}
+
+    if (type === 'Scaler' && horizontalScaleOptions && horizontalScaleOptions.masterTlsOptions) {
+        const httpsServer: HTTPS.Server = HTTPS.createServer(horizontalScaleOptions.masterTlsOptions)
+        server = new WebSocket.Server({ server: httpsServer })
+        httpsServer.listen(port, () => process.send({ event: 'READY', pid: process.pid }))
+    } else server = new WebSocket.Server({ port }, (): void => process.send({ event: 'READY', pid: process.pid }))
 
     server.on('connection', (socket: any) => {
         let authenticated: boolean = false
@@ -19,7 +32,10 @@ export function BrokerServer(port: number, key: string, horizontalScaleOptions: 
                 authenticateSocket(socket)
                 return clearTimeout(timeout)
             }
-            if (authenticated) broadcast(socket.id, message)
+            if (authenticated) {
+                broadcast(socket.id, message)
+                type !== 'Scaler' && horizontalScaleOptions && horizontalBroadcast(message)
+            }
         })
 
         socket.on('close', (code: number, reason: string) => {
@@ -32,6 +48,8 @@ export function BrokerServer(port: number, key: string, horizontalScaleOptions: 
         })
     })
 
+    connectToMasterBrokers()
+
     function broadcast(id: string, message: Message): void {
         for (let i: number = 0, len: number = sockets.length; i < len; i++)
             if (sockets[i].id !== id) sockets[i].send(message)
@@ -42,6 +60,39 @@ export function BrokerServer(port: number, key: string, horizontalScaleOptions: 
         for (let i: number = 0, length: number = sockets.length; i < length; i++)
             if (sockets[i].id === socket.id) return authenticateSocket(socket)
         sockets.push(socket)
+    }
+
+    function horizontalBroadcast(message: Message, tryiesOnBrokerError: number = 0): void | NodeJS.Timer {
+        if (brokersKeysLength === 0) return setTimeout(() => horizontalBroadcast(message), 20)
+        try { brokers[brokersKeys[nextBroker]].send(message) } catch (err) {
+            if (tryiesOnBrokerError > brokersKeysLength) return logError('Does not have access to any global Broker')
+            logWarning('Could not pass message to the global Broker \n' + err.stack)
+            nextBroker >= brokersKeysLength - 1 ? nextBroker = 0 : nextBroker++
+            tryiesOnBrokerError++
+            return horizontalBroadcast(message, tryiesOnBrokerError)
+        }
+        nextBroker >= brokersKeysLength - 1 ? nextBroker = 0 : nextBroker++
+    }
+
+    function connectToMasterBrokers(): void {
+        if (type !== 'Scaler' && horizontalScaleOptions) {
+            horizontalScaleOptions.masterPort &&
+                BrokerClient((horizontalScaleOptions.masterTlsOptions ? 'wss' : 'ws') + '://127.0.0.1:' + horizontalScaleOptions.masterPort,
+                    horizontalScaleOptions.key || '', {
+                        broadcastMessage: broadcast,
+                        setBroker: (br: WebSocket, url: string): WebSocket => brokers[url] = br
+                    })
+            for (let i: number = 0, len: number = horizontalScaleOptions.mastersUrls.length; i < len; i++)
+                BrokerClient(horizontalScaleOptions.mastersUrls[i], horizontalScaleOptions.key || '', {
+                    broadcastMessage: broadcast,
+                    setBroker: (br: WebSocket, url: string): void => {
+                        brokers[url] = br
+                        brokersKeys = Object.keys(brokers)
+                        brokersKeysLength = brokersKeys.length
+                    }
+                })
+        }
+
     }
 }
 

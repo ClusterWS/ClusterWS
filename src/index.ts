@@ -80,6 +80,8 @@ function WorkerProcess(options: Options): void {
         switch (message.processName) {
             case 'Broker': return BrokerServer(options.brokersPorts[message.processID], message.key, options.horizontalScaleOptions)
             case 'Worker': return new Worker(options, message.key)
+            case 'Scaler': return options.horizontalScaleOptions &&
+                BrokerServer(options.horizontalScaleOptions.masterPort, options.horizontalScaleOptions.key, options.horizontalScaleOptions, 'Scaler')
         }
     })
     process.on('uncaughtException', (err: Error): void => {
