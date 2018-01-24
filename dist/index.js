@@ -62,12 +62,9 @@ function BrokerServer(e, r, t, n) {
                     if (0 === c) return setTimeout(function() {
                         return e(r);
                     }, 20);
-                    try {
-                        l[i[o]].send(r);
-                    } catch (n) {
-                        return t > c ? logError("Does not have access to any global Broker") : (logWarning("Could not pass message to the global Broker \n" + n.stack), 
-                        o >= c - 1 ? o = 0 : o++, e(r, ++t));
-                    }
+                    if (1 !== l[i[o]].readyState) return t++ > c ? logError("Does not have access to any global Broker") : (o >= c - 1 ? o = 0 : o++, 
+                    e(r, t));
+                    l[i[o]].send(r);
                     o >= c - 1 ? o = 0 : o++;
                 }(u));
             }
@@ -80,15 +77,15 @@ function BrokerServer(e, r, t, n) {
             t.masterPort && BrokerClient((t.masterTlsOptions ? "wss" : "ws") + "://127.0.0.1:" + t.masterPort, t.key || "", {
                 broadcastMessage: h,
                 setBroker: function(e, r) {
-                    return l[r] = e;
+                    l[r] = e, i = Object.keys(l), c = i.length;
                 }
-            });
+            }, !0);
             for (var e = 0, r = t.mastersUrls.length; e < r; e++) BrokerClient(t.mastersUrls[e], t.key || "", {
                 broadcastMessage: h,
                 setBroker: function(e, r) {
                     l[r] = e, i = Object.keys(l), c = i.length;
                 }
-            });
+            }, !0);
         }
     }();
 }
@@ -96,7 +93,8 @@ function BrokerServer(e, r, t, n) {
 function BrokerClient(e, r, t, n) {
     var s = new WebSocket(e);
     s.on("open", function() {
-        t.setBroker(s, e), n && logReady("Broker's socket has been reconnected"), s.send(r);
+        t.setBroker(s, e), n && logReady("Broker's socket has been connected to " + e), 
+        s.send(r);
     }), s.on("error", function(n) {
         if ("uWs client connection error" === n.stack) return s = null, setTimeout(function() {
             return BrokerClient(e, r, t, !0);
@@ -192,16 +190,11 @@ var EventEmitter = function() {
             if (0 === this.brokersKeysLength) return setTimeout(function() {
                 return n.publish(e, r);
             }, 20);
-            try {
-                this.brokers[this.brokersKeys[this.nextBroker]].send(Buffer.from(e + "%" + JSON.stringify({
-                    message: r
-                })));
-            } catch (n) {
-                return t > this.brokersKeysLength ? logError("Does not have access to any Broker") : (logWarning("Could not pass message to the internal Broker \n" + n.stack), 
-                this.nextBroker >= this.brokersKeysLength - 1 ? this.nextBroker = 0 : this.nextBroker++, 
-                t++, this.publish(e, r, t));
-            }
-            this.middleware.onPublish && this.middleware.onPublish.call(null, e, r), this.channels.emitmany(e, r), 
+            if (1 !== this.brokers[this.brokersKeys[this.nextBroker]].readyState) return t++ > this.brokersKeysLength ? logError("Does not have access to any internal Broker") : (this.nextBroker >= this.brokersKeysLength - 1 ? this.nextBroker = 0 : this.nextBroker++, 
+            this.publish(e, r, t));
+            this.brokers[this.brokersKeys[this.nextBroker]].send(Buffer.from(e + "%" + JSON.stringify({
+                message: r
+            }))), this.middleware.onPublish && this.middleware.onPublish.call(null, e, r), this.channels.emitmany(e, r), 
             this.nextBroker >= this.brokersKeysLength - 1 ? this.nextBroker = 0 : this.nextBroker++;
         }
     }, r.prototype.broadcastMessage = function(e, r) {
@@ -355,7 +348,7 @@ var Socket = function() {
 
 function MasterProcess(e) {
     var r = !0, t = generateKey(16), n = {}, s = {};
-    if (e.horizontalScaleOptions) i("Scaler", -1); else for (var o = 0; o < e.brokers; o++) i("Broker", o);
+    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterPort) i("Scaler", -1); else for (var o = 0; o < e.brokers; o++) i("Broker", o);
     function i(o, c) {
         var a = cluster.fork();
         a.on("message", function(t) {
@@ -392,7 +385,7 @@ function WorkerProcess(e) {
             return new Worker(e, r.key);
 
           case "Scaler":
-            return e.horizontalScaleOptions && BrokerServer(e.horizontalScaleOptions.masterPort, e.horizontalScaleOptions.key, e.horizontalScaleOptions, "Scaler");
+            return e.horizontalScaleOptions && BrokerServer(e.horizontalScaleOptions.masterPort, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions, "Scaler");
         }
     }), process.on("uncaughtException", function(e) {
         return logError("PID: " + process.pid + "\n" + e.stack + "\n"), process.exit();

@@ -38,7 +38,7 @@ function MasterProcess(options: Options): void {
     const brokersReady: CustomObject = {}
     const workersReady: CustomObject = {}
 
-    if (options.horizontalScaleOptions)
+    if (options.horizontalScaleOptions && options.horizontalScaleOptions.masterPort)
         launchProcess('Scaler', -1)
     else for (let i: number = 0; i < options.brokers; i++) launchProcess('Broker', i)
 
@@ -81,7 +81,10 @@ function WorkerProcess(options: Options): void {
             case 'Broker': return BrokerServer(options.brokersPorts[message.processID], message.key, options.horizontalScaleOptions)
             case 'Worker': return new Worker(options, message.key)
             case 'Scaler': return options.horizontalScaleOptions &&
-                BrokerServer(options.horizontalScaleOptions.masterPort, options.horizontalScaleOptions.key, options.horizontalScaleOptions, 'Scaler')
+                BrokerServer(options.horizontalScaleOptions.masterPort,
+                    options.horizontalScaleOptions.key || '',
+                    options.horizontalScaleOptions,
+                    'Scaler')
         }
     })
     process.on('uncaughtException', (err: Error): void => {

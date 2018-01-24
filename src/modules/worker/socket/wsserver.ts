@@ -38,13 +38,13 @@ export class WSServer extends EventEmitter {
     public publish(channel: string, message: Message, tryiesOnBrokerError: number = 0): void | NodeJS.Timer {
         if (channel === 'sendToWorkers') return
         if (this.brokersKeysLength === 0) return setTimeout(() => this.publish(channel, message), 20)
-        try { this.brokers[this.brokersKeys[this.nextBroker]].send(Buffer.from(channel + '%' + JSON.stringify({ message }))) } catch (err) {
-            if (tryiesOnBrokerError > this.brokersKeysLength) return logError('Does not have access to any Broker')
-            logWarning('Could not pass message to the internal Broker \n' + err.stack)
+
+        if (this.brokers[this.brokersKeys[this.nextBroker]].readyState !== 1) {
+            if (tryiesOnBrokerError++ > this.brokersKeysLength) return logError('Does not have access to any internal Broker')
             this.nextBroker >= this.brokersKeysLength - 1 ? this.nextBroker = 0 : this.nextBroker++
-            tryiesOnBrokerError++
             return this.publish(channel, message, tryiesOnBrokerError)
         }
+        this.brokers[this.brokersKeys[this.nextBroker]].send(Buffer.from(channel + '%' + JSON.stringify({ message })))
         this.middleware.onPublish && this.middleware.onPublish.call(null, channel, message)
         this.channels.emitmany(channel, message)
         this.nextBroker >= this.brokersKeysLength - 1 ? this.nextBroker = 0 : this.nextBroker++

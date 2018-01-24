@@ -64,13 +64,12 @@ export function BrokerServer(port: number, key: string, horizontalScaleOptions?:
 
     function horizontalBroadcast(message: Message, tryiesOnBrokerError: number = 0): void | NodeJS.Timer {
         if (brokersKeysLength === 0) return setTimeout(() => horizontalBroadcast(message), 20)
-        try { brokers[brokersKeys[nextBroker]].send(message) } catch (err) {
-            if (tryiesOnBrokerError > brokersKeysLength) return logError('Does not have access to any global Broker')
-            logWarning('Could not pass message to the global Broker \n' + err.stack)
+        if (brokers[brokersKeys[nextBroker]].readyState !== 1) {
+            if (tryiesOnBrokerError++ > brokersKeysLength) return logError('Does not have access to any global Broker')
             nextBroker >= brokersKeysLength - 1 ? nextBroker = 0 : nextBroker++
-            tryiesOnBrokerError++
             return horizontalBroadcast(message, tryiesOnBrokerError)
         }
+        brokers[brokersKeys[nextBroker]].send(message)
         nextBroker >= brokersKeysLength - 1 ? nextBroker = 0 : nextBroker++
     }
 
@@ -80,8 +79,12 @@ export function BrokerServer(port: number, key: string, horizontalScaleOptions?:
                 BrokerClient((horizontalScaleOptions.masterTlsOptions ? 'wss' : 'ws') + '://127.0.0.1:' + horizontalScaleOptions.masterPort,
                     horizontalScaleOptions.key || '', {
                         broadcastMessage: broadcast,
-                        setBroker: (br: WebSocket, url: string): WebSocket => brokers[url] = br
-                    })
+                        setBroker: (br: WebSocket, url: string): void => {
+                            brokers[url] = br
+                            brokersKeys = Object.keys(brokers)
+                            brokersKeysLength = brokersKeys.length
+                        }
+                    }, true)
             for (let i: number = 0, len: number = horizontalScaleOptions.mastersUrls.length; i < len; i++)
                 BrokerClient(horizontalScaleOptions.mastersUrls[i], horizontalScaleOptions.key || '', {
                     broadcastMessage: broadcast,
@@ -90,7 +93,7 @@ export function BrokerServer(port: number, key: string, horizontalScaleOptions?:
                         brokersKeys = Object.keys(brokers)
                         brokersKeysLength = brokersKeys.length
                     }
-                })
+                }, true)
         }
 
     }
@@ -98,9 +101,10 @@ export function BrokerServer(port: number, key: string, horizontalScaleOptions?:
 
 export function BrokerClient(url: string, key: string, broadcaster: any, reconnected?: boolean): void {
     let websocket: WebSocket = new WebSocket(url)
+
     websocket.on('open', () => {
         broadcaster.setBroker(websocket, url)
-        if (reconnected) logReady('Broker\'s socket has been reconnected')
+        if (reconnected) logReady('Broker\'s socket has been connected to ' + url)
         websocket.send(key)
     })
     websocket.on('error', (err: Error): void | NodeJS.Timer => {

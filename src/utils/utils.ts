@@ -32,7 +32,6 @@ export interface TlsOptions {
     passphrase?: string
 }
 
-// Work with this part in depth
 export interface HorizontalScaleOptions {
     masterPort?: number
     masterTlsOptions?: TlsOptions
