@@ -2,19 +2,18 @@ import * as HTTP from 'http'
 import * as HTTPS from 'https'
 import * as WebSocket from 'uws'
 
-import { Socket } from './socket/socket'
-import { Broker } from '../broker/broker'
-import { WSServer } from './socket/wss'
 import { Options, CustomObject, Listener } from '../../utils/utils'
-
-declare const process: any
+import { BrokerClient } from '../broker/broker'
+import { WSServer } from './socket/wsserver'
+import { Socket } from './socket/socket'
 
 export class Worker {
     public wss: WSServer = new WSServer()
     public server: HTTP.Server | HTTPS.Server
 
     constructor(public options: Options, key: string) {
-        Broker.Client('ws://127.0.0.1:' + this.options.brokerPort, key, this.wss)
+        for (let i: number = 0; i < options.brokers; i++)
+            BrokerClient('ws://127.0.0.1:' + this.options.brokersPorts[i], key, this.wss)
 
         this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer()
 
