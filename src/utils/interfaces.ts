@@ -6,6 +6,27 @@ export interface CustomObject {
     [propName: string]: any
 }
 
+export interface BrokerServerConfigs {
+    key: string
+    port: number
+    type: string
+    horizontalScaleOptions: HorizontalScaleOptions | false
+}
+
+export interface BrokerClientConfigs {
+    url: string
+    key: string
+    broadcaster: CustomObject,
+    external?: boolean
+}
+
+export interface GlobalBrokers {
+    brokers: CustomObject
+    brokersKeys: string[]
+    brokersAmount: number
+    nextBroker: number
+}
+
 export interface TlsOptions {
     ca?: string
     pfx?: string
