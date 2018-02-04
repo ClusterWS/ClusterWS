@@ -21,7 +21,7 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
     } else server = new Server({ port: configs.port })
 
     server.on('connection', (socket: CustomObject) => {
-        let isAuth = false
+        let isAuth: boolean = false
         const ping: NodeJS.Timer = setInterval((): void => socket.send('#0'), 20000)
         const authTimeOut: NodeJS.Timer = setTimeout((): void => socket.close(4000, 'Not Authenticated'), 5000)
 
@@ -65,7 +65,7 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
         sockets[socket.id] = socket
     }
 
-    function connectGlobalBrokers() {
+    function connectGlobalBrokers(): void {
         if (configs.type !== 'Scaler' && configs.horizontalScaleOptions) {
             configs.horizontalScaleOptions.masterOptions &&
                 createClient((configs.horizontalScaleOptions.masterOptions.tlsOptions
@@ -75,7 +75,7 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
         }
     }
 
-    function globalBrokersBroadcast(message: Message, tryiesOnBrokerError: number = 0) {
+    function globalBrokersBroadcast(message: Message, tryiesOnBrokerError: number = 0): void {
         globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1 ? globalBrokers.nextBroker = 0 : globalBrokers.nextBroker++
         if (globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]].readyState !== 1) {
             if (tryiesOnBrokerError++ > globalBrokers.brokersAmount) return logError('Does not have access to any global Broker')
@@ -86,12 +86,12 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
 
     function createClient(brokerUrl: string, key: string = ''): void {
         BrokerClient({
+            key,
             external: true,
             url: brokerUrl,
-            key: key,
             broadcaster: {
                 broadcastMessage: broadcast,
-                setBroker: (br: WebSocket, url: string) => {
+                setBroker: (br: WebSocket, url: string): void => {
                     globalBrokers.brokers[url] = br
                     globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers)
                     globalBrokers.brokersAmount = globalBrokers.brokersKeys.length

@@ -1,4 +1,6 @@
 import * as cluster from 'cluster'
+import { Worker } from './modules/worker/worker'
+import { BrokerServer } from './modules/broker/server'
 import { logReady, logError, logWarning, generateKey } from './utils/functions'
 import { Configurations, Options, CustomObject, Message } from './utils/interfaces'
 
@@ -87,11 +89,21 @@ export default class ClusterWS {
     }
 
     private workerProcess(): void {
-        process.on('message', (message: Message): void => {
+        process.on('message', (message: Message): any => {
             switch (message.processName) {
-                case 'Broker':
-                case 'Worker':
-                case 'Scaler':
+                case 'Broker': return BrokerServer({
+                    key: message.key,
+                    port: this.options.brokersPorts[message.processId],
+                    horizontalScaleOptions: this.options.horizontalScaleOptions,
+                    type: 'Broker'
+                })
+                case 'Worker': return new Worker(this.options, message.key)
+                case 'Scaler': return this.options.horizontalScaleOptions && BrokerServer({
+                    key: this.options.horizontalScaleOptions.key,
+                    port: this.options.horizontalScaleOptions.masterOptions.port,
+                    horizontalScaleOptions: this.options.horizontalScaleOptions,
+                    type: 'Scaler'
+                })
             }
         })
         process.on('uncaughtException', (err: Error): void => {

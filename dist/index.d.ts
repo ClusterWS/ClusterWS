@@ -4,6 +4,15 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
+export function BrokerClient(configs: BrokerClientConfigs, reconnected?: boolean, tryiesOnConnectionError?: number): void;
+
+export function BrokerServer(configs: BrokerServerConfigs): void;
+
+export class Worker {
+    options: Options;
+    constructor(options: Options, key: string);
+}
+
 export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;
@@ -14,6 +23,24 @@ export type Listener = (...args: any[]) => void;
 export type WorkerFunction = () => void;
 export interface CustomObject {
     [propName: string]: any;
+}
+export interface BrokerServerConfigs {
+    key: string;
+    port: number;
+    type: string;
+    horizontalScaleOptions: HorizontalScaleOptions | false;
+}
+export interface BrokerClientConfigs {
+    url: string;
+    key: string;
+    broadcaster: CustomObject;
+    external?: boolean;
+}
+export interface GlobalBrokers {
+    brokers: CustomObject;
+    brokersKeys: string[];
+    brokersAmount: number;
+    nextBroker: number;
 }
 export interface TlsOptions {
     ca?: string;
