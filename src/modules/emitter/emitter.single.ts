@@ -5,7 +5,7 @@ import { Listener, CustomObject, Message } from '../../utils/interfaces'
 export class EventEmitterSingle {
     private events: CustomObject = {}
 
-    // Add socket : type
+    // TODO: Add socket type
     public on(event: 'connection', listener: (socket: any) => void): void
     public on(event: string, listener: Listener): void
     public on(event: string, listener: Listener): void {

@@ -20,7 +20,7 @@ export interface BrokerClientConfigs {
     external?: boolean
 }
 
-export interface GlobalBrokers {
+export interface BrokersObject {
     brokers: CustomObject
     brokersKeys: string[]
     brokersAmount: number

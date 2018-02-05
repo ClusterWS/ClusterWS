@@ -2,12 +2,12 @@ import * as HTTPS from 'https'
 import { Server } from 'uws'
 import { BrokerClient } from './client'
 import { logError, generateKey } from '../../utils/functions'
-import { CustomObject, Message, BrokerServerConfigs, GlobalBrokers } from '../../utils/interfaces'
+import { CustomObject, Message, BrokerServerConfigs, BrokersObject } from '../../utils/interfaces'
 
 export function BrokerServer(configs: BrokerServerConfigs): void {
     let server: Server
     const sockets: CustomObject = {}
-    const globalBrokers: GlobalBrokers = {
+    const globalBrokers: BrokersObject = {
         brokers: {},
         nextBroker: -1,
         brokersKeys: [],
@@ -26,8 +26,7 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
         const authTimeOut: NodeJS.Timer = setTimeout((): void => socket.close(4000, 'Not Authenticated'), 5000)
 
         socket.on('message', (message: Message): void => {
-            if (message === '#1')
-                return
+            if (message === '#1') return
             if (message === configs.key) {
                 if (isAuth) return
                 isAuth = true
