@@ -1,10 +1,12 @@
 import * as WebSocket from 'uws'
 
+import { Socket } from './socket'
 import { logWarning } from '../../../utils/functions'
 import { EventEmitterMany } from '../../emitter/emitter.many'
+import { EventEmitterSingle } from '../../emitter/emitter.single'
 import { CustomObject, Message, Listener, BrokersObject } from '../../../utils/interfaces'
 
-export class WSServer {
+export class WSServer extends EventEmitterSingle {
     public channels: EventEmitterMany = new EventEmitterMany()
     public middleware: CustomObject = {}
     private internalBrokers: BrokersObject = {
@@ -15,8 +17,7 @@ export class WSServer {
     }
 
     public setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void
-    // TODO: make socket type the right one
-    public setMiddleware(name: 'onSubscribe', listener: (socket: any, channel: string, next: Listener) => void): void
+    public setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void
     public setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void
     public setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void
     public setMiddleware(name: string, listener: Listener): void {

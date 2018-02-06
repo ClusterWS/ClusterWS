@@ -31,11 +31,24 @@ export class EventEmitterSingle {
     removeEvents(): void;
 }
 
-export class WSServer {
+export class Socket {
+    worker: Worker;
+    events: EventEmitterSingle;
+    channels: CustomObject;
+    onPublish: any;
+    constructor(worker: Worker, socket: WebSocket);
+    on(event: 'error', listener: (err: Error) => void): void;
+    on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;
+    on(event: string, listener: Listener): void;
+    send(event: string, message: Message, type?: string): void;
+    disconnect(code?: number, reason?: string): void;
+}
+
+export class WSServer extends EventEmitterSingle {
     channels: EventEmitterMany;
     middleware: CustomObject;
     setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void;
-    setMiddleware(name: 'onSubscribe', listener: (socket: any, channel: string, next: Listener) => void): void;
+    setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
     setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
     publishToWorkers(message: Message): void;
