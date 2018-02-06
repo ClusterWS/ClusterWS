@@ -18,7 +18,7 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
         const httpsServer: HTTPS.Server = HTTPS.createServer(configs.horizontalScaleOptions.masterOptions.tlsOptions)
         server = new Server({ server: httpsServer })
         httpsServer.listen(configs.port, () => process.send({ event: 'READY', pid: process.pid }))
-    } else server = new Server({ port: configs.port })
+    } else server = new Server({ port: configs.port }, (): void => process.send({ event: 'READY', pid: process.pid }))
 
     server.on('connection', (socket: CustomObject) => {
         let isAuth: boolean = false

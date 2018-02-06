@@ -54,7 +54,7 @@ export class WSServer extends EventEmitterSingle {
         if (channel === '#sendToWorkers')
             return this.middleware.onMessageFromWorker &&
                 this.middleware.onMessageFromWorker.call(null, JSON.parse(message.slice(devider + 1)).message)
-        if (this.channels.exist(channel)) return
+        if (!this.channels.exist(channel)) return
 
         const decodedMessage: any = JSON.parse(message.slice(devider + 1)).message
         this.middleware.onPublish && this.middleware.onPublish.call(null, channel, decodedMessage)

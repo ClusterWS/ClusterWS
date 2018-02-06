@@ -7,13 +7,11 @@ import { Configurations, Options, CustomObject, Message } from './utils/interfac
 declare const process: any
 
 export default class ClusterWS {
-    private options: Options
-
     constructor(configurations: Configurations) {
         if ({}.toString.call(configurations.worker) !== '[object Function]')
             return logError('Worker must be provided and it must be a function \n')
 
-        this.options = {
+        const options: Options = {
             port: configurations.port || (configurations.tlsOptions ? 443 : 80),
             worker: configurations.worker,
             workers: configurations.workers || 1,
@@ -27,22 +25,22 @@ export default class ClusterWS {
         }
 
         if (!configurations.brokersPorts)
-            for (let i: number = 0; i < this.options.brokers; i++) this.options.brokersPorts.push(9400 + i)
-        if (this.options.brokersPorts.length < this.options.brokers)
+            for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(9400 + i)
+        if (options.brokersPorts.length < options.brokers)
             return logError('Number of broker ports is less than number of brokers \n')
 
-        cluster.isMaster ? this.masterProcess() : this.workerProcess()
+        cluster.isMaster ? this.masterProcess(options) : this.workerProcess(options)
     }
 
-    private masterProcess(): void {
+    private masterProcess(options: Options): void {
         let loaded: boolean = false
         const key: string = generateKey(16)
         const brokersReady: CustomObject = {}
         const workersReady: CustomObject = {}
 
-        if (this.options.horizontalScaleOptions && this.options.horizontalScaleOptions.masterOptions)
+        if (options.horizontalScaleOptions && options.horizontalScaleOptions.masterOptions)
             launchProcess('Scaler', -1)
-        else for (let i: number = 0; i < this.options.brokers; i++)
+        else for (let i: number = 0; i < options.brokers; i++)
             launchProcess('Broker', i)
 
         function launchProcess(processName: string, processId: number): void {
@@ -52,7 +50,7 @@ export default class ClusterWS {
                 message.event === 'READY' && ready(processName, processId, message.pid))
             newProcess.on('exit', () => {
                 logError(processName + ' is closed \n')
-                if (this.options.restartWorkerOnFail) {
+                if (options.restartWorkerOnFail) {
                     logWarning(processName + ' is restarting \n')
                     launchProcess(processName, processId)
                 }
@@ -69,39 +67,39 @@ export default class ClusterWS {
                 workersReady[processId] = '\tWorker: ' + processId + ', PID ' + pid
 
             if (processName === 'Scaler')
-                for (let i: number = 0; i < this.options.brokers; i++)
+                for (let i: number = 0; i < options.brokers; i++)
                     launchProcess('Broker', i)
 
             if (processName === 'Broker') {
-                brokersReady[processId] = '>>>  Broker on: ' + this.options.brokersPorts[processId] + ', PID ' + pid
-                if (Object.keys(brokersReady).length === this.options.brokers)
-                    for (let i: number = 0; i < this.options.workers; i++)
+                brokersReady[processId] = '>>>  Broker on: ' + options.brokersPorts[processId] + ', PID ' + pid
+                if (Object.keys(brokersReady).length === options.brokers)
+                    for (let i: number = 0; i < options.workers; i++)
                         launchProcess('Worker', i)
             }
 
-            if (Object.keys(brokersReady).length === this.options.brokers && Object.keys(workersReady).length === this.options.workers) {
+            if (Object.keys(brokersReady).length === options.brokers && Object.keys(workersReady).length === options.workers) {
                 loaded = true
-                logReady('>>>  Master on: ' + this.options.port + ', PID: ' + process.pid + (this.options.tlsOptions ? ' (secure)' : ''))
+                logReady('>>>  Master on: ' + options.port + ', PID: ' + process.pid + (options.tlsOptions ? ' (secure)' : ''))
                 for (const indexKey in brokersReady) brokersReady[indexKey] && logReady(brokersReady[indexKey])
                 for (const indexKey in workersReady) workersReady[indexKey] && logReady(workersReady[indexKey])
             }
         }
     }
 
-    private workerProcess(): void {
+    private workerProcess(options: Options): void {
         process.on('message', (message: Message): any => {
             switch (message.processName) {
                 case 'Broker': return BrokerServer({
                     key: message.key,
-                    port: this.options.brokersPorts[message.processId],
-                    horizontalScaleOptions: this.options.horizontalScaleOptions,
+                    port: options.brokersPorts[message.processId],
+                    horizontalScaleOptions: options.horizontalScaleOptions,
                     type: 'Broker'
                 })
-                case 'Worker': return new Worker(this.options, message.key)
-                case 'Scaler': return this.options.horizontalScaleOptions && BrokerServer({
-                    key: this.options.horizontalScaleOptions.key,
-                    port: this.options.horizontalScaleOptions.masterOptions.port,
-                    horizontalScaleOptions: this.options.horizontalScaleOptions,
+                case 'Worker': return new Worker(options, message.key)
+                case 'Scaler': return options.horizontalScaleOptions && BrokerServer({
+                    key: options.horizontalScaleOptions.key,
+                    port: options.horizontalScaleOptions.masterOptions.port,
+                    horizontalScaleOptions: options.horizontalScaleOptions,
                     type: 'Scaler'
                 })
             }

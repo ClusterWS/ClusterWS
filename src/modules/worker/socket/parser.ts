@@ -3,7 +3,6 @@ import { CustomObject } from '../../../utils/interfaces'
 
 export function encode(event: string, data: any, type: string): string {
     const message: CustomObject = {
-        'ping': event,
         'emit': { '#': ['e', event, data] },
         'publish': { '#': ['p', event, data] },
         'system': {
@@ -12,7 +11,9 @@ export function encode(event: string, data: any, type: string): string {
             'configuration': { '#': ['s', 'c', data] }
         }
     }
-    return JSON.stringify(type === 'system' ? message[type][event] : message[type])
+    return type === 'ping' ? event :
+        JSON.stringify(type === 'system' ?
+            message[type][event] : message[type])
 }
 
 export function decode(socket: Socket, message: any): void {
@@ -35,5 +36,7 @@ export function decode(socket: Socket, message: any): void {
             }
         }
     }
-    return message['#'][0] === 's' ? actions[message['#'][1]].call(null) : actions[message['#'][0]].call(null)
+    return message['#'][0] === 's' ?
+        actions[message['#'][0]][message['#'][1]] && actions[message['#'][0]][message['#'][1]].call(null) :
+        actions[message['#'][0]] && actions[message['#'][0]].call(null)
 }
