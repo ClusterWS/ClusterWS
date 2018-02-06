@@ -1,6 +1,8 @@
 import * as WebSocket from 'uws'
 
 import { Worker } from '../worker'
+import { logError } from '../../../utils/functions'
+import { encode, decode } from './parser'
 import { EventEmitterSingle } from '../../emitter/emitter.single'
 import { CustomObject, Listener, Message } from '../../../utils/interfaces'
 
@@ -8,11 +10,31 @@ export class Socket {
     public events: EventEmitterSingle = new EventEmitterSingle()
     public channels: CustomObject = {}
     public onPublish: any
-
     private missedPing: number = 0
 
     constructor(public worker: Worker, private socket: WebSocket) {
+        this.onPublish = (channel: string, message: Message): void => this.send(channel, message, 'publish')
+        const pingInterval: NodeJS.Timer = setInterval((): void => this.missedPing++ > 2 ?
+            this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'), this.worker.options.pingInterval)
+        this.send('configuration', { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary }, 'system')
 
+        this.socket.on('error', (err: Error): void => this.events.emit('error', err))
+        this.socket.on('close', (code?: number, reason?: string): void => {
+            clearInterval(pingInterval)
+            this.events.emit('disconnect', code, reason)
+            for (const key in this.channels)
+                this.channels[key] && this.worker.wss.channels.removeListener(key, this.onPublish)
+            for (const key in this)
+                this[key] ? this[key] = null : null
+        })
+        this.socket.on('message', (message: Message): number => {
+            typeof message !== 'string' ? message = Buffer.from(message).toString() : null
+            if (message === '#1') return this.missedPing = 0
+            try {
+                message = JSON.parse(message)
+            } catch (e) { return logError('PID: ' + process.pid + '\n' + e + '\n') }
+            decode(this, message)
+        })
     }
 
     public on(event: 'error', listener: (err: Error) => void): void
@@ -24,9 +46,9 @@ export class Socket {
 
     public send(event: string, message: Message, type?: string): void
     public send(event: string, message: Message, type: string = 'emit'): void {
-        // this.socket.send(this.worker.options.useBinary ?
-        //     Buffer.from(encode(event, message, type)) :
-        //     encode(event, message, type))
+        this.socket.send(this.worker.options.useBinary ?
+            Buffer.from(encode(event, message, type)) :
+            encode(event, message, type))
     }
     public disconnect(code?: number, reason?: string): void {
         this.socket.close(code, reason)

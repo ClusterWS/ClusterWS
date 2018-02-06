@@ -1,12 +1,11 @@
-// import { Socket } from '../socket/socket'
+import { Socket } from '../worker/socket/socket'
 import { logError } from '../../utils/functions'
 import { Listener, CustomObject, Message } from '../../utils/interfaces'
 
 export class EventEmitterSingle {
     private events: CustomObject = {}
 
-    // TODO: Add socket type
-    public on(event: 'connection', listener: (socket: any) => void): void
+    public on(event: 'connection', listener: (socket: Socket) => void): void
     public on(event: string, listener: Listener): void
     public on(event: string, listener: Listener): void {
         if ({}.toString.call(listener) !== '[object Function]')

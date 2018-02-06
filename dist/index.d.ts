@@ -24,12 +24,15 @@ export class EventEmitterMany {
 }
 
 export class EventEmitterSingle {
-    on(event: 'connection', listener: (socket: any) => void): void;
+    on(event: 'connection', listener: (socket: Socket) => void): void;
     on(event: string, listener: Listener): void;
     emit(event: string, message: Message): void;
     emit(event: string, ...args: any[]): void;
     removeEvents(): void;
 }
+
+export function encode(event: string, data: any, type: string): string;
+export function decode(socket: Socket, message: any): void;
 
 export class Socket {
     worker: Worker;
