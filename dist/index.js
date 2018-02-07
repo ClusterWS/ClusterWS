@@ -167,10 +167,12 @@ var EventEmitterMany = function() {
         this.publish("#sendToWorkers", e);
     }, r.prototype.publish = function(e, r, t) {
         var n = this;
-        return void 0 === t && (t = 0), t > 2 * this.internalBrokers.brokersAmount && t > 10 ? logWarning("Faild to publish message") : 0 === this.internalBrokers.brokersAmount ? setTimeout(function() {
+        return void 0 === t && (t = 0), t > this.internalBrokers.brokersAmount + 10 ? logWarning("Does not have access to any broker") : this.internalBrokers.brokersAmount <= 0 ? setTimeout(function() {
             return n.publish(e, r, ++t);
-        }, 20) : (this.internalBrokers.nextBroker >= this.internalBrokers.brokersAmount - 1 ? this.internalBrokers.nextBroker = 0 : this.internalBrokers.nextBroker++, 
-        1 !== this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].readyState ? this.publish(e, r, ++t) : (this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].send(Buffer.from(e + "%" + JSON.stringify({
+        }, 10) : (this.internalBrokers.nextBroker >= this.internalBrokers.brokersAmount - 1 ? this.internalBrokers.nextBroker = 0 : this.internalBrokers.nextBroker++, 
+        1 !== this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].readyState ? (delete this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]], 
+        this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), this.internalBrokers.brokersAmount--, 
+        this.publish(e, r, ++t)) : (this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].send(Buffer.from(e + "%" + JSON.stringify({
             message: r
         }))), "#sendToWorkers" === e ? this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker.call(null, r) : (this.middleware.onPublish && this.middleware.onPublish.call(null, e, r), 
         void this.channels.emitMany(e, r))));
@@ -194,13 +196,13 @@ function BrokerClient(e, r, t) {
         t = 0, e.broadcaster.setBroker(n, e.url), r && logReady("Broker has been connected to " + e.url + "\n"), 
         n.send(e.key);
     }), n.on("error", function(o) {
-        if ("uWs client connection error" === o.stack) return n = null, t > 5 && logWarning("Can not connect to the Broker, please check: " + e.url + "\n"), 
+        if ("uWs client connection error" === o.stack) return n = null, t > 5 && logWarning("Can not connect to the Broker: " + e.url + "\n"), 
         setTimeout(function() {
             return BrokerClient(e, r || !e.external || t > 5, t > 5 ? 0 : ++t);
         }, 50);
         logError("Socket " + process.pid + " has an issue: \n" + o.stack + "\n");
     }), n.on("close", function(r) {
-        return 4e3 === r ? logError("Wrong authorization key") : (n = null, logWarning("Something went wrong," + (e.external ? " external " : " ") + "broker is trying to reconnect to " + e.url + "\n"), 
+        return 4e3 === r ? logError("Wrong authorization key") : (n = null, logWarning("Something went wrong, system is trying to reconnect to " + e.url + "\n"), 
         setTimeout(function() {
             return BrokerClient(e, !0, ++t);
         }, 50));
@@ -293,10 +295,11 @@ function BrokerServer(e) {
                         t[r.id] = r;
                     }(r), clearTimeout(l);
                 }
-                o && (s(r.id, i), "Scaler" !== e.type && e.horizontalScaleOptions && 0 !== n.brokersAmount && function e(r, t) {
-                    void 0 === t && (t = 0);
+                o && (s(r.id, i), "Scaler" !== e.type && e.horizontalScaleOptions && function e(r) {
+                    if (n.brokersAmount <= 0) return;
                     n.nextBroker >= n.brokersAmount - 1 ? n.nextBroker = 0 : n.nextBroker++;
-                    if (1 !== n.brokers[n.brokersKeys[n.nextBroker]].readyState) return ++t > n.brokersAmount ? logError("Does not have access to any global Broker") : e(r, t);
+                    if (1 !== n.brokers[n.brokersKeys[n.nextBroker]].readyState) return delete n.brokers[n.brokersKeys[n.nextBroker]], 
+                    n.brokersKeys = Object.keys(n.brokers), n.brokersAmount--, e(r);
                     n.brokers[n.brokersKeys[n.nextBroker]].send(r);
                 }(i));
             }
@@ -359,26 +362,28 @@ var ClusterWS = function() {
         }
     }, e.prototype.workerProcess = function(e) {
         process.on("message", function(r) {
-            switch (r.processName) {
-              case "Broker":
-                return BrokerServer({
-                    key: r.key,
-                    port: e.brokersPorts[r.processId],
-                    horizontalScaleOptions: e.horizontalScaleOptions,
-                    type: "Broker"
-                });
-
-              case "Worker":
-                return new Worker(e, r.key);
-
-              case "Scaler":
-                return e.horizontalScaleOptions && BrokerServer({
-                    key: e.horizontalScaleOptions.key || "",
-                    port: e.horizontalScaleOptions.masterOptions.port,
-                    horizontalScaleOptions: e.horizontalScaleOptions,
-                    type: "Scaler"
-                });
-            }
+            var t = {
+                Worker: function() {
+                    return new Worker(e, r.key);
+                },
+                Broker: function() {
+                    return BrokerServer({
+                        key: r.key,
+                        port: e.brokersPorts[r.processId],
+                        horizontalScaleOptions: e.horizontalScaleOptions,
+                        type: "Broker"
+                    });
+                },
+                Scaler: function() {
+                    return e.horizontalScaleOptions && BrokerServer({
+                        key: e.horizontalScaleOptions.key || "",
+                        port: e.horizontalScaleOptions.masterOptions.port,
+                        horizontalScaleOptions: e.horizontalScaleOptions,
+                        type: "Scaler"
+                    });
+                }
+            };
+            return t[r.processName] && t[r.processName].call(null);
         }), process.on("uncaughtException", function(e) {
             return logError("PID: " + process.pid + "\n" + e.stack + "\n"), process.exit();
         });

@@ -15,7 +15,7 @@ export function BrokerClient(configs: BrokerClientConfigs, reconnected?: boolean
             websocket = null
 
             tryiesOnConnectionError > 5 &&
-                logWarning('Can not connect to the Broker, please check: ' + configs.url + '\n')
+                logWarning('Can not connect to the Broker: ' + configs.url + '\n')
 
             return setTimeout(() => BrokerClient(configs,
                 reconnected ||

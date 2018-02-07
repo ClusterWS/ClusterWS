@@ -31,12 +31,18 @@ export class WSServer extends EventEmitterSingle {
 
     public publish(channel: string, message: Message, tryiesOnBrokerError?: number): void
     public publish(channel: string, message: Message, tryiesOnBrokerError: number = 0): void | NodeJS.Timer {
-        if (tryiesOnBrokerError > this.internalBrokers.brokersAmount * 2 && tryiesOnBrokerError > 10) return logWarning('Faild to publish message')
-        if (this.internalBrokers.brokersAmount === 0) return setTimeout(() => this.publish(channel, message, ++tryiesOnBrokerError), 20)
+        if (tryiesOnBrokerError > this.internalBrokers.brokersAmount + 10) return logWarning('Does not have access to any broker')
+        if (this.internalBrokers.brokersAmount <= 0) return setTimeout(() => this.publish(channel, message, ++tryiesOnBrokerError), 10)
         this.internalBrokers.nextBroker >= this.internalBrokers.brokersAmount - 1 ?
             this.internalBrokers.nextBroker = 0 : this.internalBrokers.nextBroker++
-        if (this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].readyState !== 1)
+
+        if (this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].readyState !== 1) {
+            delete this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]]
+            this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers)
+            this.internalBrokers.brokersAmount--
             return this.publish(channel, message, ++tryiesOnBrokerError)
+        }
+
         this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]]
             .send(Buffer.from(channel + '%' + JSON.stringify({ message })))
 

@@ -87,22 +87,23 @@ export default class ClusterWS {
     }
 
     private workerProcess(options: Options): void {
-        process.on('message', (message: Message): any => {
-            switch (message.processName) {
-                case 'Broker': return BrokerServer({
+        process.on('message', (message: Message): void => {
+            const actions: CustomObject = {
+                'Worker': (): void | Worker => new Worker(options, message.key),
+                'Broker': (): void => BrokerServer({
                     key: message.key,
                     port: options.brokersPorts[message.processId],
                     horizontalScaleOptions: options.horizontalScaleOptions,
                     type: 'Broker'
-                })
-                case 'Worker': return new Worker(options, message.key)
-                case 'Scaler': return options.horizontalScaleOptions && BrokerServer({
+                }),
+                'Scaler': (): void => options.horizontalScaleOptions && BrokerServer({
                     key: options.horizontalScaleOptions.key || '',
                     port: options.horizontalScaleOptions.masterOptions.port,
                     horizontalScaleOptions: options.horizontalScaleOptions,
                     type: 'Scaler'
                 })
             }
+            return actions[message.processName] && actions[message.processName].call(null)
         })
         process.on('uncaughtException', (err: Error): void => {
             logError('PID: ' + process.pid + '\n' + err.stack + '\n')

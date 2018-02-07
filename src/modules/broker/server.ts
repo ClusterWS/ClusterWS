@@ -37,7 +37,6 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
                 broadcast(socket.id, message)
                 configs.type !== 'Scaler' &&
                     configs.horizontalScaleOptions &&
-                    globalBrokers.brokersAmount !== 0 &&
                     globalBrokersBroadcast(message)
             }
         })
@@ -74,11 +73,14 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
         }
     }
 
-    function globalBrokersBroadcast(message: Message, tryiesOnBrokerError: number = 0): void {
+    function globalBrokersBroadcast(message: Message): void {
+        if (globalBrokers.brokersAmount <= 0) return
         globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1 ? globalBrokers.nextBroker = 0 : globalBrokers.nextBroker++
         if (globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]].readyState !== 1) {
-            if (++tryiesOnBrokerError > globalBrokers.brokersAmount) return logError('Does not have access to any global Broker')
-            return globalBrokersBroadcast(message, tryiesOnBrokerError)
+            delete globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]]
+            globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers)
+            globalBrokers.brokersAmount--
+            return globalBrokersBroadcast(message)
         }
         globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]].send(message)
     }
