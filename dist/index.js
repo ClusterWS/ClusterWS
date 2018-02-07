@@ -196,13 +196,14 @@ function BrokerClient(e, r, t) {
         t = 0, e.broadcaster.setBroker(n, e.url), r && logReady("Broker has been connected to " + e.url + "\n"), 
         n.send(e.key);
     }), n.on("error", function(o) {
-        if ("uWs client connection error" === o.stack) return n = null, t > 5 && logWarning("Can not connect to the Broker: " + e.url + "\n"), 
+        if ("uWs client connection error" === o.stack) return n.close(4001), t > 5 && logWarning("Can not connect to the Broker: " + e.url + "\n"), 
         setTimeout(function() {
             return BrokerClient(e, r || !e.external || t > 5, t > 5 ? 0 : ++t);
         }, 50);
         logError("Socket " + process.pid + " has an issue: \n" + o.stack + "\n");
     }), n.on("close", function(r) {
-        return 4e3 === r ? logError("Wrong authorization key") : (n = null, logWarning("Something went wrong, system is trying to reconnect to " + e.url + "\n"), 
+        if (4001 !== r) return 4e3 === r ? logError("Can not connect to the broker wrong authorization key") : (n = null, 
+        logWarning("Something went wrong, system is trying to reconnect to " + e.url + "\n"), 
         setTimeout(function() {
             return BrokerClient(e, !0, ++t);
         }, 50));

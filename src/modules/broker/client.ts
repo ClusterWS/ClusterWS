@@ -25,7 +25,7 @@ export function BrokerClient(configs: BrokerClientConfigs, reconnected?: boolean
         logError('Socket ' + process.pid + ' has an issue: ' + '\n' + err.stack + '\n')
     })
     websocket.on('close', (code: number): void | NodeJS.Timer => {
-        if (code === 4000) return logError('Wrong authorization key')
+        if (code === 4000) return logError('Can not connect to the broker wrong authorization key')
         websocket = null
         logWarning('Something went wrong,' + ' system is trying to reconnect to ' + configs.url + '\n')
         return setTimeout(() => BrokerClient(configs, true, ++tryiesOnConnectionError), 50)
