@@ -168,9 +168,9 @@ var EventEmitterMany = function() {
     }, r.prototype.publish = function(e, r, t) {
         var n = this;
         return void 0 === t && (t = 0), t > 2 * this.internalBrokers.brokersAmount && t > 10 ? logWarning("Faild to publish message") : 0 === this.internalBrokers.brokersAmount ? setTimeout(function() {
-            return n.publish(e, r, t++);
+            return n.publish(e, r, ++t);
         }, 20) : (this.internalBrokers.nextBroker >= this.internalBrokers.brokersAmount - 1 ? this.internalBrokers.nextBroker = 0 : this.internalBrokers.nextBroker++, 
-        1 !== this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].readyState ? this.publish(e, r, t++) : (this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].send(Buffer.from(e + "%" + JSON.stringify({
+        1 !== this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].readyState ? this.publish(e, r, ++t) : (this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]].send(Buffer.from(e + "%" + JSON.stringify({
             message: r
         }))), "#sendToWorkers" === e ? this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker.call(null, r) : (this.middleware.onPublish && this.middleware.onPublish.call(null, e, r), 
         void this.channels.emitMany(e, r))));
@@ -191,19 +191,19 @@ function BrokerClient(e, r, t) {
     void 0 === t && (t = 0);
     var n = new WebSocket(e.url);
     n.on("open", function() {
-        t = 0, e.broadcaster.setBroker(n, e.url), r && logReady("Broker's socket has been connected to " + e.url), 
+        t = 0, e.broadcaster.setBroker(n, e.url), r && logReady("Broker has been connected to " + e.url + "\n"), 
         n.send(e.key);
-    }), n.on("error", function(r) {
-        if ("uWs client connection error" === r.stack) return n = null, t > 10 && logWarning("Can not connect to the Broker: " + e.url), 
+    }), n.on("error", function(o) {
+        if ("uWs client connection error" === o.stack) return n = null, t > 5 && logWarning("Can not connect to the Broker, please check: " + e.url + "\n"), 
         setTimeout(function() {
-            return BrokerClient(e, !e.external || t > 10, t++);
-        }, 20);
-        logError("Socket " + process.pid + " has an issue: \n" + r.stack + "\n");
+            return BrokerClient(e, r || !e.external || t > 5, t > 5 ? 0 : ++t);
+        }, 50);
+        logError("Socket " + process.pid + " has an issue: \n" + o.stack + "\n");
     }), n.on("close", function(r) {
-        return 4e3 === r ? logError("Wrong authorization key") : (n = null, logWarning("Something went wrong," + (e.external ? " external " : " ") + "socket is trying to reconnect"), 
+        return 4e3 === r ? logError("Wrong authorization key") : (n = null, logWarning("Something went wrong," + (e.external ? " external " : " ") + "broker is trying to reconnect to " + e.url + "\n"), 
         setTimeout(function() {
-            return BrokerClient(e, !0, t++);
-        }, 20));
+            return BrokerClient(e, !0, ++t);
+        }, 50));
     }), n.on("message", function(r) {
         return "#0" === r ? n.send("#1") : e.broadcaster.broadcastMessage("", r);
     });
@@ -296,7 +296,7 @@ function BrokerServer(e) {
                 o && (s(r.id, i), "Scaler" !== e.type && e.horizontalScaleOptions && 0 !== n.brokersAmount && function e(r, t) {
                     void 0 === t && (t = 0);
                     n.nextBroker >= n.brokersAmount - 1 ? n.nextBroker = 0 : n.nextBroker++;
-                    if (1 !== n.brokers[n.brokersKeys[n.nextBroker]].readyState) return t++ > n.brokersAmount ? logError("Does not have access to any global Broker") : e(r, t++);
+                    if (1 !== n.brokers[n.brokersKeys[n.nextBroker]].readyState) return ++t > n.brokersAmount ? logError("Does not have access to any global Broker") : e(r, t);
                     n.brokers[n.brokersKeys[n.nextBroker]].send(r);
                 }(i));
             }
@@ -373,7 +373,7 @@ var ClusterWS = function() {
 
               case "Scaler":
                 return e.horizontalScaleOptions && BrokerServer({
-                    key: e.horizontalScaleOptions.key,
+                    key: e.horizontalScaleOptions.key || "",
                     port: e.horizontalScaleOptions.masterOptions.port,
                     horizontalScaleOptions: e.horizontalScaleOptions,
                     type: "Scaler"

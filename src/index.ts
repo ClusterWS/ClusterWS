@@ -97,7 +97,7 @@ export default class ClusterWS {
                 })
                 case 'Worker': return new Worker(options, message.key)
                 case 'Scaler': return options.horizontalScaleOptions && BrokerServer({
-                    key: options.horizontalScaleOptions.key,
+                    key: options.horizontalScaleOptions.key || '',
                     port: options.horizontalScaleOptions.masterOptions.port,
                     horizontalScaleOptions: options.horizontalScaleOptions,
                     type: 'Scaler'

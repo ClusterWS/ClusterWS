@@ -77,8 +77,8 @@ export function BrokerServer(configs: BrokerServerConfigs): void {
     function globalBrokersBroadcast(message: Message, tryiesOnBrokerError: number = 0): void {
         globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1 ? globalBrokers.nextBroker = 0 : globalBrokers.nextBroker++
         if (globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]].readyState !== 1) {
-            if (tryiesOnBrokerError++ > globalBrokers.brokersAmount) return logError('Does not have access to any global Broker')
-            return globalBrokersBroadcast(message, tryiesOnBrokerError++)
+            if (++tryiesOnBrokerError > globalBrokers.brokersAmount) return logError('Does not have access to any global Broker')
+            return globalBrokersBroadcast(message, tryiesOnBrokerError)
         }
         globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]].send(message)
     }
