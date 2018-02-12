@@ -4,7 +4,6 @@ import { logReady, logError, logWarning } from '../../utils/functions'
 
 /**
  * Need to be fixed:
- * 
  * 1. Too many error on connection to the server which is tls
  * 2. Inform user on start up if server was not able to connect
  */
