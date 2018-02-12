@@ -2,6 +2,12 @@ import * as WebSocket from 'uws'
 import { BrokerClientConfigs, Message } from '../../utils/interfaces'
 import { logReady, logError, logWarning } from '../../utils/functions'
 
+/**
+ * Need to be fixed:
+ * 
+ * 1. Too many error on connection to the server which is tls
+ * 2. Inform user on start up if server was not able to connect
+ */
 export function BrokerClient(configs: BrokerClientConfigs, reconnected?: boolean, tryiesOnConnectionError: number = 0): void {
     let websocket: WebSocket = new WebSocket(configs.url)
     websocket.on('open', () => {
