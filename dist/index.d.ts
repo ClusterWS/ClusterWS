@@ -12,41 +12,52 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
-export class Broker {
-    static Client(url: string, key: string, broadcaster: any, reconnected?: boolean): void;
-    static Server(serverPort: number, key: string, scaleOptions?: ScaleOptions | false): void;
+export function BrokerClient(configs: BrokerClientConfigs, reconnected?: boolean, tryiesOnConnectionError?: number): void;
+
+export function BrokerServer(configs: BrokerServerConfigs): void;
+
+export class EventEmitterMany {
+    onMany(event: string, listener: (event: string, ...args: any[]) => void): void;
+    emitMany(event: string, ...args: any[]): void;
+    removeListener(event: string, listener: Listener): any;
+    exist(event: string): boolean;
 }
 
-export class EventEmitter {
+export class EventEmitterSingle {
+    on(event: 'connection', listener: (socket: Socket) => void): void;
     on(event: string, listener: Listener): void;
+    emit(event: string, message: Message): void;
     emit(event: string, ...args: any[]): void;
-    onmany(event: string, listener: Listener): void;
-    emitmany(event: string, ...args: any[]): void;
-    removeListener(event: string, listener: Listener): any;
-    removeEvent(event: string): void;
     removeEvents(): void;
 }
 
-export function encode(event: string, data: any, type: string): any;
-export function decode(socket: Socket, message: any): any;
+export function encode(event: string, data: any, type: string): string;
+export function decode(socket: Socket, message: any): void;
 
 export class Socket {
     worker: Worker;
+    events: EventEmitterSingle;
     channels: CustomObject;
-    events: EventEmitter;
+    onPublish: any;
     constructor(worker: Worker, socket: WebSocket);
+    on(event: 'error', listener: (err: Error) => void): void;
+    on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;
     on(event: string, listener: Listener): void;
-    send(event: string, data: any, type?: string): void;
+    send(event: string, message: Message, type?: string): void;
     disconnect(code?: number, reason?: string): void;
 }
 
-export class WSServer extends EventEmitter {
+export class WSServer extends EventEmitterSingle {
+    channels: EventEmitterMany;
     middleware: CustomObject;
-    setMiddleware(name: string, listener: Listener): void;
-    sendToWorkers(data: any): void;
-    publish(channel: string, data: any): void;
-    broadcastMessage(x: string, message: any): void;
-    setBroker(br: WebSocket): void;
+    setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void;
+    setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
+    setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
+    setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
+    publishToWorkers(message: Message): void;
+    publish(channel: string, message: Message, tryiesOnBrokerError?: number): void;
+    broadcastMessage(x: string, message: Message): void;
+    setBroker(br: WebSocket, url: string): void;
 }
 
 export class Worker {
@@ -56,10 +67,34 @@ export class Worker {
     constructor(options: Options, key: string);
 }
 
+export function logError<T>(data: T): any;
+export function logReady<T>(data: T): any;
+export function logWarning<T>(data: T): any;
+export function generateKey(length: number): string;
+
+export type Message = any;
 export type Listener = (...args: any[]) => void;
 export type WorkerFunction = () => void;
 export interface CustomObject {
     [propName: string]: any;
+}
+export interface BrokerServerConfigs {
+    key: string;
+    port: number;
+    type: string;
+    horizontalScaleOptions: HorizontalScaleOptions | false;
+}
+export interface BrokerClientConfigs {
+    url: string;
+    key: string;
+    broadcaster: CustomObject;
+    external?: boolean;
+}
+export interface BrokersObject {
+    brokers: CustomObject;
+    brokersKeys: string[];
+    brokersAmount: number;
+    nextBroker: number;
 }
 export interface TlsOptions {
     ca?: string;
@@ -68,36 +103,36 @@ export interface TlsOptions {
     cert?: string;
     passphrase?: string;
 }
-export interface ScaleOptions {
-    port: number;
-    url?: string;
+export interface HorizontalScaleOptions {
+    masterOptions?: {
+        port: number;
+        tlsOptions?: TlsOptions;
+    };
+    brokersUrls?: string[];
     key?: string;
-    master?: boolean;
 }
 export interface Configurations {
     worker: WorkerFunction;
     port?: number;
     workers?: number;
+    brokers?: number;
     useBinary?: boolean;
-    brokerPort?: number;
+    brokersPorts?: number[];
     tlsOptions?: TlsOptions;
-    scaleOptions?: ScaleOptions;
     pingInterval?: number;
     restartWorkerOnFail?: boolean;
+    horizontalScaleOptions?: HorizontalScaleOptions;
 }
 export interface Options {
     worker: WorkerFunction;
     port: number;
     workers: number;
+    brokers: number;
     useBinary: boolean;
-    brokerPort: number;
+    brokersPorts: number[];
     tlsOptions: TlsOptions | false;
-    scaleOptions: ScaleOptions | false;
     pingInterval: number;
     restartWorkerOnFail: boolean;
+    horizontalScaleOptions: HorizontalScaleOptions | false;
 }
-export function logError<T>(data: T): any;
-export function logReady<T>(data: T): any;
-export function logWarning<T>(data: T): any;
-export function randomString(length: number): string;
 
