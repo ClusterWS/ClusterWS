@@ -53,4 +53,6 @@ export class Socket {
     public disconnect(code?: number, reason?: string): void {
         this.socket.close(code, reason)
     }
+
+    
 }
