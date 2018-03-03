@@ -88,6 +88,12 @@ export default class ClusterWS {
   }
 
   private workerProcess(options: Options): void {
-    console.log('here')
+    const actions: CustomObject = {}
+
+    process.on('message', (message: Message): void => actions[message.processName] && actions[message.processName].call(null))
+    process.on('uncaughtException', (err: Error): void => {
+      logError(`PID: ${process.pid}\n ${err.stack}\n`)
+      return process.exit()
+    })
   }
 }

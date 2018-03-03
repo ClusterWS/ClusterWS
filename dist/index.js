@@ -41,14 +41,14 @@ var ClusterWS = function() {
         var e = !1, o = generateKey(16), t = {}, s = {};
         if (r.horizontalScaleOptions && r.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (var n = 0; n < r.brokers; n++) i("Broker", n);
         function i(n, a) {
-            var l = cluster.fork();
-            l.on("message", function(o) {
+            var c = cluster.fork();
+            c.on("message", function(o) {
                 return "READY" === o.event && function(o, n, a) {
                     if (e) return logReady(o + " PID " + a + " has been restarted");
                     "Worker" === o && (s[n] = "\tWorker: " + n + ", PID " + a);
-                    if ("Scaler" === o) for (var l = 0; l < r.brokers; l++) i("Broker", l);
+                    if ("Scaler" === o) for (var c = 0; c < r.brokers; c++) i("Broker", c);
                     if ("Broker" === o && (t[n] = ">>>  Broker on: " + r.brokersPorts[n] + ", PID " + a, 
-                    Object.keys(t).length === r.brokers)) for (var l = 0; l < r.workers; l++) i("Worker", l);
+                    Object.keys(t).length === r.brokers)) for (var c = 0; c < r.workers; c++) i("Worker", c);
                     Object.keys(t).length === r.brokers && Object.keys(s).length === r.workers && (e = !0, 
                     logReady(">>>  Master on: " + r.port + ", PID: " + process.pid + " " + (r.tlsOptions ? " (secure)" : "")), 
                     Object.keys(t).forEach(function(r) {
@@ -57,17 +57,22 @@ var ClusterWS = function() {
                         return s.hasOwnProperty(r) && logReady(s[r]);
                     }));
                 }(n, a, o.pid);
-            }), l.on("exit", function() {
+            }), c.on("exit", function() {
                 logError(n + " has exited \n"), r.restartWorkerOnFail && (logWarning(n + " is restarting \n"), 
-                i(n, a)), l = void 0;
-            }), l.send({
+                i(n, a)), c = void 0;
+            }), c.send({
                 securityKey: o,
                 processId: a,
                 processName: n
             });
         }
     }, r.prototype.workerProcess = function(r) {
-        console.log("here");
+        var e = {};
+        process.on("message", function(r) {
+            return e[r.processName] && e[r.processName].call(null);
+        }), process.on("uncaughtException", function(r) {
+            return logError("PID: " + process.pid + "\n " + r.stack + "\n"), process.exit();
+        });
     }, r;
 }();
 
