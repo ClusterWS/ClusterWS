@@ -1,6 +1,7 @@
 import * as cluster from 'cluster'
-import { Configurations, Options, CustomObject, Message } from './utils/types'
+import { BrokerServer } from './modules/broker/server'
 import { logReady, logWarning, logError, generateKey } from './utils/functions'
+import { Configurations, Options, CustomObject, Message } from './utils/types'
 
 declare const process: any
 
@@ -88,9 +89,14 @@ export default class ClusterWS {
   }
 
   private workerProcess(options: Options): void {
-    const actions: CustomObject = {}
-
-    process.on('message', (message: Message): void => actions[message.processName] && actions[message.processName].call(null))
+    process.on('message', (message: Message): void => {
+      const actions: CustomObject = {
+        Broker: (): void => BrokerServer(options.brokersPorts[message.processId], message.securityKey, options.horizontalScaleOptions, 'Broker'),
+        Scaler: (): void => options.horizontalScaleOptions &&
+          BrokerServer(options.horizontalScaleOptions.masterOptions.port, options.horizontalScaleOptions.key || '', options.horizontalScaleOptions, 'Scaler')
+      }
+      actions[message.processName] && actions[message.processName].call(null)
+    })
     process.on('uncaughtException', (err: Error): void => {
       logError(`PID: ${process.pid}\n ${err.stack}\n`)
       return process.exit()

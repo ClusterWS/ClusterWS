@@ -4,8 +4,14 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
+export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
+
+export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: String): void;
+
+
+
 export function logError<T>(data: T): any;
-export function logReady<T>(data: T, stamp?: boolean): any;
+export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;
 export function generateKey(length: number): string;
 
