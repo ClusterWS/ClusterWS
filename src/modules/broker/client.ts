@@ -14,7 +14,7 @@ export function BrokerClient(url: string, securityKey: string, broadcaster: Cust
     websocket = undefined
     if (err.stack === 'uWs client connection error') {
       tries === 5 &&
-        logWarning(`Can not connect to the Broker ${url}. System is in reconnection state please check your Broker and URL`)
+        logWarning(`Can not connect to the Broker ${url}. System in reconnection state please check your Broker and URL`)
       return setTimeout(() => BrokerClient(url, securityKey, broadcaster, ++tries, tries > 5), 50)
     }
     logError(`Socket ${process.pid} has an issue: \n ${err.stack} \n`)

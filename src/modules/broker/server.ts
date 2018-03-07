@@ -66,7 +66,11 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
 
   function globalBroadcast(message: Message): void {
     if (globalBrokers.brokersAmount <= 0) return
-    globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1 ? globalBrokers.nextBroker = 0 : globalBrokers.nextBroker++
+
+    globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1
+      ? globalBrokers.nextBroker = 0
+      : globalBrokers.nextBroker++
+
     const receiver: CustomObject = globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]]
 
     if (receiver.readyState !== 1) {

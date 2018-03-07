@@ -1,4 +1,6 @@
 import * as cluster from 'cluster'
+
+import { Worker } from './modules/worker'
 import { BrokerServer } from './modules/broker/server'
 import { logReady, logWarning, logError, generateKey } from './utils/functions'
 import { Configurations, Options, CustomObject, Message } from './utils/types'
@@ -12,6 +14,7 @@ export default class ClusterWS {
 
     const options: Options = {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
+      host: configurations.host || null,
       worker: configurations.worker,
       workers: configurations.workers || 1,
       brokers: configurations.brokers || 1,
@@ -91,6 +94,7 @@ export default class ClusterWS {
   private workerProcess(options: Options): void {
     process.on('message', (message: Message): void => {
       const actions: CustomObject = {
+        Worker: (): Worker => new Worker(options, message.securityKey),
         Broker: (): void => BrokerServer(options.brokersPorts[message.processId], message.securityKey, options.horizontalScaleOptions, 'Broker'),
         Scaler: (): void => options.horizontalScaleOptions &&
           BrokerServer(options.horizontalScaleOptions.masterOptions.port, options.horizontalScaleOptions.key || '', options.horizontalScaleOptions, 'Scaler')

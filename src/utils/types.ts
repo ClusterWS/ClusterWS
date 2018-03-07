@@ -26,6 +26,7 @@ export type HorizontalScaleOptions = {
 export type Configurations = {
   worker: WorkerFunction
   port?: number
+  host?: string
   workers?: number
   brokers?: number
   useBinary?: boolean
@@ -39,6 +40,7 @@ export type Configurations = {
 export type Options = {
   worker: WorkerFunction
   port: number
+  host: string
   workers: number
   brokers: number
   useBinary: boolean

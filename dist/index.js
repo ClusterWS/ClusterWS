@@ -1,6 +1,10 @@
 "use strict";
 
-var crypto = require("crypto"), WebSocket = require("uws"), HTTPS = require("https"), cluster = require("cluster");
+var crypto = require("crypto"), WebSocket = require("uws"), HTTPS = require("https"), cluster = require("cluster"), Worker = function() {
+    return function(r, e) {
+        this.options = r;
+    };
+}();
 
 function logError(r) {
     return console.log("[31m" + r + "[0m");
@@ -24,7 +28,7 @@ function BrokerClient(r, e, o, t, n) {
     s.on("open", function() {
         o.setBroker(s, r), n && logReady("Broker has been connected to " + r + " \n"), s.send(e);
     }), s.on("error", function(n) {
-        if (s = void 0, "uWs client connection error" === n.stack) return 5 === t && logWarning("Can not connect to the Broker " + r + ". System is in reconnection state please check your Broker and URL"), 
+        if (s = void 0, "uWs client connection error" === n.stack) return 5 === t && logWarning("Can not connect to the Broker " + r + ". System in reconnection state please check your Broker and URL"), 
         setTimeout(function() {
             return BrokerClient(r, e, o, ++t, t > 5);
         }, 50);
@@ -162,6 +166,9 @@ var ClusterWS = function() {
     }, r.prototype.workerProcess = function(r) {
         process.on("message", function(e) {
             var o = {
+                Worker: function() {
+                    return new Worker(r, e.securityKey);
+                },
                 Broker: function() {
                     return BrokerServer(r.brokersPorts[e.processId], e.securityKey, r.horizontalScaleOptions, "Broker");
                 },

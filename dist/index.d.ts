@@ -8,7 +8,10 @@ export function BrokerClient(url: string, securityKey: string, broadcaster: Cust
 
 export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: String): void;
 
-
+export class Worker {
+    options: Options;
+    constructor(options: Options, securityKey: string);
+}
 
 export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
