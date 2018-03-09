@@ -12,9 +12,9 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
-export function BrokerClient(configs: BrokerClientConfigs, reconnected?: boolean, tryiesOnConnectionError?: number): void;
+export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
 
-export function BrokerServer(configs: BrokerServerConfigs): void;
+export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: String): void;
 
 export class EventEmitterMany {
     onMany(event: string, listener: (event: string, ...args: any[]) => void): void;
@@ -31,7 +31,7 @@ export class EventEmitterSingle {
     removeEvents(): void;
 }
 
-export function encode(event: string, data: any, type: string): string;
+export function encode(event: string, data: any, typeOfEvent: string): string;
 export function decode(socket: Socket, message: any): void;
 
 export class Socket {
@@ -43,7 +43,7 @@ export class Socket {
     on(event: 'error', listener: (err: Error) => void): void;
     on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;
     on(event: string, listener: Listener): void;
-    send(event: string, message: Message, type?: string): void;
+    send(event: string, message: Message, eventType?: string): void;
     disconnect(code?: number, reason?: string): void;
 }
 
@@ -55,16 +55,16 @@ export class WSServer extends EventEmitterSingle {
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
     setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
     publishToWorkers(message: Message): void;
-    publish(channel: string, message: Message, tryiesOnBrokerError?: number): void;
-    broadcastMessage(x: string, message: Message): void;
+    publish(channel: string, message: Message, tries?: number): void;
+    broadcastMessage(_: string, message: Message): void;
     setBroker(br: WebSocket, url: string): void;
 }
 
 export class Worker {
-    options: Options;
     wss: WSServer;
     server: HTTP.Server | HTTPS.Server;
-    constructor(options: Options, key: string);
+    options: Options;
+    constructor(options: Options, securityKey: string);
 }
 
 export function logError<T>(data: T): any;
@@ -75,45 +75,28 @@ export function generateKey(length: number): string;
 export type Message = any;
 export type Listener = (...args: any[]) => void;
 export type WorkerFunction = () => void;
-export interface CustomObject {
+export type CustomObject = {
     [propName: string]: any;
-}
-export interface BrokerServerConfigs {
-    key: string;
-    port: number;
-    type: string;
-    horizontalScaleOptions: HorizontalScaleOptions | false;
-}
-export interface BrokerClientConfigs {
-    url: string;
-    key: string;
-    broadcaster: CustomObject;
-    external?: boolean;
-}
-export interface BrokersObject {
-    brokers: CustomObject;
-    brokersKeys: string[];
-    brokersAmount: number;
-    nextBroker: number;
-}
-export interface TlsOptions {
+};
+export type TlsOptions = {
     ca?: string;
     pfx?: string;
     key?: string;
     cert?: string;
     passphrase?: string;
-}
-export interface HorizontalScaleOptions {
+};
+export type HorizontalScaleOptions = {
     masterOptions?: {
         port: number;
         tlsOptions?: TlsOptions;
     };
     brokersUrls?: string[];
     key?: string;
-}
-export interface Configurations {
+};
+export type Configurations = {
     worker: WorkerFunction;
     port?: number;
+    host?: string;
     workers?: number;
     brokers?: number;
     useBinary?: boolean;
@@ -122,10 +105,11 @@ export interface Configurations {
     pingInterval?: number;
     restartWorkerOnFail?: boolean;
     horizontalScaleOptions?: HorizontalScaleOptions;
-}
-export interface Options {
+};
+export type Options = {
     worker: WorkerFunction;
     port: number;
+    host: string;
     workers: number;
     brokers: number;
     useBinary: boolean;
@@ -134,5 +118,5 @@ export interface Options {
     pingInterval: number;
     restartWorkerOnFail: boolean;
     horizontalScaleOptions: HorizontalScaleOptions | false;
-}
+};
 
