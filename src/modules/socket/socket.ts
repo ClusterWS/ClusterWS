@@ -21,8 +21,7 @@ export class Socket {
     this.onPublish = (channel: string, message: Message): void => this.send(channel, message, 'publish')
 
     const pingInterval: NodeJS.Timer = setInterval(
-      (): void => this.missedPing++ > 2 ?
-        this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'),
+      (): void => this.missedPing++ > 2 ? this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'),
       this.worker.options.pingInterval)
 
     this.send('configuration', { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary }, 'system')
@@ -63,6 +62,7 @@ export class Socket {
       Buffer.from(encode(event, message, eventType)) :
       encode(event, message, eventType))
   }
+
   public disconnect(code?: number, reason?: string): void {
     this.socket.close(code, reason)
   }

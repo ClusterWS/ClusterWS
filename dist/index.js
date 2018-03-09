@@ -198,13 +198,14 @@ function BrokerClient(e, r, t, n, o) {
     void 0 === n && (n = 0);
     var s = new WebSocket(e);
     s.on("open", function() {
-        t.setBroker(s, e), o && logReady("Broker has been connected to " + e + " \n"), s.send(r);
-    }), s.on("error", function(o) {
-        if (s = void 0, "uWs client connection error" === o.stack) return 5 === n && logWarning("Can not connect to the Broker " + e + ". System in reconnection state please check your Broker and URL"), 
+        n = 0, t.setBroker(s, e), o && logReady("Broker has been connected to " + e + " \n"), 
+        s.send(r);
+    }), s.on("error", function(i) {
+        if (s = void 0, "uWs client connection error" === i.stack) return 5 === n && logWarning("Can not connect to the Broker " + e + ". System in reconnection state please check your Broker and URL"), 
         setTimeout(function() {
-            return BrokerClient(e, r, t, ++n, n > 5);
-        }, 50);
-        logError("Socket " + process.pid + " has an issue: \n " + o.stack + " \n");
+            return BrokerClient(e, r, t, ++n, o || n > 5);
+        }, 500);
+        logError("Socket " + process.pid + " has an issue: \n " + i.stack + " \n");
     }), s.on("close", function(o) {
         if (s = void 0, 4e3 === o) return logError("Can not connect to the broker wrong authorization key");
         logWarning("Broker has disconnected, system is trying to reconnect to " + e + " \n"), 
