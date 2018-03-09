@@ -201,17 +201,17 @@ function BrokerClient(e, r, t, n, o) {
         n = 0, t.setBroker(s, e), o && logReady("Broker has been connected to " + e + " \n"), 
         s.send(r);
     }), s.on("error", function(i) {
-        if (s = void 0, "uWs client connection error" === i.stack) return 5 === n && logWarning("Can not connect to the Broker " + e + ". System in reconnection state please check your Broker and URL"), 
+        if (s = void 0, "uWs client connection error" === i.stack) return 5 === n && logWarning("Can not connect to the Broker " + e + ". System in reconnection state please check your Broker and URL \n"), 
         setTimeout(function() {
             return BrokerClient(e, r, t, ++n, o || n > 5);
         }, 500);
         logError("Socket " + process.pid + " has an issue: \n " + i.stack + " \n");
     }), s.on("close", function(o) {
-        if (s = void 0, 4e3 === o) return logError("Can not connect to the broker wrong authorization key");
+        if (s = void 0, 4e3 === o) return logError("Can not connect to the broker wrong authorization key \n");
         logWarning("Broker has disconnected, system is trying to reconnect to " + e + " \n"), 
         setTimeout(function() {
             return BrokerClient(e, r, t, ++n, !0);
-        }, 50);
+        }, 500);
     }), s.on("message", function(e) {
         return "#0" === e ? s.send("#1") : t.broadcastMessage("", e);
     });
