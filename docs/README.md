@@ -6,8 +6,9 @@
 </p>
 
 <p align="center">
- <a title="NPM Version" href="https://badge.fury.io/js/clusterws"><img src="https://badge.fury.io/js/clusterws.svg"></a>
- <a title="GitHub version" href="https://badge.fury.io/gh/goriunov%2FClusterWS"><img src="https://badge.fury.io/gh/goriunov%2FClusterWS.svg"></a>
+    <a href="https://github.com/ClusterWS/ClusterWS/blob/master/LICENSE"><img src="https://img.shields.io/github/license/ClusterWS/ClusterWS.svg?style=for-the-badge" alt="GitHub license" /></a>
+    <a href="https://www.npmjs.com/package/clusterws"><img src="https://img.shields.io/badge/npm-2.1.0-blue.svg?style=for-the-badge" alt="NPM Version" /></a>
+    <a href="https://github.com/ClusterWS/ClusterWS/graphs/commit-activity"><img src="https://img.shields.io/badge/Maintain-Yes-green.svg?style=for-the-badge" alt="Maintain" /></a>
 </p>
 
 <p align="center">
