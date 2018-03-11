@@ -21,6 +21,7 @@
 		"node js websocket",
 		"scale node js websocket",
 		"real-time",
-		"cluster"
+		"cluster",
+		"javascript"
 	]
 }
