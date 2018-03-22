@@ -31,6 +31,5 @@ export class Worker {
       this.options.worker.call(this)
       process.send({ event: 'READY', pid: process.pid })
     })
-
   }
 }
