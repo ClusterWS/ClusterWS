@@ -93,27 +93,6 @@ export class WebSocketServer extends EventEmitterSingle {
     abortConnection(socket: CustomObject, code: number, name: string): void;
 }
 
-export class WebSocket {
-    static server: any;
-    onping: Listener;
-    onpong: Listener;
-    external: Listener;
-    internalOnOpen: Listener;
-    internalOnError: Listener;
-    internalOnClose: Listener;
-    internalOnMessage: Listener;
-    clientGroup: any;
-    constructor(uri: string);
-    on(eventName: string, listener: Listener): WebSocket;
-    ping(message: Message): void;
-    terminate(): void;
-    send(message: Message, options?: CustomObject, cb?: Listener): void;
-    close(code: number, reason: string): void;
-    readonly OPEN: number;
-    readonly CLOSED: number;
-    readonly readyState: number;
-}
-
 export class Worker {
     wss: WSServer;
     server: HTTP.Server | HTTPS.Server;
