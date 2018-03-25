@@ -1,4 +1,4 @@
-import * as WebSocket from 'uws'
+import { WebSocket } from '../uws/uws'
 
 import { Socket } from './socket'
 import { logWarning } from '../../utils/functions'

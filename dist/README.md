@@ -2,7 +2,7 @@
 <h6 align="center">Build Scalable Node.js WebSocket Applications</h6>
 
 <p align="center">
- <img src="https://cdn.rawgit.com/goriunov/159120ca6a883d8d4e75543ec395d361/raw/c7d5366740902a118bd857b70117a2df6ca97dd0/clusterws.svg" width="450">
+ <img src="https://cdn.rawgit.com/goriunov/159120ca6a883d8d4e75543ec395d361/raw/146220360173a2428fceb44e7fc9b2cda8a17832/clusterws.svg" width="450">
 </p>
 
 <p align="center">
@@ -20,9 +20,10 @@
 </h3>
 
 <p align="center">
-    <a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://u.cubeupload.com/goriunovd/swift.png" /></a>
-    <a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img src="https://u.cubeupload.com/goriunovd/java.png" /></a>
-    <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://u.cubeupload.com/goriunovd/javascript.png" /></a>
+    <a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://user-images.githubusercontent.com/18750503/37686010-8ec97d8c-2cfa-11e8-844a-3c79043d3c83.png" width="150"/></a>
+    <a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img src="https://user-images.githubusercontent.com/18750503/37686016-96558d5c-2cfa-11e8-8d91-3a01122a73eb.png" 
+    width="150" /></a>
+    <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://user-images.githubusercontent.com/18750503/37686031-9fa2d888-2cfa-11e8-911e-d844a8753b88.png" width="150"/></a>
 </p>
 
 <h1></h1>

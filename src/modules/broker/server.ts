@@ -1,12 +1,13 @@
 import * as HTTPS from 'https'
 
-import { Server } from 'uws'
+import { WebSocketServer } from '../uws/uws'
+
 import { BrokerClient } from './client'
 import { generateKey } from '../../utils/functions'
 import { Message, CustomObject, HorizontalScaleOptions } from '../../utils/types'
 
 export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: String): void {
-  let server: Server
+  let server: WebSocketServer
   const clients: CustomObject = {}
   const globalBrokers: CustomObject = {
     brokers: {},
@@ -17,9 +18,9 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
 
   if (serverType === 'Scaler' && horizontalScaleOptions && horizontalScaleOptions.masterOptions && horizontalScaleOptions.masterOptions.tlsOptions) {
     const httpsServer: HTTPS.Server = HTTPS.createServer(horizontalScaleOptions.masterOptions.tlsOptions)
-    server = new Server({ server: httpsServer })
+    server = new WebSocketServer({ server: httpsServer })
     httpsServer.listen(port, () => process.send({ event: 'READY', pid: process.pid }))
-  } else server = new Server({ port }, (): void => process.send({ event: 'READY', pid: process.pid }))
+  } else server = new WebSocketServer({ port }, (): void => process.send({ event: 'READY', pid: process.pid }))
 
   server.on('connection', (socket: CustomObject) => {
     socket.isAuth = false
