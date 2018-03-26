@@ -17,7 +17,7 @@ export class EventEmitterSingle {
   public emit(event: string, ...args: any[]): void
   public emit(event: string, ...args: any[]): void {
     const listener: Listener = this.events[event]
-    listener && listener.call(null, ...args)
+    listener && listener(...args)
   }
 
   public removeEvents(): void {

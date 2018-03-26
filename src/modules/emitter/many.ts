@@ -17,7 +17,7 @@ export class EventEmitterMany {
     const listeners: Listener[] = this.events[event]
     if (!listeners) return
     for (let i: number = 0, len: number = listeners.length; i < len; i++)
-      listeners[i].call(null, event, ...args)
+      listeners[i](event, ...args)
   }
 
   public removeListener(event: string, listener: Listener): any {

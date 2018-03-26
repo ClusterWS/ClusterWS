@@ -7,8 +7,8 @@ const noop: Listener = (): void => { }
 
 const OPEN: number = 1
 const CLOSED: number = 0
-const OPCODE_PING: number = 9
 const OPCODE_TEXT: number = 1
+const OPCODE_PING: number = 9
 const OPCODE_BINARY: number = 2
 const PERMESSAGE_DEFLATE: number = 1
 const DEFAULT_PAYLOAD_LIMIT: number = 16777216
@@ -22,9 +22,6 @@ const native: any = ((): void => {
 
     if (process.platform === 'win32' && lessThanSixFour)
       throw new Error('µWebSockets requires Node.js 6.4.0 or greater on Windows.')
-
-    throw new Error('Compilation of µWebSockets has failed and there is no pre-compiled binary ' +
-      'available for your system. Please install a supported C++11 compiler and reinstall the module \'uws\'.')
   }
 })()
 
@@ -49,16 +46,29 @@ export class WebSocket {
       this.clientGroup = native.client.group.create(0, DEFAULT_PAYLOAD_LIMIT)
       native.connect(this.clientGroup, uri, this)
 
+      native.client.group.onConnection(this.clientGroup, (newExternal: CustomObject): void => {
+        const webSocket: CustomObject = native.getUserData(newExternal)
+        webSocket.external = newExternal
+        webSocket.internalOnOpen()
+      })
+      native.client.group.onMessage(this.clientGroup, (message: Message, webSocket: CustomObject): void => {
+        webSocket.internalOnMessage(message)
+      })
       native.client.group.onPing(this.clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onping(message))
       native.client.group.onPong(this.clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onpong(message))
-      native.client.group.onDisconnection(this.clientGroup, this.onDisconnection)
-      native.client.group.onError(this.clientGroup, this.onError)
-
-      native.client.group.onMessage(this.clientGroup, this.onMessage)
-      native.client.group.onConnection(this.clientGroup, this.onConnection)
+      native.client.group.onError(this.clientGroup, (webSocket: CustomObject): void => {
+        process.nextTick((): void => webSocket.internalOnError({
+          message: 'uWs client connection error',
+          stack: 'uWs client connection error'
+        }))
+      })
+      native.client.group.onDisconnection(this.clientGroup, (newExternal: CustomObject, code: number, message: Message, webSocket: CustomObject): void => {
+        webSocket.external = null
+        process.nextTick((): void => webSocket.internalOnClose(code, message))
+        native.clearUserData(newExternal)
+      })
     }
   }
-
   public on(eventName: string, listener: Listener): this {
     const actions: any = {
       ping: (): Listener => this.onping = listener,
@@ -68,7 +78,7 @@ export class WebSocket {
       close: (): Listener => this.internalOnClose = listener,
       message: (): Listener => this.internalOnMessage = listener
     }
-    actions[eventName] && actions[eventName].call(this)
+    actions[eventName] && actions[eventName]()
     return this
   }
 
@@ -122,29 +132,6 @@ export class WebSocket {
 
   get readyState(): number {
     return this.external ? OPEN : CLOSED
-  }
-
-  private onError(webSocket: CustomObject): void {
-    process.nextTick((): void => webSocket.internalOnError({
-      message: 'uWs client connection error',
-      stack: 'uWs client connection error'
-    }))
-  }
-
-  private onDisconnection(external: CustomObject, code: number, message: Message, webSocket: CustomObject): void {
-    webSocket.external = null
-    process.nextTick((): void => webSocket.internalOnClose(code, message))
-    native.clearUserData(external)
-  }
-
-  private onMessage(message: Message, webSocket: CustomObject): void {
-    webSocket.internalOnMessage(message)
-  }
-
-  private onConnection(external: CustomObject): void {
-    const webSocket: CustomObject = native.getUserData(external)
-    webSocket.external = external
-    webSocket.internalOnOpen()
   }
 }
 
@@ -201,8 +188,13 @@ export class WebSocketServer extends EventEmitterSingle {
     this.httpServer.on('error', (err: any) => this.emit('error', err))
     this.httpServer.on('newListener', (eventName: any, listener: Listener) => eventName === 'upgrade' ? this.lastUpgradeListener = false : null)
 
+    native.server.group.onConnection(this.serverGroup, (external: CustomObject): void => {
+      const webSocket: WebSocket = new WebSocket(null, external, 'server')
+      native.setUserData(external, webSocket)
+      this.upgradeCallback(webSocket)
+      this.upgradeReq = null
+    })
     native.server.group.onMessage(this.serverGroup, this.sendMessage)
-    native.server.group.onConnection(this.serverGroup, this.onConnection.bind(this))
     native.server.group.onDisconnection(this.serverGroup, this.onDisconnection)
     native.server.group.onPing(this.serverGroup, (message: any, webSocket: any): void => webSocket.onping(message))
     native.server.group.onPong(this.serverGroup, (message: any, webSocket: any): void => webSocket.onpong(message))
@@ -237,13 +229,6 @@ export class WebSocketServer extends EventEmitterSingle {
 
   public abortConnection(socket: CustomObject, code: number, name: string): void {
     socket.end(`HTTP/1.1 ${code} ${name}\r\n\r\n`)
-  }
-
-  private onConnection(external: CustomObject): void {
-    const webSocket: WebSocket = new WebSocket(null, external, 'server')
-    native.setUserData(external, webSocket)
-    this.upgradeCallback(webSocket)
-    this.upgradeReq = null
   }
 
   private sendMessage(message: Message, webSocket: CustomObject): void {

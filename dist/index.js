@@ -42,11 +42,11 @@ var EventEmitterSingle = function() {
     }, e.prototype.emit = function(e) {
         for (var r = [], n = 1; n < arguments.length; n++) r[n - 1] = arguments[n];
         var t = this.events[e];
-        t && t.call.apply(t, [ null ].concat(r));
+        t && t.apply(void 0, r);
     }, e.prototype.removeEvents = function() {
         this.events = {};
     }, e;
-}(), noop = function() {}, OPEN = 1, CLOSED = 0, OPCODE_PING = 9, OPCODE_TEXT = 1, OPCODE_BINARY = 2, PERMESSAGE_DEFLATE = 1, DEFAULT_PAYLOAD_LIMIT = 16777216, native = function() {
+}(), noop = function() {}, OPEN = 1, CLOSED = 0, OPCODE_TEXT = 1, OPCODE_PING = 9, OPCODE_BINARY = 2, PERMESSAGE_DEFLATE = 1, DEFAULT_PAYLOAD_LIMIT = 16777216, native = function() {
     try {
         return require("./node/uws_" + process.platform + "_" + process.versions.modules);
     } catch (n) {
@@ -54,7 +54,6 @@ var EventEmitterSingle = function() {
             return parseInt(e, 10);
         }), r = e[0] < 6 || 6 === e[0] && e[1] < 4;
         if ("win32" === process.platform && r) throw new Error("µWebSockets requires Node.js 6.4.0 or greater on Windows.");
-        throw new Error("Compilation of µWebSockets has failed and there is no pre-compiled binary available for your system. Please install a supported C++11 compiler and reinstall the module 'uws'.");
     }
 }();
 
@@ -66,13 +65,27 @@ var WebSocket = function() {
         this.onpong = noop, this.clientGroup = noop, this.external = noop, this.internalOnOpen = noop, 
         this.internalOnError = noop, this.internalOnClose = noop, this.internalOnMessage = noop, 
         this.websocketType = n, this.external = r, "client" === this.websocketType && (this.clientGroup = native.client.group.create(0, DEFAULT_PAYLOAD_LIMIT), 
-        native.connect(this.clientGroup, e, this), native.client.group.onPing(this.clientGroup, function(e, r) {
+        native.connect(this.clientGroup, e, this), native.client.group.onConnection(this.clientGroup, function(e) {
+            var r = native.getUserData(e);
+            r.external = e, r.internalOnOpen();
+        }), native.client.group.onMessage(this.clientGroup, function(e, r) {
+            r.internalOnMessage(e);
+        }), native.client.group.onPing(this.clientGroup, function(e, r) {
             return r.onping(e);
         }), native.client.group.onPong(this.clientGroup, function(e, r) {
             return r.onpong(e);
-        }), native.client.group.onDisconnection(this.clientGroup, this.onDisconnection), 
-        native.client.group.onError(this.clientGroup, this.onError), native.client.group.onMessage(this.clientGroup, this.onMessage), 
-        native.client.group.onConnection(this.clientGroup, this.onConnection));
+        }), native.client.group.onError(this.clientGroup, function(e) {
+            process.nextTick(function() {
+                return e.internalOnError({
+                    message: "uWs client connection error",
+                    stack: "uWs client connection error"
+                });
+            });
+        }), native.client.group.onDisconnection(this.clientGroup, function(e, r, n, t) {
+            t.external = null, process.nextTick(function() {
+                return t.internalOnClose(r, n);
+            }), native.clearUserData(e);
+        }));
     }
     return e.prototype.on = function(e, r) {
         var n = this, t = {
@@ -95,7 +108,7 @@ var WebSocket = function() {
                 return n.internalOnMessage = r;
             }
         };
-        return t[e] && t[e].call(this), this;
+        return t[e] && t[e](), this;
     }, e.prototype.ping = function(e) {
         this.external && ("client" === this.websocketType ? native.client.send(this.external, e, OPCODE_PING) : native.server.send(this.external, e, OPCODE_PING));
     }, e.prototype.terminate = function() {
@@ -132,23 +145,7 @@ var WebSocket = function() {
         },
         enumerable: !0,
         configurable: !0
-    }), e.prototype.onError = function(e) {
-        process.nextTick(function() {
-            return e.internalOnError({
-                message: "uWs client connection error",
-                stack: "uWs client connection error"
-            });
-        });
-    }, e.prototype.onDisconnection = function(e, r, n, t) {
-        t.external = null, process.nextTick(function() {
-            return t.internalOnClose(r, n);
-        }), native.clearUserData(e);
-    }, e.prototype.onMessage = function(e, r) {
-        r.internalOnMessage(e);
-    }, e.prototype.onConnection = function(e) {
-        var r = native.getUserData(e);
-        r.external = e, r.internalOnOpen();
-    }, e;
+    }), e;
 }(), WebSocketServer = function(e) {
     function r(r, n) {
         var t = e.call(this) || this;
@@ -174,8 +171,11 @@ var WebSocket = function() {
             return t.emit("error", e);
         }), t.httpServer.on("newListener", function(e, r) {
             return "upgrade" === e ? t.lastUpgradeListener = !1 : null;
-        }), native.server.group.onMessage(t.serverGroup, t.sendMessage), native.server.group.onConnection(t.serverGroup, t.onConnection.bind(t)), 
-        native.server.group.onDisconnection(t.serverGroup, t.onDisconnection), native.server.group.onPing(t.serverGroup, function(e, r) {
+        }), native.server.group.onConnection(t.serverGroup, function(e) {
+            var r = new WebSocket(null, e, "server");
+            native.setUserData(e, r), t.upgradeCallback(r), t.upgradeReq = null;
+        }), native.server.group.onMessage(t.serverGroup, t.sendMessage), native.server.group.onDisconnection(t.serverGroup, t.onDisconnection), 
+        native.server.group.onPing(t.serverGroup, function(e, r) {
             return r.onping(e);
         }), native.server.group.onPong(t.serverGroup, function(e, r) {
             return r.onpong(e);
@@ -191,9 +191,6 @@ var WebSocket = function() {
         this.emit("connection", e);
     }, r.prototype.abortConnection = function(e, r, n) {
         e.end("HTTP/1.1 " + r + " " + n + "\r\n\r\n");
-    }, r.prototype.onConnection = function(e) {
-        var r = new WebSocket(null, e, "server");
-        native.setUserData(e, r), this.upgradeCallback(r), this.upgradeReq = null;
     }, r.prototype.sendMessage = function(e, r) {
         r.internalOnMessage(e);
     }, r.prototype.onDisconnection = function(e, r, n, t) {
@@ -253,16 +250,16 @@ function decode(e, r) {
                 var n = function() {
                     e.channels[r["#"][2]] = 1, e.worker.wss.channels.onMany(r["#"][2], e.onPublish);
                 };
-                e.worker.wss.middleware.onSubscribe ? e.worker.wss.middleware.onSubscribe.call(null, e, r["#"][2], function(e) {
-                    return e && n.call(null);
-                }) : n.call(null);
+                e.worker.wss.middleware.onSubscribe ? e.worker.wss.middleware.onSubscribe(e, r["#"][2], function(e) {
+                    return e && n();
+                }) : n();
             },
             u: function() {
                 e.worker.wss.channels.removeListener(r["#"][2], e.onPublish), e.channels[r["#"][2]] = null;
             }
         }
     };
-    return "s" === r["#"][0] ? n[r["#"][0]][r["#"][1]] && n[r["#"][0]][r["#"][1]].call(null) : n[r["#"][0]] && n[r["#"][0]].call(null);
+    return "s" === r["#"][0] ? n[r["#"][0]][r["#"][1]] && n[r["#"][0]][r["#"][1]]() : n[r["#"][0]] && n[r["#"][0]]();
 }
 
 var Socket = function() {
@@ -311,8 +308,8 @@ var Socket = function() {
         this.events[e] ? this.events[e].push(r) : this.events[e] = [ r ];
     }, e.prototype.emitMany = function(e) {
         for (var r = [], n = 1; n < arguments.length; n++) r[n - 1] = arguments[n];
-        var t, o = this.events[e];
-        if (o) for (var s = 0, i = o.length; s < i; s++) (t = o[s]).call.apply(t, [ null, e ].concat(r));
+        var t = this.events[e];
+        if (t) for (var o = 0, s = t.length; o < s; o++) t[o].apply(t, [ e ].concat(r));
     }, e.prototype.removeListener = function(e, r) {
         var n = this.events[e];
         if (n) {
@@ -348,14 +345,14 @@ var Socket = function() {
         this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), this.internalBrokers.brokersAmount--, 
         this.publish(e, r, ++n)) : (o.send(Buffer.from(e + "%" + JSON.stringify({
             message: r
-        }))), "#sendToWorkers" === e ? this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker.call(null, r) : (this.middleware.onPublish && this.middleware.onPublish.call(null, e, r), 
+        }))), "#sendToWorkers" === e ? this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(r) : (this.middleware.onPublish && this.middleware.onPublish(e, r), 
         void this.channels.emitMany(e, r)));
     }, r.prototype.broadcastMessage = function(e, r) {
         var n = (r = Buffer.from(r)).indexOf(37), t = r.slice(0, n).toString();
-        if ("#sendToWorkers" === t) return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker.call(null, JSON.parse(r.slice(n + 1)).message);
+        if ("#sendToWorkers" === t) return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(JSON.parse(r.slice(n + 1)).message);
         if (this.channels.exist(t)) {
             var o = JSON.parse(r.slice(n + 1)).message;
-            this.middleware.onPublish && this.middleware.onPublish.call(null, t, o), this.channels.emitMany(t, o);
+            this.middleware.onPublish && this.middleware.onPublish(t, o), this.channels.emitMany(t, o);
         }
     }, r.prototype.setBroker = function(e, r) {
         this.internalBrokers.brokers[r] = e, this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), 
@@ -395,7 +392,7 @@ var Worker = function() {
         new WebSocketServer({
             server: this.server,
             verifyClient: function(e, r) {
-                return n.wss.middleware.verifyConnection ? n.wss.middleware.verifyConnection.call(null, e, r) : r(!0);
+                return n.wss.middleware.verifyConnection ? n.wss.middleware.verifyConnection(e, r) : r(!0);
             }
         }).on("connection", function(e) {
             return n.wss.emit("connection", new Socket(n, e));
@@ -436,7 +433,7 @@ function BrokerServer(e, r, n, t) {
     function c(e, r) {
         for (var n = 0, t = Object.keys(s), o = t.length; n < o; n++) t[n] !== e && s[t[n]] && s[t[n]].send(r);
     }
-    function l(e, r) {
+    function u(e, r) {
         void 0 === r && (r = ""), BrokerClient(e, r, {
             broadcastMessage: c,
             setBroker: function(e, r) {
@@ -474,8 +471,8 @@ function BrokerServer(e, r, n, t) {
         });
     }), function() {
         if ("Scaler" === t || !n) return;
-        n.masterOptions && l((n.masterOptions.tlsOptions ? "wss" : "ws") + "://127.0.0.1:" + n.masterOptions.port, n.key);
-        for (var e = 0, r = n.brokersUrls.length; e < r; e++) l(n.brokersUrls[e], n.key);
+        n.masterOptions && u((n.masterOptions.tlsOptions ? "wss" : "ws") + "://127.0.0.1:" + n.masterOptions.port, n.key);
+        for (var e = 0, r = n.brokersUrls.length; e < r; e++) u(n.brokersUrls[e], n.key);
     }();
 }
 
@@ -541,7 +538,7 @@ var ClusterWS = function() {
                     return e.horizontalScaleOptions && BrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions, "Scaler");
                 }
             };
-            n[r.processName] && n[r.processName].call(null);
+            n[r.processName] && n[r.processName]();
         }), process.on("uncaughtException", function(e) {
             return logError("PID: " + process.pid + "\n " + e.stack + "\n"), process.exit();
         });

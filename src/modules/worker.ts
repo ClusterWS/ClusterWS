@@ -24,7 +24,7 @@ export class Worker {
       server: this.server,
       verifyClient: (info: CustomObject, callback: Listener): void =>
         this.wss.middleware.verifyConnection ?
-          this.wss.middleware.verifyConnection.call(null, info, callback) : callback(true)
+          this.wss.middleware.verifyConnection(info, callback) : callback(true)
     }).on('connection', (socket: any) => this.wss.emit('connection', new Socket(this, socket)))
 
     this.server.listen(this.options.port, this.options.host, (): void => {

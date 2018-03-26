@@ -26,8 +26,8 @@ export function decode(socket: Socket, message: any): void {
           socket.channels[message['#'][2]] = 1
           socket.worker.wss.channels.onMany(message['#'][2], socket.onPublish)
         }
-        !socket.worker.wss.middleware.onSubscribe ? subscribe.call(null) :
-          socket.worker.wss.middleware.onSubscribe.call(null, socket, message['#'][2], (allow: boolean): void => allow && subscribe.call(null))
+        !socket.worker.wss.middleware.onSubscribe ? subscribe() :
+          socket.worker.wss.middleware.onSubscribe(socket, message['#'][2], (allow: boolean): void => allow && subscribe())
       },
       u: (): void => {
         socket.worker.wss.channels.removeListener(message['#'][2], socket.onPublish)
@@ -36,6 +36,6 @@ export function decode(socket: Socket, message: any): void {
     }
   }
   return message['#'][0] === 's' ?
-    actions[message['#'][0]][message['#'][1]] && actions[message['#'][0]][message['#'][1]].call(null) :
-    actions[message['#'][0]] && actions[message['#'][0]].call(null)
+    actions[message['#'][0]][message['#'][1]] && actions[message['#'][0]][message['#'][1]]() :
+    actions[message['#'][0]] && actions[message['#'][0]]()
 }
