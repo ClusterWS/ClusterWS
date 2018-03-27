@@ -99,7 +99,7 @@ export default class ClusterWS {
         Scaler: (): void => options.horizontalScaleOptions &&
           BrokerServer(options.horizontalScaleOptions.masterOptions.port, options.horizontalScaleOptions.key || '', options.horizontalScaleOptions, 'Scaler')
       }
-      actions[message.processName] && actions[message.processName].call(null)
+      actions[message.processName] && actions[message.processName]()
     })
     process.on('uncaughtException', (err: Error): void => {
       logError(`PID: ${process.pid}\n ${err.stack}\n`)

@@ -1,4 +1,4 @@
-import * as WebSocket from 'uws'
+import { WebSocket } from '../uws/uws'
 
 import { Socket } from './socket'
 import { logWarning } from '../../utils/functions'
@@ -54,9 +54,9 @@ export class WSServer extends EventEmitterSingle {
 
     if (channel === '#sendToWorkers')
       return this.middleware.onMessageFromWorker &&
-        this.middleware.onMessageFromWorker.call(null, message)
+        this.middleware.onMessageFromWorker(message)
 
-    this.middleware.onPublish && this.middleware.onPublish.call(null, channel, message)
+    this.middleware.onPublish && this.middleware.onPublish(channel, message)
     this.channels.emitMany(channel, message)
   }
 
@@ -67,12 +67,12 @@ export class WSServer extends EventEmitterSingle {
 
     if (channel === '#sendToWorkers')
       return this.middleware.onMessageFromWorker &&
-        this.middleware.onMessageFromWorker.call(null, JSON.parse(message.slice(devider + 1)).message)
+        this.middleware.onMessageFromWorker(JSON.parse(message.slice(devider + 1)).message)
 
     if (!this.channels.exist(channel)) return
 
     const decodedMessage: any = JSON.parse(message.slice(devider + 1)).message
-    this.middleware.onPublish && this.middleware.onPublish.call(null, channel, decodedMessage)
+    this.middleware.onPublish && this.middleware.onPublish(channel, decodedMessage)
     this.channels.emitMany(channel, decodedMessage)
   }
 
