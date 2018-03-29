@@ -25,10 +25,8 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
   server.on('connection', (socket: CustomObject) => {
     socket.isAuth = false
     socket.authTimeOut = setTimeout((): void => socket.close(4000, 'Not Authenticated'), 5000)
-    socket.pingInterval = setInterval((): void => socket.send('#0'), 20000)
 
     socket.on('message', (message: Message): void => {
-      if (message === '#1') return
       if (message === securityKey) {
         if (socket.isAuth) return
         socket.isAuth = true
@@ -43,7 +41,6 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
     })
 
     socket.on('close', (code: number, reason: string) => {
-      clearInterval(socket.pingInterval)
       clearTimeout(socket.authTimeOut)
       if (socket.isAuth)
         clients[socket.id] = null
@@ -51,6 +48,7 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
     })
   })
 
+  server.keepAlive(20000)
   connectGlobalBrokers()
 
   function setSocketId(socket: CustomObject): void {

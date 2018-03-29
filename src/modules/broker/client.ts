@@ -30,5 +30,5 @@ export function BrokerClient(url: string, securityKey: string, broadcaster: Cust
     setTimeout(() => BrokerClient(url, securityKey, broadcaster, ++tries, true), 500)
   })
 
-  websocket.on('message', (message: Message): void => message === '#0' ? websocket.send('#1') : broadcaster.broadcastMessage('', message))
+  websocket.on('message', (message: Message): void => broadcaster.broadcastMessage('', message))
 }
