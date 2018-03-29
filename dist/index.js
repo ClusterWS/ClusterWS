@@ -276,26 +276,30 @@ function decode(e, r) {
 var Socket = function() {
     function e(e, r) {
         var n = this;
-        this.events = new EventEmitterSingle(), this.channels = {}, this.worker = e, this.socket = r, 
-        this.onPublish = function(e, r) {
+        this.events = new EventEmitterSingle(), this.channels = {}, this.missedPing = 0, 
+        this.worker = e, this.socket = r, this.onPublish = function(e, r) {
             return n.send(e, r, "publish");
-        }, this.send("configuration", {
+        };
+        var t = setInterval(function() {
+            return n.missedPing++ > 2 ? n.disconnect(4001, "No pongs") : n.send("#0", null, "ping");
+        }, this.worker.options.pingInterval);
+        this.send("configuration", {
             ping: this.worker.options.pingInterval,
             binary: this.worker.options.useBinary
         }, "system"), this.socket.on("error", function(e) {
             return n.events.emit("error", e);
         }), this.socket.on("message", function(e) {
-            if ("string" != typeof e && (e = Buffer.from(e).toString()), "#9" === e) return n.send("#10", null, "ping");
+            if ("string" != typeof e && (e = Buffer.from(e).toString()), "#1" === e) return n.missedPing = 0;
             try {
                 e = JSON.parse(e), decode(n, e);
             } catch (e) {
                 return logError("PID: " + process.pid + "\n" + e + "\n");
             }
         }), this.socket.on("close", function(e, r) {
-            n.events.emit("disconnect", e, r);
-            for (var t = 0, o = (s = Object.keys(n.channels)).length; t < o; t++) n.worker.wss.channels.removeListener(s[t], n.onPublish);
-            var s;
-            for (t = 0, o = (s = Object.keys(n)).length; t < o; t++) n[s[t]] = null;
+            clearInterval(t), n.events.emit("disconnect", e, r);
+            for (var o = 0, s = (i = Object.keys(n.channels)).length; o < s; o++) n.worker.wss.channels.removeListener(i[o], n.onPublish);
+            var i;
+            for (o = 0, s = (i = Object.keys(n)).length; o < s; o++) n[i[o]] = null;
         });
     }
     return e.prototype.on = function(e, r) {
@@ -396,16 +400,15 @@ var Worker = function() {
         var n = this;
         this.wss = new WSServer(), this.options = e;
         for (var t = 0; t < this.options.brokers; t++) BrokerClient("ws://127.0.0.1:" + this.options.brokersPorts[t], r, this.wss);
-        this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        var o = new WebSocketServer({
+        this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer(), 
+        new WebSocketServer({
             server: this.server,
             verifyClient: function(e, r) {
                 return n.wss.middleware.verifyConnection ? n.wss.middleware.verifyConnection(e, r) : r(!0);
             }
-        });
-        o.on("connection", function(e) {
+        }).on("connection", function(e) {
             return n.wss.emit("connection", new Socket(n, e));
-        }), o.keepAlive(this.options.pingInterval), this.server.listen(this.options.port, this.options.host, function() {
+        }), this.server.listen(this.options.port, this.options.host, function() {
             n.options.worker.call(n), process.send({
                 event: "READY",
                 pid: process.pid
