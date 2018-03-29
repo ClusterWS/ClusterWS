@@ -27,7 +27,7 @@ export class Worker {
           this.wss.middleware.verifyConnection(info, callback) : callback(true)
     })
     mainWSServer.on('connection', (socket: any) => this.wss.emit('connection', new Socket(this, socket)))
-    mainWSServer.keepAlive(this.options.pingInterval)
+    // mainWSServer.keepAlive(this.options.pingInterval)
 
     this.server.listen(this.options.port, this.options.host, (): void => {
       this.options.worker.call(this)

@@ -7,7 +7,7 @@
 
 <p align="center">
     <a href="https://github.com/ClusterWS/ClusterWS/blob/master/LICENSE"><img src="https://img.shields.io/github/license/ClusterWS/ClusterWS.svg?style=for-the-badge" alt="GitHub license" /></a>
-    <a href="https://www.npmjs.com/package/clusterws"><img src="https://img.shields.io/badge/npm-2.1.0-blue.svg?style=for-the-badge" alt="NPM Version" /></a>
+    <a href="https://www.npmjs.com/package/clusterws"><img src="https://img.shields.io/badge/npm-2.2.1-blue.svg?style=for-the-badge" alt="NPM Version" /></a>
     <a href="https://github.com/ClusterWS/ClusterWS/graphs/commit-activity"><img src="https://img.shields.io/badge/Maintain-Yes-green.svg?style=for-the-badge" alt="Maintain" /></a>
 </p>
 
