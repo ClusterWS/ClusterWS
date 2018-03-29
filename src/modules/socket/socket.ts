@@ -24,9 +24,12 @@ export class Socket {
 
     this.socket.on('error', (err: Error): void => this.events.emit('error', err))
 
-    this.socket.on('message', (message: Message): number => {
+    this.socket.on('message', (message: Message): void => {
       if (typeof message !== 'string')
-        message = Buffer.from(message)
+        message = Buffer.from(message).toString()
+
+      if (message === '#9')
+        return this.send('#10', null, 'ping')
 
       try {
         message = JSON.parse(message)

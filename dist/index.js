@@ -245,7 +245,7 @@ function encode(e, r, n) {
             }
         }
     };
-    return JSON.stringify("system" === n ? t[n][e] : t[n]);
+    return "ping" === n ? e : JSON.stringify("system" === n ? t[n][e] : t[n]);
 }
 
 function decode(e, r) {
@@ -285,7 +285,7 @@ var Socket = function() {
         }, "system"), this.socket.on("error", function(e) {
             return n.events.emit("error", e);
         }), this.socket.on("message", function(e) {
-            "string" != typeof e && (e = Buffer.from(e));
+            if ("string" != typeof e && (e = Buffer.from(e).toString()), "#9" === e) return n.send("#10", null, "ping");
             try {
                 e = JSON.parse(e), decode(n, e);
             } catch (e) {

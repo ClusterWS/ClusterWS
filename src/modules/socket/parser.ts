@@ -1,7 +1,7 @@
 import { Socket } from './socket'
 import { CustomObject } from '../../utils/types'
 
-export function encode(event: string, data: any, typeOfEvent: string): string {
+export function encode(event: string, data: any, eventType: string): string {
   const message: CustomObject = {
     emit: { '#': ['e', event, data] },
     publish: { '#': ['p', event, data] },
@@ -11,8 +11,9 @@ export function encode(event: string, data: any, typeOfEvent: string): string {
       configuration: { '#': ['s', 'c', data] }
     }
   }
-  return JSON.stringify(typeOfEvent === 'system' ?
-    message[typeOfEvent][event] : message[typeOfEvent])
+  return eventType === 'ping' ? event :
+    JSON.stringify(eventType === 'system' ?
+      message[eventType][event] : message[eventType])
 }
 
 export function decode(socket: Socket, message: any): void {

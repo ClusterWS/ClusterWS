@@ -29,7 +29,7 @@ export class EventEmitterSingle {
     removeEvents(): void;
 }
 
-export function encode(event: string, data: any, typeOfEvent: string): string;
+export function encode(event: string, data: any, eventType: string): string;
 export function decode(socket: Socket, message: any): void;
 
 export class Socket {
