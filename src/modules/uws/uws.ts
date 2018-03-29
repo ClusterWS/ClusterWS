@@ -22,12 +22,14 @@ const native: any = ((): void => {
 
     if (process.platform === 'win32' && lessThanSixFour)
       throw new Error('µWebSockets requires Node.js 6.4.0 or greater on Windows.')
+    throw new Error('Could not run µWebSockets bindings')
   }
 })()
 
 native.setNoop(noop)
 
 export class WebSocket {
+  public isAlive: boolean = true
   public websocketType: string
   public onping: Listener = noop
   public onpong: Listener = noop
@@ -41,6 +43,8 @@ export class WebSocket {
   constructor(uri: string, external: CustomObject = null, websocketType: string = 'client') {
     this.websocketType = websocketType
     this.external = external
+
+    this.onpong = (): boolean => this.isAlive = true
 
     if (this.websocketType === 'client') {
       this.clientGroup = native.client.group.create(0, DEFAULT_PAYLOAD_LIMIT)
@@ -82,7 +86,7 @@ export class WebSocket {
     return this
   }
 
-  public ping(message: Message): void {
+  public ping(message?: Message): void {
     if (this.external) {
       this.websocketType === 'client' ?
         native.client.send(this.external, message, OPCODE_PING) :
@@ -207,6 +211,15 @@ export class WebSocketServer extends EventEmitterSingle {
     }
   }
 
+  public keepAlive(interval: any): void {
+    setTimeout(
+      () => {
+        native.server.group.forEach(this.serverGroup, this.sendPings)
+        this.keepAlive(interval)
+      },
+      interval)
+  }
+
   public close(cb: Listener): void {
     if (this.upgradeListener && this.httpServer) {
       this.httpServer.removeListener('upgrade', this.upgradeListener)
@@ -229,6 +242,13 @@ export class WebSocketServer extends EventEmitterSingle {
 
   public abortConnection(socket: CustomObject, code: number, name: string): void {
     socket.end(`HTTP/1.1 ${code} ${name}\r\n\r\n`)
+  }
+
+  private sendPings(ws: WebSocket): void {
+    if (ws.isAlive) {
+      ws.isAlive = false
+      ws.ping()
+    } else ws.terminate()
   }
 
   private sendMessage(message: Message, webSocket: CustomObject): void {

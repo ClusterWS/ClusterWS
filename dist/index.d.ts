@@ -43,6 +43,7 @@ export class Socket {
     on(event: string, listener: Listener): void;
     send(event: string, message: Message, eventType?: string): void;
     disconnect(code?: number, reason?: string): void;
+    terminate(): void;
 }
 
 export class WSServer extends EventEmitterSingle {
@@ -59,6 +60,7 @@ export class WSServer extends EventEmitterSingle {
 }
 
 export class WebSocket {
+    isAlive: boolean;
     websocketType: string;
     onping: Listener;
     onpong: Listener;
@@ -70,7 +72,7 @@ export class WebSocket {
     internalOnMessage: Listener;
     constructor(uri: string, external?: CustomObject, websocketType?: string);
     on(eventName: string, listener: Listener): this;
-    ping(message: Message): void;
+    ping(message?: Message): void;
     terminate(): void;
     close(code: number, reason: string): void;
     send(message: Message, options?: CustomObject, cb?: Listener): void;
@@ -88,6 +90,7 @@ export class WebSocketServer extends EventEmitterSingle {
     passedHttpServer: any;
     lastUpgradeListener: boolean;
     constructor(options: CustomObject, callback?: Listener);
+    keepAlive(interval: any): void;
     close(cb: Listener): void;
     emitConnection(ws: CustomObject): void;
     abortConnection(socket: CustomObject, code: number, name: string): void;
