@@ -6,7 +6,7 @@ import { BrokerClient } from './client'
 import { generateKey } from '../../utils/functions'
 import { Message, CustomObject, HorizontalScaleOptions } from '../../utils/types'
 
-export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: String): void {
+export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: string): void {
   let server: WebSocketServer
   const clients: CustomObject = {}
   const globalBrokers: CustomObject = {

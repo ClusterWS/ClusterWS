@@ -1,8 +1,9 @@
+/* tslint:disable */
+
 import * as HTTP from 'http'
 import { EventEmitterSingle } from '../emitter/single'
 import { Listener, Message, CustomObject } from '../../utils/types'
 
-// tslint:disable-next-line
 const noop: Listener = (): void => { }
 
 const OPEN: number = 1

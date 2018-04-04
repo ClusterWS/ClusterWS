@@ -12,7 +12,7 @@ export default class ClusterWS {
 
 export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
 
-export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: String): void;
+export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: string): void;
 
 export class EventEmitterMany {
     onMany(event: string, listener: (event: string, ...args: any[]) => void): void;
