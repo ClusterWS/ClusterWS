@@ -23,7 +23,6 @@ export class Socket {
     this.send('configuration', { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary }, 'system')
 
     this.socket.on('error', (err: Error): void => this.events.emit('error', err))
-
     this.socket.on('message', (message: Message): any => {
       try {
         message = JSON.parse(message)
