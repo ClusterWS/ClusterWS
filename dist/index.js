@@ -281,7 +281,6 @@ var Socket = function() {
         }, "system"), this.socket.on("error", function(e) {
             return n.events.emit("error", e);
         }), this.socket.on("message", function(e) {
-            console.log("In messages:", e);
             try {
                 e = JSON.parse(e), decode(n, e);
             } catch (e) {
