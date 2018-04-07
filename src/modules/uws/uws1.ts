@@ -1,8 +1,9 @@
-// tslint:disable:max-classes-per-file
+
 import * as HTTP from 'http'
 import { EventEmitterSingle } from '../emitter/single'
 import { Listener, Message, CustomObject } from '../../utils/types'
 
+// tslint:disable:max-classes-per-file
 // tslint:disable-next-line
 const noop: Listener = (): void => { }
 
@@ -13,8 +14,6 @@ const OPCODE_PING: number = 9
 const OPCODE_BINARY: number = 2
 const PERMESSAGE_DEFLATE: number = 1
 const DEFAULT_PAYLOAD_LIMIT: number = 16777216
-const APP_PING_CODE: any = Buffer.from('9')
-const APP_PONG_CODE: string = '10'
 
 const native: any = ((): void => {
   try {
@@ -32,20 +31,20 @@ const native: any = ((): void => {
 native.setNoop(noop)
 
 export class WebSocket {
+  public isAlive: boolean = true
+  public websocketType: string
   public onping: Listener = noop
   public onpong: Listener = noop
-  public isAlive: boolean = true
-  public external: Listener | CustomObject = noop
   public clientGroup: any = noop
-  public websocketType: string
+  public external: Listener | CustomObject = noop
   public internalOnOpen: Listener = noop
   public internalOnError: Listener = noop
   public internalOnClose: Listener = noop
   public internalOnMessage: Listener = noop
 
   constructor(uri: string, external: CustomObject = null, websocketType: string = 'client') {
-    this.external = external
     this.websocketType = websocketType
+    this.external = external
 
     this.onpong = (): boolean => this.isAlive = true
 
@@ -58,13 +57,17 @@ export class WebSocket {
         webSocket.external = newExternal
         webSocket.internalOnOpen()
       })
-      native.client.group.onMessage(this.clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.internalOnMessage(message))
+      native.client.group.onMessage(this.clientGroup, (message: Message, webSocket: CustomObject): void => {
+        webSocket.internalOnMessage(message)
+      })
       native.client.group.onPing(this.clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onping(message))
       native.client.group.onPong(this.clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onpong(message))
-      native.client.group.onError(this.clientGroup, (webSocket: CustomObject): void => process.nextTick((): void => webSocket.internalOnError({
-        message: 'uWs client connection error',
-        stack: 'uWs client connection error'
-      })))
+      native.client.group.onError(this.clientGroup, (webSocket: CustomObject): void => {
+        process.nextTick((): void => webSocket.internalOnError({
+          message: 'uWs client connection error',
+          stack: 'uWs client connection error'
+        }))
+      })
       native.client.group.onDisconnection(this.clientGroup, (newExternal: CustomObject, code: number, message: Message, webSocket: CustomObject): void => {
         webSocket.external = null
         process.nextTick((): void => webSocket.internalOnClose(code, message))
@@ -72,19 +75,6 @@ export class WebSocket {
       })
     }
   }
-
-  get OPEN(): number {
-    return OPEN
-  }
-
-  get CLOSED(): number {
-    return CLOSED
-  }
-
-  get readyState(): number {
-    return this.external ? OPEN : CLOSED
-  }
-
   public on(eventName: string, listener: Listener): this {
     const actions: any = {
       ping: (): Listener => this.onping = listener,
@@ -94,7 +84,7 @@ export class WebSocket {
       close: (): Listener => this.internalOnClose = listener,
       message: (): Listener => this.internalOnMessage = listener
     }
-    actions[eventName]()
+    actions[eventName] && actions[eventName]()
     return this
   }
 
@@ -103,15 +93,6 @@ export class WebSocket {
       this.websocketType === 'client' ?
         native.client.send(this.external, message, OPCODE_PING) :
         native.server.send(this.external, message, OPCODE_PING)
-    }
-  }
-
-  public send(message: Message, options?: CustomObject): void {
-    if (this.external) {
-      const binary: boolean = options && options.binary || typeof message !== 'string'
-      this.websocketType === 'client' ?
-        native.client.send(this.external, message, binary ? OPCODE_BINARY : OPCODE_TEXT, undefined) :
-        native.server.send(this.external, message, binary ? OPCODE_BINARY : OPCODE_TEXT, undefined)
     }
   }
 
@@ -129,8 +110,34 @@ export class WebSocket {
       this.websocketType === 'client' ?
         native.client.close(this.external, code, reason) :
         native.server.close(this.external, code, reason)
+
       this.external = null
     }
+  }
+
+  public send(message: Message, options?: CustomObject, cb?: Listener): void {
+    if (this.external) {
+      if (typeof options === 'function') {
+        cb = options
+        options = null
+      }
+      const binary: boolean = options && options.binary || typeof message !== 'string'
+      this.websocketType === 'client' ?
+        native.client.send(this.external, message, binary ? OPCODE_BINARY : OPCODE_TEXT, cb ? ((): void => process.nextTick(cb)) : undefined) :
+        native.server.send(this.external, message, binary ? OPCODE_BINARY : OPCODE_TEXT, cb ? ((): void => process.nextTick(cb)) : undefined)
+    } else if (cb) cb(new Error('Not opened'))
+  }
+
+  get OPEN(): number {
+    return OPEN
+  }
+
+  get CLOSED(): number {
+    return CLOSED
+  }
+
+  get readyState(): number {
+    return this.external ? OPEN : CLOSED
   }
 }
 
@@ -153,7 +160,7 @@ export class WebSocketServer extends EventEmitterSingle {
     this.noDelay = options.noDelay || true
     this.passedHttpServer = options.server
 
-    const nativeOptions: number = options.perMessageDeflate ? PERMESSAGE_DEFLATE : 0
+    const nativeOptions: number = options.perMessageDeflate === false ? 0 : PERMESSAGE_DEFLATE
     this.serverGroup = native.server.group.create(nativeOptions, options.maxPayload || DEFAULT_PAYLOAD_LIMIT)
 
     this.httpServer = options.server || HTTP.createServer((request: CustomObject, response: CustomObject) => response.end())
@@ -194,10 +201,11 @@ export class WebSocketServer extends EventEmitterSingle {
       this.upgradeReq = null
     })
 
+
     native.server.group.onMessage(this.serverGroup, this.sendMessage)
     native.server.group.onDisconnection(this.serverGroup, this.onDisconnection)
-    native.server.group.onPing(this.serverGroup, this.onPing)
-    native.server.group.onPong(this.serverGroup, this.onPong)
+    native.server.group.onPing(this.serverGroup, (message: any, webSocket: any): void => webSocket.onping(message))
+    native.server.group.onPong(this.serverGroup, (message: any, webSocket: any): void => webSocket.onpong(message))
 
     if (options.port) {
       this.httpServer.listen(options.port, options.host || null, (): void => {
@@ -214,6 +222,30 @@ export class WebSocketServer extends EventEmitterSingle {
     }, interval)
   }
 
+  public close(cb: Listener): void {
+    if (this.upgradeListener && this.httpServer) {
+      this.httpServer.removeListener('upgrade', this.upgradeListener)
+      if (!this.passedHttpServer) this.httpServer.close()
+    }
+
+    if (this.serverGroup) {
+      native.server.group.close(this.serverGroup)
+      this.serverGroup = null
+    }
+
+    // compatibility hack, 20 seconds timeout
+    if (typeof cb === 'function')
+      setTimeout(cb, 20000)
+  }
+
+  public emitConnection(ws: CustomObject): void {
+    this.emit('connection', ws)
+  }
+
+  public abortConnection(socket: CustomObject, code: number, name: string): void {
+    socket.end(`HTTP/1.1 ${code} ${name}\r\n\r\n`)
+  }
+
   private sendPings(ws: WebSocket): void {
     if (ws.isAlive) {
       ws.isAlive = false
@@ -222,25 +254,10 @@ export class WebSocketServer extends EventEmitterSingle {
   }
 
   private sendPingsAppLevel(ws: WebSocket): void {
-    if (ws.isAlive) {
-      ws.isAlive = false
-      ws.send(APP_PING_CODE)
-    } else ws.terminate()
+
   }
 
-  private onPing(message: Message, webSocket: WebSocket): void {
-    webSocket.onping(message)
-  }
-
-  private onPong(message: Message, webSocket: WebSocket): void {
-    webSocket.onpong(message)
-  }
-
-  private sendMessage(message: Message, webSocket: CustomObject): any {
-    // change this code
-    if (message === APP_PONG_CODE) {
-      return webSocket.isAlive = true
-    }
+  private sendMessage(message: Message, webSocket: CustomObject): void {
     webSocket.internalOnMessage(message)
   }
 
@@ -248,14 +265,6 @@ export class WebSocketServer extends EventEmitterSingle {
     webSocket.external = null
     process.nextTick(() => webSocket.internalOnClose(code, message))
     native.clearUserData(external)
-  }
-
-  private emitConnection(ws: CustomObject): void {
-    this.emit('connection', ws)
-  }
-
-  private abortConnection(socket: CustomObject, code: number, name: string): void {
-    socket.end(`HTTP/1.1 ${code} ${name}\r\n\r\n`)
   }
 
   private handleUpgrade(request: CustomObject, socket: CustomObject, upgradeHead: CustomObject, callback: Listener): void {
