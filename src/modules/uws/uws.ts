@@ -14,7 +14,7 @@ const OPCODE_BINARY: number = 2
 const PERMESSAGE_DEFLATE: number = 1
 const DEFAULT_PAYLOAD_LIMIT: number = 16777216
 const APP_PING_CODE: any = Buffer.from('9')
-const APP_PONG_CODE: string = '10'
+const APP_PONG_CODE: number = 65
 
 const native: any = ((): void => {
   try {
@@ -139,6 +139,7 @@ export class WebSocketServer extends EventEmitterSingle {
   public upgradeReq: any = null
   public httpServer: HTTP.Server
   public serverGroup: any
+  public pingIsAppLevel: boolean = false
   public upgradeCallback: any = noop
   public upgradeListener: any = null
   public passedHttpServer: any
@@ -194,7 +195,17 @@ export class WebSocketServer extends EventEmitterSingle {
       this.upgradeReq = null
     })
 
-    native.server.group.onMessage(this.serverGroup, this.sendMessage)
+    native.server.group.onMessage(this.serverGroup, (message: Message, webSocket: CustomObject): any => {
+      if (this.pingIsAppLevel) {
+        if (typeof message !== 'string')
+          message = Buffer.from(message)
+
+        if (message[0] === APP_PONG_CODE)
+          return webSocket.isAlive = true
+      }
+
+      webSocket.internalOnMessage(message)
+    })
     native.server.group.onDisconnection(this.serverGroup, this.onDisconnection)
     native.server.group.onPing(this.serverGroup, this.onPing)
     native.server.group.onPong(this.serverGroup, this.onPong)
@@ -208,8 +219,10 @@ export class WebSocketServer extends EventEmitterSingle {
   }
 
   public keepAlive(interval: number, appLevel: boolean = false): void {
+    if (appLevel)
+      this.pingIsAppLevel = true
     setTimeout(() => {
-      native.server.group.forEach(this.serverGroup, appLevel ? this.sendPingsAppLevel : this.sendPings)
+      native.server.group.forEach(this.serverGroup, this.pingIsAppLevel ? this.sendPingsAppLevel : this.sendPings)
       this.keepAlive(interval)
     }, interval)
   }
@@ -234,14 +247,6 @@ export class WebSocketServer extends EventEmitterSingle {
 
   private onPong(message: Message, webSocket: WebSocket): void {
     webSocket.onpong(message)
-  }
-
-  private sendMessage(message: Message, webSocket: CustomObject): any {
-    // change this code
-    if (message === APP_PONG_CODE) {
-      return webSocket.isAlive = true
-    }
-    webSocket.internalOnMessage(message)
   }
 
   private onDisconnection(external: CustomObject, code: number, message: Message, webSocket: CustomObject): void {

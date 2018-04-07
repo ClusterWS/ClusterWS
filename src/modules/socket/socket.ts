@@ -14,27 +14,17 @@ export class Socket {
 
   private socket: WebSocket
   private isAlive: boolean
-  private missedPing: number = 0
 
   constructor(worker: Worker, socket: WebSocket) {
     this.worker = worker
     this.socket = socket
     this.onPublish = (channel: string, message: Message): void => this.send(channel, message, 'publish')
 
-    const pingInterval: NodeJS.Timer = setInterval(
-      (): void => this.missedPing++ > 2 ? this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'),
-      this.worker.options.pingInterval)
-
     this.send('configuration', { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary }, 'system')
 
     this.socket.on('error', (err: Error): void => this.events.emit('error', err))
 
     this.socket.on('message', (message: Message): any => {
-      if (typeof message !== 'string')
-        message = Buffer.from(message).toString()
-
-      if (message === '#1') return this.missedPing = 0
-
       try {
         message = JSON.parse(message)
         decode(this, message)
@@ -42,7 +32,6 @@ export class Socket {
     })
 
     this.socket.on('close', (code?: number, reason?: string): void => {
-      clearInterval(pingInterval)
       this.events.emit('disconnect', code, reason)
 
       for (let i: number = 0, keys: string[] = Object.keys(this.channels), keysLength: number = keys.length; i < keysLength; i++)

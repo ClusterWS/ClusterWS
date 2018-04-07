@@ -11,9 +11,8 @@ export function encode(event: string, data: any, eventType: string): string {
       configuration: { '#': ['s', 'c', data] }
     }
   }
-  return eventType === 'ping' ? event :
-    JSON.stringify(eventType === 'system' ?
-      message[eventType][event] : message[eventType])
+  return JSON.stringify(eventType === 'system' ?
+    message[eventType][event] : message[eventType])
 }
 
 export function decode(socket: Socket, message: any): void {

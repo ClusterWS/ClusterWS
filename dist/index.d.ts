@@ -60,40 +60,38 @@ export class WSServer extends EventEmitterSingle {
 }
 
 export class WebSocket {
-    isAlive: boolean;
-    websocketType: string;
     onping: Listener;
     onpong: Listener;
-    clientGroup: any;
+    isAlive: boolean;
     external: Listener | CustomObject;
+    clientGroup: any;
+    websocketType: string;
     internalOnOpen: Listener;
     internalOnError: Listener;
     internalOnClose: Listener;
     internalOnMessage: Listener;
     constructor(uri: string, external?: CustomObject, websocketType?: string);
-    on(eventName: string, listener: Listener): this;
-    ping(message?: Message): void;
-    terminate(): void;
-    close(code: number, reason: string): void;
-    send(message: Message, options?: CustomObject, cb?: Listener): void;
     readonly OPEN: number;
     readonly CLOSED: number;
     readonly readyState: number;
+    on(eventName: string, listener: Listener): this;
+    ping(message?: Message): void;
+    send(message: Message, options?: CustomObject): void;
+    terminate(): void;
+    close(code: number, reason: string): void;
 }
 export class WebSocketServer extends EventEmitterSingle {
     noDelay: any;
     upgradeReq: any;
     httpServer: HTTP.Server;
     serverGroup: any;
+    pingIsAppLevel: boolean;
     upgradeCallback: any;
     upgradeListener: any;
     passedHttpServer: any;
     lastUpgradeListener: boolean;
     constructor(options: CustomObject, callback?: Listener);
-    keepAlive(interval: any): void;
-    close(cb: Listener): void;
-    emitConnection(ws: CustomObject): void;
-    abortConnection(socket: CustomObject, code: number, name: string): void;
+    keepAlive(interval: number, appLevel?: boolean): void;
 }
 
 export class Worker {
