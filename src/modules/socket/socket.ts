@@ -1,4 +1,4 @@
-import { WebSocket } from '../uws/uws'
+import { WebSocket } from '../uws/uws.client'
 
 import { Worker } from '../worker'
 import { logError } from '../../utils/functions'
@@ -10,7 +10,7 @@ export class Socket {
   public worker: Worker
   public events: EventEmitterSingle = new EventEmitterSingle()
   public channels: CustomObject = {}
-  public onPublish: any
+  public onPublishEvent: (...args: any[]) => void
 
   private socket: WebSocket
   private isAlive: boolean
@@ -18,7 +18,7 @@ export class Socket {
   constructor(worker: Worker, socket: WebSocket) {
     this.worker = worker
     this.socket = socket
-    this.onPublish = (channel: string, message: Message): void => this.send(channel, message, 'publish')
+    this.onPublishEvent = (channel: string, message: Message): void => this.send(channel, message, 'publish')
 
     this.send('configuration', { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary }, 'system')
 
@@ -34,7 +34,7 @@ export class Socket {
       this.events.emit('disconnect', code, reason)
 
       for (let i: number = 0, keys: string[] = Object.keys(this.channels), keysLength: number = keys.length; i < keysLength; i++)
-        this.worker.wss.channels.removeListener(keys[i], this.onPublish)
+        this.worker.wss.channels.removeListener(keys[i], this.onPublishEvent)
 
       for (let i: number = 0, keys: string[] = Object.keys(this), keysLength: number = keys.length; i < keysLength; i++)
         this[keys[i]] = null

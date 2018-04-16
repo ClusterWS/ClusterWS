@@ -1,6 +1,6 @@
 import * as HTTPS from 'https'
 
-import { WebSocketServer } from '../uws/uws'
+import { WebSocketServer } from '../uws/uws.server'
 
 import { BrokerClient } from './client'
 import { generateKey } from '../../utils/functions'

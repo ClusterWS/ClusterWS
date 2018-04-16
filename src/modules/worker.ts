@@ -1,6 +1,6 @@
 import * as HTTP from 'http'
 import * as HTTPS from 'https'
-import { WebSocketServer } from './uws/uws'
+import { WebSocketServer } from './uws/uws.server'
 
 import { Socket } from './socket/socket'
 import { WSServer } from './socket/wsserver'

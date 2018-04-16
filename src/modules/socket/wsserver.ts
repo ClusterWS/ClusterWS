@@ -1,4 +1,4 @@
-import { WebSocket } from '../uws/uws'
+import { WebSocket } from '../uws/uws.client'
 
 import { Socket } from './socket'
 import { logWarning } from '../../utils/functions'

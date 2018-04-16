@@ -1,4 +1,4 @@
-import { WebSocket } from '../uws/uws'
+import { WebSocket } from '../uws/uws.client'
 
 import { CustomObject, Message } from '../../utils/types'
 import { logError, logWarning, logReady } from '../../utils/functions'

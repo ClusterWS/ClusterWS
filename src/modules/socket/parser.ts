@@ -23,13 +23,13 @@ export function decode(socket: Socket, message: any): void {
       s: (): void => {
         const subscribe: any = (): void => {
           socket.channels[message['#'][2]] = 1
-          socket.worker.wss.channels.onMany(message['#'][2], socket.onPublish)
+          socket.worker.wss.channels.onMany(message['#'][2], socket.onPublishEvent)
         }
         !socket.worker.wss.middleware.onSubscribe ? subscribe() :
           socket.worker.wss.middleware.onSubscribe(socket, message['#'][2], (allow: boolean): void => allow && subscribe())
       },
       u: (): void => {
-        socket.worker.wss.channels.removeListener(message['#'][2], socket.onPublish)
+        socket.worker.wss.channels.removeListener(message['#'][2], socket.onPublishEvent)
         socket.channels[message['#'][2]] = null
       }
     }

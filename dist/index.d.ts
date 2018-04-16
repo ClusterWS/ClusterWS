@@ -36,7 +36,7 @@ export class Socket {
     worker: Worker;
     events: EventEmitterSingle;
     channels: CustomObject;
-    onPublish: any;
+    onPublishEvent: (...args: any[]) => void;
     constructor(worker: Worker, socket: WebSocket);
     on(event: 'error', listener: (err: Error) => void): void;
     on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;
@@ -60,19 +60,18 @@ export class WSServer extends EventEmitterSingle {
 }
 
 export class WebSocket {
+    OPEN: number;
+    CLOSED: number;
     onping: Listener;
     onpong: Listener;
     isAlive: boolean;
-    external: Listener | CustomObject;
-    clientGroup: any;
-    websocketType: string;
+    external: CustomObject;
+    executeOn: string;
     internalOnOpen: Listener;
     internalOnError: Listener;
     internalOnClose: Listener;
     internalOnMessage: Listener;
-    constructor(uri: string, external?: CustomObject, websocketType?: string);
-    readonly OPEN: number;
-    readonly CLOSED: number;
+    constructor(uri: string, external?: CustomObject, isServeClient?: boolean);
     readonly readyState: number;
     on(eventName: string, listener: Listener): this;
     ping(message?: Message): void;
@@ -80,19 +79,22 @@ export class WebSocket {
     terminate(): void;
     close(code: number, reason: string): void;
 }
+
 export class WebSocketServer extends EventEmitterSingle {
-    noDelay: any;
+    noDelay: boolean;
     upgradeReq: any;
     httpServer: HTTP.Server;
     serverGroup: any;
     pingIsAppLevel: boolean;
     upgradeCallback: any;
-    upgradeListener: any;
     passedHttpServer: any;
     lastUpgradeListener: boolean;
     constructor(options: CustomObject, callback?: Listener);
     keepAlive(interval: number, appLevel?: boolean): void;
 }
+
+export const noop: any;
+export const native: any;
 
 export class Worker {
     wss: WSServer;
