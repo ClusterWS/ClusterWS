@@ -35,6 +35,7 @@ export type Configurations = {
   pingInterval?: number
   restartWorkerOnFail?: boolean
   horizontalScaleOptions?: HorizontalScaleOptions
+  encodeDecodeEngine?: EncodeDecodeEngine
 }
 
 export type Options = {
@@ -49,4 +50,10 @@ export type Options = {
   pingInterval: number
   restartWorkerOnFail: boolean
   horizontalScaleOptions: HorizontalScaleOptions | false
+  encodeDecodeEngine: EncodeDecodeEngine | false
+}
+
+export type EncodeDecodeEngine = {
+  encode: (message: Message) => Message,
+  decode: (message: Message) => Message
 }

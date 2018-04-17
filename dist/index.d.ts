@@ -29,8 +29,8 @@ export class EventEmitterSingle {
     removeEvents(): void;
 }
 
-export function encode(event: string, data: any, eventType: string): string;
-export function decode(socket: Socket, message: any): void;
+export function encode(event: string, data: Message, eventType: string): string;
+export function decode(socket: Socket, message: Message): void;
 
 export class Socket {
     worker: Worker;
@@ -90,7 +90,7 @@ export class WebSocketServer extends EventEmitterSingle {
     passedHttpServer: any;
     lastUpgradeListener: boolean;
     constructor(options: CustomObject, callback?: Listener);
-    keepAlive(interval: number, appLevel?: boolean): void;
+    heartbeat(interval: number, appLevel?: boolean): void;
 }
 
 export const noop: any;
@@ -141,6 +141,7 @@ export type Configurations = {
     pingInterval?: number;
     restartWorkerOnFail?: boolean;
     horizontalScaleOptions?: HorizontalScaleOptions;
+    encodeDecodeEngine?: EncodeDecodeEngine;
 };
 export type Options = {
     worker: WorkerFunction;
@@ -154,5 +155,10 @@ export type Options = {
     pingInterval: number;
     restartWorkerOnFail: boolean;
     horizontalScaleOptions: HorizontalScaleOptions | false;
+    encodeDecodeEngine: EncodeDecodeEngine | false;
+};
+export type EncodeDecodeEngine = {
+    encode: (message: Message) => Message;
+    decode: (message: Message) => Message;
 };
 

@@ -23,7 +23,8 @@ export default class ClusterWS {
       tlsOptions: configurations.tlsOptions || false,
       pingInterval: configurations.pingInterval || 20000,
       restartWorkerOnFail: configurations.restartWorkerOnFail || false,
-      horizontalScaleOptions: configurations.horizontalScaleOptions || false
+      horizontalScaleOptions: configurations.horizontalScaleOptions || false,
+      encodeDecodeEngine: configurations.encodeDecodeEngine || false
     }
 
     if (!configurations.brokersPorts)

@@ -50,6 +50,9 @@ export class Socket {
 
   public send(event: string, message: Message, eventType?: string): void
   public send(event: string, message: Message, eventType: string = 'emit'): void {
+    message = this.worker.options.encodeDecodeEngine ?
+      this.worker.options.encodeDecodeEngine.encode(message) : message
+
     this.socket.send(this.worker.options.useBinary ?
       Buffer.from(encode(event, message, eventType)) :
       encode(event, message, eventType))

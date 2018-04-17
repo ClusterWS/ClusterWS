@@ -183,11 +183,11 @@ var WebSocketServer = function(e) {
             t.emit("listening"), n && n();
         }), t;
     }
-    return __extends(r, e), r.prototype.keepAlive = function(e, r) {
+    return __extends(r, e), r.prototype.heartbeat = function(e, r) {
         var n = this;
         void 0 === r && (r = !1), r && (this.pingIsAppLevel = !0), setTimeout(function() {
             native.server.group.forEach(n.serverGroup, n.pingIsAppLevel ? n.sendPingsAppLevel : n.sendPings), 
-            n.keepAlive(e);
+            n.heartbeat(e);
         }, e);
     }, r.prototype.sendPings = function(e) {
         e.isAlive ? (e.isAlive = !1, e.ping()) : e.terminate();
@@ -238,28 +238,28 @@ function encode(e, r, n) {
 }
 
 function decode(e, r) {
-    var n = {
+    var n = e.worker.options.encodeDecodeEngine ? e.worker.options.encodeDecodeEngine.decode(r["#"][2]) : r["#"][2], t = {
         e: function() {
-            return e.events.emit(r["#"][1], r["#"][2]);
+            return e.events.emit(r["#"][1], n);
         },
         p: function() {
-            return e.channels[r["#"][1]] && e.worker.wss.publish(r["#"][1], r["#"][2]);
+            return e.channels[r["#"][1]] && e.worker.wss.publish(r["#"][1], n);
         },
         s: {
             s: function() {
-                var n = function() {
-                    e.channels[r["#"][2]] = 1, e.worker.wss.channels.onMany(r["#"][2], e.onPublishEvent);
+                var r = function() {
+                    e.channels[n] = 1, e.worker.wss.channels.onMany(n, e.onPublishEvent);
                 };
-                e.worker.wss.middleware.onSubscribe ? e.worker.wss.middleware.onSubscribe(e, r["#"][2], function(e) {
-                    return e && n();
-                }) : n();
+                e.worker.wss.middleware.onSubscribe ? e.worker.wss.middleware.onSubscribe(e, n, function(e) {
+                    return e && r();
+                }) : r();
             },
             u: function() {
-                e.worker.wss.channels.removeListener(r["#"][2], e.onPublishEvent), e.channels[r["#"][2]] = null;
+                e.worker.wss.channels.removeListener(n, e.onPublishEvent), e.channels[n] = null;
             }
         }
     };
-    return "s" === r["#"][0] ? n[r["#"][0]][r["#"][1]] && n[r["#"][0]][r["#"][1]]() : n[r["#"][0]] && n[r["#"][0]]();
+    return "s" === r["#"][0] ? t[r["#"][0]][r["#"][1]] && t[r["#"][0]][r["#"][1]]() : t[r["#"][0]] && t[r["#"][0]]();
 }
 
 var Socket = function() {
@@ -289,7 +289,8 @@ var Socket = function() {
     return e.prototype.on = function(e, r) {
         this.events.on(e, r);
     }, e.prototype.send = function(e, r, n) {
-        void 0 === n && (n = "emit"), this.socket.send(this.worker.options.useBinary ? Buffer.from(encode(e, r, n)) : encode(e, r, n));
+        void 0 === n && (n = "emit"), r = this.worker.options.encodeDecodeEngine ? this.worker.options.encodeDecodeEngine.encode(r) : r, 
+        this.socket.send(this.worker.options.useBinary ? Buffer.from(encode(e, r, n)) : encode(e, r, n));
     }, e.prototype.disconnect = function(e, r) {
         this.socket.close(e, r);
     }, e.prototype.terminate = function() {
@@ -393,7 +394,7 @@ var Worker = function() {
         });
         o.on("connection", function(e) {
             return n.wss.emit("connection", new Socket(n, e));
-        }), o.keepAlive(this.options.pingInterval, !0), this.server.listen(this.options.port, this.options.host, function() {
+        }), o.heartbeat(this.options.pingInterval, !0), this.server.listen(this.options.port, this.options.host, function() {
             n.options.worker.call(n), process.send({
                 event: "READY",
                 pid: process.pid
@@ -461,7 +462,7 @@ function BrokerServer(e, r, n, t) {
         }), e.on("close", function(r, n) {
             clearTimeout(e.authTimeOut), e.isAuth && (s[e.id] = null), e = void 0;
         });
-    }), o.keepAlive(2e4), function() {
+    }), o.heartbeat(2e4), function() {
         if ("Scaler" === t || !n) return;
         n.masterOptions && u((n.masterOptions.tlsOptions ? "wss" : "ws") + "://127.0.0.1:" + n.masterOptions.port, n.key);
         for (var e = 0, r = n.brokersUrls.length; e < r; e++) u(n.brokersUrls[e], n.key);
@@ -482,7 +483,8 @@ var ClusterWS = function() {
             tlsOptions: e.tlsOptions || !1,
             pingInterval: e.pingInterval || 2e4,
             restartWorkerOnFail: e.restartWorkerOnFail || !1,
-            horizontalScaleOptions: e.horizontalScaleOptions || !1
+            horizontalScaleOptions: e.horizontalScaleOptions || !1,
+            encodeDecodeEngine: e.encodeDecodeEngine || !1
         };
         if (!e.brokersPorts) for (var n = 0; n < r.brokers; n++) r.brokersPorts.push(n + 9400);
         if (r.brokersPorts.length < r.brokers) return logError("Number of the broker ports can not be less than number of brokers \n");

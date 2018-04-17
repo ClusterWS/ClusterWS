@@ -48,7 +48,7 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
     })
   })
 
-  server.keepAlive(20000)
+  server.heartbeat(20000)
   connectGlobalBrokers()
 
   function setSocketId(socket: CustomObject): void {

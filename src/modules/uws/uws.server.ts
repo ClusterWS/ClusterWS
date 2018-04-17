@@ -91,12 +91,12 @@ export class WebSocketServer extends EventEmitterSingle {
     }
   }
 
-  public keepAlive(interval: number, appLevel: boolean = false): void {
+  public heartbeat(interval: number, appLevel: boolean = false): void {
     if (appLevel)
       this.pingIsAppLevel = true
     setTimeout(() => {
       native.server.group.forEach(this.serverGroup, this.pingIsAppLevel ? this.sendPingsAppLevel : this.sendPings)
-      this.keepAlive(interval)
+      this.heartbeat(interval)
     }, interval)
   }
 
