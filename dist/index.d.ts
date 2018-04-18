@@ -62,11 +62,11 @@ export class WSServer extends EventEmitterSingle {
 export class WebSocket {
     OPEN: number;
     CLOSED: number;
-    onping: Listener;
-    onpong: Listener;
     isAlive: boolean;
     external: CustomObject;
     executeOn: string;
+    onping: Listener;
+    onpong: Listener;
     internalOnOpen: Listener;
     internalOnError: Listener;
     internalOnClose: Listener;
@@ -87,7 +87,6 @@ export class WebSocketServer extends EventEmitterSingle {
     serverGroup: any;
     pingIsAppLevel: boolean;
     upgradeCallback: any;
-    passedHttpServer: any;
     lastUpgradeListener: boolean;
     constructor(options: CustomObject, callback?: Listener);
     heartbeat(interval: number, appLevel?: boolean): void;

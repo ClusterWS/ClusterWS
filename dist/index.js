@@ -1,221 +1,172 @@
 "use strict";
 
-var crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster"), extendStatics = Object.setPrototypeOf || {
-    __proto__: []
-} instanceof Array && function(e, r) {
-    e.__proto__ = r;
-} || function(e, r) {
-    for (var n in r) r.hasOwnProperty(n) && (e[n] = r[n]);
-};
+var crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
 
-function __extends(e, r) {
-    function n() {
-        this.constructor = e;
-    }
-    extendStatics(e, r), e.prototype = null === r ? Object.create(r) : (n.prototype = r.prototype, 
-    new n());
-}
-
-var noop = function() {}, native = function() {
+const noop = () => {}, native = (() => {
     try {
-        return require("./node/uws_" + process.platform + "_" + process.versions.modules);
-    } catch (n) {
-        var e = process.version.substring(1).split(".").map(function(e) {
-            return parseInt(e, 10);
-        }), r = e[0] < 6 || 6 === e[0] && e[1] < 4;
-        if ("win32" === process.platform && r) throw new Error("µWebSockets requires Node.js 6.4.0 or greater on Windows.");
+        return require(`./node/uws_${process.platform}_${process.versions.modules}`);
+    } catch (e) {
+        const r = process.version.substring(1).split(".").map(e => parseInt(e, 10)), t = r[0] < 6 || 6 === r[0] && r[1] < 4;
+        if ("win32" === process.platform && t) throw new Error("µWebSockets requires Node.js 6.4.0 or greater on Windows.");
         throw new Error("Could not run µWebSockets bindings");
     }
-}(), OPCODE_TEXT = 1, OPCODE_PING = 9, OPCODE_BINARY = 2, DEFAULT_PAYLOAD_LIMIT = 16777216;
+})(), OPCODE_TEXT = 1, OPCODE_PING = 9, OPCODE_BINARY = 2, DEFAULT_PAYLOAD_LIMIT = 16777216;
 
 native.setNoop(noop);
 
-var clientGroup = native.client.group.create(0, DEFAULT_PAYLOAD_LIMIT);
+const clientGroup = native.client.group.create(0, 16777216);
 
-native.client.group.onConnection(clientGroup, function(e) {
-    var r = native.getUserData(e);
+native.client.group.onConnection(clientGroup, e => {
+    const r = native.getUserData(e);
     r.external = e, r.internalOnOpen();
-}), native.client.group.onMessage(clientGroup, function(e, r) {
-    return r.internalOnMessage(e);
-}), native.client.group.onPing(clientGroup, function(e, r) {
-    return r.onping(e);
-}), native.client.group.onPong(clientGroup, function(e, r) {
-    return r.onpong(e);
-}), native.client.group.onError(clientGroup, function(e) {
-    return process.nextTick(function() {
-        return e.internalOnError({
-            message: "uWs client connection error",
-            stack: "uWs client connection error"
-        });
-    });
-}), native.client.group.onDisconnection(clientGroup, function(e, r, n, t) {
-    t.external = null, process.nextTick(function() {
-        return t.internalOnClose(r, n);
-    }), native.clearUserData(e);
-});
+}), native.client.group.onDisconnection(clientGroup, (e, r, t, s) => {
+    s.external = null, process.nextTick(() => s.internalOnClose(r, t)), native.clearUserData(e);
+}), native.client.group.onError(clientGroup, e => {
+    process.nextTick(() => e.internalOnError({
+        message: "uWs client connection error",
+        stack: "uWs client connection error"
+    }));
+}), native.client.group.onMessage(clientGroup, (e, r) => r.internalOnMessage(e)), 
+native.client.group.onPing(clientGroup, (e, r) => r.onping(e)), native.client.group.onPong(clientGroup, (e, r) => r.onpong(e));
 
-var WebSocket = function() {
-    function e(e, r, n) {
-        void 0 === r && (r = null), void 0 === n && (n = !1);
-        var t = this;
-        this.OPEN = 1, this.CLOSED = 0, this.onping = noop, this.onpong = noop, this.isAlive = !0, 
-        this.external = noop, this.internalOnOpen = noop, this.internalOnError = noop, this.internalOnClose = noop, 
-        this.internalOnMessage = noop, this.external = r, this.executeOn = n ? "server" : "client", 
-        this.onpong = function() {
-            return t.isAlive = !0;
-        }, !n && native.connect(clientGroup, e, this);
+class WebSocket {
+    constructor(e, r = null, t = !1) {
+        this.OPEN = 1, this.CLOSED = 0, this.isAlive = !0, this.external = noop, this.onping = noop, 
+        this.onpong = noop, this.internalOnOpen = noop, this.internalOnError = noop, this.internalOnClose = noop, 
+        this.internalOnMessage = noop, this.onpong = (() => this.isAlive = !0), this.external = r, 
+        this.executeOn = t ? "server" : "client", !t && native.connect(clientGroup, e, this);
     }
-    return Object.defineProperty(e.prototype, "readyState", {
-        get: function() {
-            return this.external ? this.OPEN : this.CLOSED;
-        },
-        enumerable: !0,
-        configurable: !0
-    }), e.prototype.on = function(e, r) {
-        var n = this;
+    get readyState() {
+        return this.external ? this.OPEN : this.CLOSED;
+    }
+    on(e, r) {
         return {
-            ping: function() {
-                return n.onping = r;
-            },
-            pong: function() {
-                return n.onpong = r;
-            },
-            open: function() {
-                return n.internalOnOpen = r;
-            },
-            error: function() {
-                return n.internalOnError = r;
-            },
-            close: function() {
-                return n.internalOnClose = r;
-            },
-            message: function() {
-                return n.internalOnMessage = r;
-            }
+            ping: () => this.onping = r,
+            pong: () => this.onpong = r,
+            open: () => this.internalOnOpen = r,
+            error: () => this.internalOnError = r,
+            close: () => this.internalOnClose = r,
+            message: () => this.internalOnMessage = r
         }[e](), this;
-    }, e.prototype.ping = function(e) {
+    }
+    ping(e) {
         this.external && native[this.executeOn].send(this.external, e, OPCODE_PING);
-    }, e.prototype.send = function(e, r) {
-        if (this.external) {
-            var n = r && r.binary || "string" != typeof e;
-            native[this.executeOn].send(this.external, e, n ? OPCODE_BINARY : OPCODE_TEXT, void 0);
-        }
-    }, e.prototype.terminate = function() {
+    }
+    send(e, r) {
+        if (!this.external) return;
+        const t = r && r.binary || "string" != typeof e;
+        native[this.executeOn].send(this.external, e, t ? OPCODE_BINARY : OPCODE_TEXT, void 0);
+    }
+    terminate() {
         this.external && (native[this.executeOn].terminate(this.external), this.external = null);
-    }, e.prototype.close = function(e, r) {
+    }
+    close(e, r) {
         this.external && (native[this.executeOn].close(this.external, e, r), this.external = null);
-    }, e;
-}();
+    }
+}
 
 function logError(e) {
-    return console.log("[31m" + e + "[0m");
+    return console.log(`[31m${e}[0m`);
 }
 
 function logReady(e) {
-    return console.log("[36m" + e + "[0m");
+    return console.log(`[36m${e}[0m`);
 }
 
 function logWarning(e) {
-    return console.log("[33m" + e + "[0m");
+    return console.log(`[33m${e}[0m`);
 }
 
 function generateKey(e) {
     return crypto.randomBytes(Math.ceil(e / 2)).toString("hex").slice(0, e);
 }
 
-var EventEmitterSingle = function() {
-    function e() {
+class EventEmitterSingle {
+    constructor() {
         this.events = {};
     }
-    return e.prototype.on = function(e, r) {
+    on(e, r) {
         if ("[object Function]" !== {}.toString.call(r)) return logError("Listener must be a function");
         this.events[e] = r;
-    }, e.prototype.emit = function(e) {
-        for (var r = [], n = 1; n < arguments.length; n++) r[n - 1] = arguments[n];
-        var t = this.events[e];
-        t && t.apply(void 0, r);
-    }, e.prototype.removeEvents = function() {
+    }
+    emit(e, ...r) {
+        const t = this.events[e];
+        t && t(...r);
+    }
+    removeEvents() {
         this.events = {};
-    }, e;
-}(), PERMESSAGE_DEFLATE = 1, DEFAULT_PAYLOAD_LIMIT$1 = 16777216, APP_PING_CODE = Buffer.from("9"), APP_PONG_CODE = 65;
+    }
+}
+
+const PERMESSAGE_DEFLATE = 1, DEFAULT_PAYLOAD_LIMIT$1 = 16777216, APP_PING_CODE = Buffer.from("9"), APP_PONG_CODE = 65;
 
 native.setNoop(noop);
 
-var WebSocketServer = function(e) {
-    function r(r, n) {
-        var t = e.call(this) || this;
-        if (t.upgradeReq = null, t.upgradeCallback = noop, t.lastUpgradeListener = !0, !r || !r.port && !r.server && !r.noServer) throw new TypeError("Wrong options");
-        t.noDelay = r.noDelay || !0, t.passedHttpServer = r.server;
-        var o = r.perMessageDeflate ? PERMESSAGE_DEFLATE : 0;
-        return t.serverGroup = native.server.group.create(o, r.maxPayload || DEFAULT_PAYLOAD_LIMIT$1), 
-        t.httpServer = r.server || HTTP.createServer(function(e, r) {
-            return r.end();
-        }), !r.path || r.path.length && "/" === r.path[0] || (r.path = "/" + r.path), t.httpServer.on("upgrade", function(e, n, o) {
-            if (r.path && r.path !== e.url.split("?")[0].split("#")[0]) t.lastUpgradeListener && t.abortConnection(n, 400, "URL not supported"); else if (r.verifyClient) {
-                var s = {
-                    origin: e.headers.origin,
-                    secure: !(!e.connection.authorized && !e.connection.encrypted),
-                    req: e
+class WebSocketServer extends EventEmitterSingle {
+    constructor(e, r) {
+        if (super(), this.upgradeReq = null, this.upgradeCallback = noop, this.lastUpgradeListener = !0, 
+        !e || !e.port && !e.server && !e.noServer) throw new TypeError("Wrong options");
+        this.noDelay = e.noDelay || !0, this.httpServer = e.server || HTTP.createServer((e, r) => r.end()), 
+        this.serverGroup = native.server.group.create(e.perMessageDeflate ? PERMESSAGE_DEFLATE : 0, e.maxPayload || DEFAULT_PAYLOAD_LIMIT$1), 
+        !e.path || e.path.length && "/" === e.path[0] || (e.path = `/${e.path}`), this.httpServer.on("upgrade", (r, t, s) => {
+            if (e.path && e.path !== r.url.split("?")[0].split("#")[0]) this.lastUpgradeListener && this.abortConnection(t, 400, "URL not supported"); else if (e.verifyClient) {
+                const n = {
+                    origin: r.headers.origin,
+                    secure: !(!r.connection.authorized && !r.connection.encrypted),
+                    req: r
                 };
-                r.verifyClient(s, function(r, s, i) {
-                    return r ? t.handleUpgrade(e, n, o, t.emitConnection) : t.abortConnection(n, s, i);
-                });
-            } else t.handleUpgrade(e, n, o, t.emitConnection);
-        }), t.httpServer.on("error", function(e) {
-            return t.emit("error", e);
-        }), t.httpServer.on("newListener", function(e, r) {
-            return "upgrade" === e ? t.lastUpgradeListener = !1 : null;
-        }), native.server.group.onConnection(t.serverGroup, function(e) {
-            var r = new WebSocket(null, e, !0);
-            native.setUserData(e, r), t.upgradeCallback(r), t.upgradeReq = null;
-        }), native.server.group.onMessage(t.serverGroup, function(e, r) {
-            if (t.pingIsAppLevel && ("string" != typeof e && (e = Buffer.from(e)), e[0] === APP_PONG_CODE)) return r.isAlive = !0;
+                e.verifyClient(n, (e, n, o) => e ? this.handleUpgrade(r, t, s, this.emitConnection) : this.abortConnection(t, n, o));
+            } else this.handleUpgrade(r, t, s, this.emitConnection);
+        }), this.httpServer.on("error", e => this.emit("error", e)), this.httpServer.on("newListener", (e, r) => "upgrade" === e ? this.lastUpgradeListener = !1 : null), 
+        native.server.group.onConnection(this.serverGroup, e => {
+            const r = new WebSocket(null, e, !0);
+            native.setUserData(e, r), this.upgradeCallback(r), this.upgradeReq = null;
+        }), native.server.group.onMessage(this.serverGroup, (e, r) => {
+            if (this.pingIsAppLevel && ("string" != typeof e && (e = Buffer.from(e)), e[0] === APP_PONG_CODE)) return r.isAlive = !0;
             r.internalOnMessage(e);
-        }), native.server.group.onDisconnection(t.serverGroup, function(e, r, n, t) {
-            t.external = null, process.nextTick(function() {
-                return t.internalOnClose(r, n);
-            }), native.clearUserData(e);
-        }), native.server.group.onPing(t.serverGroup, function(e, r) {
-            return r.onping(e);
-        }), native.server.group.onPong(t.serverGroup, function(e, r) {
-            return r.onpong(e);
-        }), r.port && t.httpServer.listen(r.port, r.host || null, function() {
-            t.emit("listening"), n && n();
-        }), t;
+        }), native.server.group.onDisconnection(this.serverGroup, (e, r, t, s) => {
+            s.external = null, process.nextTick(() => s.internalOnClose(r, t)), native.clearUserData(e);
+        }), native.server.group.onPing(this.serverGroup, (e, r) => r.onping(e)), native.server.group.onPong(this.serverGroup, (e, r) => r.onpong(e)), 
+        e.port && this.httpServer.listen(e.port, e.host || null, () => {
+            this.emit("listening"), r && r();
+        });
     }
-    return __extends(r, e), r.prototype.heartbeat = function(e, r) {
-        var n = this;
-        void 0 === r && (r = !1), r && (this.pingIsAppLevel = !0), setTimeout(function() {
-            native.server.group.forEach(n.serverGroup, n.pingIsAppLevel ? n.sendPingsAppLevel : n.sendPings), 
-            n.heartbeat(e);
+    heartbeat(e, r = !1) {
+        r && (this.pingIsAppLevel = !0), setTimeout(() => {
+            native.server.group.forEach(this.serverGroup, this.pingIsAppLevel ? this.sendPingsAppLevel : this.sendPings), 
+            this.heartbeat(e);
         }, e);
-    }, r.prototype.sendPings = function(e) {
+    }
+    sendPings(e) {
         e.isAlive ? (e.isAlive = !1, e.ping()) : e.terminate();
-    }, r.prototype.sendPingsAppLevel = function(e) {
+    }
+    sendPingsAppLevel(e) {
         e.isAlive ? (e.isAlive = !1, e.send(APP_PING_CODE)) : e.terminate();
-    }, r.prototype.emitConnection = function(e) {
+    }
+    emitConnection(e) {
         this.emit("connection", e);
-    }, r.prototype.abortConnection = function(e, r, n) {
-        e.end("HTTP/1.1 " + r + " " + n + "\r\n\r\n");
-    }, r.prototype.handleUpgrade = function(e, r, n, t) {
-        var o = this;
-        if (r._isNative) this.serverGroup && (this.upgradeReq = e, this.upgradeCallback = t || noop, 
+    }
+    abortConnection(e, r, t) {
+        e.end(`HTTP/1.1 ${r} ${t}\r\n\r\n`);
+    }
+    handleUpgrade(e, r, t, s) {
+        if (r._isNative) this.serverGroup && (this.upgradeReq = e, this.upgradeCallback = s || noop, 
         native.upgrade(this.serverGroup, r.external, null, e.headers["sec-websocket-extensions"], e.headers["sec-websocket-protocol"])); else {
-            var s = e.headers["sec-websocket-key"], i = r.ssl ? r._parent._handle : r._handle, a = r.ssl ? r.ssl._external : null;
-            if (i && s && 24 === s.length) {
+            const t = e.headers["sec-websocket-key"], n = r.ssl ? r._parent._handle : r._handle, o = r.ssl ? r.ssl._external : null;
+            if (n && t && 24 === t.length) {
                 r.setNoDelay(this.noDelay);
-                var c = native.transfer(-1 === i.fd ? i : i.fd, a);
-                r.on("close", function(r) {
-                    o.serverGroup && (o.upgradeReq = e, o.upgradeCallback = t || noop, native.upgrade(o.serverGroup, c, s, e.headers["sec-websocket-extensions"], e.headers["sec-websocket-protocol"]));
+                const i = native.transfer(-1 === n.fd ? n : n.fd, o);
+                r.on("close", r => {
+                    this.serverGroup && (this.upgradeReq = e, this.upgradeCallback = s || noop, native.upgrade(this.serverGroup, i, t, e.headers["sec-websocket-extensions"], e.headers["sec-websocket-protocol"]));
                 });
             }
             r.destroy();
         }
-    }, r;
-}(EventEmitterSingle);
+    }
+}
 
-function encode(e, r, n) {
-    var t = {
+function encode(e, r, t) {
+    const s = {
         emit: {
             "#": [ "e", e, r ]
         },
@@ -234,245 +185,227 @@ function encode(e, r, n) {
             }
         }
     };
-    return JSON.stringify("system" === n ? t[n][e] : t[n]);
+    return JSON.stringify("system" === t ? s[t][e] : s[t]);
 }
 
 function decode(e, r) {
-    var n = e.worker.options.encodeDecodeEngine ? e.worker.options.encodeDecodeEngine.decode(r["#"][2]) : r["#"][2], t = {
-        e: function() {
-            return e.events.emit(r["#"][1], n);
-        },
-        p: function() {
-            return e.channels[r["#"][1]] && e.worker.wss.publish(r["#"][1], n);
-        },
+    const t = e.worker.options.encodeDecodeEngine ? e.worker.options.encodeDecodeEngine.decode(r["#"][2]) : r["#"][2], s = {
+        e: () => e.events.emit(r["#"][1], t),
+        p: () => e.channels[r["#"][1]] && e.worker.wss.publish(r["#"][1], t),
         s: {
-            s: function() {
-                var r = function() {
-                    e.channels[n] = 1, e.worker.wss.channels.onMany(n, e.onPublishEvent);
+            s: () => {
+                const r = () => {
+                    e.channels[t] = 1, e.worker.wss.channels.onMany(t, e.onPublishEvent);
                 };
-                e.worker.wss.middleware.onSubscribe ? e.worker.wss.middleware.onSubscribe(e, n, function(e) {
-                    return e && r();
-                }) : r();
+                e.worker.wss.middleware.onSubscribe ? e.worker.wss.middleware.onSubscribe(e, t, e => e && r()) : r();
             },
-            u: function() {
-                e.worker.wss.channels.removeListener(n, e.onPublishEvent), e.channels[n] = null;
+            u: () => {
+                e.worker.wss.channels.removeListener(t, e.onPublishEvent), e.channels[t] = null;
             }
         }
     };
-    return "s" === r["#"][0] ? t[r["#"][0]][r["#"][1]] && t[r["#"][0]][r["#"][1]]() : t[r["#"][0]] && t[r["#"][0]]();
+    return "s" === r["#"][0] ? s[r["#"][0]][r["#"][1]] && s[r["#"][0]][r["#"][1]]() : s[r["#"][0]] && s[r["#"][0]]();
 }
 
-var Socket = function() {
-    function e(e, r) {
-        var n = this;
+class Socket {
+    constructor(e, r) {
         this.events = new EventEmitterSingle(), this.channels = {}, this.worker = e, this.socket = r, 
-        this.onPublishEvent = function(e, r) {
-            return n.send(e, r, "publish");
-        }, this.send("configuration", {
+        this.onPublishEvent = ((e, r) => this.send(e, r, "publish")), this.send("configuration", {
             ping: this.worker.options.pingInterval,
             binary: this.worker.options.useBinary
-        }, "system"), this.socket.on("error", function(e) {
-            return n.events.emit("error", e);
-        }), this.socket.on("message", function(e) {
+        }, "system"), this.socket.on("error", e => this.events.emit("error", e)), this.socket.on("message", e => {
             try {
-                e = JSON.parse(e), decode(n, e);
+                decode(this, e = JSON.parse(e));
             } catch (e) {
-                return logError("PID: " + process.pid + "\n" + e + "\n");
+                return logError(`PID: ${process.pid}\n${e}\n`);
             }
-        }), this.socket.on("close", function(e, r) {
-            n.events.emit("disconnect", e, r);
-            for (var t = 0, o = (s = Object.keys(n.channels)).length; t < o; t++) n.worker.wss.channels.removeListener(s[t], n.onPublishEvent);
-            var s;
-            for (t = 0, o = (s = Object.keys(n)).length; t < o; t++) n[s[t]] = null;
+        }), this.socket.on("close", (e, r) => {
+            this.events.emit("disconnect", e, r);
+            for (let e = 0, r = Object.keys(this.channels), t = r.length; e < t; e++) this.worker.wss.channels.removeListener(r[e], this.onPublishEvent);
+            for (let e = 0, r = Object.keys(this), t = r.length; e < t; e++) this[r[e]] = null;
         });
     }
-    return e.prototype.on = function(e, r) {
+    on(e, r) {
         this.events.on(e, r);
-    }, e.prototype.send = function(e, r, n) {
-        void 0 === n && (n = "emit"), r = this.worker.options.encodeDecodeEngine ? this.worker.options.encodeDecodeEngine.encode(r) : r, 
-        this.socket.send(this.worker.options.useBinary ? Buffer.from(encode(e, r, n)) : encode(e, r, n));
-    }, e.prototype.disconnect = function(e, r) {
+    }
+    send(e, r, t = "emit") {
+        r = this.worker.options.encodeDecodeEngine ? this.worker.options.encodeDecodeEngine.encode(r) : r, 
+        this.socket.send(this.worker.options.useBinary ? Buffer.from(encode(e, r, t)) : encode(e, r, t));
+    }
+    disconnect(e, r) {
         this.socket.close(e, r);
-    }, e.prototype.terminate = function() {
+    }
+    terminate() {
         this.socket.terminate();
-    }, e;
-}(), EventEmitterMany = function() {
-    function e() {
+    }
+}
+
+class EventEmitterMany {
+    constructor() {
         this.events = {};
     }
-    return e.prototype.onMany = function(e, r) {
+    onMany(e, r) {
         if ("[object Function]" !== {}.toString.call(r)) return logError("Listener must be a function");
         this.events[e] ? this.events[e].push(r) : this.events[e] = [ r ];
-    }, e.prototype.emitMany = function(e) {
-        for (var r = [], n = 1; n < arguments.length; n++) r[n - 1] = arguments[n];
-        var t = this.events[e];
-        if (t) for (var o = 0, s = t.length; o < s; o++) t[o].apply(t, [ e ].concat(r));
-    }, e.prototype.removeListener = function(e, r) {
-        var n = this.events[e];
-        if (n) {
-            for (var t = 0, o = n.length; t < o; t++) if (n[t] === r) return n.splice(t, 1);
-            0 === n.length && (this.events[e] = null);
+    }
+    emitMany(e, ...r) {
+        const t = this.events[e];
+        if (t) for (let s = 0, n = t.length; s < n; s++) t[s](e, ...r);
+    }
+    removeListener(e, r) {
+        const t = this.events[e];
+        if (t) {
+            for (let e = 0, s = t.length; e < s; e++) if (t[e] === r) return t.splice(e, 1);
+            0 === t.length && (this.events[e] = null);
         }
-    }, e.prototype.exist = function(e) {
+    }
+    exist(e) {
         return this.events[e] && this.events[e].length > 0;
-    }, e;
-}(), WSServer = function(e) {
-    function r() {
-        var r = null !== e && e.apply(this, arguments) || this;
-        return r.channels = new EventEmitterMany(), r.middleware = {}, r.internalBrokers = {
+    }
+}
+
+class WSServer extends EventEmitterSingle {
+    constructor() {
+        super(...arguments), this.channels = new EventEmitterMany(), this.middleware = {}, 
+        this.internalBrokers = {
             brokers: {},
             nextBroker: -1,
             brokersKeys: [],
             brokersAmount: 0
-        }, r;
+        };
     }
-    return __extends(r, e), r.prototype.setMiddleware = function(e, r) {
+    setMiddleware(e, r) {
         this.middleware[e] = r;
-    }, r.prototype.publishToWorkers = function(e) {
+    }
+    publishToWorkers(e) {
         this.publish("#sendToWorkers", e);
-    }, r.prototype.publish = function(e, r, n) {
-        var t = this;
-        if (void 0 === n && (n = 0), n > 2 * this.internalBrokers.brokersAmount + 10) return logWarning("Does not have access to any broker");
-        if (this.internalBrokers.brokersAmount <= 0) return setTimeout(function() {
-            return t.publish(e, r, ++n);
-        }, 10);
+    }
+    publish(e, r, t = 0) {
+        if (t > 2 * this.internalBrokers.brokersAmount + 10) return logWarning("Does not have access to any broker");
+        if (this.internalBrokers.brokersAmount <= 0) return setTimeout(() => this.publish(e, r, ++t), 10);
         this.internalBrokers.nextBroker >= this.internalBrokers.brokersAmount - 1 ? this.internalBrokers.nextBroker = 0 : this.internalBrokers.nextBroker++;
-        var o = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]];
-        return 1 !== o.readyState ? (delete this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]], 
+        const s = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]];
+        return 1 !== s.readyState ? (delete this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]], 
         this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), this.internalBrokers.brokersAmount--, 
-        this.publish(e, r, ++n)) : (o.send(Buffer.from(e + "%" + JSON.stringify({
+        this.publish(e, r, ++t)) : (s.send(Buffer.from(`${e}%${JSON.stringify({
             message: r
-        }))), "#sendToWorkers" === e ? this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(r) : (this.middleware.onPublish && this.middleware.onPublish(e, r), 
+        })}`)), "#sendToWorkers" === e ? this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(r) : (this.middleware.onPublish && this.middleware.onPublish(e, r), 
         void this.channels.emitMany(e, r)));
-    }, r.prototype.broadcastMessage = function(e, r) {
-        var n = (r = Buffer.from(r)).indexOf(37), t = r.slice(0, n).toString();
-        if ("#sendToWorkers" === t) return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(JSON.parse(r.slice(n + 1)).message);
-        if (this.channels.exist(t)) {
-            var o = JSON.parse(r.slice(n + 1)).message;
-            this.middleware.onPublish && this.middleware.onPublish(t, o), this.channels.emitMany(t, o);
-        }
-    }, r.prototype.setBroker = function(e, r) {
+    }
+    broadcastMessage(e, r) {
+        const t = (r = Buffer.from(r)).indexOf(37), s = r.slice(0, t).toString();
+        if ("#sendToWorkers" === s) return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(JSON.parse(r.slice(t + 1)).message);
+        if (!this.channels.exist(s)) return;
+        const n = JSON.parse(r.slice(t + 1)).message;
+        this.middleware.onPublish && this.middleware.onPublish(s, n), this.channels.emitMany(s, n);
+    }
+    setBroker(e, r) {
         this.internalBrokers.brokers[r] = e, this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), 
         this.internalBrokers.brokersAmount = this.internalBrokers.brokersKeys.length;
-    }, r;
-}(EventEmitterSingle);
-
-function BrokerClient(e, r, n, t, o) {
-    void 0 === t && (t = 0);
-    var s = new WebSocket(e);
-    s.on("open", function() {
-        t = 0, n.setBroker(s, e), o && logReady("Broker has been connected to " + e + " \n"), 
-        s.send(r);
-    }), s.on("error", function(i) {
-        if (s = void 0, "uWs client connection error" === i.stack) return 5 === t && logWarning("Can not connect to the Broker " + e + ". System in reconnection state please check your Broker and URL \n"), 
-        setTimeout(function() {
-            return BrokerClient(e, r, n, ++t, o || t > 5);
-        }, 500);
-        logError("Socket " + process.pid + " has an issue: \n " + i.stack + " \n");
-    }), s.on("close", function(o) {
-        if (s = void 0, 4e3 === o) return logError("Can not connect to the broker wrong authorization key \n");
-        logWarning("Broker has disconnected, system is trying to reconnect to " + e + " \n"), 
-        setTimeout(function() {
-            return BrokerClient(e, r, n, ++t, !0);
-        }, 500);
-    }), s.on("message", function(e) {
-        return n.broadcastMessage("", e);
-    });
+    }
 }
 
-var Worker = function() {
-    return function(e, r) {
-        var n = this;
+function BrokerClient(e, r, t, s = 0, n) {
+    let o = new WebSocket(e);
+    o.on("open", () => {
+        s = 0, t.setBroker(o, e), n && logReady(`Broker has been connected to ${e} \n`), 
+        o.send(r);
+    }), o.on("error", i => {
+        if (o = void 0, "uWs client connection error" === i.stack) return 5 === s && logWarning(`Can not connect to the Broker ${e}. System in reconnection state please check your Broker and URL \n`), 
+        setTimeout(() => BrokerClient(e, r, t, ++s, n || s > 5), 500);
+        logError(`Socket ${process.pid} has an issue: \n ${i.stack} \n`);
+    }), o.on("close", n => {
+        if (o = void 0, 4e3 === n) return logError("Can not connect to the broker wrong authorization key \n");
+        logWarning(`Broker has disconnected, system is trying to reconnect to ${e} \n`), 
+        setTimeout(() => BrokerClient(e, r, t, ++s, !0), 500);
+    }), o.on("message", e => t.broadcastMessage("", e));
+}
+
+class Worker {
+    constructor(e, r) {
         this.wss = new WSServer(), this.options = e;
-        for (var t = 0; t < this.options.brokers; t++) BrokerClient("ws://127.0.0.1:" + this.options.brokersPorts[t], r, this.wss);
+        for (let e = 0; e < this.options.brokers; e++) BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}`, r, this.wss);
         this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        var o = new WebSocketServer({
+        const t = new WebSocketServer({
             server: this.server,
-            verifyClient: function(e, r) {
-                return n.wss.middleware.verifyConnection ? n.wss.middleware.verifyConnection(e, r) : r(!0);
-            }
+            verifyClient: (e, r) => this.wss.middleware.verifyConnection ? this.wss.middleware.verifyConnection(e, r) : r(!0)
         });
-        o.on("connection", function(e) {
-            return n.wss.emit("connection", new Socket(n, e));
-        }), o.heartbeat(this.options.pingInterval, !0), this.server.listen(this.options.port, this.options.host, function() {
-            n.options.worker.call(n), process.send({
+        t.on("connection", e => this.wss.emit("connection", new Socket(this, e))), t.heartbeat(this.options.pingInterval, !0), 
+        this.server.listen(this.options.port, this.options.host, () => {
+            this.options.worker.call(this), process.send({
                 event: "READY",
                 pid: process.pid
             });
         });
-    };
-}();
+    }
+}
 
-function BrokerServer(e, r, n, t) {
-    var o, s = {}, i = {
+function BrokerServer(e, r, t, s) {
+    let n;
+    const o = {}, i = {
         brokers: {},
         nextBroker: -1,
         brokersKeys: [],
         brokersAmount: 0
     };
-    if ("Scaler" === t && n && n.masterOptions && n.masterOptions.tlsOptions) {
-        var a = HTTPS.createServer(n.masterOptions.tlsOptions);
-        o = new WebSocketServer({
-            server: a
-        }), a.listen(e, function() {
-            return process.send({
-                event: "READY",
-                pid: process.pid
-            });
-        });
-    } else o = new WebSocketServer({
-        port: e
-    }, function() {
-        return process.send({
+    if ("Scaler" === s && t && t.masterOptions && t.masterOptions.tlsOptions) {
+        const r = HTTPS.createServer(t.masterOptions.tlsOptions);
+        n = new WebSocketServer({
+            server: r
+        }), r.listen(e, () => process.send({
             event: "READY",
             pid: process.pid
-        });
-    });
-    function c(e, r) {
-        for (var n = 0, t = Object.keys(s), o = t.length; n < o; n++) t[n] !== e && s[t[n]] && s[t[n]].send(r);
+        }));
+    } else n = new WebSocketServer({
+        port: e
+    }, () => process.send({
+        event: "READY",
+        pid: process.pid
+    }));
+    function a(e, r) {
+        for (let t = 0, s = Object.keys(o), n = s.length; t < n; t++) s[t] !== e && o[s[t]] && o[s[t]].send(r);
     }
-    function u(e, r) {
-        void 0 === r && (r = ""), BrokerClient(e, r, {
-            broadcastMessage: c,
-            setBroker: function(e, r) {
+    function l(e, r = "") {
+        BrokerClient(e, r, {
+            broadcastMessage: a,
+            setBroker: (e, r) => {
                 i.brokers[r] = e, i.brokersKeys = Object.keys(i.brokers), i.brokersAmount = i.brokersKeys.length;
             }
         });
     }
-    o.on("connection", function(e) {
-        e.isAuth = !1, e.authTimeOut = setTimeout(function() {
-            return e.close(4e3, "Not Authenticated");
-        }, 5e3), e.on("message", function(o) {
-            if (o === r) {
+    n.on("connection", e => {
+        e.isAuth = !1, e.authTimeOut = setTimeout(() => e.close(4e3, "Not Authenticated"), 5e3), 
+        e.on("message", n => {
+            if (n === r) {
                 if (e.isAuth) return;
                 return e.isAuth = !0, function e(r) {
                     r.id = generateKey(16);
-                    if (s[r.id]) return e(r);
-                    s[r.id] = r;
+                    if (o[r.id]) return e(r);
+                    o[r.id] = r;
                 }(e), clearTimeout(e.authTimeOut);
             }
-            e.isAuth && (c(e.id, o), "Scaler" !== t && n && function e(r) {
+            e.isAuth && (a(e.id, n), "Scaler" !== s && t && function e(r) {
                 if (i.brokersAmount <= 0) return;
                 i.nextBroker >= i.brokersAmount - 1 ? i.nextBroker = 0 : i.nextBroker++;
-                var n = i.brokers[i.brokersKeys[i.nextBroker]];
-                if (1 !== n.readyState) return delete i.brokers[i.brokersKeys[i.nextBroker]], i.brokersKeys = Object.keys(i.brokers), 
+                const t = i.brokers[i.brokersKeys[i.nextBroker]];
+                if (1 !== t.readyState) return delete i.brokers[i.brokersKeys[i.nextBroker]], i.brokersKeys = Object.keys(i.brokers), 
                 i.brokersAmount--, e(r);
-                n.send(r);
-            }(o));
-        }), e.on("close", function(r, n) {
-            clearTimeout(e.authTimeOut), e.isAuth && (s[e.id] = null), e = void 0;
+                t.send(r);
+            }(n));
+        }), e.on("close", (r, t) => {
+            clearTimeout(e.authTimeOut), e.isAuth && (o[e.id] = null), e = void 0;
         });
-    }), o.heartbeat(2e4), function() {
-        if ("Scaler" === t || !n) return;
-        n.masterOptions && u((n.masterOptions.tlsOptions ? "wss" : "ws") + "://127.0.0.1:" + n.masterOptions.port, n.key);
-        for (var e = 0, r = n.brokersUrls.length; e < r; e++) u(n.brokersUrls[e], n.key);
+    }), n.heartbeat(2e4), function() {
+        if ("Scaler" === s || !t) return;
+        t.masterOptions && l(`${t.masterOptions.tlsOptions ? "wss" : "ws"}://127.0.0.1:${t.masterOptions.port}`, t.key);
+        for (let e = 0, r = t.brokersUrls.length; e < r; e++) l(t.brokersUrls[e], t.key);
     }();
 }
 
-var ClusterWS = function() {
-    function e(e) {
+class ClusterWS {
+    constructor(e) {
         if ("[object Function]" !== {}.toString.call(e.worker)) return logError("Worker param must be provided and it must be a function \n");
-        var r = {
+        const r = {
             port: e.port || (e.tlsOptions ? 443 : 80),
             host: e.host || null,
             worker: e.worker,
@@ -486,57 +419,46 @@ var ClusterWS = function() {
             horizontalScaleOptions: e.horizontalScaleOptions || !1,
             encodeDecodeEngine: e.encodeDecodeEngine || !1
         };
-        if (!e.brokersPorts) for (var n = 0; n < r.brokers; n++) r.brokersPorts.push(n + 9400);
+        if (!e.brokersPorts) for (let e = 0; e < r.brokers; e++) r.brokersPorts.push(e + 9400);
         if (r.brokersPorts.length < r.brokers) return logError("Number of the broker ports can not be less than number of brokers \n");
         cluster.isMaster ? this.masterProcess(r) : this.workerProcess(r);
     }
-    return e.prototype.masterProcess = function(e) {
-        var r = !1, n = generateKey(16), t = {}, o = {};
-        if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (var s = 0; s < e.brokers; s++) i("Broker", s);
-        function i(s, a) {
-            var c = cluster.fork();
-            c.on("message", function(n) {
-                return "READY" === n.event && function(n, s, a) {
-                    if (r) return logReady(n + " PID " + a + " has been restarted");
-                    "Worker" === n && (o[s] = "\tWorker: " + s + ", PID " + a);
-                    if ("Scaler" === n) for (var c = 0; c < e.brokers; c++) i("Broker", c);
-                    if ("Broker" === n && (t[s] = ">>>  Broker on: " + e.brokersPorts[s] + ", PID " + a, 
-                    Object.keys(t).length === e.brokers)) for (var c = 0; c < e.workers; c++) i("Worker", c);
-                    Object.keys(t).length === e.brokers && Object.keys(o).length === e.workers && (r = !0, 
-                    logReady(">>>  Master on: " + e.port + ", PID: " + process.pid + " " + (e.tlsOptions ? " (secure)" : "")), 
-                    Object.keys(t).forEach(function(e) {
-                        return t.hasOwnProperty(e) && logReady(t[e]);
-                    }), Object.keys(o).forEach(function(e) {
-                        return o.hasOwnProperty(e) && logReady(o[e]);
-                    }));
-                }(s, a, n.pid);
-            }), c.on("exit", function() {
-                logError(s + " has exited \n"), e.restartWorkerOnFail && (logWarning(s + " is restarting \n"), 
-                i(s, a)), c = void 0;
-            }), c.send({
-                securityKey: n,
+    masterProcess(e) {
+        let r = !1;
+        const t = generateKey(16), s = {}, n = {};
+        if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) o("Scaler", -1); else for (let r = 0; r < e.brokers; r++) o("Broker", r);
+        function o(i, a) {
+            let l = cluster.fork();
+            l.on("message", t => "READY" === t.event && function(t, i, a) {
+                if (r) return logReady(`${t} PID ${a} has been restarted`);
+                "Worker" === t && (n[i] = `\tWorker: ${i}, PID ${a}`);
+                if ("Scaler" === t) for (let r = 0; r < e.brokers; r++) o("Broker", r);
+                if ("Broker" === t && (s[i] = `>>>  Broker on: ${e.brokersPorts[i]}, PID ${a}`, 
+                Object.keys(s).length === e.brokers)) for (let r = 0; r < e.workers; r++) o("Worker", r);
+                Object.keys(s).length === e.brokers && Object.keys(n).length === e.workers && (r = !0, 
+                logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
+                Object.keys(s).forEach(e => s.hasOwnProperty(e) && logReady(s[e])), Object.keys(n).forEach(e => n.hasOwnProperty(e) && logReady(n[e])));
+            }(i, a, t.pid)), l.on("exit", () => {
+                logError(`${i} has exited \n`), e.restartWorkerOnFail && (logWarning(`${i} is restarting \n`), 
+                o(i, a)), l = void 0;
+            }), l.send({
+                securityKey: t,
                 processId: a,
-                processName: s
+                processName: i
             });
         }
-    }, e.prototype.workerProcess = function(e) {
-        process.on("message", function(r) {
-            var n = {
-                Worker: function() {
-                    return new Worker(e, r.securityKey);
-                },
-                Broker: function() {
-                    return BrokerServer(e.brokersPorts[r.processId], r.securityKey, e.horizontalScaleOptions, "Broker");
-                },
-                Scaler: function() {
-                    return e.horizontalScaleOptions && BrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions, "Scaler");
-                }
+    }
+    workerProcess(e) {
+        process.on("message", r => {
+            const t = {
+                Worker: () => new Worker(e, r.securityKey),
+                Broker: () => BrokerServer(e.brokersPorts[r.processId], r.securityKey, e.horizontalScaleOptions, "Broker"),
+                Scaler: () => e.horizontalScaleOptions && BrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions, "Scaler")
             };
-            n[r.processName] && n[r.processName]();
-        }), process.on("uncaughtException", function(e) {
-            return logError("PID: " + process.pid + "\n " + e.stack + "\n"), process.exit();
-        });
-    }, e;
-}();
+            t[r.processName] && t[r.processName]();
+        }), process.on("uncaughtException", e => (logError(`PID: ${process.pid}\n ${e.stack}\n`), 
+        process.exit()));
+    }
+}
 
 module.exports = ClusterWS, module.exports.default = ClusterWS;

@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^8.5.8",
-    "clusterws-builder": "0.0.9"
+    "clusterws-builder": "0.0.10"
   },
   "keywords": [
     "clusterws",

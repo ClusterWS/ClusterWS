@@ -18,7 +18,6 @@ export class WebSocketServer extends EventEmitterSingle {
   public serverGroup: any
   public pingIsAppLevel: boolean
   public upgradeCallback: any = noop
-  public passedHttpServer: any
   public lastUpgradeListener: boolean = true
 
   constructor(options: CustomObject, callback?: Listener) {
@@ -28,11 +27,8 @@ export class WebSocketServer extends EventEmitterSingle {
       throw new TypeError('Wrong options')
 
     this.noDelay = options.noDelay || true
-    this.passedHttpServer = options.server
-
-    const nativeOptions: number = options.perMessageDeflate ? PERMESSAGE_DEFLATE : 0
-    this.serverGroup = native.server.group.create(nativeOptions, options.maxPayload || DEFAULT_PAYLOAD_LIMIT)
     this.httpServer = options.server || HTTP.createServer((request: CustomObject, response: CustomObject) => response.end())
+    this.serverGroup = native.server.group.create(options.perMessageDeflate ? PERMESSAGE_DEFLATE : 0, options.maxPayload || DEFAULT_PAYLOAD_LIMIT)
 
     if (options.path && (!options.path.length || options.path[0] !== '/'))
       options.path = `/${options.path}`
@@ -54,8 +50,8 @@ export class WebSocketServer extends EventEmitterSingle {
       } else if (this.lastUpgradeListener) this.abortConnection(socket, 400, 'URL not supported')
     })
 
-    this.httpServer.on('error', (err: any) => this.emit('error', err))
-    this.httpServer.on('newListener', (eventName: any, listener: Listener) => eventName === 'upgrade' ? this.lastUpgradeListener = false : null)
+    this.httpServer.on('error', (err: Error) => this.emit('error', err))
+    this.httpServer.on('newListener', (eventName: string, listener: Listener) => eventName === 'upgrade' ? this.lastUpgradeListener = false : null)
 
     native.server.group.onConnection(this.serverGroup, (external: CustomObject): void => {
       const webSocket: WebSocket = new WebSocket(null, external, true)
@@ -63,7 +59,6 @@ export class WebSocketServer extends EventEmitterSingle {
       this.upgradeCallback(webSocket)
       this.upgradeReq = null
     })
-
     native.server.group.onMessage(this.serverGroup, (message: Message, webSocket: CustomObject): any => {
       if (this.pingIsAppLevel) {
         if (typeof message !== 'string')
@@ -74,7 +69,6 @@ export class WebSocketServer extends EventEmitterSingle {
       }
       webSocket.internalOnMessage(message)
     })
-
     native.server.group.onDisconnection(this.serverGroup, (external: CustomObject, code: number, message: Message, webSocket: CustomObject): void => {
       webSocket.external = null
       process.nextTick(() => webSocket.internalOnClose(code, message))
@@ -83,12 +77,11 @@ export class WebSocketServer extends EventEmitterSingle {
     native.server.group.onPing(this.serverGroup, (message: Message, webSocket: WebSocket): void => webSocket.onping(message))
     native.server.group.onPong(this.serverGroup, (message: Message, webSocket: WebSocket): void => webSocket.onpong(message))
 
-    if (options.port) {
-      this.httpServer.listen(options.port, options.host || null, (): void => {
-        this.emit('listening')
-        callback && callback()
-      })
-    }
+    if (!options.port) return
+    this.httpServer.listen(options.port, options.host || null, (): void => {
+      this.emit('listening')
+      callback && callback()
+    })
   }
 
   public heartbeat(interval: number, appLevel: boolean = false): void {

@@ -13,7 +13,6 @@ export class Socket {
   public onPublishEvent: (...args: any[]) => void
 
   private socket: WebSocket
-  private isAlive: boolean
 
   constructor(worker: Worker, socket: WebSocket) {
     this.worker = worker
@@ -23,7 +22,7 @@ export class Socket {
     this.send('configuration', { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary }, 'system')
 
     this.socket.on('error', (err: Error): void => this.events.emit('error', err))
-    this.socket.on('message', (message: Message): any => {
+    this.socket.on('message', (message: Message): void => {
       try {
         message = JSON.parse(message)
         decode(this, message)
