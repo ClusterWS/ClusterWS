@@ -10,11 +10,11 @@ const noop = () => {}, native = (() => {
         if ("win32" === process.platform && t) throw new Error("µWebSockets requires Node.js 6.4.0 or greater on Windows.");
         throw new Error("Could not run µWebSockets bindings");
     }
-})(), OPCODE_TEXT = 1, OPCODE_PING = 9, OPCODE_BINARY = 2, DEFAULT_PAYLOAD_LIMIT = 16777216;
+})(), OPCODE_TEXT = 1, OPCODE_PING = 9, OPCODE_BINARY = 2, APP_PONG_CODE = 65, APP_PING_CODE = Buffer.from("9"), PERMESSAGE_DEFLATE = 1, DEFAULT_PAYLOAD_LIMIT = 16777216;
 
 native.setNoop(noop);
 
-const clientGroup = native.client.group.create(0, 16777216);
+const clientGroup = native.client.group.create(0, DEFAULT_PAYLOAD_LIMIT);
 
 native.client.group.onConnection(clientGroup, e => {
     const r = native.getUserData(e);
@@ -98,8 +98,6 @@ class EventEmitterSingle {
     }
 }
 
-const PERMESSAGE_DEFLATE = 1, DEFAULT_PAYLOAD_LIMIT$1 = 16777216, APP_PING_CODE = Buffer.from("9"), APP_PONG_CODE = 65;
-
 native.setNoop(noop);
 
 class WebSocketServer extends EventEmitterSingle {
@@ -107,7 +105,7 @@ class WebSocketServer extends EventEmitterSingle {
         if (super(), this.upgradeReq = null, this.upgradeCallback = noop, this.lastUpgradeListener = !0, 
         !e || !e.port && !e.server && !e.noServer) throw new TypeError("Wrong options");
         this.noDelay = e.noDelay || !0, this.httpServer = e.server || HTTP.createServer((e, r) => r.end()), 
-        this.serverGroup = native.server.group.create(e.perMessageDeflate ? PERMESSAGE_DEFLATE : 0, e.maxPayload || DEFAULT_PAYLOAD_LIMIT$1), 
+        this.serverGroup = native.server.group.create(e.perMessageDeflate ? PERMESSAGE_DEFLATE : 0, e.maxPayload || DEFAULT_PAYLOAD_LIMIT), 
         !e.path || e.path.length && "/" === e.path[0] || (e.path = `/${e.path}`), this.httpServer.on("upgrade", (r, t, s) => {
             if (e.path && e.path !== r.url.split("?")[0].split("#")[0]) this.lastUpgradeListener && this.abortConnection(t, 400, "URL not supported"); else if (e.verifyClient) {
                 const n = {

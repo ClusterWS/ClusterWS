@@ -94,6 +94,13 @@ export class WebSocketServer extends EventEmitterSingle {
 
 export const noop: any;
 export const native: any;
+export const OPCODE_TEXT: number;
+export const OPCODE_PING: number;
+export const OPCODE_BINARY: number;
+export const APP_PONG_CODE: number;
+export const APP_PING_CODE: any;
+export const PERMESSAGE_DEFLATE: number;
+export const DEFAULT_PAYLOAD_LIMIT: number;
 
 export class Worker {
     wss: WSServer;

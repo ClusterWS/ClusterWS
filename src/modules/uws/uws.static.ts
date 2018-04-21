@@ -12,3 +12,11 @@ export const native: any = ((): void => {
     throw new Error('Could not run µWebSockets bindings')
   }
 })()
+
+export const OPCODE_TEXT: number = 1
+export const OPCODE_PING: number = 9
+export const OPCODE_BINARY: number = 2
+export const APP_PONG_CODE: number = 65
+export const APP_PING_CODE: any = Buffer.from('9')
+export const PERMESSAGE_DEFLATE: number = 1
+export const DEFAULT_PAYLOAD_LIMIT: number = 16777216

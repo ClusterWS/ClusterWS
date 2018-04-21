@@ -1,10 +1,5 @@
-import { noop, native } from './uws.static'
 import { Listener, Message, CustomObject } from '../../utils/types'
-
-const OPCODE_TEXT: number = 1
-const OPCODE_PING: number = 9
-const OPCODE_BINARY: number = 2
-const DEFAULT_PAYLOAD_LIMIT: number = 16777216
+import { noop, native, DEFAULT_PAYLOAD_LIMIT, OPCODE_BINARY, OPCODE_PING, OPCODE_TEXT } from './uws.static'
 
 native.setNoop(noop)
 const clientGroup: Listener = native.client.group.create(0, DEFAULT_PAYLOAD_LIMIT)

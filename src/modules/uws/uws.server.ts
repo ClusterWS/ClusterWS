@@ -1,13 +1,8 @@
 import * as HTTP from 'http'
 import { WebSocket } from './uws.client'
-import { noop, native } from './uws.static'
 import { EventEmitterSingle } from '../emitter/single'
 import { Listener, Message, CustomObject } from '../../utils/types'
-
-const PERMESSAGE_DEFLATE: number = 1
-const DEFAULT_PAYLOAD_LIMIT: number = 16777216
-const APP_PING_CODE: any = Buffer.from('9')
-const APP_PONG_CODE: number = 65
+import { noop, native, PERMESSAGE_DEFLATE, DEFAULT_PAYLOAD_LIMIT, APP_PONG_CODE, APP_PING_CODE } from './uws.static'
 
 native.setNoop(noop)
 
