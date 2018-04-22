@@ -25,7 +25,7 @@ native.client.group.onMessage(clientGroup, (message: Message, webSocket: CustomO
 native.client.group.onPing(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onping(message))
 native.client.group.onPong(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onpong(message))
 
-export class WebSocket {
+export class UWebSocket {
   public OPEN: number = 1
   public CLOSED: number = 0
 

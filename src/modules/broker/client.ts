@@ -1,10 +1,10 @@
-import { WebSocket } from '../uws/uws.client'
+import { UWebSocket } from '../uws/uws.client'
 
 import { CustomObject, Message } from '../../utils/types'
 import { logError, logWarning, logReady } from '../../utils/functions'
 
 export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries: number = 0, reconnected?: boolean): void {
-  let websocket: WebSocket = new WebSocket(url)
+  let websocket: UWebSocket = new UWebSocket(url)
   websocket.on('open', (): void => {
     tries = 0
     broadcaster.setBroker(websocket, url)

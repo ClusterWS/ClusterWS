@@ -1,12 +1,12 @@
 import * as HTTP from 'http'
-import { WebSocket } from './uws.client'
+import { UWebSocket } from './uws.client'
 import { EventEmitterSingle } from '../emitter/single'
 import { Listener, Message, CustomObject } from '../../utils/types'
 import { noop, native, PERMESSAGE_DEFLATE, DEFAULT_PAYLOAD_LIMIT, APP_PONG_CODE, APP_PING_CODE } from './uws.static'
 
 native.setNoop(noop)
 
-export class WebSocketServer extends EventEmitterSingle {
+export class UWebSocketServer extends EventEmitterSingle {
   public noDelay: boolean
   public upgradeReq: any = null
   public httpServer: HTTP.Server
@@ -49,7 +49,7 @@ export class WebSocketServer extends EventEmitterSingle {
     this.httpServer.on('newListener', (eventName: string, listener: Listener) => eventName === 'upgrade' ? this.lastUpgradeListener = false : null)
 
     native.server.group.onConnection(this.serverGroup, (external: CustomObject): void => {
-      const webSocket: WebSocket = new WebSocket(null, external, true)
+      const webSocket: UWebSocket = new UWebSocket(null, external, true)
       native.setUserData(external, webSocket)
       this.upgradeCallback(webSocket)
       this.upgradeReq = null
@@ -69,8 +69,8 @@ export class WebSocketServer extends EventEmitterSingle {
       process.nextTick(() => webSocket.internalOnClose(code, message))
       native.clearUserData(external)
     })
-    native.server.group.onPing(this.serverGroup, (message: Message, webSocket: WebSocket): void => webSocket.onping(message))
-    native.server.group.onPong(this.serverGroup, (message: Message, webSocket: WebSocket): void => webSocket.onpong(message))
+    native.server.group.onPing(this.serverGroup, (message: Message, webSocket: UWebSocket): void => webSocket.onping(message))
+    native.server.group.onPong(this.serverGroup, (message: Message, webSocket: UWebSocket): void => webSocket.onpong(message))
 
     if (!options.port) return
     this.httpServer.listen(options.port, options.host || null, (): void => {
@@ -88,14 +88,14 @@ export class WebSocketServer extends EventEmitterSingle {
     }, interval)
   }
 
-  private sendPings(ws: WebSocket): void {
+  private sendPings(ws: UWebSocket): void {
     if (ws.isAlive) {
       ws.isAlive = false
       ws.ping()
     } else ws.terminate()
   }
 
-  private sendPingsAppLevel(ws: WebSocket): void {
+  private sendPingsAppLevel(ws: UWebSocket): void {
     if (ws.isAlive) {
       ws.isAlive = false
       ws.send(APP_PING_CODE)

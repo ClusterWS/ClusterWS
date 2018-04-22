@@ -5,9 +5,15 @@ import { BrokerServer } from './modules/broker/server'
 import { logReady, logWarning, logError, generateKey } from './utils/functions'
 import { Configurations, Options, CustomObject, Message } from './utils/types'
 
+import { UWebSocket } from './modules/uws/uws.client'
+import { UWebSocketServer } from './modules/uws/uws.server'
+
 declare const process: any
 
 export default class ClusterWS {
+  public static uWebSocket: any = UWebSocket
+  public static uWebSocketServer: any = UWebSocketServer
+
   constructor(configurations: Configurations) {
     if ({}.toString.call(configurations.worker) !== '[object Function]')
       return logError('Worker param must be provided and it must be a function \n')

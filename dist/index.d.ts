@@ -7,6 +7,8 @@ import * as HTTP from 'http';
 import * as HTTPS from 'https';
 
 export default class ClusterWS {
+    static uWebSocket: any;
+    static uWebSocketServer: any;
     constructor(configurations: Configurations);
 }
 
@@ -37,7 +39,7 @@ export class Socket {
     events: EventEmitterSingle;
     channels: CustomObject;
     onPublishEvent: (...args: any[]) => void;
-    constructor(worker: Worker, socket: WebSocket);
+    constructor(worker: Worker, socket: UWebSocket);
     on(event: 'error', listener: (err: Error) => void): void;
     on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;
     on(event: string, listener: Listener): void;
@@ -56,10 +58,10 @@ export class WSServer extends EventEmitterSingle {
     publishToWorkers(message: Message): void;
     publish(channel: string, message: Message, tries?: number): void;
     broadcastMessage(_: string, message: Message): void;
-    setBroker(br: WebSocket, url: string): void;
+    setBroker(br: UWebSocket, url: string): void;
 }
 
-export class WebSocket {
+export class UWebSocket {
     OPEN: number;
     CLOSED: number;
     isAlive: boolean;
@@ -80,7 +82,7 @@ export class WebSocket {
     close(code: number, reason: string): void;
 }
 
-export class WebSocketServer extends EventEmitterSingle {
+export class UWebSocketServer extends EventEmitterSingle {
     noDelay: boolean;
     upgradeReq: any;
     httpServer: HTTP.Server;

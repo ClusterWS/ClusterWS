@@ -1,5 +1,3 @@
-import { WebSocket } from '../uws/uws.client'
-
 import { logError } from '../../utils/functions'
 import { Listener, CustomObject, Message } from '../../utils/types'
 

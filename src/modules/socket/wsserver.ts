@@ -1,4 +1,4 @@
-import { WebSocket } from '../uws/uws.client'
+import { UWebSocket } from '../uws/uws.client'
 
 import { Socket } from './socket'
 import { logWarning } from '../../utils/functions'
@@ -76,7 +76,7 @@ export class WSServer extends EventEmitterSingle {
     this.channels.emitMany(channel, decodedMessage)
   }
 
-  public setBroker(br: WebSocket, url: string): void {
+  public setBroker(br: UWebSocket, url: string): void {
     this.internalBrokers.brokers[url] = br
     this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers)
     this.internalBrokers.brokersAmount = this.internalBrokers.brokersKeys.length

@@ -1,4 +1,4 @@
-import { WebSocket } from '../uws/uws.client'
+import { UWebSocket } from '../uws/uws.client'
 
 import { Worker } from '../worker'
 import { logError } from '../../utils/functions'
@@ -12,9 +12,9 @@ export class Socket {
   public channels: CustomObject = {}
   public onPublishEvent: (...args: any[]) => void
 
-  private socket: WebSocket
+  private socket: UWebSocket
 
-  constructor(worker: Worker, socket: WebSocket) {
+  constructor(worker: Worker, socket: UWebSocket) {
     this.worker = worker
     this.socket = socket
     this.onPublishEvent = (channel: string, message: Message): void => this.send(channel, message, 'publish')

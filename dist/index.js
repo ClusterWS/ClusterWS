@@ -29,7 +29,7 @@ native.client.group.onConnection(clientGroup, e => {
 }), native.client.group.onMessage(clientGroup, (e, r) => r.internalOnMessage(e)), 
 native.client.group.onPing(clientGroup, (e, r) => r.onping(e)), native.client.group.onPong(clientGroup, (e, r) => r.onpong(e));
 
-class WebSocket {
+class UWebSocket {
     constructor(e, r = null, t = !1) {
         this.OPEN = 1, this.CLOSED = 0, this.isAlive = !0, this.external = noop, this.onping = noop, 
         this.onpong = noop, this.internalOnOpen = noop, this.internalOnError = noop, this.internalOnClose = noop, 
@@ -100,7 +100,7 @@ class EventEmitterSingle {
 
 native.setNoop(noop);
 
-class WebSocketServer extends EventEmitterSingle {
+class UWebSocketServer extends EventEmitterSingle {
     constructor(e, r) {
         if (super(), this.upgradeReq = null, this.upgradeCallback = noop, this.lastUpgradeListener = !0, 
         !e || !e.port && !e.server && !e.noServer) throw new TypeError("Wrong options");
@@ -117,7 +117,7 @@ class WebSocketServer extends EventEmitterSingle {
             } else this.handleUpgrade(r, t, s, this.emitConnection);
         }), this.httpServer.on("error", e => this.emit("error", e)), this.httpServer.on("newListener", (e, r) => "upgrade" === e ? this.lastUpgradeListener = !1 : null), 
         native.server.group.onConnection(this.serverGroup, e => {
-            const r = new WebSocket(null, e, !0);
+            const r = new UWebSocket(null, e, !0);
             native.setUserData(e, r), this.upgradeCallback(r), this.upgradeReq = null;
         }), native.server.group.onMessage(this.serverGroup, (e, r) => {
             if (this.pingIsAppLevel && ("string" != typeof e && (e = Buffer.from(e)), e[0] === APP_PONG_CODE)) return r.isAlive = !0;
@@ -304,7 +304,7 @@ class WSServer extends EventEmitterSingle {
 }
 
 function BrokerClient(e, r, t, s = 0, n) {
-    let o = new WebSocket(e);
+    let o = new UWebSocket(e);
     o.on("open", () => {
         s = 0, t.setBroker(o, e), n && logReady(`Broker has been connected to ${e} \n`), 
         o.send(r);
@@ -324,7 +324,7 @@ class Worker {
         this.wss = new WSServer(), this.options = e;
         for (let e = 0; e < this.options.brokers; e++) BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}`, r, this.wss);
         this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        const t = new WebSocketServer({
+        const t = new UWebSocketServer({
             server: this.server,
             verifyClient: (e, r) => this.wss.middleware.verifyConnection ? this.wss.middleware.verifyConnection(e, r) : r(!0)
         });
@@ -348,13 +348,13 @@ function BrokerServer(e, r, t, s) {
     };
     if ("Scaler" === s && t && t.masterOptions && t.masterOptions.tlsOptions) {
         const r = HTTPS.createServer(t.masterOptions.tlsOptions);
-        n = new WebSocketServer({
+        n = new UWebSocketServer({
             server: r
         }), r.listen(e, () => process.send({
             event: "READY",
             pid: process.pid
         }));
-    } else n = new WebSocketServer({
+    } else n = new UWebSocketServer({
         port: e
     }, () => process.send({
         event: "READY",
@@ -459,4 +459,5 @@ class ClusterWS {
     }
 }
 
+ClusterWS.uWebSocket = UWebSocket, ClusterWS.uWebSocketServer = UWebSocketServer, 
 module.exports = ClusterWS, module.exports.default = ClusterWS;
