@@ -11,8 +11,8 @@ import { UWebSocketServer } from './modules/uws/uws.server'
 declare const process: any
 
 export default class ClusterWS {
-  public static uWebSocket: any = UWebSocket
-  public static uWebSocketServer: any = UWebSocketServer
+  public static UWebSocket: any = UWebSocket
+  public static UWebSocketServer: any = UWebSocketServer
 
   constructor(configurations: Configurations) {
     if ({}.toString.call(configurations.worker) !== '[object Function]')
