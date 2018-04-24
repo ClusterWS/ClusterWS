@@ -142,7 +142,7 @@ class UWebSocketServer extends EventEmitterSingle {
         e.isAlive ? (e.isAlive = !1, e.send(APP_PING_CODE)) : e.terminate();
     }
     emitConnection(e) {
-        this.emit("connection", e);
+        this.emit("connection", e, this.upgradeReq);
     }
     abortConnection(e, r, t) {
         e.end(`HTTP/1.1 ${r} ${t}\r\n\r\n`);

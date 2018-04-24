@@ -103,7 +103,7 @@ export class UWebSocketServer extends EventEmitterSingle {
   }
 
   private emitConnection(ws: UWebSocket): void {
-    this.emit('connection', ws)
+    this.emit('connection', ws, this.upgradeReq)
   }
 
   private abortConnection(socket: CustomObject, code: number, name: string): void {
