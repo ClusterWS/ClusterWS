@@ -102,7 +102,7 @@ export class UWebSocketServer extends EventEmitterSingle {
     } else ws.terminate()
   }
 
-  private emitConnection(ws: CustomObject): void {
+  private emitConnection(ws: UWebSocket): void {
     this.emit('connection', ws)
   }
 
