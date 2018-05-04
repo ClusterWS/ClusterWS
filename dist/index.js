@@ -4,7 +4,7 @@ var crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https")
 
 const noop = () => {}, native = (() => {
     try {
-        return require(`./node/uws_${process.platform}_${process.versions.modules}`);
+        return require(`${require.resolve("uws").replace("uws.js", "")}uws_${process.platform}_${process.versions.modules}`);
     } catch (e) {
         const r = process.version.substring(1).split(".").map(e => parseInt(e, 10)), t = r[0] < 6 || 6 === r[0] && r[1] < 4;
         if ("win32" === process.platform && t) throw new Error("µWebSockets requires Node.js 6.4.0 or greater on Windows.");

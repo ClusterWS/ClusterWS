@@ -28,5 +28,8 @@
     "real-time",
     "cluster",
     "javascript"
-  ]
+  ],
+  "dependencies": {
+    "uws": "^9.148.0"
+  }
 }
