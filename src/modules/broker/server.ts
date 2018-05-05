@@ -45,7 +45,7 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
       clearTimeout(socket.authTimeOut)
       if (socket.isAuth)
         clients[socket.id] = null
-      socket = undefined
+      socket = null
     })
   })
 

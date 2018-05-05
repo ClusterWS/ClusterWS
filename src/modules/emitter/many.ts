@@ -1,11 +1,11 @@
-import { logError } from '../../utils/functions'
+import { logError, isFunction } from '../../utils/functions'
 import { Listener, CustomObject, Message } from '../../utils/types'
 
 export class EventEmitterMany {
   private events: CustomObject = {}
 
   public onMany(event: string, listener: (event: string, ...args: any[]) => void): void {
-    if ({}.toString.call(listener) !== '[object Function]')
+    if (isFunction(listener))
       return logError('Listener must be a function')
     this.events[event] ?
       this.events[event].push(listener) : this.events[event] = [listener]

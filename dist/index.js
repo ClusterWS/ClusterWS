@@ -2,15 +2,15 @@
 
 var crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
 
-const noop = () => {}, native = (() => {
+const noop = () => {}, OPCODE_TEXT = 1, OPCODE_PING = 9, OPCODE_BINARY = 2, APP_PONG_CODE = 65, APP_PING_CODE = Buffer.from("9"), PERMESSAGE_DEFLATE = 1, DEFAULT_PAYLOAD_LIMIT = 16777216, native = (() => {
     try {
         return require(`${require.resolve("uws").replace("uws.js", "")}uws_${process.platform}_${process.versions.modules}`);
     } catch (e) {
         const r = process.version.substring(1).split(".").map(e => parseInt(e, 10)), t = r[0] < 6 || 6 === r[0] && r[1] < 4;
-        if ("win32" === process.platform && t) throw new Error("µWebSockets requires Node.js 6.4.0 or greater on Windows.");
+        if ("win32" === process.platform && t) throw new Error("µWebSockets requires Node.js 8.0.0 or greater on Windows.");
         throw new Error("Could not run µWebSockets bindings");
     }
-})(), OPCODE_TEXT = 1, OPCODE_PING = 9, OPCODE_BINARY = 2, APP_PONG_CODE = 65, APP_PING_CODE = Buffer.from("9"), PERMESSAGE_DEFLATE = 1, DEFAULT_PAYLOAD_LIMIT = 16777216;
+})();
 
 native.setNoop(noop);
 

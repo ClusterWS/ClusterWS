@@ -1,5 +1,5 @@
 import { Socket } from '../socket/socket'
-import { logError } from '../../utils/functions'
+import { logError, isFunction } from '../../utils/functions'
 import { Listener, CustomObject, Message } from '../../utils/types'
 
 export class EventEmitterSingle {
@@ -8,7 +8,7 @@ export class EventEmitterSingle {
   public on(event: 'connection', listener: (socket: Socket) => void): void
   public on(event: string, listener: Listener): void
   public on(event: string, listener: Listener): void {
-    if ({}.toString.call(listener) !== '[object Function]')
+    if (isFunction(listener))
       return logError('Listener must be a function')
     this.events[event] = listener
   }
