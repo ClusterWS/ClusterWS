@@ -37,7 +37,7 @@ export default class ClusterWS {
       for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(i + 9400)
 
     if (options.brokersPorts.length !== options.brokers)
-      return logError('Number of the broker ports can not be less than number of brokers \n')
+      return logError('Number of broker ports should be the same as nubmer of brokers\n')
 
     cluster.isMaster ? this.masterProcess(options) : this.workerProcess(options)
   }
