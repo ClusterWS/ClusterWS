@@ -422,7 +422,7 @@ class ClusterWS {
         };
         if (isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
         if (!e.brokersPorts) for (let e = 0; e < r.brokers; e++) r.brokersPorts.push(e + 9400);
-        if (r.brokersPorts.length !== r.brokers) return logError("Number of the broker ports can not be less than number of brokers \n");
+        if (r.brokersPorts.length !== r.brokers) return logError("Number of broker ports should be the same as number of brokers\n");
         cluster.isMaster ? this.masterProcess(r) : this.workerProcess(r);
     }
     masterProcess(e) {
