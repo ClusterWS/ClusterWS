@@ -1,13 +1,14 @@
 import * as HTTPS from 'https'
 
-import { WebSocketServer } from '../uws/uws'
+import { UWebSocket } from '../uws/uws.client'
+import { UWebSocketServer } from '../uws/uws.server'
 
 import { BrokerClient } from './client'
 import { generateKey } from '../../utils/functions'
 import { Message, CustomObject, HorizontalScaleOptions } from '../../utils/types'
 
-export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: String): void {
-  let server: WebSocketServer
+export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: string): void {
+  let server: UWebSocketServer
   const clients: CustomObject = {}
   const globalBrokers: CustomObject = {
     brokers: {},
@@ -18,9 +19,9 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
 
   if (serverType === 'Scaler' && horizontalScaleOptions && horizontalScaleOptions.masterOptions && horizontalScaleOptions.masterOptions.tlsOptions) {
     const httpsServer: HTTPS.Server = HTTPS.createServer(horizontalScaleOptions.masterOptions.tlsOptions)
-    server = new WebSocketServer({ server: httpsServer })
+    server = new UWebSocketServer({ server: httpsServer })
     httpsServer.listen(port, () => process.send({ event: 'READY', pid: process.pid }))
-  } else server = new WebSocketServer({ port }, (): void => process.send({ event: 'READY', pid: process.pid }))
+  } else server = new UWebSocketServer({ port }, (): void => process.send({ event: 'READY', pid: process.pid }))
 
   server.on('connection', (socket: CustomObject) => {
     socket.isAuth = false
@@ -44,11 +45,11 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
       clearTimeout(socket.authTimeOut)
       if (socket.isAuth)
         clients[socket.id] = null
-      socket = undefined
+      socket = null
     })
   })
 
-  server.keepAlive(20000)
+  server.heartbeat(20000)
   connectGlobalBrokers()
 
   function setSocketId(socket: CustomObject): void {
@@ -94,7 +95,7 @@ export function BrokerServer(port: number, securityKey: string, horizontalScaleO
   function createClient(brokerUrl: string, key: string = ''): void {
     BrokerClient(brokerUrl, key, {
       broadcastMessage: broadcast,
-      setBroker: (br: WebSocket, url: string): void => {
+      setBroker: (br: UWebSocket, url: string): void => {
         globalBrokers.brokers[url] = br
         globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers)
         globalBrokers.brokersAmount = globalBrokers.brokersKeys.length

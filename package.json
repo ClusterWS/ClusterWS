@@ -1,12 +1,12 @@
 {
   "name": "clusterws",
-  "version": "2.2.1",
+  "version": "3.0.0",
   "description": "ClusterWS - lightweight, fast and powerful framework for building horizontally & vertically scalable WebSocket applications in Node.js.",
   "main": "index.js",
   "types": "index.d.ts",
   "author": "Dmitrii Goriunov",
   "scripts": {
-    "build": "ts-builder -node -npm -folder src -mainfile index.ts -outfolder dist -outfile index.js",
+    "build": "clusterws-builder -type=node -npm",
     "publish": "npm run build && cd dist && npm publish && cd .."
   },
   "license": "MIT",
@@ -16,8 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^8.5.8",
-    "@types/uws": "^0.13.1",
-    "ts-builder": "^0.6.10"
+    "clusterws-builder": "0.0.10"
   },
   "keywords": [
     "clusterws",
@@ -29,5 +28,8 @@
     "real-time",
     "cluster",
     "javascript"
-  ]
+  ],
+  "dependencies": {
+    "uws": "^9.148.0"
+  }
 }

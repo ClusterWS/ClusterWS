@@ -7,12 +7,14 @@ import * as HTTP from 'http';
 import * as HTTPS from 'https';
 
 export default class ClusterWS {
+    static uWebSocket: any;
+    static uWebSocketServer: any;
     constructor(configurations: Configurations);
 }
 
 export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
 
-export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: String): void;
+export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: string): void;
 
 export class EventEmitterMany {
     onMany(event: string, listener: (event: string, ...args: any[]) => void): void;
@@ -29,15 +31,15 @@ export class EventEmitterSingle {
     removeEvents(): void;
 }
 
-export function encode(event: string, data: any, eventType: string): string;
-export function decode(socket: Socket, message: any): void;
+export function encode(event: string, data: Message, eventType: string): string;
+export function decode(socket: Socket, message: Message): void;
 
 export class Socket {
     worker: Worker;
     events: EventEmitterSingle;
     channels: CustomObject;
-    onPublish: any;
-    constructor(worker: Worker, socket: WebSocket);
+    onPublishEvent: (...args: any[]) => void;
+    constructor(worker: Worker, socket: UWebSocket);
     on(event: 'error', listener: (err: Error) => void): void;
     on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;
     on(event: string, listener: Listener): void;
@@ -56,45 +58,51 @@ export class WSServer extends EventEmitterSingle {
     publishToWorkers(message: Message): void;
     publish(channel: string, message: Message, tries?: number): void;
     broadcastMessage(_: string, message: Message): void;
-    setBroker(br: WebSocket, url: string): void;
+    setBroker(br: UWebSocket, url: string): void;
 }
 
-export class WebSocket {
+export class UWebSocket {
+    OPEN: number;
+    CLOSED: number;
     isAlive: boolean;
-    websocketType: string;
+    external: CustomObject;
+    executeOn: string;
     onping: Listener;
     onpong: Listener;
-    clientGroup: any;
-    external: Listener | CustomObject;
     internalOnOpen: Listener;
     internalOnError: Listener;
     internalOnClose: Listener;
     internalOnMessage: Listener;
-    constructor(uri: string, external?: CustomObject, websocketType?: string);
+    constructor(uri: string, external?: CustomObject, isServeClient?: boolean);
+    readonly readyState: number;
     on(eventName: string, listener: Listener): this;
     ping(message?: Message): void;
+    send(message: Message, options?: CustomObject): void;
     terminate(): void;
     close(code: number, reason: string): void;
-    send(message: Message, options?: CustomObject, cb?: Listener): void;
-    readonly OPEN: number;
-    readonly CLOSED: number;
-    readonly readyState: number;
 }
-export class WebSocketServer extends EventEmitterSingle {
-    noDelay: any;
+
+export class UWebSocketServer extends EventEmitterSingle {
+    noDelay: boolean;
     upgradeReq: any;
     httpServer: HTTP.Server;
     serverGroup: any;
+    pingIsAppLevel: boolean;
     upgradeCallback: any;
-    upgradeListener: any;
-    passedHttpServer: any;
     lastUpgradeListener: boolean;
     constructor(options: CustomObject, callback?: Listener);
-    keepAlive(interval: any): void;
-    close(cb: Listener): void;
-    emitConnection(ws: CustomObject): void;
-    abortConnection(socket: CustomObject, code: number, name: string): void;
+    heartbeat(interval: number, appLevel?: boolean): void;
 }
+
+export const noop: any;
+export const OPCODE_TEXT: number;
+export const OPCODE_PING: number;
+export const OPCODE_BINARY: number;
+export const APP_PONG_CODE: number;
+export const APP_PING_CODE: any;
+export const PERMESSAGE_DEFLATE: number;
+export const DEFAULT_PAYLOAD_LIMIT: number;
+export const native: any;
 
 export class Worker {
     wss: WSServer;
@@ -106,6 +114,7 @@ export class Worker {
 export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;
+export function isFunction<T>(fn: T): boolean;
 export function generateKey(length: number): string;
 
 export type Message = any;
@@ -141,6 +150,7 @@ export type Configurations = {
     pingInterval?: number;
     restartWorkerOnFail?: boolean;
     horizontalScaleOptions?: HorizontalScaleOptions;
+    encodeDecodeEngine?: EncodeDecodeEngine;
 };
 export type Options = {
     worker: WorkerFunction;
@@ -154,5 +164,10 @@ export type Options = {
     pingInterval: number;
     restartWorkerOnFail: boolean;
     horizontalScaleOptions: HorizontalScaleOptions | false;
+    encodeDecodeEngine: EncodeDecodeEngine | false;
+};
+export type EncodeDecodeEngine = {
+    encode: (message: Message) => Message;
+    decode: (message: Message) => Message;
 };
 

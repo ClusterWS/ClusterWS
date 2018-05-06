@@ -1,6 +1,6 @@
 import * as HTTP from 'http'
 import * as HTTPS from 'https'
-import { WebSocketServer } from './uws/uws'
+import { UWebSocketServer } from './uws/uws.server'
 
 import { Socket } from './socket/socket'
 import { WSServer } from './socket/wsserver'
@@ -20,14 +20,14 @@ export class Worker {
 
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer()
 
-    const mainWSServer: WebSocketServer = new WebSocketServer({
+    const uWSServer: UWebSocketServer = new UWebSocketServer({
       server: this.server,
       verifyClient: (info: CustomObject, callback: Listener): void =>
         this.wss.middleware.verifyConnection ?
           this.wss.middleware.verifyConnection(info, callback) : callback(true)
     })
-    mainWSServer.on('connection', (socket: any) => this.wss.emit('connection', new Socket(this, socket)))
-    // mainWSServer.keepAlive(this.options.pingInterval)
+    uWSServer.on('connection', (socket: any) => this.wss.emit('connection', new Socket(this, socket)))
+    uWSServer.heartbeat(this.options.pingInterval, true)
 
     this.server.listen(this.options.port, this.options.host, (): void => {
       this.options.worker.call(this)

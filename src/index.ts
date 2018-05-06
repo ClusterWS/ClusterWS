@@ -2,16 +2,19 @@ import * as cluster from 'cluster'
 
 import { Worker } from './modules/worker'
 import { BrokerServer } from './modules/broker/server'
-import { logReady, logWarning, logError, generateKey } from './utils/functions'
+import { logReady, logWarning, logError, generateKey, isFunction } from './utils/functions'
 import { Configurations, Options, CustomObject, Message } from './utils/types'
+
+import { UWebSocket } from './modules/uws/uws.client'
+import { UWebSocketServer } from './modules/uws/uws.server'
 
 declare const process: any
 
 export default class ClusterWS {
-  constructor(configurations: Configurations) {
-    if ({}.toString.call(configurations.worker) !== '[object Function]')
-      return logError('Worker param must be provided and it must be a function \n')
+  public static uWebSocket: any = UWebSocket
+  public static uWebSocketServer: any = UWebSocketServer
 
+  constructor(configurations: Configurations) {
     const options: Options = {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
       host: configurations.host || null,
@@ -23,13 +26,17 @@ export default class ClusterWS {
       tlsOptions: configurations.tlsOptions || false,
       pingInterval: configurations.pingInterval || 20000,
       restartWorkerOnFail: configurations.restartWorkerOnFail || false,
-      horizontalScaleOptions: configurations.horizontalScaleOptions || false
+      horizontalScaleOptions: configurations.horizontalScaleOptions || false,
+      encodeDecodeEngine: configurations.encodeDecodeEngine || false
     }
+
+    if (isFunction(options.worker))
+      return logError('Worker param must be provided and it must be a function \n')
 
     if (!configurations.brokersPorts)
       for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(i + 9400)
 
-    if (options.brokersPorts.length < options.brokers)
+    if (options.brokersPorts.length !== options.brokers)
       return logError('Number of the broker ports can not be less than number of brokers \n')
 
     cluster.isMaster ? this.masterProcess(options) : this.workerProcess(options)
@@ -53,12 +60,12 @@ export default class ClusterWS {
         message.event === 'READY' && ready(processName, processId, message.pid))
 
       newProcess.on('exit', () => {
+        newProcess = null
         logError(`${processName} has exited \n`)
         if (options.restartWorkerOnFail) {
           logWarning(`${processName} is restarting \n`)
           launchProcess(processName, processId)
         }
-        newProcess = undefined
       })
 
       newProcess.send({ securityKey, processId, processName })
@@ -101,6 +108,7 @@ export default class ClusterWS {
       }
       actions[message.processName] && actions[message.processName]()
     })
+
     process.on('uncaughtException', (err: Error): void => {
       logError(`PID: ${process.pid}\n ${err.stack}\n`)
       return process.exit()

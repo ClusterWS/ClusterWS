@@ -1,10 +1,10 @@
-import { WebSocket } from '../uws/uws'
+import { UWebSocket } from '../uws/uws.client'
 
 import { CustomObject, Message } from '../../utils/types'
 import { logError, logWarning, logReady } from '../../utils/functions'
 
 export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries: number = 0, reconnected?: boolean): void {
-  let websocket: WebSocket = new WebSocket(url)
+  let websocket: UWebSocket = new UWebSocket(url)
   websocket.on('open', (): void => {
     tries = 0
     broadcaster.setBroker(websocket, url)
@@ -13,7 +13,7 @@ export function BrokerClient(url: string, securityKey: string, broadcaster: Cust
   })
 
   websocket.on('error', (err: Error): NodeJS.Timer => {
-    websocket = undefined
+    websocket = null
     if (err.stack === 'uWs client connection error') {
       tries === 5 &&
         logWarning(`Can not connect to the Broker ${url}. System in reconnection state please check your Broker and URL \n`)
@@ -23,7 +23,7 @@ export function BrokerClient(url: string, securityKey: string, broadcaster: Cust
   })
 
   websocket.on('close', (code: number): void => {
-    websocket = undefined
+    websocket = null
     if (code === 4000)
       return logError('Can not connect to the broker wrong authorization key \n')
     logWarning(`Broker has disconnected, system is trying to reconnect to ${url} \n`)

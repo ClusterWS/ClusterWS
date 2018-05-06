@@ -1,4 +1,4 @@
-import { WebSocket } from '../uws/uws'
+import { UWebSocket } from '../uws/uws.client'
 
 import { Worker } from '../worker'
 import { logError } from '../../utils/functions'
@@ -10,31 +10,19 @@ export class Socket {
   public worker: Worker
   public events: EventEmitterSingle = new EventEmitterSingle()
   public channels: CustomObject = {}
-  public onPublish: any
+  public onPublishEvent: (...args: any[]) => void
 
-  private socket: WebSocket
-  private isAlive: boolean
-  private missedPing: number = 0
+  private socket: UWebSocket
 
-  constructor(worker: Worker, socket: WebSocket) {
+  constructor(worker: Worker, socket: UWebSocket) {
     this.worker = worker
     this.socket = socket
-    this.onPublish = (channel: string, message: Message): void => this.send(channel, message, 'publish')
-
-    const pingInterval: NodeJS.Timer = setInterval(
-      (): void => this.missedPing++ > 2 ? this.disconnect(4001, 'No pongs') : this.send('#0', null, 'ping'),
-      this.worker.options.pingInterval)
+    this.onPublishEvent = (channel: string, message: Message): void => this.send(channel, message, 'publish')
 
     this.send('configuration', { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary }, 'system')
 
     this.socket.on('error', (err: Error): void => this.events.emit('error', err))
-
-    this.socket.on('message', (message: Message): any => {
-      if (typeof message !== 'string')
-        message = Buffer.from(message).toString()
-
-      if (message === '#1') return this.missedPing = 0
-
+    this.socket.on('message', (message: Message): void => {
       try {
         message = JSON.parse(message)
         decode(this, message)
@@ -42,11 +30,10 @@ export class Socket {
     })
 
     this.socket.on('close', (code?: number, reason?: string): void => {
-      clearInterval(pingInterval)
       this.events.emit('disconnect', code, reason)
 
       for (let i: number = 0, keys: string[] = Object.keys(this.channels), keysLength: number = keys.length; i < keysLength; i++)
-        this.worker.wss.channels.removeListener(keys[i], this.onPublish)
+        this.worker.wss.channels.removeListener(keys[i], this.onPublishEvent)
 
       for (let i: number = 0, keys: string[] = Object.keys(this), keysLength: number = keys.length; i < keysLength; i++)
         this[keys[i]] = null
@@ -62,6 +49,9 @@ export class Socket {
 
   public send(event: string, message: Message, eventType?: string): void
   public send(event: string, message: Message, eventType: string = 'emit'): void {
+    message = this.worker.options.encodeDecodeEngine ?
+      this.worker.options.encodeDecodeEngine.encode(message) : message
+
     this.socket.send(this.worker.options.useBinary ?
       Buffer.from(encode(event, message, eventType)) :
       encode(event, message, eventType))
