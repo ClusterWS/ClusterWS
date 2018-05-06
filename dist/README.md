@@ -6,14 +6,14 @@
 </p>
 
 <p align="center">
-    <a href="https://www.npmjs.com/package/clusterws"><img src="https://img.shields.io/badge/npm-3.0.3-AE1E80.svg?style=for-the-badge" alt="NPM Version" /></a>
+    <a href="https://www.npmjs.com/package/clusterws"><img src="https://img.shields.io/badge/npm-3.0.4-AE1E80.svg?style=for-the-badge" alt="NPM Version" /></a>
     <a href="https://github.com/ClusterWS/ClusterWS/graphs/commit-activity"><img src="https://img.shields.io/badge/Maintain-Yes-AE1E80.svg?style=for-the-badge" alt="Maintain" /></a>
     <a href="https://github.com/ClusterWS/ClusterWS/blob/master/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-AE1E80.svg?style=for-the-badge" alt="GitHub license"/></a>
     <a href="#"><img src="https://img.shields.io/badge/NODE.JS->=8-AE1E80.svg?style=for-the-badge" alt="GitHub license"/></a>
 </p>
 
 <p align="center">
-    <i>Lightweight, fast and powerful framework for building scalable WebSockets applications in Node.js. ClusterWS uses <a href="https://github.com/uNetworking/uWebSockets">uWebSockets</a> - one of the most lightweight, efficient & scalable WebSockets library.</i>
+    <i><strong>Lightweight, fast and powerful</strong> framework for building <strong>scalable</strong> WebSockets applications in Node.js. ClusterWS uses <a href="https://github.com/uNetworking/uWebSockets">uWebSockets</a> - one of the most lightweight, efficient & scalable WebSockets library.</i>
 </p>
 
 <h3 align="center">
