@@ -77,6 +77,10 @@ function logWarning(e) {
     return console.log(`[33m${e}[0m`);
 }
 
+function isFunction(e) {
+    return "[object Function]" !== {}.toString.call(e);
+}
+
 function generateKey(e) {
     return crypto.randomBytes(Math.ceil(e / 2)).toString("hex").slice(0, e);
 }
@@ -86,7 +90,7 @@ class EventEmitterSingle {
         this.events = {};
     }
     on(e, r) {
-        if ("[object Function]" !== {}.toString.call(r)) return logError("Listener must be a function");
+        if (isFunction(r)) return logError("Listener must be a function");
         this.events[e] = r;
     }
     emit(e, ...r) {
@@ -243,7 +247,7 @@ class EventEmitterMany {
         this.events = {};
     }
     onMany(e, r) {
-        if ("[object Function]" !== {}.toString.call(r)) return logError("Listener must be a function");
+        if (isFunction(r)) return logError("Listener must be a function");
         this.events[e] ? this.events[e].push(r) : this.events[e] = [ r ];
     }
     emitMany(e, ...r) {
@@ -309,11 +313,11 @@ function BrokerClient(e, r, t, s = 0, n) {
         s = 0, t.setBroker(o, e), n && logReady(`Broker has been connected to ${e} \n`), 
         o.send(r);
     }), o.on("error", i => {
-        if (o = void 0, "uWs client connection error" === i.stack) return 5 === s && logWarning(`Can not connect to the Broker ${e}. System in reconnection state please check your Broker and URL \n`), 
+        if (o = null, "uWs client connection error" === i.stack) return 5 === s && logWarning(`Can not connect to the Broker ${e}. System in reconnection state please check your Broker and URL \n`), 
         setTimeout(() => BrokerClient(e, r, t, ++s, n || s > 5), 500);
         logError(`Socket ${process.pid} has an issue: \n ${i.stack} \n`);
     }), o.on("close", n => {
-        if (o = void 0, 4e3 === n) return logError("Can not connect to the broker wrong authorization key \n");
+        if (o = null, 4e3 === n) return logError("Can not connect to the broker wrong authorization key \n");
         logWarning(`Broker has disconnected, system is trying to reconnect to ${e} \n`), 
         setTimeout(() => BrokerClient(e, r, t, ++s, !0), 500);
     }), o.on("message", e => t.broadcastMessage("", e));
@@ -391,7 +395,7 @@ function BrokerServer(e, r, t, s) {
                 t.send(r);
             }(n));
         }), e.on("close", (r, t) => {
-            clearTimeout(e.authTimeOut), e.isAuth && (o[e.id] = null), e = void 0;
+            clearTimeout(e.authTimeOut), e.isAuth && (o[e.id] = null), e = null;
         });
     }), n.heartbeat(2e4), function() {
         if ("Scaler" === s || !t) return;
@@ -402,7 +406,6 @@ function BrokerServer(e, r, t, s) {
 
 class ClusterWS {
     constructor(e) {
-        if ("[object Function]" !== {}.toString.call(e.worker)) return logError("Worker param must be provided and it must be a function \n");
         const r = {
             port: e.port || (e.tlsOptions ? 443 : 80),
             host: e.host || null,
@@ -417,8 +420,9 @@ class ClusterWS {
             horizontalScaleOptions: e.horizontalScaleOptions || !1,
             encodeDecodeEngine: e.encodeDecodeEngine || !1
         };
+        if (isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
         if (!e.brokersPorts) for (let e = 0; e < r.brokers; e++) r.brokersPorts.push(e + 9400);
-        if (r.brokersPorts.length < r.brokers) return logError("Number of the broker ports can not be less than number of brokers \n");
+        if (r.brokersPorts.length !== r.brokers) return logError("Number of the broker ports can not be less than number of brokers \n");
         cluster.isMaster ? this.masterProcess(r) : this.workerProcess(r);
     }
     masterProcess(e) {
@@ -437,8 +441,8 @@ class ClusterWS {
                 logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
                 Object.keys(s).forEach(e => s.hasOwnProperty(e) && logReady(s[e])), Object.keys(n).forEach(e => n.hasOwnProperty(e) && logReady(n[e])));
             }(i, a, t.pid)), l.on("exit", () => {
-                logError(`${i} has exited \n`), e.restartWorkerOnFail && (logWarning(`${i} is restarting \n`), 
-                o(i, a)), l = void 0;
+                l = null, logError(`${i} has exited \n`), e.restartWorkerOnFail && (logWarning(`${i} is restarting \n`), 
+                o(i, a));
             }), l.send({
                 securityKey: t,
                 processId: a,

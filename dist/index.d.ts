@@ -114,6 +114,7 @@ export class Worker {
 export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;
+export function isFunction<T>(fn: T): boolean;
 export function generateKey(length: number): string;
 
 export type Message = any;
