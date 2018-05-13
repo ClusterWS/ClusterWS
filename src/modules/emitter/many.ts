@@ -5,7 +5,7 @@ export class EventEmitterMany {
   private events: CustomObject = {}
 
   public onMany(event: string, listener: (event: string, ...args: any[]) => void): void {
-    if (isFunction(listener))
+    if (!isFunction(listener))
       return logError('Listener must be a function')
     this.events[event] ?
       this.events[event].push(listener) : this.events[event] = [listener]

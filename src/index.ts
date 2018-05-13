@@ -30,7 +30,7 @@ export default class ClusterWS {
       encodeDecodeEngine: configurations.encodeDecodeEngine || false
     }
 
-    if (isFunction(options.worker))
+    if (!isFunction(options.worker))
       return logError('Worker param must be provided and it must be a function \n')
 
     if (!configurations.brokersPorts)

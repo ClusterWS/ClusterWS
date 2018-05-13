@@ -8,7 +8,7 @@ export class EventEmitterSingle {
   public on(event: 'connection', listener: (socket: Socket) => void): void
   public on(event: string, listener: Listener): void
   public on(event: string, listener: Listener): void {
-    if (isFunction(listener))
+    if (!isFunction(listener))
       return logError('Listener must be a function')
     this.events[event] = listener
   }

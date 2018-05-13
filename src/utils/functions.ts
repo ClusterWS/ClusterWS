@@ -14,7 +14,7 @@ export function logWarning<T>(data: T): any {
 }
 
 export function isFunction<T>(fn: T): boolean {
-  return {}.toString.call(fn) !== '[object Function]'
+  return {}.toString.call(fn) === '[object Function]'
 }
 
 export function generateKey(length: number): string {

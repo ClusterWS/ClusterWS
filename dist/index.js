@@ -78,7 +78,7 @@ function logWarning(e) {
 }
 
 function isFunction(e) {
-    return "[object Function]" !== {}.toString.call(e);
+    return "[object Function]" === {}.toString.call(e);
 }
 
 function generateKey(e) {
@@ -90,7 +90,7 @@ class EventEmitterSingle {
         this.events = {};
     }
     on(e, r) {
-        if (isFunction(r)) return logError("Listener must be a function");
+        if (!isFunction(r)) return logError("Listener must be a function");
         this.events[e] = r;
     }
     emit(e, ...r) {
@@ -247,7 +247,7 @@ class EventEmitterMany {
         this.events = {};
     }
     onMany(e, r) {
-        if (isFunction(r)) return logError("Listener must be a function");
+        if (!isFunction(r)) return logError("Listener must be a function");
         this.events[e] ? this.events[e].push(r) : this.events[e] = [ r ];
     }
     emitMany(e, ...r) {
@@ -420,7 +420,7 @@ class ClusterWS {
             horizontalScaleOptions: e.horizontalScaleOptions || !1,
             encodeDecodeEngine: e.encodeDecodeEngine || !1
         };
-        if (isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
+        if (!isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
         if (!e.brokersPorts) for (let e = 0; e < r.brokers; e++) r.brokersPorts.push(e + 9400);
         if (r.brokersPorts.length !== r.brokers) return logError("Number of broker ports should be the same as number of brokers\n");
         cluster.isMaster ? this.masterProcess(r) : this.workerProcess(r);
