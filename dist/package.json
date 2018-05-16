@@ -23,5 +23,12 @@
 	],
 	"dependencies": {
 		"uws": "^9.148.0"
+	},
+	"prettier": {
+		"printWidth": 120,
+		"singleQuote": true,
+		"disableLanguages": [],
+		"semi": true,
+		"arrowParens": "always"
 	}
 }
