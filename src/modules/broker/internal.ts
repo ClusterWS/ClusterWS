@@ -5,7 +5,7 @@ import { Message, CustomObject } from '../../utils/types';
 /* 
 TODO: 
  1. fix typings for this file 
- 2. Add external connection
+ 2. Add external connection to global broker
 **/
 
 interface Clients {

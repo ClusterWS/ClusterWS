@@ -85,8 +85,23 @@ describe('Websocket Client/Server Communication Tests', () => {
     broadcaster2.broadcastMessage = (_, message): void => done('Should not get any messages but has got one');
 
     setTimeout(() => done(null), 1500);
-
     setTimeout(() => websocket1.send(Buffer.from(`test%${JSON.stringify({ m: 'hello world' })}`)), 500);
   });
-  // it('Should fire connect event', (done) => {});
+});
+
+describe('Reconnection Test', () => {
+  it('Should reconnect to the Websocket on lost connection', (done) => {
+    let tries = 0;
+    let websocket1;
+    let broadcaster1 = {
+      broadcastMessage: (message) => {},
+      setBroker: (br, url): void => {
+        tries++;
+        websocket1 = br;
+        if (tries === 2) done(null);
+      }
+    };
+    BrokerClient('ws://localhost:3000', 'key', broadcaster1);
+    setTimeout(() => websocket1.close(4001, 'Test Close'), 200);
+  });
 });

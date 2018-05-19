@@ -1,14 +1,15 @@
 {
   "name": "clusterws",
   "version": "3.0.5",
-  "description": "ClusterWS - lightweight, fast and powerful framework for building scalable WebSockets applications in Node.js.",
+  "description":
+    "ClusterWS - lightweight, fast and powerful framework for building scalable WebSockets applications in Node.js.",
   "main": "index.js",
   "types": "index.d.ts",
   "author": "Dmitrii Goriunov",
   "scripts": {
     "build": "clusterws-builder -type=node -npm",
     "publish": "npm run build && cd dist && npm publish && cd ..",
-    "test": "mocha -r ts-node/register  ./tests/broker.test.ts"
+    "test": "mocha -r ts-node/register ./tests/*.test.ts"
   },
   "license": "MIT",
   "repository": {
