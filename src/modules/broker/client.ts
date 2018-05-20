@@ -2,6 +2,7 @@ import { UWebSocket } from '../uws/client';
 import { logWarning, logReady, logError } from '../../utils/functions';
 import { CustomObject, Message, Listener } from '../../utils/types';
 
+// TODO: Design complete resubscribing
 export function BrokerClient(
   url: string,
   securityKey: string,
@@ -12,6 +13,7 @@ export function BrokerClient(
   let websocket: CustomObject = new UWebSocket(url);
 
   websocket.on('open', (): void => {
+    tries = 0;
     websocket.send(securityKey);
     broadcaster.setBroker(websocket, url);
     reconnected && logReady(`Broker has been connected to ${url} \n`);

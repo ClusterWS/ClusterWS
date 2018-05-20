@@ -1,5 +1,6 @@
-// import { Socket } from '../socket/socket';
 // TODO: Fix typings for Socket
+
+// import { Socket } from '../socket/socket';
 import { logError, isFunction } from '../../utils/functions';
 import { Listener, CustomObject, Message } from '../../utils/types';
 

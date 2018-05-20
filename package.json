@@ -7,9 +7,9 @@
   "types": "index.d.ts",
   "author": "Dmitrii Goriunov",
   "scripts": {
+    "test": "mocha -r ts-node/register ./tests/*.test.ts",
     "build": "clusterws-builder -type=node -npm",
-    "publish": "npm run build && cd dist && npm publish && cd ..",
-    "test": "mocha -r ts-node/register ./tests/*.test.ts"
+    "publish": "npm run build && cd dist && npm publish && cd .."
   },
   "license": "MIT",
   "repository": {
@@ -21,9 +21,9 @@
     "@types/mocha": "^5.2.0",
     "@types/node": "^8.5.8",
     "chai": "^4.1.2",
-    "clusterws-builder": "0.1.0",
     "mocha": "^5.1.1",
-    "ts-node": "^6.0.3"
+    "ts-node": "^6.0.3",
+    "clusterws-builder": "0.1.0"
   },
   "keywords": [
     "clusterws",
@@ -40,10 +40,10 @@
     "uws": "^10.148.0"
   },
   "prettier": {
+    "semi": true,
     "printWidth": 120,
     "singleQuote": true,
-    "disableLanguages": [],
-    "semi": true,
-    "arrowParens": "always"
+    "arrowParens": "always",
+    "disableLanguages": []
   }
 }
