@@ -3,7 +3,7 @@ import { Listener, CustomObject, Message } from '../../utils/types';
 
 // Note that listener's first arg is event name
 export class EventEmitterMany {
-  private events: CustomObject = {};
+  public events: CustomObject = {};
 
   public onMany(event: string, listener: (event: string, ...args: any[]) => void): void {
     if (!isFunction(listener)) return logError('Listener must be a function');
@@ -11,7 +11,7 @@ export class EventEmitterMany {
       this.events[event].push(listener);
     } else {
       this.events[event] = [listener];
-      this.informBrokerSubscribe(event);
+      this.changeChannelStatusInBroker(event);
     }
   }
 
@@ -28,7 +28,7 @@ export class EventEmitterMany {
       if (listeners[i] === listener) return listeners.splice(i, 1);
     if (listeners.length === 0) {
       this.events[event] = null;
-      this.informBrokerUnsubscribe(event);
+      this.changeChannelStatusInBroker(event);
     }
   }
 
@@ -36,7 +36,7 @@ export class EventEmitterMany {
     return this.events[event] && this.events[event].length > 0;
   }
 
-  // Must be here to echange this functions in wsserver
-  public informBrokerUnsubscribe(event: string): void {}
-  public informBrokerSubscribe(event: string): void {}
+  public changeChannelStatusInBroker(event: string): void {
+    return;
+  }
 }

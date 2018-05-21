@@ -33,6 +33,5 @@ export function BrokerClient(
     setTimeout(() => BrokerClient(url, securityKey, broadcaster, ++tries, reconnected || tries > 5), 500);
   });
 
-  websocket.subscribe = websocket.unsubscribe = (channelName: string) => websocket.send(channelName);
   websocket.on('message', (message: Message): void => broadcaster.broadcastMessage(null, message));
 }

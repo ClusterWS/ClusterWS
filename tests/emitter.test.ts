@@ -43,6 +43,11 @@ describe('Event Emitter Many Tests', () => {
 
     emitter.emitMany('manyevents', 'testmessage');
   });
+
+  it('Should call new changeChannelStatusInBroker function', (done) => {
+    emitter.changeChannelStatusInBroker = (string) => done(null);
+    emitter.onMany('testnewSubscribe', (event) => done(null));
+  });
 });
 
 describe('Event Emitter Single Tests', () => {

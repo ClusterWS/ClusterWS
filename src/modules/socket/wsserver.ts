@@ -26,7 +26,7 @@ export class WSServer extends EventEmitterSingle {
   constructor() {
     super();
 
-    this.channels.informBrokerUnsubscribe = this.channels.informBrokerSubscribe = (event: string): void => {
+    this.channels.changeChannelStatusInBroker = (event: string): void => {
       for (let i = 0; i < this.internalBrokers.brokersAmount; i++) {
         const receiver = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[i]];
         if (receiver.readyState === 1) receiver.send(event);
@@ -94,7 +94,7 @@ export class WSServer extends EventEmitterSingle {
     this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers);
     this.internalBrokers.brokersAmount = this.internalBrokers.brokersKeys.length;
 
-    const connectedChannels: string[] = Object.keys(this.channels);
+    const connectedChannels: string[] = Object.keys(this.channels.events);
     if (connectedChannels.length) br.send(JSON.stringify(connectedChannels));
   }
 }

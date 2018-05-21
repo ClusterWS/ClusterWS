@@ -66,8 +66,8 @@ describe('Websocket Client/Server Communication Tests', () => {
   });
 
   it('Should get the right message only on Websocket2 ', (done) => {
-    websocket1.subscribe('test');
-    websocket2.subscribe('test');
+    websocket1.send('test');
+    websocket2.send('test');
 
     broadcaster1.broadcastMessage = (_, message): void => done('Should not execute broadcaster 1');
     broadcaster2.broadcastMessage = (_, message): void => {
@@ -79,7 +79,7 @@ describe('Websocket Client/Server Communication Tests', () => {
   });
 
   it('Should not get any message after unsubscribe', (done) => {
-    websocket2.unsubscribe('test');
+    websocket2.send('test');
 
     broadcaster1.broadcastMessage = (_, message): void => done('Should not execute broadcaster 1');
     broadcaster2.broadcastMessage = (_, message): void => done('Should not get any messages but has got one');
