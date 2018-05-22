@@ -1,7 +1,6 @@
 import { logError, isFunction } from '../../utils/functions';
 import { Listener, CustomObject, Message } from '../../utils/types';
 
-// Note that listener's first arg is event name
 export class EventEmitterMany {
   public events: CustomObject = {};
 
@@ -18,6 +17,7 @@ export class EventEmitterMany {
   public emitMany(event: string, ...args: any[]): void {
     const listeners: Listener[] = this.events[event];
     if (!listeners) return;
+    // Note that listener's first arg is event name
     for (let i: number = 0, len: number = listeners.length; i < len; i++) listeners[i](event, ...args);
   }
 

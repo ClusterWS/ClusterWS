@@ -1,13 +1,11 @@
-// TODO: Fix typings for Socket
-
-// import { Socket } from '../socket/socket';
+import { Socket } from '../socket/socket';
 import { logError, isFunction } from '../../utils/functions';
 import { Listener, CustomObject, Message } from '../../utils/types';
 
 export class EventEmitterSingle {
   private events: CustomObject = {};
 
-  public on(event: 'connection', listener: (socket: any) => void): void;
+  public on(event: 'connection', listener: (socket: Socket) => void): void;
   public on(event: string, listener: Listener): void;
   public on(event: string, listener: Listener): void {
     if (!isFunction(listener)) return logError('Listener must be a function');

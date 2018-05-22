@@ -1,10 +1,10 @@
+import { Socket } from './socket';
 import { UWebSocket } from '../uws/client';
 import { logWarning } from '../../utils/functions';
 import { EventEmitterMany } from '../emitter/many';
 import { EventEmitterSingle } from '../emitter/single';
 import { CustomObject, Message, Listener } from '../../utils/types';
 
-// TODO: fix typings for Socket.ts
 interface InternalBrokers {
   brokers: CustomObject;
   nextBroker: number;
@@ -35,7 +35,7 @@ export class WSServer extends EventEmitterSingle {
   }
 
   public setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void;
-  // public setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
+  public setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
   public setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
   public setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
   public setMiddleware(name: string, listener: Listener): void {
