@@ -7,7 +7,7 @@
   "types": "index.d.ts",
   "author": "Dmitrii Goriunov",
   "scripts": {
-    "test": "mocha -r ts-node/register ./tests/*.test.ts",
+    "tests": "mocha -r ts-node/register ./tests/*.test.ts",
     "build": "clusterws-builder -type=node -npm",
     "publish": "npm run build && cd dist && npm publish && cd .."
   },

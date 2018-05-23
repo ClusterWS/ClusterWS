@@ -12,11 +12,8 @@ import { Options, CustomObject, Listener } from '../utils/types';
 export class Worker {
   public wss: WSServer = new WSServer();
   public server: HTTP.Server | HTTPS.Server;
-  public options: Options;
 
-  constructor(options: Options, securityKey: string) {
-    this.options = options;
-
+  constructor(public options: Options, securityKey: string) {
     for (let i: number = 0; i < this.options.brokers; i++)
       BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}`, securityKey, this.wss);
 
