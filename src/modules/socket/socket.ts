@@ -1,3 +1,5 @@
+// TODO: Need clean up
+
 import { Worker } from '../worker';
 import { logError } from '../../utils/functions';
 import { UWebSocket } from '../uws/client';
@@ -18,11 +20,9 @@ export class Socket {
       'system'
     );
 
-    this.socket.on('error', (err: Error): void => this.events.emit('error', err));
     this.socket.on('message', (message: Message): void => {
       try {
-        message = JSON.parse(message);
-        decode(this, message);
+        decode(this, JSON.parse(message));
       } catch (e) {
         logError(`PID: ${process.pid}\n${e}\n`);
       }
@@ -35,8 +35,9 @@ export class Socket {
       )
         this.worker.wss.channels.removeListener(keys[i], this.onPublishEvent);
       this.events.emit('disconnect', code, reason);
-      // Have removed cleaning up for now  (need to test memory test)
+      // Have removed cleaning up for now (need to test memory test)
     });
+    this.socket.on('error', (err: Error): void => this.events.emit('error', err));
   }
 
   public on(event: 'error', listener: (err: Error) => void): void;
@@ -47,7 +48,11 @@ export class Socket {
   }
 
   public send(event: string, message: Message, eventType?: string): void;
-  public send(event: string, message: Message, eventType: string = 'emit'): void {}
+  public send(event: string, message: Message, eventType: string = 'emit'): void {
+    message = this.worker.options.encodeDecodeEngine ? this.worker.options.encodeDecodeEngine.encode(message) : message;
+    message = encode(event, message, eventType);
+    this.socket.send(this.worker.options.useBinary ? Buffer.from(message) : message);
+  }
 
   public disconnect(code?: number, reason?: string): void {
     this.socket.close(code, reason);

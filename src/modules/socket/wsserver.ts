@@ -27,8 +27,8 @@ export class WSServer extends EventEmitterSingle {
     super();
 
     this.channels.changeChannelStatusInBroker = (event: string): void => {
-      for (let i = 0; i < this.internalBrokers.brokersAmount; i++) {
-        const receiver = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[i]];
+      for (let i: number = 0; i < this.internalBrokers.brokersAmount; i++) {
+        const receiver: UWebSocket = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[i]];
         if (receiver.readyState === 1) receiver.send(event);
       }
     };

@@ -2,20 +2,18 @@ import { generateKey } from '../../utils/functions';
 import { UWebSocketsServer } from '../uws/server';
 import { Message, CustomObject } from '../../utils/types';
 
-/* 
-TODO: 
- 1. fix typings for this file 
- 2. Add external connection to global broker
+/*
+TODO: Add external connection to global broker
 **/
 
-interface Clients {
+type Clients = {
   sockets: CustomObject;
   length: number;
   keys: string[];
-}
+};
 
-export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any) {
-  let clients: Clients = {
+export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void {
+  const clients: Clients = {
     sockets: {},
     length: 0,
     keys: []
@@ -41,12 +39,11 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
       } else if (socket.isAuth) {
         if (typeof message === 'string') {
           if (message[0] !== '[') {
-            socket.channels[message] = socket.channels[message] ? false : true;
+            socket.channels[message] = socket.channels[message] ? null : 1;
           } else {
-            let channelsArray: string[] = JSON.parse(message);
-            for (let i: number = 0, len = channelsArray.length; i < len; i++) {
+            const channelsArray: string[] = JSON.parse(message);
+            for (let i: number = 0, len: number = channelsArray.length; i < len; i++)
               socket.channels[channelsArray[i]] = true;
-            }
           }
         } else broadcast(socket.uid, message);
       }
@@ -64,12 +61,12 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
   server.heartbeat(20000);
 
   function broadcast(uid: string, message: Message): void {
-    const messageBuffer = Buffer.from(message);
+    const messageBuffer: Buffer = Buffer.from(message);
     const channel: string = messageBuffer.slice(0, messageBuffer.indexOf(37)).toString();
     for (let i: number = 0; i < clients.length; i++) {
       const key: string = clients.keys[i];
       if (key !== uid) {
-        const client = clients.sockets[key];
+        const client: CustomObject = clients.sockets[key];
         if (client.channels[channel]) client.send(message);
       }
     }

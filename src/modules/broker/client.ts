@@ -2,14 +2,13 @@ import { UWebSocket } from '../uws/client';
 import { logWarning, logReady, logError } from '../../utils/functions';
 import { CustomObject, Message, Listener } from '../../utils/types';
 
-// TODO: Design complete resubscribing
 export function BrokerClient(
   url: string,
   securityKey: string,
   broadcaster: CustomObject,
   tries: number = 0,
   reconnected?: boolean
-) {
+): void {
   let websocket: CustomObject = new UWebSocket(url);
 
   websocket.on('open', (): void => {

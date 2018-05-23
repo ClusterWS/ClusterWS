@@ -22,13 +22,13 @@
 		"javascript"
 	],
 	"dependencies": {
-		"uws": "^9.148.0"
+		"uws": "^10.148.0"
 	},
 	"prettier": {
+		"semi": true,
 		"printWidth": 120,
 		"singleQuote": true,
-		"disableLanguages": [],
-		"semi": true,
-		"arrowParens": "always"
+		"arrowParens": "always",
+		"disableLanguages": []
 	}
 }

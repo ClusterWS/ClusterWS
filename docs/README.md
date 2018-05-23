@@ -1,4 +1,4 @@
-<h1 align="center">ClusterWS</h1> 
+<h1 align="center">ClusterWS</h1>
 <h6 align="center">Build Scalable Node.js WebSockets Applications</h6>
 
 <p align="center">
@@ -9,7 +9,7 @@
     <a href="https://www.npmjs.com/package/clusterws"><img src="https://img.shields.io/badge/npm-3.0.5-AE1E80.svg?style=for-the-badge" alt="NPM Version" /></a>
     <a href="https://github.com/ClusterWS/ClusterWS/graphs/commit-activity"><img src="https://img.shields.io/badge/Maintain-Yes-AE1E80.svg?style=for-the-badge" alt="Maintain" /></a>
     <a href="https://github.com/ClusterWS/ClusterWS/blob/master/LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-AE1E80.svg?style=for-the-badge" alt="GitHub license"/></a>
-    <a href="#"><img src="https://img.shields.io/badge/NODE.JS->=8-AE1E80.svg?style=for-the-badge" alt="GitHub license"/></a>
+    <a href="#"><img src="https://img.shields.io/badge/NODE.JS-8+-AE1E80.svg?style=for-the-badge" alt="GitHub license"/></a>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 
 <p align="center">
     <a href="https://github.com/ClusterWS/ClusterWS-Client-Swift"><img src="https://user-images.githubusercontent.com/18750503/37686010-8ec97d8c-2cfa-11e8-844a-3c79043d3c83.png" width="150"/></a>
-    <a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img src="https://user-images.githubusercontent.com/18750503/37686016-96558d5c-2cfa-11e8-8d91-3a01122a73eb.png" 
+    <a href="https://github.com/ClusterWS/ClusterWS-Client-Java"><img src="https://user-images.githubusercontent.com/18750503/37686016-96558d5c-2cfa-11e8-8d91-3a01122a73eb.png"
     width="150" /></a>
     <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://user-images.githubusercontent.com/18750503/37686031-9fa2d888-2cfa-11e8-911e-d844a8753b88.png" width="150"/></a>
 </p>

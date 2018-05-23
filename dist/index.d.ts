@@ -14,13 +14,17 @@ export default class ClusterWS {
 
 export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
 
-export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: string): void;
+
+
+export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void;
 
 export class EventEmitterMany {
+    events: CustomObject;
     onMany(event: string, listener: (event: string, ...args: any[]) => void): void;
     emitMany(event: string, ...args: any[]): void;
     removeListener(event: string, listener: Listener): any;
     exist(event: string): boolean;
+    changeChannelStatusInBroker(event: string): void;
 }
 
 export class EventEmitterSingle {
@@ -36,6 +40,7 @@ export function decode(socket: Socket, message: Message): void;
 
 export class Socket {
     worker: Worker;
+    socket: UWebSocket;
     events: EventEmitterSingle;
     channels: CustomObject;
     onPublishEvent: (...args: any[]) => void;
@@ -51,6 +56,7 @@ export class Socket {
 export class WSServer extends EventEmitterSingle {
     channels: EventEmitterMany;
     middleware: CustomObject;
+    constructor();
     setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void;
     setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
@@ -82,7 +88,7 @@ export class UWebSocket {
     close(code: number, reason: string): void;
 }
 
-export class UWebSocketServer extends EventEmitterSingle {
+export class UWebSocketsServer extends EventEmitterSingle {
     noDelay: boolean;
     upgradeReq: any;
     httpServer: HTTP.Server;
@@ -105,9 +111,9 @@ export const DEFAULT_PAYLOAD_LIMIT: number;
 export const native: any;
 
 export class Worker {
+    options: Options;
     wss: WSServer;
     server: HTTP.Server | HTTPS.Server;
-    options: Options;
     constructor(options: Options, securityKey: string);
 }
 

@@ -1,17 +1,19 @@
+// TODO: Need clean up
 import { Socket } from './socket';
 import { CustomObject, Message, Listener } from '../../utils/types';
 
 export function encode(event: string, data: Message, eventType: string): string {
   const message: CustomObject = {
-    emit: { '#': ['e', event, data] },
-    publish: { '#': ['p', event, data] },
+    emit: ['e', event, data],
+    publish: ['p', event, data],
     system: {
-      subscribe: { '#': ['s', 's', data] },
-      unsubscribe: { '#': ['s', 'u', data] },
-      configuration: { '#': ['s', 'c', data] }
+      subscribe: ['s', 's', data],
+      unsubscribe: ['s', 'u', data],
+      configuration: ['s', 'c', data]
     }
   };
-  return JSON.stringify(eventType === 'system' ? message[eventType][event] : message[eventType]);
+
+  return JSON.stringify({ '#': message[eventType][event] || message[eventType] });
 }
 
 export function decode(socket: Socket, message: Message): void {
@@ -28,13 +30,13 @@ export function decode(socket: Socket, message: Message): void {
           socket.channels[userMessage] = 1;
           socket.worker.wss.channels.onMany(userMessage, socket.onPublishEvent);
         };
-        !socket.worker.wss.middleware.onSubscribe
-          ? subscribe()
-          : socket.worker.wss.middleware.onSubscribe(
+        socket.worker.wss.middleware.onSubscribe
+          ? socket.worker.wss.middleware.onSubscribe(
               socket,
               userMessage,
               (allow: boolean): void => allow && subscribe()
-            );
+            )
+          : subscribe();
       },
       u: (): void => {
         socket.worker.wss.channels.removeListener(userMessage, socket.onPublishEvent);
@@ -43,7 +45,7 @@ export function decode(socket: Socket, message: Message): void {
     }
   };
 
-  return message['#'][0] === 's'
-    ? actions[message['#'][0]][message['#'][1]] && actions[message['#'][0]][message['#'][1]]()
+  return actions[message['#'][0]][message['#'][1]]
+    ? actions[message['#'][0]][message['#'][1]]()
     : actions[message['#'][0]] && actions[message['#'][0]]();
 }
