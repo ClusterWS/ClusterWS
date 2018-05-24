@@ -172,8 +172,6 @@ function encode(e, r, t) {
         emit: [ "e", e, r ],
         publish: [ "p", e, r ],
         system: {
-            subscribe: [ "s", "s", r ],
-            unsubscribe: [ "s", "u", r ],
             configuration: [ "s", "c", r ]
         }
     };

@@ -7,8 +7,6 @@ export function encode(event: string, data: Message, eventType: string): string 
     emit: ['e', event, data],
     publish: ['p', event, data],
     system: {
-      subscribe: ['s', 's', data],
-      unsubscribe: ['s', 'u', data],
       configuration: ['s', 'c', data]
     }
   };

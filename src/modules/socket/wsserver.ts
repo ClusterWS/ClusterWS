@@ -5,12 +5,12 @@ import { EventEmitterMany } from '../emitter/many';
 import { EventEmitterSingle } from '../emitter/single';
 import { CustomObject, Message, Listener } from '../../utils/types';
 
-interface InternalBrokers {
+type InternalBrokers = {
   brokers: CustomObject;
   nextBroker: number;
   brokersKeys: string[];
   brokersAmount: number;
-}
+};
 
 export class WSServer extends EventEmitterSingle {
   public channels: EventEmitterMany = new EventEmitterMany();
