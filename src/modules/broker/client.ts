@@ -12,17 +12,16 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries: numb
   });
 
   websocket.on('close', (code: number, reason: string): void => {
-    console.log(code, reason);
     websocket = null;
-    if (code === 4000) return logError('Can not connect to the broker wrong authorization key \n');
     logWarning(`Broker has disconnected, system is trying to reconnect to ${url} \n`);
     setTimeout(() => BrokerClient(url, broadcaster, ++tries, true), 500);
   });
 
   websocket.on('error', (err: Error): void => {
+    console.log(err);
     websocket = null;
     if (tries === 5)
-      logWarning(`Can not connect to the Broker ${url}. System in reconnection state please check your Broker \n`);
+      logWarning(`Can not connect to the Broker ${url}. System in reconnection please check your Broker and Token\n`);
     setTimeout(() => BrokerClient(url, broadcaster, ++tries, reconnected || tries > 5), 500);
   });
 
