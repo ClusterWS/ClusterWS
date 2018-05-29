@@ -301,24 +301,24 @@ class WSServer extends EventEmitterSingle {
     }
 }
 
-function BrokerClient(e, r, t, s = 0, n) {
-    let o = new UWebSocket(e);
-    o.on("open", () => {
-        s = 0, o.send(r), t.setBroker(o, e), n && logReady(`Broker has been connected to ${e} \n`);
-    }), o.on("close", (n, i) => {
-        if (o = null, 4e3 === n) return logError("Can not connect to the broker wrong authorization key \n");
+function BrokerClient(e, r, t = 0, s) {
+    let n = new UWebSocket(e);
+    n.on("open", () => {
+        t = 0, r.setBroker(n, e), s && logReady(`Broker has been connected to ${e} \n`);
+    }), n.on("close", (s, o) => {
+        if (console.log(s, o), n = null, 4e3 === s) return logError("Can not connect to the broker wrong authorization key \n");
         logWarning(`Broker has disconnected, system is trying to reconnect to ${e} \n`), 
-        setTimeout(() => BrokerClient(e, r, t, ++s, !0), 500);
-    }), o.on("error", i => {
-        o = null, 5 === s && logWarning(`Can not connect to the Broker ${e}. System in reconnection state please check your Broker \n`), 
-        setTimeout(() => BrokerClient(e, r, t, ++s, n || s > 5), 500);
-    }), o.on("message", e => t.broadcastMessage(null, e));
+        setTimeout(() => BrokerClient(e, r, ++t, !0), 500);
+    }), n.on("error", o => {
+        n = null, 5 === t && logWarning(`Can not connect to the Broker ${e}. System in reconnection state please check your Broker \n`), 
+        setTimeout(() => BrokerClient(e, r, ++t, s || t > 5), 500);
+    }), n.on("message", e => r.broadcastMessage(null, e));
 }
 
 class Worker {
     constructor(e, r) {
         this.options = e, this.wss = new WSServer();
-        for (let e = 0; e < this.options.brokers; e++) BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}`, r, this.wss);
+        for (let e = 0; e < this.options.brokers; e++) BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}/?token=${r}`, this.wss);
         this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
         const t = new UWebSocketsServer({
             server: this.server,
@@ -340,23 +340,19 @@ function InternalBrokerServer(e, r, t) {
         length: 0,
         keys: []
     }, n = new UWebSocketsServer({
-        port: e
-    }, () => {
-        process.send({
-            event: "READY",
-            pid: process.pid
-        });
-    });
+        port: e,
+        verifyClient: (e, t) => t(e.req.url === `/?token=${r}`)
+    }, () => process.send({
+        event: "READY",
+        pid: process.pid
+    }));
     n.on("connection", e => {
-        e.authTimeout = setTimeout(() => e.close(4e3, "Not Authenticated"), 1e3), e.on("message", t => {
-            if (t === r) {
-                if (e.isAuth) return;
-                clearTimeout(e.authTimeout), e.uid = generateKey(10), e.isAuth = !0, e.channels = {
-                    "#sendToWorkers": !0
-                }, s.sockets[e.uid] = e, s.length++, s.keys = Object.keys(s.sockets);
-            } else if (e.isAuth) if ("string" == typeof t) if ("[" !== t[0]) e.channels[t] = e.channels[t] ? null : 1; else {
-                const r = JSON.parse(t);
-                for (let t = 0, s = r.length; t < s; t++) e.channels[r[t]] = !0;
+        e.uid = generateKey(10), e.channels = {
+            "#sendToWorkers": !0
+        }, s.sockets[e.uid] = e, s.length++, s.keys = Object.keys(s.sockets), e.on("message", r => {
+            if ("string" == typeof r) if ("[" !== r[0]) e.channels[r] = e.channels[r] ? null : 1; else {
+                const t = JSON.parse(r);
+                for (let r = 0, s = t.length; r < s; r++) e.channels[t[r]] = !0;
             } else !function(e, r) {
                 const t = Buffer.from(r), n = t.slice(0, t.indexOf(37)).toString();
                 for (let t = 0; t < s.length; t++) {
@@ -366,9 +362,8 @@ function InternalBrokerServer(e, r, t) {
                         e.channels[n] && e.send(r);
                     }
                 }
-            }(e.uid, t);
+            }(e.uid, r);
         }), e.on("close", (r, t) => {
-            if (!e.isAuth) return clearTimeout(e.authTimeout);
             delete s.sockets[e.uid], s.length--, s.keys = Object.keys(s.sockets), e = null;
         });
     }), n.heartbeat(2e4);
@@ -399,23 +394,23 @@ class ClusterWS {
         let r = !1;
         const t = generateKey(16), s = {}, n = {};
         if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) o("Scaler", -1); else for (let r = 0; r < e.brokers; r++) o("Broker", r);
-        function o(i, a) {
-            let l = cluster.fork();
-            l.on("message", t => "READY" === t.event && function(t, i, a) {
-                if (r) return logReady(`${t} PID ${a} has been restarted`);
-                "Worker" === t && (n[i] = `\tWorker: ${i}, PID ${a}`);
+        function o(i, l) {
+            let a = cluster.fork();
+            a.on("message", t => "READY" === t.event && function(t, i, l) {
+                if (r) return logReady(`${t} PID ${l} has been restarted`);
+                "Worker" === t && (n[i] = `\tWorker: ${i}, PID ${l}`);
                 if ("Scaler" === t) for (let r = 0; r < e.brokers; r++) o("Broker", r);
-                if ("Broker" === t && (s[i] = `>>>  Broker on: ${e.brokersPorts[i]}, PID ${a}`, 
+                if ("Broker" === t && (s[i] = `>>>  Broker on: ${e.brokersPorts[i]}, PID ${l}`, 
                 Object.keys(s).length === e.brokers)) for (let r = 0; r < e.workers; r++) o("Worker", r);
                 Object.keys(s).length === e.brokers && Object.keys(n).length === e.workers && (r = !0, 
                 logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
                 Object.keys(s).forEach(e => s.hasOwnProperty(e) && logReady(s[e])), Object.keys(n).forEach(e => n.hasOwnProperty(e) && logReady(n[e])));
-            }(i, a, t.pid)), l.on("exit", () => {
-                l = null, logError(`${i} has exited \n`), e.restartWorkerOnFail && (logWarning(`${i} is restarting \n`), 
-                o(i, a));
-            }), l.send({
+            }(i, l, t.pid)), a.on("exit", () => {
+                a = null, logError(`${i} has exited \n`), e.restartWorkerOnFail && (logWarning(`${i} is restarting \n`), 
+                o(i, l));
+            }), a.send({
                 securityKey: t,
-                processId: a,
+                processId: l,
                 processName: i
             });
         }

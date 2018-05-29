@@ -15,7 +15,7 @@ export class Worker {
 
   constructor(public options: Options, securityKey: string) {
     for (let i: number = 0; i < this.options.brokers; i++)
-      BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}`, securityKey, this.wss);
+      BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${securityKey}`, this.wss);
 
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 

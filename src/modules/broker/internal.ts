@@ -19,38 +19,35 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
     keys: []
   };
 
-  const server: UWebSocketsServer = new UWebSocketsServer({ port }, (): void => {
-    process.send({ event: 'READY', pid: process.pid });
-  });
+  const server: UWebSocketsServer = new UWebSocketsServer(
+    {
+      port,
+      verifyClient: (info: CustomObject, done: (next: boolean) => void): void =>
+        done(info.req.url === `/?token=${securityKey}`)
+    },
+    (): void => process.send({ event: 'READY', pid: process.pid })
+  );
 
   server.on('connection', (socket: any): void => {
-    socket.authTimeout = setTimeout((): void => socket.close(4000, 'Not Authenticated'), 1000);
+    socket.uid = generateKey(10);
+    socket.channels = { '#sendToWorkers': true };
+    clients.sockets[socket.uid] = socket;
+    clients.length++;
+    clients.keys = Object.keys(clients.sockets);
 
     socket.on('message', (message: Message): void => {
-      if (message === securityKey) {
-        if (socket.isAuth) return;
-        clearTimeout(socket.authTimeout);
-        socket.uid = generateKey(10);
-        socket.isAuth = true;
-        socket.channels = { '#sendToWorkers': true };
-        clients.sockets[socket.uid] = socket;
-        clients.length++;
-        clients.keys = Object.keys(clients.sockets);
-      } else if (socket.isAuth) {
-        if (typeof message === 'string') {
-          if (message[0] !== '[') {
-            socket.channels[message] = socket.channels[message] ? null : 1;
-          } else {
-            const channelsArray: string[] = JSON.parse(message);
-            for (let i: number = 0, len: number = channelsArray.length; i < len; i++)
-              socket.channels[channelsArray[i]] = true;
-          }
-        } else broadcast(socket.uid, message);
-      }
+      if (typeof message === 'string') {
+        if (message[0] !== '[') {
+          socket.channels[message] = socket.channels[message] ? null : 1;
+        } else {
+          const channelsArray: string[] = JSON.parse(message);
+          for (let i: number = 0, len: number = channelsArray.length; i < len; i++)
+            socket.channels[channelsArray[i]] = true;
+        }
+      } else broadcast(socket.uid, message);
     });
 
     socket.on('close', (code: number, reason?: string): void => {
-      if (!socket.isAuth) return clearTimeout(socket.authTimeout);
       delete clients.sockets[socket.uid];
       clients.length--;
       clients.keys = Object.keys(clients.sockets);

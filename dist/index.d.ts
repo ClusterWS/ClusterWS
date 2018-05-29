@@ -12,9 +12,9 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
-export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
+export function BrokerClient(url: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
 
-
+export function GlobalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void;
 
 export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void;
 

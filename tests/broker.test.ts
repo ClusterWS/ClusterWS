@@ -22,7 +22,7 @@ describe('Websocket Authentication Tests', () => {
         });
       }
     };
-    BrokerClient('ws://localhost:3000', 'wrong_key', broadcaster1);
+    BrokerClient(`ws://localhost:3000/?token=wrong_key`, broadcaster1);
   });
 
   it('Should stay connected if right key provided', (done) => {
@@ -35,7 +35,7 @@ describe('Websocket Authentication Tests', () => {
         setTimeout(() => done(null), 1500);
       }
     };
-    BrokerClient('ws://localhost:3000', 'key', broadcaster1);
+    BrokerClient('ws://localhost:3000/?token=key', broadcaster1);
   });
 });
 
@@ -58,11 +58,11 @@ describe('Websocket Client/Server Communication Tests', () => {
       broadcastMessage: (message) => {},
       setBroker: (br, url): void => {
         websocket1 = br;
-        BrokerClient('ws://localhost:3000', 'key', broadcaster2);
+        BrokerClient('ws://localhost:3000/?token=key', broadcaster2);
       }
     };
 
-    BrokerClient('ws://localhost:3000', 'key', broadcaster1);
+    BrokerClient('ws://localhost:3000/?token=key', broadcaster1);
   });
 
   it('Should get the right message only on Websocket2 ', (done) => {
@@ -101,7 +101,7 @@ describe('Reconnection Test', () => {
         if (tries === 2) done(null);
       }
     };
-    BrokerClient('ws://localhost:3000', 'key', broadcaster1);
+    BrokerClient('ws://localhost:3000/?token=key', broadcaster1);
     setTimeout(() => websocket1.close(4001, 'Test Close'), 200);
   });
 });
