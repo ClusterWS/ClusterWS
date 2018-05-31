@@ -3,6 +3,7 @@ import * as cluster from 'cluster';
 import { Worker } from './modules/worker';
 import { UWebSocket } from './modules/uws/client';
 import { UWebSocketsServer } from './modules/uws/server';
+import { GlobalBrokerServer } from './modules/broker/global';
 import { InternalBrokerServer } from './modules/broker/internal';
 import { Configurations, Options, CustomObject, Message } from './utils/types';
 import { logReady, logWarning, logError, generateKey, isFunction } from './utils/functions';
@@ -107,14 +108,14 @@ export default class ClusterWS {
             options.brokersPorts[message.processId],
             message.securityKey,
             options.horizontalScaleOptions
+          ),
+        Scaler: (): void =>
+          options.horizontalScaleOptions &&
+          GlobalBrokerServer(
+            options.horizontalScaleOptions.masterOptions.port,
+            options.horizontalScaleOptions.key || '',
+            options.horizontalScaleOptions
           )
-        // Scaler: (): void =>
-        //   options.horizontalScaleOptions &&
-        //   InternalBrokerServer(
-        //     options.horizontalScaleOptions.masterOptions.port,
-        //     options.horizontalScaleOptions.key || '',
-        //     options.horizontalScaleOptions
-        //   )
       };
       actions[message.processName] && actions[message.processName]();
     });
