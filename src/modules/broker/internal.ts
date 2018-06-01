@@ -1,4 +1,5 @@
 import { generateKey } from '../../utils/functions';
+import { BrokerClient } from './client';
 import { UWebSocketsServer } from '../uws/server';
 import { Message, CustomObject } from '../../utils/types';
 
@@ -56,6 +57,13 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
   });
 
   server.heartbeat(20000);
+
+  if (horizontalScaleOptions) {
+  }
+
+  function createClient(brokerUrl: string): void {
+    BrokerClient(brokerUrl, {});
+  }
 
   function broadcast(uid: string, message: Message): void {
     const messageBuffer: Buffer = Buffer.from(message);
