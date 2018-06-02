@@ -18,7 +18,6 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries: numb
   });
 
   websocket.on('error', (err: Error): void => {
-    console.log(err);
     websocket = null;
     if (tries === 5)
       logWarning(`Can not connect to the Broker ${url}. System in reconnection please check your Broker and Token\n`);

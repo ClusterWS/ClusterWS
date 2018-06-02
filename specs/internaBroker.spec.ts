@@ -7,7 +7,7 @@ import { InternalBrokerServer } from '../src/modules/broker/internal';
 describe('Create Server', () => {
   it('Broker server Should start up', (done) => {
     process.send = () => done(null);
-    InternalBrokerServer(3000, 'key', {});
+    InternalBrokerServer(3000, 'key', false);
   });
 });
 
