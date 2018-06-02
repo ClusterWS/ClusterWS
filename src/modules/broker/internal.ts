@@ -1,11 +1,8 @@
+import { UWebSocket } from '../uws/client';
 import { generateKey } from '../../utils/functions';
 import { BrokerClient } from './client';
 import { UWebSocketsServer } from '../uws/server';
 import { Message, CustomObject } from '../../utils/types';
-
-/*
-TODO: Add external connection to global broker
-**/
 
 type Clients = {
   sockets: CustomObject;
@@ -13,11 +10,25 @@ type Clients = {
   keys: string[];
 };
 
+type GlobalBrokers = {
+  brokers: CustomObject;
+  nextBroker: number;
+  brokersKeys: string[];
+  brokersAmount: number;
+};
+
 export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void {
   const clients: Clients = {
     sockets: {},
     length: 0,
     keys: []
+  };
+
+  const globalBrokers: GlobalBrokers = {
+    brokers: {},
+    nextBroker: -1,
+    brokersKeys: [],
+    brokersAmount: 0
   };
 
   const server: UWebSocketsServer = new UWebSocketsServer(
@@ -45,7 +56,10 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
           for (let i: number = 0, len: number = channelsArray.length; i < len; i++)
             socket.channels[channelsArray[i]] = true;
         }
-      } else broadcast(socket.uid, message);
+      } else {
+        broadcast(socket.uid, message);
+        if (horizontalScaleOptions) globalBroadcast(message);
+      }
     });
 
     socket.on('close', (code: number, reason?: string): void => {
@@ -58,11 +72,45 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
 
   server.heartbeat(20000);
 
-  if (horizontalScaleOptions) {
+  if (!horizontalScaleOptions) return;
+
+  horizontalScaleOptions.masterOptions &&
+    createClient(
+      `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${
+        horizontalScaleOptions.masterOptions.port
+      }/?token=${horizontalScaleOptions.key}`
+    );
+
+  for (let i: number = 0, len: number = horizontalScaleOptions.brokersUrls.length; i < len; i++)
+    createClient(`${horizontalScaleOptions.brokersUrls[i]}/?token=${horizontalScaleOptions.key}`);
+
+  function globalBroadcast(message: Message): void {
+    if (globalBrokers.brokersAmount <= 0) return;
+
+    globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1
+      ? (globalBrokers.nextBroker = 0)
+      : globalBrokers.nextBroker++;
+
+    const receiver: CustomObject = globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]];
+
+    if (receiver.readyState !== 1) {
+      delete globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]];
+      globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
+      globalBrokers.brokersAmount--;
+      return globalBroadcast(message);
+    }
+    receiver.send(message);
   }
 
   function createClient(brokerUrl: string): void {
-    BrokerClient(brokerUrl, {});
+    BrokerClient(brokerUrl, {
+      broadcastMessage: broadcast,
+      setBroker: (br: UWebSocket, url: string): void => {
+        globalBrokers.brokers[url] = br;
+        globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
+        globalBrokers.brokersAmount = globalBrokers.brokersKeys.length;
+      }
+    });
   }
 
   function broadcast(uid: string, message: Message): void {
