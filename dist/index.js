@@ -307,10 +307,10 @@ function BrokerClient(e, r, s = 0, t) {
         s = 0, r.setBroker(n, e), t && logReady(`Broker has been connected to ${e} \n`);
     }), n.on("close", (t, o) => {
         n = null, logWarning(`Broker has disconnected, system is trying to reconnect to ${e} \n`), 
-        setTimeout(() => BrokerClient(e, r, ++s, !0), 500);
+        setTimeout(() => BrokerClient(e, r, ++s, !0), Math.floor(1e3 * Math.random()) + 500);
     }), n.on("error", o => {
-        console.log(o), n = null, 5 === s && logWarning(`Can not connect to the Broker ${e}. System in reconnection please check your Broker and Token\n`), 
-        setTimeout(() => BrokerClient(e, r, ++s, t || s > 5), 500);
+        n = null, 5 === s && logWarning(`Can not connect to the Broker ${e}. System in reconnection please check your Broker and Token\n`), 
+        setTimeout(() => BrokerClient(e, r, ++s, t || s > 5), Math.floor(1e3 * Math.random()) + 500);
     }), n.on("message", e => r.broadcastMessage(null, e));
 }
 
@@ -360,7 +360,10 @@ function GlobalBrokerServer(e, r, s) {
     n.on("connection", e => {
         e.on("message", r => {
             "string" == typeof r ? (e.uid = generateKey(10), e.serverid = r, t.sockets[r] || (t.sockets[r] = {
-                next: 0
+                wss: {},
+                next: 0,
+                length: 0,
+                keys: []
             }), t.sockets[r].wss[e.uid] = e, t.sockets[r].keys = Object.keys(t.sockets[r].wss), 
             t.sockets[r].length++, t.length++, t.keys = Object.keys(t.sockets)) : function(e, r) {
                 for (let s = 0; s < t.length; s++) {
@@ -419,7 +422,8 @@ function InternalBrokerServer(e, r, s) {
         BrokerClient(e, {
             broadcastMessage: l,
             setBroker: (e, r) => {
-                n.brokers[r] = e, n.brokersKeys = Object.keys(n.brokers), n.brokersAmount = n.brokersKeys.length;
+                n.brokers[r] = e, n.brokersKeys = Object.keys(n.brokers), n.brokersAmount = n.brokersKeys.length, 
+                e.send(s.serverID);
             }
         });
     }
@@ -451,7 +455,8 @@ class ClusterWS {
             horizontalScaleOptions: e.horizontalScaleOptions || !1,
             encodeDecodeEngine: e.encodeDecodeEngine || !1
         };
-        if (!isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
+        if (r.horizontalScaleOptions && (r.horizontalScaleOptions.serverID = generateKey(10)), 
+        !isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
         if (!e.brokersPorts) for (let e = 0; e < r.brokers; e++) r.brokersPorts.push(e + 9400);
         if (r.brokersPorts.length !== r.brokers) return logError("Number of broker ports should be the same as number of brokers\n");
         cluster.isMaster ? this.masterProcess(r) : this.workerProcess(r);

@@ -38,7 +38,7 @@ export function GlobalBrokerServer(port: number, securityKey: string, horizontal
         socket.uid = generateKey(10);
         socket.serverid = message;
 
-        if (!clients.sockets[message]) clients.sockets[message] = { next: 0 };
+        if (!clients.sockets[message]) clients.sockets[message] = { wss: {}, next: 0, length: 0, keys: [] };
 
         clients.sockets[message].wss[socket.uid] = socket;
         clients.sockets[message].keys = Object.keys(clients.sockets[message].wss);

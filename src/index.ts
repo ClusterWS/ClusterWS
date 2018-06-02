@@ -30,6 +30,8 @@ export default class ClusterWS {
       encodeDecodeEngine: configurations.encodeDecodeEngine || false
     };
 
+    options.horizontalScaleOptions && (options.horizontalScaleOptions.serverID = generateKey(10));
+
     if (!isFunction(options.worker)) return logError('Worker param must be provided and it must be a function \n');
 
     if (!configurations.brokersPorts)

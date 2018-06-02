@@ -143,6 +143,7 @@ export type HorizontalScaleOptions = {
     };
     brokersUrls?: string[];
     key?: string;
+    serverID?: string;
 };
 export type Configurations = {
     worker: WorkerFunction;

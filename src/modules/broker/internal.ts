@@ -109,6 +109,8 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
         globalBrokers.brokers[url] = br;
         globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
         globalBrokers.brokersAmount = globalBrokers.brokersKeys.length;
+
+        br.send(horizontalScaleOptions.serverID);
       }
     });
   }
