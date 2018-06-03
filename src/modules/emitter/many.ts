@@ -4,28 +4,33 @@ import { Listener, CustomObject, Message } from '../../utils/types';
 export class EventEmitterMany {
   public events: CustomObject = {};
 
-  public onMany(event: string, listener: (event: string, ...args: any[]) => void): void {
+  public subscibe(event: string, listener: (event: string, ...args: any[]) => void, token: string): void {
     if (!isFunction(listener)) return logError('Listener must be a function');
     if (this.events[event]) {
-      this.events[event].push(listener);
+      this.events[event].push({ token, listener });
     } else {
-      this.events[event] = [listener];
+      this.events[event] = [{ token, listener }];
       this.changeChannelStatusInBroker(event);
     }
   }
 
-  public emitMany(event: string, ...args: any[]): void {
-    const listeners: Listener[] = this.events[event];
+  public publish(event: string, ...args: any[]): void {
+    const listeners: CustomObject[] = this.events[event];
     if (!listeners) return;
     // Note that listener's first arg is event name
-    for (let i: number = 0, len: number = listeners.length; i < len; i++) listeners[i](event, ...args);
+    for (let i: number = 0, len: number = listeners.length; i < len; i++) listeners[i].listener(event, ...args);
   }
 
-  public removeListener(event: string, listener: Listener): any {
-    const listeners: Listener[] = this.events[event];
+  public unsubscribe(event: string, token: string): void {
+    const listeners: CustomObject[] = this.events[event];
     if (!listeners) return;
+
     for (let i: number = 0, len: number = listeners.length; i < len; i++)
-      if (listeners[i] === listener) return listeners.splice(i, 1);
+      if (listeners[i].token === token) {
+        listeners.splice(i, 1);
+        break;
+      }
+
     if (listeners.length === 0) {
       this.events[event] = null;
       this.changeChannelStatusInBroker(event);
@@ -33,7 +38,7 @@ export class EventEmitterMany {
   }
 
   public exist(event: string): boolean {
-    return this.events[event] && this.events[event].length > 0;
+    return this.events[event];
   }
 
   public changeChannelStatusInBroker(event: string): void {

@@ -20,9 +20,9 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
 
 export class EventEmitterMany {
     events: CustomObject;
-    onMany(event: string, listener: (event: string, ...args: any[]) => void): void;
-    emitMany(event: string, ...args: any[]): void;
-    removeListener(event: string, listener: Listener): any;
+    subscibe(event: string, listener: (event: string, ...args: any[]) => void, token: string): void;
+    publish(event: string, ...args: any[]): void;
+    unsubscribe(event: string, token: string): void;
     exist(event: string): boolean;
     changeChannelStatusInBroker(event: string): void;
 }
@@ -35,15 +35,10 @@ export class EventEmitterSingle {
     removeEvents(): void;
 }
 
-export function encode(event: string, data: Message, eventType: string): string;
-export function decode(socket: Socket, message: Message): void;
-
 export class Socket {
     worker: Worker;
     socket: UWebSocket;
-    events: EventEmitterSingle;
-    channels: CustomObject;
-    onPublishEvent: (...args: any[]) => void;
+    id: string;
     constructor(worker: Worker, socket: UWebSocket);
     on(event: 'error', listener: (err: Error) => void): void;
     on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;

@@ -72,7 +72,7 @@ export class WSServer extends EventEmitterSingle {
     if (channel === '#sendToWorkers')
       return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(message);
 
-    this.channels.emitMany(channel, message);
+    this.channels.publish(channel, message);
     this.middleware.onPublish && this.middleware.onPublish(channel, message);
   }
 
@@ -86,7 +86,7 @@ export class WSServer extends EventEmitterSingle {
       return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(decodedMessage);
 
     this.middleware.onPublish && this.middleware.onPublish(channel, decodedMessage);
-    this.channels.emitMany(channel, decodedMessage);
+    this.channels.publish(channel, decodedMessage);
   }
 
   public setBroker(br: UWebSocket, url: string): void {

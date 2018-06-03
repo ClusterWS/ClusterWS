@@ -29,10 +29,14 @@ describe('WSServer Functions Tests', () => {
     };
 
     wss.setBroker(broker, 'myurl');
-    wss.channels.onMany('testchannel', (_, message) => {
-      expect(message).to.equal(`hello world`);
-      done(null);
-    });
+    wss.channels.subscibe(
+      'testchannel',
+      (_, message) => {
+        expect(message).to.equal(`hello world`);
+        done(null);
+      },
+      'My key'
+    );
     wss.broadcastMessage(null, Buffer.from(`testchannel%${JSON.stringify({ message: 'hello world' })}`));
   });
 });
@@ -55,7 +59,7 @@ describe('WSServer Broker Resubscribe', () => {
     };
 
     wss.setBroker(broker, 'superurl');
-    wss.channels.onMany('testchannel', (_, message) => {});
+    wss.channels.subscibe('testchannel', (_, message) => {}, 'keythree');
     wss.setBroker(broker, 'superurl');
   });
 });
