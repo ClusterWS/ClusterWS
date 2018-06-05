@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect } from 'chai';
-import { WSServer } from '../src/modules/socket/wsserver';
+import { WSServer } from '../../src/modules/socket/wsserver';
 
 describe('WSServer Functions Tests', () => {
   let wss = new WSServer();

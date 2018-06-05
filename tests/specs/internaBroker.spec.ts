@@ -1,7 +1,7 @@
 import 'mocha';
 import { expect } from 'chai';
-import { BrokerClient } from '../src/modules/broker/client';
-import { InternalBrokerServer } from '../src/modules/broker/internal';
+import { BrokerClient } from '../../src/modules/broker/client';
+import { InternalBrokerServer } from '../../src/modules/broker/internal';
 
 // TODO: fix bug with wrong key
 describe('Create Server', () => {

@@ -1,8 +1,8 @@
 import 'mocha';
 import { expect } from 'chai';
 
-import { EventEmitterMany } from '../src/modules/emitter/many';
-import { EventEmitterSingle } from '../src/modules/emitter/single';
+import { EventEmitterMany } from '../../src/modules/emitter/many';
+import { EventEmitterSingle } from '../../src/modules/emitter/single';
 
 describe('Event Emitter Many Tests', () => {
   let emitter: EventEmitterMany;
