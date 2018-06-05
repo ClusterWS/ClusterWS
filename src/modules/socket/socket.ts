@@ -7,8 +7,8 @@ import { CustomObject, Listener, Message } from '../../utils/types';
 export class Socket {
   public id: string = generateKey(8);
   private events: EventEmitterSingle = new EventEmitterSingle();
-  private onPublishEvent: (...args: any[]) => void;
   private channels: CustomObject = {};
+  private onPublishEvent: (...args: any[]) => void;
 
   constructor(public worker: Worker, public socket: UWebSocket) {
     const initMessage: CustomObject = { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary };

@@ -32,35 +32,44 @@ export function GlobalBrokerServer(port: number, securityKey: string, horizontal
     httpsServer.listen(port, (): void => process.send({ event: 'READY', pid: process.pid }));
   } else server = new UWebSocketsServer(wsOptions, (): void => process.send({ event: 'READY', pid: process.pid }));
 
-  server.on('connection', (socket: any): void => {
-    socket.on('message', (message: Message): void => {
-      if (typeof message === 'string') {
-        socket.uid = generateKey(10);
-        socket.serverid = message;
+  server.on(
+    'connection',
+    (socket: any): void => {
+      socket.on(
+        'message',
+        (message: Message): void => {
+          if (typeof message === 'string') {
+            socket.uid = generateKey(10);
+            socket.serverid = message;
 
-        if (!clients.sockets[message]) clients.sockets[message] = { wss: {}, next: 0, length: 0, keys: [] };
+            if (!clients.sockets[message]) clients.sockets[message] = { wss: {}, next: 0, length: 0, keys: [] };
 
-        clients.sockets[message].wss[socket.uid] = socket;
-        clients.sockets[message].keys = Object.keys(clients.sockets[message].wss);
-        clients.sockets[message].length++;
+            clients.sockets[message].wss[socket.uid] = socket;
+            clients.sockets[message].keys = Object.keys(clients.sockets[message].wss);
+            clients.sockets[message].length++;
 
-        clients.length++;
-        clients.keys = Object.keys(clients.sockets);
-      } else broadcast(socket.serverid, message);
-    });
+            clients.length++;
+            clients.keys = Object.keys(clients.sockets);
+          } else broadcast(socket.serverid, message);
+        }
+      );
 
-    socket.on('close', (code: number, reason?: string): void => {
-      delete clients.sockets[socket.serverid].wss[socket.uid];
-      clients.sockets[socket.serverid].keys = Object.keys(clients.sockets[socket.serverid].wss);
-      clients.sockets[socket.serverid].length--;
-      if (!clients.sockets[socket.serverid].length) {
-        delete clients.sockets[socket.serverid];
-        clients.keys = Object.keys(clients.sockets);
-        clients.length--;
-      }
-      socket = null;
-    });
-  });
+      socket.on(
+        'close',
+        (code: number, reason?: string): void => {
+          delete clients.sockets[socket.serverid].wss[socket.uid];
+          clients.sockets[socket.serverid].keys = Object.keys(clients.sockets[socket.serverid].wss);
+          clients.sockets[socket.serverid].length--;
+          if (!clients.sockets[socket.serverid].length) {
+            delete clients.sockets[socket.serverid];
+            clients.keys = Object.keys(clients.sockets);
+            clients.length--;
+          }
+          socket = null;
+        }
+      );
+    }
+  );
 
   server.heartbeat(20000);
 
