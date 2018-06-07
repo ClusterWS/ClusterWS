@@ -3,63 +3,72 @@ import { expect } from 'chai';
 import { WSServer } from '../../src/modules/socket/wsserver';
 
 describe('WSServer Functions Tests', () => {
-  let wss = new WSServer();
+  it('Test middleware set functions', (done) => {
+    const wss = new WSServer();
 
-  it('Test middleware function', (done) => {
+    // Set on publish
     wss.setMiddleware('onPublish', () => done(null));
     wss.middleware.onPublish();
-    wss.setMiddleware('onPublish', () => {});
   });
 
   it('Test setBroker & publish functions', (done) => {
-    let broker: any = {
+    const wss = new WSServer();
+
+    const broker: any = {
       send: (msg) => {
-        expect(Buffer.from(msg).toString()).to.equal(`channel1%{"message":"test"}`);
+        expect(Buffer.from(msg).toString()).to.equal(`channel%{"message":"test"}`);
         done(null);
       },
       readyState: 1
     };
-    wss.setBroker(broker, 'myurl');
-    wss.publish('channel1', 'test');
+    // Set broker
+    wss.setBroker(broker, 'broker/url');
+    // Publish message to the channel
+    wss.publish('channel', 'test');
   });
 
   it('Test broadcastMessage function', (done) => {
-    let broker: any = {
+    const wss = new WSServer();
+
+    const broker: any = {
       send: (msg) => {}
     };
 
-    wss.setBroker(broker, 'myurl');
+    wss.setBroker(broker, 'broker/url');
+
+    // Subscribe to the channel through wss channel
     wss.channels.subscibe(
       'testchannel',
       (_, message) => {
         expect(message).to.equal(`hello world`);
         done(null);
       },
-      'My key'
+      'channelKey' // This should be user id
     );
+
+    // Broadcast message
     wss.broadcastMessage(null, Buffer.from(`testchannel%${JSON.stringify({ message: 'hello world' })}`));
   });
 });
 
-describe('WSServer Broker Resubscribe', () => {
-  let wss = new WSServer();
-  it('Should resubsribe new broker to all channels', (done) => {
+describe('WSServer test resubsrcibtion to all channels in broker', () => {
+  it('Should resubsribe new broker to all existing channels', (done) => {
     let resubscribed = 0;
-    let broker: any = {
+    const wss = new WSServer();
+    const broker: any = {
+      // Should execute send event after connection to new broker
       send: (msg) => {
-        if (msg === 'testchannel' || msg === '["testchannel"]') {
-          resubscribed++;
-        }
-
-        if (resubscribed === 2) {
-          done(null);
-        }
+        if (msg === 'testchannel' || msg === '["testchannel"]') resubscribed++;
+        if (resubscribed === 2) done(null);
       },
       readyState: 1
     };
 
+    // connect broker
     wss.setBroker(broker, 'superurl');
-    wss.channels.subscibe('testchannel', (_, message) => {}, 'keythree');
+    // Subscribe to channel
+    wss.channels.subscibe('testchannel', (_, message) => {}, 'channelKey');
+    // Reconnect broker
     wss.setBroker(broker, 'superurl');
   });
 });

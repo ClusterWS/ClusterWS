@@ -34,41 +34,48 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
   const server: UWebSocketsServer = new UWebSocketsServer(
     {
       port,
-      verifyClient: (info: CustomObject, done: (next: boolean) => void): void =>
-        done(info.req.url === `/?token=${securityKey}`)
+      verifyClient: (info: CustomObject, done: (next: boolean) => void): void => done(info.req.url === `/?token=${securityKey}`)
     },
     (): void => process.send({ event: 'READY', pid: process.pid })
   );
 
-  server.on('connection', (socket: any): void => {
-    socket.uid = generateKey(10);
-    socket.channels = { '#sendToWorkers': true };
-    clients.sockets[socket.uid] = socket;
-    clients.length++;
-    clients.keys = Object.keys(clients.sockets);
-
-    socket.on('message', (message: Message): void => {
-      if (typeof message === 'string') {
-        if (message[0] !== '[') {
-          socket.channels[message] = socket.channels[message] ? null : 1;
-        } else {
-          const channelsArray: string[] = JSON.parse(message);
-          for (let i: number = 0, len: number = channelsArray.length; i < len; i++)
-            socket.channels[channelsArray[i]] = true;
-        }
-      } else {
-        broadcast(socket.uid, message);
-        if (horizontalScaleOptions) globalBroadcast(message);
-      }
-    });
-
-    socket.on('close', (code: number, reason?: string): void => {
-      delete clients.sockets[socket.uid];
-      clients.length--;
+  server.on(
+    'connection',
+    (socket: any): void => {
+      socket.uid = generateKey(10);
+      socket.channels = { '#sendToWorkers': true };
+      clients.sockets[socket.uid] = socket;
+      clients.length++;
       clients.keys = Object.keys(clients.sockets);
-      socket = null;
-    });
-  });
+
+      socket.on(
+        'message',
+        (message: Message): void => {
+          if (typeof message === 'string') {
+            if (message[0] !== '[') {
+              socket.channels[message] = socket.channels[message] ? null : 1;
+            } else {
+              const channelsArray: string[] = JSON.parse(message);
+              for (let i: number = 0, len: number = channelsArray.length; i < len; i++) socket.channels[channelsArray[i]] = true;
+            }
+          } else {
+            broadcast(socket.uid, message);
+            if (horizontalScaleOptions) globalBroadcast(message);
+          }
+        }
+      );
+
+      socket.on(
+        'close',
+        (code: number, reason?: string): void => {
+          delete clients.sockets[socket.uid];
+          clients.length--;
+          clients.keys = Object.keys(clients.sockets);
+          socket = null;
+        }
+      );
+    }
+  );
 
   server.heartbeat(20000);
 
@@ -76,9 +83,9 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
 
   horizontalScaleOptions.masterOptions &&
     createClient(
-      `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${
-        horizontalScaleOptions.masterOptions.port
-      }/?token=${horizontalScaleOptions.key}`
+      `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${horizontalScaleOptions.masterOptions.port}/?token=${
+        horizontalScaleOptions.key
+      }`
     );
 
   for (let i: number = 0, len: number = horizontalScaleOptions.brokersUrls.length; i < len; i++)
@@ -87,9 +94,7 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
   function globalBroadcast(message: Message): void {
     if (globalBrokers.brokersAmount <= 0) return;
 
-    globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1
-      ? (globalBrokers.nextBroker = 0)
-      : globalBrokers.nextBroker++;
+    globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1 ? (globalBrokers.nextBroker = 0) : globalBrokers.nextBroker++;
 
     const receiver: CustomObject = globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]];
 

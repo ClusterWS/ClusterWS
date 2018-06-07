@@ -3,48 +3,56 @@ import { expect } from 'chai';
 import { BrokerClient } from '../../src/modules/broker/client';
 import { InternalBrokerServer } from '../../src/modules/broker/internal';
 
-// TODO: fix bug with wrong key
-describe('Create Server', () => {
+describe('Internal Broker Create Server', () => {
   it('Broker server Should start up', (done) => {
+    // reasign process done
     process.send = () => done(null);
+
+    // Craete new internal broker server
     InternalBrokerServer(3000, 'key', false);
   });
 });
 
-describe('Websocket Authentication Tests', () => {
-  it('Should disconnect if wrong key provided', (done) => {
-    let websocket1;
-    let broadcaster1 = {
+describe('Internal Broker Websocket Authentication Tests', () => {
+  it('Should not connect if wrong key is provided', (done) => {
+    const broadcaster = {
       broadcastMessage: (message) => {},
-      setBroker: (br, url): void => {
-        websocket1 = br;
-        websocket1.on('open', () => {
-          done('Should not be called with wrong url');
-        });
-      }
+      setBroker: (broker, url): void => broker.on('open', () => done('Should not be called with wrong url'))
     };
 
-    BrokerClient(`ws://localhost:3000/?token=wrong_key`, broadcaster1);
-    setTimeout(() => {
-      done(null);
-    }, 1500);
+    BrokerClient(`ws://localhost:3000/?token=wrong_key`, broadcaster);
+    setTimeout(() => done(null), 1500);
   });
 
-  it('Should stay connected if right key provided', (done) => {
-    let websocket1;
-    let broadcaster1 = {
+  it('Should not disconnected if right key is provided', (done) => {
+    const broadcaster = {
       broadcastMessage: (message) => {},
-      setBroker: (br, url): void => {
-        websocket1 = br;
-        websocket1.on('close', (code: number, raeson: string) => done('Should not disconnect'));
+      setBroker: (broker, url): void => {
+        broker.on('close', (code: number, raeson: string) => done('Should not disconnect'));
         setTimeout(() => done(null), 1500);
       }
     };
-    BrokerClient('ws://localhost:3000/?token=key', broadcaster1);
+    BrokerClient('ws://localhost:3000/?token=key', broadcaster);
   });
 });
 
-describe('Websocket Client/Server Communication Tests', () => {
+describe('Internal Broker Reconnection Test', () => {
+  it('Should reconnect to the WebSocket Server on lost connection', (done) => {
+    let tries = 0;
+    const broadcaster = {
+      broadcastMessage: (message) => {},
+      setBroker: (broker, url): void => {
+        tries++;
+        console.log(tries);
+        if (tries === 3) return done(null);
+        setTimeout(() => broker.close(4001, 'Close for tests'), 10);
+      }
+    };
+    BrokerClient('ws://localhost:3000/?token=key', broadcaster);
+  });
+});
+
+describe('Internal Broker Websocket Client/Server Communication Tests', () => {
   let websocket1;
   let websocket2;
   let broadcaster1;
@@ -91,22 +99,5 @@ describe('Websocket Client/Server Communication Tests', () => {
 
     setTimeout(() => done(null), 1500);
     setTimeout(() => websocket1.send(Buffer.from(`test%${JSON.stringify({ m: 'hello world' })}`)), 500);
-  });
-});
-
-describe('Reconnection Test', () => {
-  it('Should reconnect to the Websocket on lost connection', (done) => {
-    let tries = 0;
-    let websocket1;
-    let broadcaster1 = {
-      broadcastMessage: (message) => {},
-      setBroker: (br, url): void => {
-        tries++;
-        websocket1 = br;
-        if (tries === 2) done(null);
-      }
-    };
-    BrokerClient('ws://localhost:3000/?token=key', broadcaster1);
-    setTimeout(() => websocket1.close(4001, 'Test Close'), 200);
   });
 });
