@@ -44,7 +44,7 @@ describe('Internal Broker Reconnection Test', () => {
       setBroker: (broker, url): void => {
         tries++;
         console.log(tries);
-        if (tries === 3) return done(null);
+        if (tries === 2) return done(null);
         setTimeout(() => broker.close(4001, 'Close for tests'), 10);
       }
     };
