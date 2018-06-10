@@ -93,28 +93,31 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
 
   function globalBroadcast(message: Message): void {
     if (globalBrokers.brokersAmount <= 0) return;
-
     globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1 ? (globalBrokers.nextBroker = 0) : globalBrokers.nextBroker++;
 
     const receiver: CustomObject = globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]];
 
     if (receiver.readyState !== 1) {
-      delete globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]];
-      globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
-      globalBrokers.brokersAmount--;
+      removeBroker(globalBrokers.brokersKeys[globalBrokers.nextBroker]);
       return globalBroadcast(message);
     }
     receiver.send(message);
   }
 
+  function removeBroker(url: string): void {
+    delete globalBrokers.brokers[url];
+    globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
+    globalBrokers.brokersAmount--;
+  }
+
   function createClient(brokerUrl: string): void {
     BrokerClient(brokerUrl, {
+      clearBroker: removeBroker,
       broadcastMessage: broadcast,
       setBroker: (br: UWebSocket, url: string): void => {
         globalBrokers.brokers[url] = br;
         globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
         globalBrokers.brokersAmount = globalBrokers.brokersKeys.length;
-
         br.send(horizontalScaleOptions.serverID);
       }
     });

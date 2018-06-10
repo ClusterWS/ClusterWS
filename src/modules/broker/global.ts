@@ -20,8 +20,7 @@ export function GlobalBrokerServer(port: number, securityKey: string, horizontal
   let server: UWebSocketsServer;
   const wsOptions: CustomObject = {
     port,
-    verifyClient: (info: CustomObject, done: (next: boolean) => void): void =>
-      done(info.req.url === `/?token=${securityKey}`)
+    verifyClient: (info: CustomObject, done: (next: boolean) => void): void => done(info.req.url === `/?token=${securityKey}`)
   };
 
   if (horizontalScaleOptions.masterOptions && horizontalScaleOptions.masterOptions.tlsOptions) {

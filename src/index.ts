@@ -34,8 +34,7 @@ export default class ClusterWS {
 
     if (!isFunction(options.worker)) return logError('Worker param must be provided and it must be a function \n');
 
-    if (!configurations.brokersPorts)
-      for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(i + 9400);
+    if (!configurations.brokersPorts) for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(i + 9400);
 
     if (options.brokersPorts.length !== options.brokers)
       return logError('Number of broker ports should be the same as number of brokers\n');
@@ -55,10 +54,7 @@ export default class ClusterWS {
     function launchProcess(processName: string, processId: number): void {
       let newProcess: cluster.Worker = cluster.fork();
 
-      newProcess.on(
-        'message',
-        (message: Message): void => message.event === 'READY' && ready(processName, processId, message.pid)
-      );
+      newProcess.on('message', (message: Message): void => message.event === 'READY' && ready(processName, processId, message.pid));
 
       newProcess.on('exit', () => {
         newProcess = null;
@@ -85,46 +81,41 @@ export default class ClusterWS {
           for (let i: number = 0; i < options.workers; i++) launchProcess('Worker', i);
       }
 
-      if (
-        Object.keys(brokersReady).length === options.brokers &&
-        Object.keys(workersReady).length === options.workers
-      ) {
+      if (Object.keys(brokersReady).length === options.brokers && Object.keys(workersReady).length === options.workers) {
         isReady = true;
         logReady(`>>>  Master on: ${options.port}, PID: ${process.pid} ${options.tlsOptions ? ' (secure)' : ''}`);
-        Object.keys(brokersReady).forEach(
-          (key: string) => brokersReady.hasOwnProperty(key) && logReady(brokersReady[key])
-        );
-        Object.keys(workersReady).forEach(
-          (key: string) => workersReady.hasOwnProperty(key) && logReady(workersReady[key])
-        );
+        Object.keys(brokersReady).forEach((key: string) => brokersReady.hasOwnProperty(key) && logReady(brokersReady[key]));
+        Object.keys(workersReady).forEach((key: string) => workersReady.hasOwnProperty(key) && logReady(workersReady[key]));
       }
     }
   }
 
   private workerProcess(options: Options): void {
-    process.on('message', (message: Message): void => {
-      const actions: CustomObject = {
-        Worker: (): Worker => new Worker(options, message.securityKey),
-        Broker: (): void =>
-          InternalBrokerServer(
-            options.brokersPorts[message.processId],
-            message.securityKey,
-            options.horizontalScaleOptions
-          ),
-        Scaler: (): void =>
-          options.horizontalScaleOptions &&
-          GlobalBrokerServer(
-            options.horizontalScaleOptions.masterOptions.port,
-            options.horizontalScaleOptions.key || '',
-            options.horizontalScaleOptions
-          )
-      };
-      actions[message.processName] && actions[message.processName]();
-    });
+    process.on(
+      'message',
+      (message: Message): void => {
+        const actions: CustomObject = {
+          Worker: (): Worker => new Worker(options, message.securityKey),
+          Broker: (): void =>
+            InternalBrokerServer(options.brokersPorts[message.processId], message.securityKey, options.horizontalScaleOptions),
+          Scaler: (): void =>
+            options.horizontalScaleOptions &&
+            GlobalBrokerServer(
+              options.horizontalScaleOptions.masterOptions.port,
+              options.horizontalScaleOptions.key || '',
+              options.horizontalScaleOptions
+            )
+        };
+        actions[message.processName] && actions[message.processName]();
+      }
+    );
 
-    process.on('uncaughtException', (err: Error): void => {
-      logError(`PID: ${process.pid}\n ${err.stack}\n`);
-      process.exit();
-    });
+    process.on(
+      'uncaughtException',
+      (err: Error): void => {
+        logError(`PID: ${process.pid}\n ${err.stack}\n`);
+        process.exit();
+      }
+    );
   }
 }

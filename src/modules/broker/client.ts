@@ -18,6 +18,7 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries: numb
     'close',
     (code: number, reason: string): void => {
       websocket = null;
+      broadcaster.clearBroker(url);
       logWarning(`Broker has disconnected, system is trying to reconnect to ${url} \n`);
       setTimeout(() => BrokerClient(url, broadcaster, ++tries, true), Math.floor(Math.random() * 1000) + 500);
     }
@@ -27,6 +28,7 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries: numb
     'error',
     (err: Error): void => {
       websocket = null;
+      broadcaster.clearBroker(url);
       if (tries === 5) logWarning(`Can not connect to the Broker ${url}. System in reconnection please check your Broker and Token\n`);
       setTimeout(() => BrokerClient(url, broadcaster, ++tries, reconnected || tries > 5), Math.floor(Math.random() * 1000) + 500);
     }

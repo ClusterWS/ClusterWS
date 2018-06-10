@@ -21,8 +21,7 @@ export class UWebSocketsServer extends EventEmitterSingle {
     if (!options || (!options.port && !options.server && !options.noServer)) throw new TypeError('Wrong options');
 
     this.noDelay = options.noDelay || true;
-    this.httpServer =
-      options.server || HTTP.createServer((request: CustomObject, response: CustomObject) => response.end());
+    this.httpServer = options.server || HTTP.createServer((request: CustomObject, response: CustomObject) => response.end());
     this.serverGroup = native.server.group.create(
       options.perMessageDeflate ? PERMESSAGE_DEFLATE : 0,
       options.maxPayload || DEFAULT_PAYLOAD_LIMIT
@@ -30,25 +29,26 @@ export class UWebSocketsServer extends EventEmitterSingle {
 
     if (options.path && (!options.path.length || options.path[0] !== '/')) options.path = `/${options.path}`;
 
-    this.httpServer.on('upgrade', (request: any, socket: any, head: any): void => {
-      if (!options.path || options.path === request.url.split('?')[0].split('#')[0]) {
-        if (options.verifyClient) {
-          const info: any = {
-            origin: request.headers.origin,
-            secure: !!(request.connection.authorized || request.connection.encrypted),
-            req: request
-          };
+    this.httpServer.on(
+      'upgrade',
+      (request: any, socket: any, head: any): void => {
+        if (!options.path || options.path === request.url.split('?')[0].split('#')[0]) {
+          if (options.verifyClient) {
+            const info: any = {
+              origin: request.headers.origin,
+              secure: !!(request.connection.authorized || request.connection.encrypted),
+              req: request
+            };
 
-          options.verifyClient(
-            info,
-            (result: any, code: any, name: any): void =>
-              result
-                ? this.handleUpgrade(request, socket, head, this.emitConnection)
-                : this.abortConnection(socket, code, name)
-          );
-        } else this.handleUpgrade(request, socket, head, this.emitConnection);
-      } else if (this.lastUpgradeListener) this.abortConnection(socket, 400, 'URL not supported');
-    });
+            options.verifyClient(
+              info,
+              (result: any, code: any, name: any): void =>
+                result ? this.handleUpgrade(request, socket, head, this.emitConnection) : this.abortConnection(socket, code, name)
+            );
+          } else this.handleUpgrade(request, socket, head, this.emitConnection);
+        } else if (this.lastUpgradeListener) this.abortConnection(socket, 400, 'URL not supported');
+      }
+    );
 
     this.httpServer.on('error', (err: Error) => this.emit('error', err));
     this.httpServer.on(
@@ -56,40 +56,54 @@ export class UWebSocketsServer extends EventEmitterSingle {
       (eventName: string, listener: Listener) => (eventName === 'upgrade' ? (this.lastUpgradeListener = false) : null)
     );
 
-    native.server.group.onConnection(this.serverGroup, (external: CustomObject): void => {
-      const webSocket: UWebSocket = new UWebSocket(null, external, true);
-      native.setUserData(external, webSocket);
-      this.upgradeCallback(webSocket);
-      this.upgradeReq = null;
-    });
-    native.server.group.onMessage(this.serverGroup, (message: Message, webSocket: CustomObject): any => {
-      if (this.pingIsAppLevel) {
-        if (typeof message !== 'string') message = Buffer.from(message);
-
-        if (message[0] === APP_PONG_CODE) return (webSocket.isAlive = true);
+    native.server.group.onConnection(
+      this.serverGroup,
+      (external: CustomObject): void => {
+        const webSocket: UWebSocket = new UWebSocket(null, external, true);
+        native.setUserData(external, webSocket);
+        this.upgradeCallback(webSocket);
+        this.upgradeReq = null;
       }
-      webSocket.internalOnMessage(message);
-    });
+    );
+
+    native.server.group.onMessage(
+      this.serverGroup,
+      (message: Message, webSocket: CustomObject): any => {
+        let parsedMessage: any;
+        if (this.pingIsAppLevel) {
+          if (typeof message !== 'string') {
+            parsedMessage = Buffer.from(message);
+            if (parsedMessage[0] === APP_PONG_CODE) return (webSocket.isAlive = true);
+          } else parsedMessage = message;
+        } else parsedMessage = message;
+        webSocket.internalOnMessage(parsedMessage);
+      }
+    );
+
     native.server.group.onDisconnection(
       this.serverGroup,
       (external: CustomObject, code: number, message: Message, webSocket: CustomObject): void => {
         webSocket.external = null;
-        process.nextTick(() => webSocket.internalOnClose(code, message));
+        process.nextTick(() => {
+          webSocket.internalOnClose(code, message);
+          webSocket = null;
+        });
         native.clearUserData(external);
       }
     );
-    native.server.group.onPing(this.serverGroup, (message: Message, webSocket: UWebSocket): void =>
-      webSocket.onping(message)
-    );
-    native.server.group.onPong(this.serverGroup, (message: Message, webSocket: UWebSocket): void =>
-      webSocket.onpong(message)
-    );
+
+    native.server.group.onPing(this.serverGroup, (message: Message, webSocket: UWebSocket): void => webSocket.onping(message));
+    native.server.group.onPong(this.serverGroup, (message: Message, webSocket: UWebSocket): void => webSocket.onpong(message));
 
     if (!options.port) return;
-    this.httpServer.listen(options.port, options.host || null, (): void => {
-      this.emit('listening');
-      callback && callback();
-    });
+    this.httpServer.listen(
+      options.port,
+      options.host || null,
+      (): void => {
+        this.emit('listening');
+        callback && callback();
+      }
+    );
   }
 
   public heartbeat(interval: number, appLevel: boolean = false): void {
@@ -122,12 +136,7 @@ export class UWebSocketsServer extends EventEmitterSingle {
     socket.end(`HTTP/1.1 ${code} ${name}\r\n\r\n`);
   }
 
-  private handleUpgrade(
-    request: CustomObject,
-    socket: CustomObject,
-    upgradeHead: CustomObject,
-    callback: Listener
-  ): void {
+  private handleUpgrade(request: CustomObject, socket: CustomObject, upgradeHead: CustomObject, callback: Listener): void {
     if (socket._isNative) {
       if (this.serverGroup) {
         this.upgradeReq = request;
@@ -147,19 +156,22 @@ export class UWebSocketsServer extends EventEmitterSingle {
       if (socketHandle && secKey && secKey.length === 24) {
         socket.setNoDelay(this.noDelay);
         const ticket: any = native.transfer(socketHandle.fd === -1 ? socketHandle : socketHandle.fd, sslState);
-        socket.on('close', (error: any): void => {
-          if (this.serverGroup) {
-            this.upgradeReq = request;
-            this.upgradeCallback = callback ? callback : noop;
-            native.upgrade(
-              this.serverGroup,
-              ticket,
-              secKey,
-              request.headers['sec-websocket-extensions'],
-              request.headers['sec-websocket-protocol']
-            );
+        socket.on(
+          'close',
+          (error: any): void => {
+            if (this.serverGroup) {
+              this.upgradeReq = request;
+              this.upgradeCallback = callback ? callback : noop;
+              native.upgrade(
+                this.serverGroup,
+                ticket,
+                secKey,
+                request.headers['sec-websocket-extensions'],
+                request.headers['sec-websocket-protocol']
+              );
+            }
           }
-        });
+        );
       }
       socket.destroy();
     }

@@ -15,21 +15,28 @@ export class Socket {
     this.send('configuration', initMessage, 'system');
     this.onPublishEvent = (channel: string, message: Message): void => this.send(channel, message, 'publish');
 
-    this.socket.on('message', (message: Message): void => {
-      try {
-        this.decode(JSON.parse(message));
-      } catch (e) {
-        logError(`PID: ${process.pid}\n${e}\n`);
+    // Binary processed in uws/server file
+    this.socket.on(
+      'message',
+      (message: Message): void => {
+        try {
+          this.decode(JSON.parse(message));
+        } catch (e) {
+          logError(`PID: ${process.pid}\n${e}\n`);
+        }
       }
-    });
+    );
 
-    this.socket.on('close', (code?: number, reason?: string): void => {
-      for (let i: number = 0, keys: string[] = Object.keys(this.channels), len: number = keys.length; i < len; i++)
-        this.worker.wss.channels.unsubscribe(keys[i], this.id);
-      this.events.emit('disconnect', code, reason);
-      this.events.removeEvents();
-      // TODO: fix removed cleaning up for now (need to test memory usage)
-    });
+    this.socket.on(
+      'close',
+      (code?: number, reason?: string): void => {
+        for (let i: number = 0, keys: string[] = Object.keys(this.channels), len: number = keys.length; i < len; i++)
+          this.worker.wss.channels.unsubscribe(keys[i], this.id);
+        this.events.emit('disconnect', code, reason);
+        this.events.removeEvents();
+        // TODO: fix removed cleaning up for now (need to test memory usage)
+      }
+    );
 
     this.socket.on('error', (err: Error): void => this.events.emit('error', err));
   }

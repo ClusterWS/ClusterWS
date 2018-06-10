@@ -24,12 +24,20 @@ export class Worker {
       verifyClient: (info: CustomObject, callback: Listener): void =>
         this.wss.middleware.verifyConnection ? this.wss.middleware.verifyConnection(info, callback) : callback(true)
     });
-    uWSServer.on('connection', (socket: UWebSocket) => this.wss.emit('connection', new Socket(this, socket)));
+
+    uWSServer.on('connection', (socket: UWebSocket, upgradeReq: CustomObject) =>
+      this.wss.emit('connection', new Socket(this, socket), upgradeReq)
+    );
+
     uWSServer.heartbeat(this.options.pingInterval, true);
 
-    this.server.listen(this.options.port, this.options.host, (): void => {
-      this.options.worker.call(this);
-      process.send({ event: 'READY', pid: process.pid });
-    });
+    this.server.listen(
+      this.options.port,
+      this.options.host,
+      (): void => {
+        this.options.worker.call(this);
+        process.send({ event: 'READY', pid: process.pid });
+      }
+    );
   }
 }

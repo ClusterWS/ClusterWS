@@ -4,31 +4,44 @@ import { noop, native, DEFAULT_PAYLOAD_LIMIT, OPCODE_BINARY, OPCODE_PING, OPCODE
 native.setNoop(noop);
 const clientGroup: Listener = native.client.group.create(0, DEFAULT_PAYLOAD_LIMIT);
 
-native.client.group.onConnection(clientGroup, (newExternal: CustomObject): void => {
-  const webSocket: CustomObject = native.getUserData(newExternal);
-  webSocket.external = newExternal;
-  webSocket.internalOnOpen();
-});
+native.client.group.onConnection(
+  clientGroup,
+  (newExternal: CustomObject): void => {
+    const webSocket: CustomObject = native.getUserData(newExternal);
+    webSocket.external = newExternal;
+    webSocket.internalOnOpen();
+  }
+);
+
 native.client.group.onDisconnection(
   clientGroup,
   (newExternal: CustomObject, code: number, message: Message, webSocket: CustomObject): void => {
     webSocket.external = null;
-    process.nextTick((): void => webSocket.internalOnClose(code, message));
+    process.nextTick(
+      (): void => {
+        webSocket.internalOnClose(code, message);
+        webSocket = null;
+      }
+    );
+
     native.clearUserData(newExternal);
   }
 );
-native.client.group.onError(clientGroup, (webSocket: CustomObject): void => {
-  process.nextTick((): void =>
-    webSocket.internalOnError({
-      message: 'uWs client connection error',
-      stack: 'uWs client connection error'
-    })
-  );
-});
 
-native.client.group.onMessage(clientGroup, (message: Message, webSocket: CustomObject): void =>
-  webSocket.internalOnMessage(message)
+native.client.group.onError(
+  clientGroup,
+  (webSocket: CustomObject): void => {
+    process.nextTick(
+      (): void =>
+        webSocket.internalOnError({
+          message: 'uWs client connection error',
+          stack: 'uWs client connection error'
+        })
+    );
+  }
 );
+
+native.client.group.onMessage(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.internalOnMessage(message));
 native.client.group.onPing(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onping(message));
 native.client.group.onPong(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onpong(message));
 
@@ -51,7 +64,12 @@ export class UWebSocket {
     this.onpong = (): boolean => (this.isAlive = true);
     this.external = external;
     this.executeOn = isServeClient ? 'server' : 'client';
-    !isServeClient && native.connect(clientGroup, uri, this);
+    !isServeClient &&
+      native.connect(
+        clientGroup,
+        uri,
+        this
+      );
   }
 
   get readyState(): number {

@@ -56,37 +56,37 @@ export class WSServer extends EventEmitterSingle {
       ? (this.internalBrokers.nextBroker = 0)
       : this.internalBrokers.nextBroker++;
 
-    const receiver: CustomObject = this.internalBrokers.brokers[
-      this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]
-    ];
+    const receiver: CustomObject = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]];
 
     if (receiver.readyState !== 1) {
-      delete this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]];
-      this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers);
-      this.internalBrokers.brokersAmount--;
+      this.clearBroker(this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]);
       return this.publish(channel, message, ++tries);
     }
 
     receiver.send(Buffer.from(`${channel}%${JSON.stringify({ message })}`));
 
-    if (channel === '#sendToWorkers')
-      return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(message);
+    if (channel === '#sendToWorkers') return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(message);
 
     this.channels.publish(channel, message);
     this.middleware.onPublish && this.middleware.onPublish(channel, message);
   }
 
   public broadcastMessage(_: string, message: Message): void {
-    message = Buffer.from(message);
-    const devider: number = message.indexOf(37);
-    const channel: string = message.slice(0, devider).toString();
-    const decodedMessage: any = JSON.parse(message.slice(devider + 1)).message;
+    const parsedMessage: Message = Buffer.from(message);
+    const devider: number = parsedMessage.indexOf(37);
+    const channel: string = parsedMessage.slice(0, devider).toString();
+    const decodedMessage: any = JSON.parse(parsedMessage.slice(devider + 1)).message;
 
-    if (channel === '#sendToWorkers')
-      return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(decodedMessage);
+    if (channel === '#sendToWorkers') return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(decodedMessage);
 
     this.middleware.onPublish && this.middleware.onPublish(channel, decodedMessage);
     this.channels.publish(channel, decodedMessage);
+  }
+
+  public clearBroker(url: string): void {
+    delete this.internalBrokers.brokers[url];
+    this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers);
+    this.internalBrokers.brokersAmount--;
   }
 
   public setBroker(br: UWebSocket, url: string): void {

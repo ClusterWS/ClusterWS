@@ -59,6 +59,7 @@ export class WSServer extends EventEmitterSingle {
     publishToWorkers(message: Message): void;
     publish(channel: string, message: Message, tries?: number): void;
     broadcastMessage(_: string, message: Message): void;
+    clearBroker(url: string): void;
     setBroker(br: UWebSocket, url: string): void;
 }
 
