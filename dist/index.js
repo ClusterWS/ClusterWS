@@ -498,7 +498,7 @@ class ClusterWS {
                 Object.keys(t).length === e.brokers)) for (let r = 0; r < e.workers; r++) o("Worker", r);
                 Object.keys(t).length === e.brokers && Object.keys(n).length === e.workers && (r = !0, 
                 logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
-                Object.keys(t).forEach(e => t.hasOwnProperty(e) && logReady(t[e])), Object.keys(n).forEach(e => n.hasOwnProperty(e) && logReady(n[e])));
+                Object.keys(t).forEach(e => logReady(t[e])), Object.keys(n).forEach(e => logReady(n[e])));
             }(i, l, s.pid)), a.on("exit", () => {
                 a = null, logError(`${i} has exited \n`), e.restartWorkerOnFail && (logWarning(`${i} is restarting \n`), 
                 o(i, l));

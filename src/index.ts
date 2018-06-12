@@ -84,8 +84,8 @@ export default class ClusterWS {
       if (Object.keys(brokersReady).length === options.brokers && Object.keys(workersReady).length === options.workers) {
         isReady = true;
         logReady(`>>>  Master on: ${options.port}, PID: ${process.pid} ${options.tlsOptions ? ' (secure)' : ''}`);
-        Object.keys(brokersReady).forEach((key: string) => brokersReady.hasOwnProperty(key) && logReady(brokersReady[key]));
-        Object.keys(workersReady).forEach((key: string) => workersReady.hasOwnProperty(key) && logReady(workersReady[key]));
+        Object.keys(brokersReady).forEach((key: string) => logReady(brokersReady[key]));
+        Object.keys(workersReady).forEach((key: string) => logReady(workersReady[key]));
       }
     }
   }

@@ -59,6 +59,7 @@ export function GlobalBrokerServer(port: number, securityKey: string, horizontal
           delete clients.sockets[socket.serverid].wss[socket.uid];
           clients.sockets[socket.serverid].keys = Object.keys(clients.sockets[socket.serverid].wss);
           clients.sockets[socket.serverid].length--;
+
           if (!clients.sockets[socket.serverid].length) {
             delete clients.sockets[socket.serverid];
             clients.keys = Object.keys(clients.sockets);
