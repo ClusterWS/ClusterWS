@@ -1,4 +1,4 @@
-import { EventEmitterMany } from '../src/modules/emitter/many';
+import { EventEmitterMany } from '../../src/modules/emitter/many';
 
 // Old Version
 // let many = new EventEmitterMany1();
