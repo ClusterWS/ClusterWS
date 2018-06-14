@@ -34,7 +34,6 @@ export class Socket {
           this.worker.wss.channels.unsubscribe(keys[i], this.id);
         this.events.emit('disconnect', code, reason);
         this.events.removeEvents();
-        // TODO: fix removed cleaning up for now (need to test memory usage)
       }
     );
 

@@ -103,7 +103,7 @@ export default class ClusterWS {
             GlobalBrokerServer(
               options.horizontalScaleOptions.masterOptions.port,
               options.horizontalScaleOptions.key || '',
-              options.horizontalScaleOptions
+              options.horizontalScaleOptions.masterOptions.tlsOptions
             )
         };
         actions[message.processName] && actions[message.processName]();

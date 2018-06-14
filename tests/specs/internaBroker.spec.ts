@@ -15,24 +15,25 @@ describe('Internal Broker Create Server', () => {
 
 describe('Internal Broker Websocket Authentication Tests', () => {
   it('Should not connect if wrong key is provided', (done) => {
+    let fail = false;
     const broadcaster = {
       broadcastMessage: (message) => {},
-      setBroker: (broker, url): void => broker.on('open', () => done('Should not be called with wrong url')),
-      clearBroker: () => {}
+      clearBroker: () => {},
+      setBroker: (broker, url): void => {
+        fail = true;
+        done('Should not be called with wrong url');
+      }
     };
 
     BrokerClient(`ws://localhost:3000/?token=wrong_key`, broadcaster);
-    setTimeout(() => done(null), 1500);
+    setTimeout(() => !fail && done(null), 1500);
   });
 
-  it('Should not disconnected if right key is provided', (done) => {
+  it('Should connect and not disconnected if right key is provided', (done) => {
     const broadcaster = {
       broadcastMessage: (message) => {},
-      setBroker: (broker, url): void => {
-        broker.on('close', (code: number, raeson: string) => done('Should not disconnect'));
-        setTimeout(() => done(null), 1500);
-      },
-      clearBroker: () => {}
+      clearBroker: () => {},
+      setBroker: (broker, url): any => setTimeout(() => done(null), 1500)
     };
     BrokerClient('ws://localhost:3000/?token=key', broadcaster);
   });

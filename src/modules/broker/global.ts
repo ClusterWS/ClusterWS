@@ -2,7 +2,7 @@ import * as HTTPS from 'https';
 
 import { generateKey } from '../../utils/functions';
 import { UWebSocketsServer } from '../uws/server';
-import { Message, CustomObject } from '../../utils/types';
+import { Message, CustomObject, TlsOptions } from '../../utils/types';
 
 type Clients = {
   sockets: CustomObject;
@@ -10,7 +10,7 @@ type Clients = {
   keys: string[];
 };
 
-export function GlobalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void {
+export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions?: TlsOptions): void {
   const clients: Clients = {
     sockets: {},
     length: 0,
@@ -23,8 +23,8 @@ export function GlobalBrokerServer(port: number, securityKey: string, horizontal
     verifyClient: (info: CustomObject, done: (next: boolean) => void): void => done(info.req.url === `/?token=${securityKey}`)
   };
 
-  if (horizontalScaleOptions.masterOptions && horizontalScaleOptions.masterOptions.tlsOptions) {
-    const httpsServer: HTTPS.Server = HTTPS.createServer(horizontalScaleOptions.masterOptions.tlsOptions);
+  if (tlsOptions) {
+    const httpsServer: HTTPS.Server = HTTPS.createServer(tlsOptions);
     wsOptions.port = null;
     wsOptions.server = httpsServer;
     server = new UWebSocketsServer(wsOptions);
