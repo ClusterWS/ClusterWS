@@ -14,7 +14,7 @@ export default class ClusterWS {
 
 export function BrokerClient(url: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
 
-export function GlobalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void;
+export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions?: TlsOptions): void;
 
 export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void;
 
@@ -117,7 +117,7 @@ export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;
 export function isFunction<T>(fn: T): boolean;
-export function generateKey(length: number): string;
+export function generateKey(halfLength: number): string;
 
 export type Message = any;
 export type Listener = (...args: any[]) => void;

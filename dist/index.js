@@ -326,6 +326,7 @@ function BrokerClient(e, r, s = 0, t) {
     n.on("open", () => {
         s = 0, r.setBroker(n, e), t && logReady(`Broker has been connected to ${e} \n`);
     }), n.on("close", (t, o) => {
+        if (1e3 === t) return logWarning(`Broker has disconnected from ${e} with code 1000 \n`);
         n = null, r.clearBroker(e), logWarning(`Broker has disconnected, system is trying to reconnect to ${e} \n`), 
         setTimeout(() => BrokerClient(e, r, ++s, !0), Math.floor(1e3 * Math.random()) + 500);
     }), n.on("error", o => {
@@ -364,8 +365,8 @@ function GlobalBrokerServer(e, r, s) {
         port: e,
         verifyClient: (e, s) => s(e.req.url === `/?token=${r}`)
     };
-    if (s.masterOptions && s.masterOptions.tlsOptions) {
-        const r = HTTPS.createServer(s.masterOptions.tlsOptions);
+    if (s) {
+        const r = HTTPS.createServer(s);
         o.port = null, o.server = r, n = new UWebSocketsServer(o), r.listen(e, () => process.send({
             event: "READY",
             pid: process.pid
@@ -379,22 +380,22 @@ function GlobalBrokerServer(e, r, s) {
     }
     n.on("connection", e => {
         e.on("message", r => {
-            "string" == typeof r ? (e.uid = generateKey(10), e.serverid = r, t.sockets[r] || (t.sockets[r] = {
-                wss: {},
-                next: 0,
-                length: 0,
-                keys: []
-            }), t.sockets[r].wss[e.uid] = e, t.sockets[r].keys = Object.keys(t.sockets[r].wss), 
-            t.sockets[r].length++, t.length++, t.keys = Object.keys(t.sockets)) : function(e, r) {
+            e.uid || "string" != typeof r ? e.uid && function(e, r) {
                 for (let s = 0; s < t.length; s++) {
                     const n = t.keys[s];
                     n !== e && i(t.sockets[n], r);
                 }
-            }(e.serverid, r);
+            }(e.serverid, r) : (e.uid = generateKey(10), e.serverid = r, t.sockets[r] || (t.sockets[r] = {
+                wss: {},
+                next: 0,
+                length: 0,
+                keys: []
+            }, t.length++, t.keys = Object.keys(t.sockets)), t.sockets[r].wss[e.uid] = e, t.sockets[r].keys = Object.keys(t.sockets[r].wss), 
+            t.sockets[r].length++);
         }), e.on("close", (r, s) => {
-            delete t.sockets[e.serverid].wss[e.uid], t.sockets[e.serverid].keys = Object.keys(t.sockets[e.serverid].wss), 
+            e.uid && (delete t.sockets[e.serverid].wss[e.uid], t.sockets[e.serverid].keys = Object.keys(t.sockets[e.serverid].wss), 
             t.sockets[e.serverid].length--, t.sockets[e.serverid].length || (delete t.sockets[e.serverid], 
-            t.keys = Object.keys(t.sockets), t.length--), e = null;
+            t.keys = Object.keys(t.sockets), t.length--)), e = null;
         });
     }), n.heartbeat(2e4);
 }
@@ -514,7 +515,7 @@ class ClusterWS {
             const s = {
                 Worker: () => new Worker(e, r.securityKey),
                 Broker: () => InternalBrokerServer(e.brokersPorts[r.processId], r.securityKey, e.horizontalScaleOptions),
-                Scaler: () => e.horizontalScaleOptions && GlobalBrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions)
+                Scaler: () => e.horizontalScaleOptions && GlobalBrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions.masterOptions.tlsOptions)
             };
             s[r.processName] && s[r.processName]();
         }), process.on("uncaughtException", e => {

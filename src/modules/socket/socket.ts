@@ -15,7 +15,7 @@ export class Socket {
     this.send('configuration', initMessage, 'system');
     this.onPublishEvent = (channel: string, message: Message): void => this.send(channel, message, 'publish');
 
-    // Binary processed in uws/server file
+    // Binary processed in uws/server.ts file
     this.socket.on(
       'message',
       (message: Message): void => {

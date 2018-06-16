@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-    <i><strong>Lightweight</strong>, <strong>fast</strong> and <strong>powerful</strong> framework for building <strong>scalable</strong> WebSockets applications in Node.js. ClusterWS uses <a href="https://github.com/uNetworking/uWebSockets">uWebSockets</a> - one of the most lightweight, efficient & scalable WebSockets library.</i>
+    <i><strong>Lightweight</strong>, <strong>fast</strong> and <strong>powerful</strong> framework for building <strong>scalable</strong> WebSocket applications in Node.js. ClusterWS uses <a href="https://github.com/uNetworking/uWebSockets">uWebSockets</a> - one of the most lightweight, efficient & scalable WebSocket library.</i>
 </p>
 
 <h3 align="center">
