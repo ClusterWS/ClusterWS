@@ -37,18 +37,19 @@ export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions
       socket.on(
         'message',
         (message: Message): void => {
-          if (typeof message === 'string') {
+          if (!socket.uid && typeof message === 'string') {
             socket.uid = generateKey(10);
             socket.serverid = message;
 
-            if (!clients.sockets[message]) clients.sockets[message] = { wss: {}, next: 0, length: 0, keys: [] };
+            if (!clients.sockets[message]) {
+              clients.sockets[message] = { wss: {}, next: 0, length: 0, keys: [] };
+              clients.length++;
+              clients.keys = Object.keys(clients.sockets);
+            }
 
             clients.sockets[message].wss[socket.uid] = socket;
             clients.sockets[message].keys = Object.keys(clients.sockets[message].wss);
             clients.sockets[message].length++;
-
-            clients.length++;
-            clients.keys = Object.keys(clients.sockets);
           } else if (socket.uid) broadcast(socket.serverid, message);
         }
       );
@@ -76,6 +77,7 @@ export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions
   server.heartbeat(20000);
 
   function broadcast(serverId: string, message: Message): void {
+    console.log(clients.length)
     for (let i: number = 0; i < clients.length; i++) {
       const key: string = clients.keys[i];
       if (key !== serverId) broadcastToSingleServer(clients.sockets[key], message);
