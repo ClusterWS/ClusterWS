@@ -49,21 +49,23 @@ export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions
 
             clients.length++;
             clients.keys = Object.keys(clients.sockets);
-          } else broadcast(socket.serverid, message);
+          } else if (socket.uid) broadcast(socket.serverid, message);
         }
       );
 
       socket.on(
         'close',
         (code: number, reason?: string): void => {
-          delete clients.sockets[socket.serverid].wss[socket.uid];
-          clients.sockets[socket.serverid].keys = Object.keys(clients.sockets[socket.serverid].wss);
-          clients.sockets[socket.serverid].length--;
+          if (socket.uid) {
+            delete clients.sockets[socket.serverid].wss[socket.uid];
+            clients.sockets[socket.serverid].keys = Object.keys(clients.sockets[socket.serverid].wss);
+            clients.sockets[socket.serverid].length--;
 
-          if (!clients.sockets[socket.serverid].length) {
-            delete clients.sockets[socket.serverid];
-            clients.keys = Object.keys(clients.sockets);
-            clients.length--;
+            if (!clients.sockets[socket.serverid].length) {
+              delete clients.sockets[socket.serverid];
+              clients.keys = Object.keys(clients.sockets);
+              clients.length--;
+            }
           }
           socket = null;
         }

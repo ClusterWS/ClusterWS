@@ -36,3 +36,20 @@ describe('Global Broker Websocket Authentication Tests', () => {
     BrokerClient('ws://localhost:4000/?token=key', broadcaster);
   });
 });
+
+describe('Global Broker Reconnection Test', () => {
+  it('Should reconnect to the WebSocket Server on lost connection', (done) => {
+    let tries = 0;
+    const broadcaster = {
+      broadcastMessage: (message) => {},
+      setBroker: (broker, url): void => {
+        console.log('Got in here');
+        tries++;
+        if (tries === 2) return done(null);
+        setTimeout(() => broker.close(4001, 'Close for tests'), 10);
+      },
+      clearBroker: () => {}
+    };
+    BrokerClient('ws://localhost:4000/?token=key', broadcaster);
+  });
+});
