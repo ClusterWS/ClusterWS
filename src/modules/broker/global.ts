@@ -77,7 +77,6 @@ export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions
   server.heartbeat(20000);
 
   function broadcast(serverId: string, message: Message): void {
-    console.log(clients.length)
     for (let i: number = 0; i < clients.length; i++) {
       const key: string = clients.keys[i];
       if (key !== serverId) broadcastToSingleServer(clients.sockets[key], message);
