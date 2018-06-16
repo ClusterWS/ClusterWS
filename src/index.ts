@@ -30,10 +30,7 @@ export default class ClusterWS {
       encodeDecodeEngine: configurations.encodeDecodeEngine || false
     };
 
-    options.horizontalScaleOptions && (options.horizontalScaleOptions.serverID = generateKey(10));
-
     if (!isFunction(options.worker)) return logError('Worker param must be provided and it must be a function \n');
-
     if (!configurations.brokersPorts) for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(i + 9400);
 
     if (options.brokersPorts.length !== options.brokers)
@@ -44,6 +41,7 @@ export default class ClusterWS {
 
   private masterProcess(options: Options): void {
     let isReady: boolean = false;
+    const serverID: string = generateKey(10);
     const securityKey: string = generateKey(16);
     const brokersReady: CustomObject = {};
     const workersReady: CustomObject = {};
@@ -65,7 +63,7 @@ export default class ClusterWS {
         }
       });
 
-      newProcess.send({ securityKey, processId, processName });
+      newProcess.send({ securityKey, processId, processName, serverID });
     }
 
     function ready(processName: string, processId: number, pid: number): void {
@@ -96,8 +94,10 @@ export default class ClusterWS {
       (message: Message): void => {
         const actions: CustomObject = {
           Worker: (): Worker => new Worker(options, message.securityKey),
-          Broker: (): void =>
-            InternalBrokerServer(options.brokersPorts[message.processId], message.securityKey, options.horizontalScaleOptions),
+          Broker: (): void => {
+            options.horizontalScaleOptions && (options.horizontalScaleOptions.serverID = message.serverID);
+            InternalBrokerServer(options.brokersPorts[message.processId], message.securityKey, options.horizontalScaleOptions);
+          },
           Scaler: (): void =>
             options.horizontalScaleOptions &&
             GlobalBrokerServer(

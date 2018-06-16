@@ -17,8 +17,8 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries: numb
   websocket.on(
     'close',
     (code: number, reason: string): void => {
-      if (code === 1000) return logWarning(`Broker has disconnected from ${url} with code 1000 \n`);
       websocket = null;
+      if (code === 1000) return logWarning(`Broker has disconnected from ${url} with code 1000 \n`);
       broadcaster.clearBroker(url);
       logWarning(`Broker has disconnected, system is trying to reconnect to ${url} \n`);
       setTimeout(() => BrokerClient(url, broadcaster, ++tries, true), Math.floor(Math.random() * 1000) + 500);

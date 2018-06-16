@@ -4,6 +4,7 @@ import { generateKey } from '../../utils/functions';
 import { UWebSocketsServer } from '../uws/server';
 import { Message, CustomObject, TlsOptions } from '../../utils/types';
 
+// TODO: Implement protection from broken brokers connections
 type Clients = {
   sockets: CustomObject;
   length: number;
@@ -85,6 +86,7 @@ export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions
 
   function broadcastToSingleServer(singleServer: CustomObject, message: Message): void {
     if (singleServer.next >= singleServer.length) singleServer.next = 0;
+    // const receiver = singleServer.wss[singleServer.keys[singleServer.next]]
     singleServer.wss[singleServer.keys[singleServer.next]].send(message);
     singleServer.next++;
   }

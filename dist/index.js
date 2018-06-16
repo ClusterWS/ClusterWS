@@ -310,8 +310,8 @@ class WSServer extends EventEmitterSingle {
         this.middleware.onPublish && this.middleware.onPublish(n, o), this.channels.publish(n, o);
     }
     clearBroker(e) {
-        delete this.internalBrokers.brokers[e], this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), 
-        this.internalBrokers.brokersAmount--;
+        this.internalBrokers.brokers[e] && (delete this.internalBrokers.brokers[e], this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), 
+        this.internalBrokers.brokersAmount--);
     }
     setBroker(e, r) {
         this.internalBrokers.brokers[r] = e, this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), 
@@ -326,8 +326,8 @@ function BrokerClient(e, r, s = 0, t) {
     n.on("open", () => {
         s = 0, r.setBroker(n, e), t && logReady(`Broker has been connected to ${e} \n`);
     }), n.on("close", (t, o) => {
-        if (1e3 === t) return logWarning(`Broker has disconnected from ${e} with code 1000 \n`);
-        n = null, r.clearBroker(e), logWarning(`Broker has disconnected, system is trying to reconnect to ${e} \n`), 
+        if (n = null, 1e3 === t) return logWarning(`Broker has disconnected from ${e} with code 1000 \n`);
+        r.clearBroker(e), logWarning(`Broker has disconnected, system is trying to reconnect to ${e} \n`), 
         setTimeout(() => BrokerClient(e, r, ++s, !0), Math.floor(1e3 * Math.random()) + 500);
     }), n.on("error", o => {
         n = null, r.clearBroker(e), 5 === s && logWarning(`Can not connect to the Broker ${e}. System in reconnection please check your Broker and Token\n`), 
@@ -439,7 +439,7 @@ function InternalBrokerServer(e, r, s) {
         for (let e = 0, r = s.brokersUrls.length; e < r; e++) l(`${s.brokersUrls[e]}/?token=${s.key}`);
     }
     function i(e) {
-        delete n.brokers[e], n.brokersKeys = Object.keys(n.brokers), n.brokersAmount--;
+        n.brokers[e] && (delete n.brokers[e], n.brokersKeys = Object.keys(n.brokers), n.brokersAmount--);
     }
     function l(e) {
         BrokerClient(e, {
@@ -479,34 +479,34 @@ class ClusterWS {
             horizontalScaleOptions: e.horizontalScaleOptions || !1,
             encodeDecodeEngine: e.encodeDecodeEngine || !1
         };
-        if (r.horizontalScaleOptions && (r.horizontalScaleOptions.serverID = generateKey(10)), 
-        !isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
+        if (!isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
         if (!e.brokersPorts) for (let e = 0; e < r.brokers; e++) r.brokersPorts.push(e + 9400);
         if (r.brokersPorts.length !== r.brokers) return logError("Number of broker ports should be the same as number of brokers\n");
         cluster.isMaster ? this.masterProcess(r) : this.workerProcess(r);
     }
     masterProcess(e) {
         let r = !1;
-        const s = generateKey(16), t = {}, n = {};
-        if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) o("Scaler", -1); else for (let r = 0; r < e.brokers; r++) o("Broker", r);
-        function o(i, l) {
-            let a = cluster.fork();
-            a.on("message", s => "READY" === s.event && function(s, i, l) {
+        const s = generateKey(10), t = generateKey(16), n = {}, o = {};
+        if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let r = 0; r < e.brokers; r++) i("Broker", r);
+        function i(l, a) {
+            let c = cluster.fork();
+            c.on("message", s => "READY" === s.event && function(s, t, l) {
                 if (r) return logReady(`${s} PID ${l} has been restarted`);
-                "Worker" === s && (n[i] = `\tWorker: ${i}, PID ${l}`);
-                if ("Scaler" === s) for (let r = 0; r < e.brokers; r++) o("Broker", r);
-                if ("Broker" === s && (t[i] = `>>>  Broker on: ${e.brokersPorts[i]}, PID ${l}`, 
-                Object.keys(t).length === e.brokers)) for (let r = 0; r < e.workers; r++) o("Worker", r);
-                Object.keys(t).length === e.brokers && Object.keys(n).length === e.workers && (r = !0, 
+                "Worker" === s && (o[t] = `\tWorker: ${t}, PID ${l}`);
+                if ("Scaler" === s) for (let r = 0; r < e.brokers; r++) i("Broker", r);
+                if ("Broker" === s && (n[t] = `>>>  Broker on: ${e.brokersPorts[t]}, PID ${l}`, 
+                Object.keys(n).length === e.brokers)) for (let r = 0; r < e.workers; r++) i("Worker", r);
+                Object.keys(n).length === e.brokers && Object.keys(o).length === e.workers && (r = !0, 
                 logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
-                Object.keys(t).forEach(e => logReady(t[e])), Object.keys(n).forEach(e => logReady(n[e])));
-            }(i, l, s.pid)), a.on("exit", () => {
-                a = null, logError(`${i} has exited \n`), e.restartWorkerOnFail && (logWarning(`${i} is restarting \n`), 
-                o(i, l));
-            }), a.send({
-                securityKey: s,
-                processId: l,
-                processName: i
+                Object.keys(n).forEach(e => logReady(n[e])), Object.keys(o).forEach(e => logReady(o[e])));
+            }(l, a, s.pid)), c.on("exit", () => {
+                c = null, logError(`${l} has exited \n`), e.restartWorkerOnFail && (logWarning(`${l} is restarting \n`), 
+                i(l, a));
+            }), c.send({
+                securityKey: t,
+                processId: a,
+                processName: l,
+                serverID: s
             });
         }
     }
@@ -514,7 +514,9 @@ class ClusterWS {
         process.on("message", r => {
             const s = {
                 Worker: () => new Worker(e, r.securityKey),
-                Broker: () => InternalBrokerServer(e.brokersPorts[r.processId], r.securityKey, e.horizontalScaleOptions),
+                Broker: () => {
+                    e.horizontalScaleOptions && (e.horizontalScaleOptions.serverID = r.serverID), InternalBrokerServer(e.brokersPorts[r.processId], r.securityKey, e.horizontalScaleOptions);
+                },
                 Scaler: () => e.horizontalScaleOptions && GlobalBrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions.masterOptions.tlsOptions)
             };
             s[r.processName] && s[r.processName]();

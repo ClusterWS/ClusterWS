@@ -84,6 +84,7 @@ export class WSServer extends EventEmitterSingle {
   }
 
   public clearBroker(url: string): void {
+    if (!this.internalBrokers.brokers[url]) return;
     delete this.internalBrokers.brokers[url];
     this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers);
     this.internalBrokers.brokersAmount--;

@@ -105,6 +105,7 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
   }
 
   function clearBroker(url: string): void {
+    if (!globalBrokers.brokers[url]) return;
     delete globalBrokers.brokers[url];
     globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
     globalBrokers.brokersAmount--;
