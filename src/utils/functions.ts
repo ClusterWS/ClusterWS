@@ -17,14 +17,14 @@ export function isFunction<T>(fn: T): boolean {
   return {}.toString.call(fn) === '[object Function]';
 }
 
-export function generateKey(length: number): string {
+export function generateKey(halfLength: number): string {
   return (
-    randomBytes(Math.ceil(length / 2))
+    randomBytes(Math.ceil(halfLength / 2))
       .toString('hex')
-      .slice(0, length) +
+      .slice(0, halfLength) +
     `${Date.now()}` +
-    randomBytes(Math.ceil(length / 2))
+    randomBytes(Math.ceil(halfLength / 2))
       .toString('hex')
-      .slice(0, length)
+      .slice(0, halfLength)
   );
 }

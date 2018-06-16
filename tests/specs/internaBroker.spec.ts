@@ -7,8 +7,6 @@ describe('Internal Broker Create Server', () => {
   it('Broker server Should start up', (done) => {
     // reasign process done
     process.send = () => done(null);
-
-    // Craete new internal broker server
     InternalBrokerServer(3000, 'key', false);
   });
 });
