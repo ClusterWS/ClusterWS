@@ -42,6 +42,14 @@ export class WSServer extends EventEmitterSingle {
     this.middleware[name] = listener;
   }
 
+  public setWatcher(channelName: string, listener: Listener): void {
+    this.channels.subscibe(channelName, (_: string, ...args: any[]) => listener(...args), 'worker');
+  }
+
+  public removeWatcher(channelName: string): void {
+    this.channels.unsubscribe(channelName, 'worker');
+  }
+
   public publishToWorkers(message: Message): void;
   public publishToWorkers(message: Message): void {
     this.publish('#sendToWorkers', message);
