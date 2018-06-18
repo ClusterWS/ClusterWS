@@ -67,6 +67,10 @@ class UWebSocket {
     }
 }
 
+function keysOf(e) {
+    return Object.keys(e);
+}
+
 function logError(e) {
     return console.log(`[31m${e}[0m`);
 }
@@ -84,7 +88,7 @@ function isFunction(e) {
 }
 
 function generateKey(e) {
-    return crypto.randomBytes(Math.ceil(e / 2)).toString("hex").slice(0, e) + `${Date.now()}` + crypto.randomBytes(Math.ceil(e / 2)).toString("hex").slice(0, e);
+    return crypto.randomBytes(Math.ceil(e / 4)).toString("hex").slice(0, e / 2) + Date.now() + crypto.randomBytes(Math.ceil(e / 4)).toString("hex").slice(0, e / 2);
 }
 
 class EventEmitterSingle {
@@ -290,6 +294,12 @@ class WSServer extends EventEmitterSingle {
     setMiddleware(e, r) {
         this.middleware[e] = r;
     }
+    setWatcher(e, r) {
+        this.channels.subscibe(e, (e, ...s) => r(...s), "worker");
+    }
+    removeWatcher(e) {
+        this.channels.unsubscribe(e, "worker");
+    }
     publishToWorkers(e) {
         this.publish("#sendToWorkers", e);
     }
@@ -463,6 +473,55 @@ function InternalBrokerServer(e, r, s) {
     }
 }
 
+function masterProcess(e) {
+    let r = !1;
+    const s = {}, t = {}, n = generateKey(15), o = generateKey(15);
+    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let r = 0; r < e.brokers; r++) i("Broker", r);
+    function i(l, a) {
+        let c = cluster.fork();
+        c.on("message", n => {
+            if (r) return logReady(`${l} PID ${n.pid} has been restarted`);
+            ({
+                Scaler: () => {
+                    for (let r = 0; r < e.brokers; r++) i("Broker", r);
+                },
+                Worker: () => {
+                    t[a] = `\tWorker: ${a}, PID ${n.pid}`;
+                },
+                Broker: () => {
+                    if (s[a] = `>>>  Broker on: ${e.brokersPorts[a]}, PID ${n.pid}`, Object.keys(s).length === e.brokers) for (let r = 0; r < e.workers; r++) i("Worker", r);
+                }
+            })[l](), keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
+            logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
+            keysOf(s).forEach(e => logReady(s[e])), keysOf(t).forEach(e => logReady(t[e])));
+        }), c.on("exit", () => {
+            c = null, logError(`${l} has exited \n`), e.restartWorkerOnFail && (logWarning(`${l} is restarting \n`), 
+            i(l, a));
+        }), c.send({
+            processId: a,
+            processName: l,
+            securityKey: n,
+            uniqueServerId: o
+        });
+    }
+}
+
+function workerProcess(e) {
+    process.on("message", r => {
+        const s = {
+            Worker: () => new Worker(e, r.securityKey),
+            Broker: () => {
+                e.horizontalScaleOptions && (e.horizontalScaleOptions.serverID = r.uniqueServerId), 
+                InternalBrokerServer(e.brokersPorts[r.processId], r.securityKey, e.horizontalScaleOptions);
+            },
+            Scaler: () => e.horizontalScaleOptions && GlobalBrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions.masterOptions.tlsOptions)
+        };
+        s[r.processName] && s[r.processName]();
+    }), process.on("uncaughtException", e => {
+        logError(`PID: ${process.pid}\n ${e.stack}\n`), process.exit();
+    });
+}
+
 class ClusterWS {
     constructor(e) {
         const r = {
@@ -472,57 +531,16 @@ class ClusterWS {
             workers: e.workers || 1,
             brokers: e.brokers || 1,
             useBinary: e.useBinary || !1,
-            brokersPorts: e.brokersPorts || [],
             tlsOptions: e.tlsOptions || !1,
             pingInterval: e.pingInterval || 2e4,
+            brokersPorts: e.brokersPorts || [],
+            encodeDecodeEngine: e.encodeDecodeEngine || !1,
             restartWorkerOnFail: e.restartWorkerOnFail || !1,
-            horizontalScaleOptions: e.horizontalScaleOptions || !1,
-            encodeDecodeEngine: e.encodeDecodeEngine || !1
+            horizontalScaleOptions: e.horizontalScaleOptions || !1
         };
-        if (!isFunction(r.worker)) return logError("Worker param must be provided and it must be a function \n");
-        if (!e.brokersPorts) for (let e = 0; e < r.brokers; e++) r.brokersPorts.push(e + 9400);
-        if (r.brokersPorts.length !== r.brokers) return logError("Number of broker ports should be the same as number of brokers\n");
-        cluster.isMaster ? this.masterProcess(r) : this.workerProcess(r);
-    }
-    masterProcess(e) {
-        let r = !1;
-        const s = generateKey(10), t = generateKey(16), n = {}, o = {};
-        if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let r = 0; r < e.brokers; r++) i("Broker", r);
-        function i(l, a) {
-            let c = cluster.fork();
-            c.on("message", s => "READY" === s.event && function(s, t, l) {
-                if (r) return logReady(`${s} PID ${l} has been restarted`);
-                "Worker" === s && (o[t] = `\tWorker: ${t}, PID ${l}`);
-                if ("Scaler" === s) for (let r = 0; r < e.brokers; r++) i("Broker", r);
-                if ("Broker" === s && (n[t] = `>>>  Broker on: ${e.brokersPorts[t]}, PID ${l}`, 
-                Object.keys(n).length === e.brokers)) for (let r = 0; r < e.workers; r++) i("Worker", r);
-                Object.keys(n).length === e.brokers && Object.keys(o).length === e.workers && (r = !0, 
-                logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
-                Object.keys(n).forEach(e => logReady(n[e])), Object.keys(o).forEach(e => logReady(o[e])));
-            }(l, a, s.pid)), c.on("exit", () => {
-                c = null, logError(`${l} has exited \n`), e.restartWorkerOnFail && (logWarning(`${l} is restarting \n`), 
-                i(l, a));
-            }), c.send({
-                securityKey: t,
-                processId: a,
-                processName: l,
-                serverID: s
-            });
-        }
-    }
-    workerProcess(e) {
-        process.on("message", r => {
-            const s = {
-                Worker: () => new Worker(e, r.securityKey),
-                Broker: () => {
-                    e.horizontalScaleOptions && (e.horizontalScaleOptions.serverID = r.serverID), InternalBrokerServer(e.brokersPorts[r.processId], r.securityKey, e.horizontalScaleOptions);
-                },
-                Scaler: () => e.horizontalScaleOptions && GlobalBrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions.masterOptions.tlsOptions)
-            };
-            s[r.processName] && s[r.processName]();
-        }), process.on("uncaughtException", e => {
-            logError(`PID: ${process.pid}\n ${e.stack}\n`), process.exit();
-        });
+        if (!r.brokersPorts.length) for (let e = 0; e < r.brokers; e++) r.brokersPorts.push(e + 9400);
+        if (r.brokers !== r.brokersPorts.length || !isFunction(r.worker)) return logError(isFunction(r.worker) ? "Number of broker ports should be the same as number of brokers\n" : "Worker param must be provided and it must be a function \n");
+        cluster.isMaster ? masterProcess(r) : workerProcess(r);
     }
 }
 

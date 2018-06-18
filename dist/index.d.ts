@@ -56,6 +56,8 @@ export class WSServer extends EventEmitterSingle {
     setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
     setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
+    setWatcher(channelName: string, listener: Listener): void;
+    removeWatcher(channelName: string): void;
     publishToWorkers(message: Message): void;
     publish(channel: string, message: Message, tries?: number): void;
     broadcastMessage(_: string, message: Message): void;
@@ -113,11 +115,15 @@ export class Worker {
     constructor(options: Options, securityKey: string);
 }
 
+export function masterProcess(options: Options): void;
+export function workerProcess(options: Options): void;
+
+export function keysOf(object: CustomObject): string[];
 export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;
 export function isFunction<T>(fn: T): boolean;
-export function generateKey(halfLength: number): string;
+export function generateKey(length: number): string;
 
 export type Message = any;
 export type Listener = (...args: any[]) => void;

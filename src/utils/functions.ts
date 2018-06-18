@@ -1,6 +1,10 @@
 import { randomBytes } from 'crypto';
 import { CustomObject } from './types';
 
+export function keysOf(object: CustomObject): string[] {
+  return Object.keys(object);
+}
+
 export function logError<T>(data: T): any {
   return console.log(`\x1b[31m${data}\x1b[0m`);
 }
@@ -17,14 +21,14 @@ export function isFunction<T>(fn: T): boolean {
   return {}.toString.call(fn) === '[object Function]';
 }
 
-export function generateKey(halfLength: number): string {
+export function generateKey(length: number): string {
   return (
-    randomBytes(Math.ceil(halfLength / 2))
+    randomBytes(Math.ceil(length / 4))
       .toString('hex')
-      .slice(0, halfLength) +
-    `${Date.now()}` +
-    randomBytes(Math.ceil(halfLength / 2))
+      .slice(0, length / 2) +
+    Date.now() +
+    randomBytes(Math.ceil(length / 4))
       .toString('hex')
-      .slice(0, halfLength)
+      .slice(0, length / 2)
   );
 }
