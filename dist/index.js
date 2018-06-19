@@ -180,7 +180,7 @@ class UWebSocketsServer extends EventEmitterSingle {
 
 class Socket {
     constructor(e, r) {
-        this.worker = e, this.socket = r, this.id = generateKey(8), this.events = new EventEmitterSingle(), 
+        this.worker = e, this.socket = r, this.id = generateKey(10), this.events = new EventEmitterSingle(), 
         this.channels = {};
         const s = {
             ping: this.worker.options.pingInterval,
@@ -194,7 +194,7 @@ class Socket {
                 logError(`PID: ${process.pid}\n${e}\n`);
             }
         }), this.socket.on("close", (e, r) => {
-            for (let e = 0, r = Object.keys(this.channels), s = r.length; e < s; e++) this.worker.wss.channels.unsubscribe(r[e], this.id);
+            for (let e = 0, r = keysOf(this.channels), s = r.length; e < s; e++) this.worker.wss.channels.unsubscribe(r[e], this.id);
             this.events.emit("disconnect", e, r), this.events.removeEvents();
         }), this.socket.on("error", e => this.events.emit("error", e));
     }
@@ -229,13 +229,14 @@ class Socket {
             p: () => this.channels[e["#"][1]] && this.worker.wss.publish(e["#"][1], r),
             s: {
                 s: () => {
+                    if (this.channels[r]) return;
                     const e = () => {
                         this.channels[r] = 1, this.worker.wss.channels.subscibe(r, this.onPublishEvent, this.id);
                     };
                     this.worker.wss.middleware.onSubscribe ? this.worker.wss.middleware.onSubscribe(this, r, r => r && e()) : e();
                 },
                 u: () => {
-                    this.worker.wss.channels.unsubscribe(r, this.id), this.channels[r] = null;
+                    this.channels[r] && (this.worker.wss.channels.unsubscribe(r, this.id), this.channels[r] = null);
                 }
             }
         };
@@ -320,13 +321,13 @@ class WSServer extends EventEmitterSingle {
         this.middleware.onPublish && this.middleware.onPublish(n, o), this.channels.publish(n, o);
     }
     clearBroker(e) {
-        this.internalBrokers.brokers[e] && (delete this.internalBrokers.brokers[e], this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), 
+        this.internalBrokers.brokers[e] && (delete this.internalBrokers.brokers[e], this.internalBrokers.brokersKeys = keysOf(this.internalBrokers.brokers), 
         this.internalBrokers.brokersAmount--);
     }
     setBroker(e, r) {
-        this.internalBrokers.brokers[r] = e, this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers), 
+        this.internalBrokers.brokers[r] = e, this.internalBrokers.brokersKeys = keysOf(this.internalBrokers.brokers), 
         this.internalBrokers.brokersAmount = this.internalBrokers.brokersKeys.length;
-        const s = Object.keys(this.channels.events);
+        const s = keysOf(this.channels.events);
         s.length && e.send(JSON.stringify(s));
     }
 }
@@ -364,50 +365,50 @@ class Worker {
     }
 }
 
-function GlobalBrokerServer(e, r, s) {
-    const t = {
+function GlobalBrokerServer(e) {
+    const r = {
         sockets: {},
         length: 0,
         keys: []
     };
-    let n;
-    const o = {
-        port: e,
-        verifyClient: (e, s) => s(e.req.url === `/?token=${r}`)
+    let s;
+    const t = {
+        port: e.masterOptions.port,
+        verifyClient: (r, s) => s(r.req.url === `/?token=${e.key || ""}`)
     };
-    if (s) {
-        const r = HTTPS.createServer(s);
-        o.port = null, o.server = r, n = new UWebSocketsServer(o), r.listen(e, () => process.send({
+    if (e.masterOptions.tlsOptions) {
+        const r = HTTPS.createServer(e.masterOptions.tlsOptions);
+        t.port = null, t.server = r, s = new UWebSocketsServer(t), r.listen(e.masterOptions.port, () => process.send({
             event: "READY",
             pid: process.pid
         }));
-    } else n = new UWebSocketsServer(o, () => process.send({
+    } else s = new UWebSocketsServer(t, () => process.send({
         event: "READY",
         pid: process.pid
     }));
-    function i(e, r) {
+    function n(e, r) {
         e.next >= e.length && (e.next = 0), e.wss[e.keys[e.next]].send(r), e.next++;
     }
-    n.on("connection", e => {
-        e.on("message", r => {
-            e.uid || "string" != typeof r ? e.uid && function(e, r) {
-                for (let s = 0; s < t.length; s++) {
-                    const n = t.keys[s];
-                    n !== e && i(t.sockets[n], r);
+    s.on("connection", e => {
+        e.on("message", s => {
+            e.uid || "string" != typeof s ? e.uid && function(e, s) {
+                for (let t = 0; t < r.length; t++) {
+                    const o = r.keys[t];
+                    o !== e && n(r.sockets[o], s);
                 }
-            }(e.serverid, r) : (e.uid = generateKey(10), e.serverid = r, t.sockets[r] || (t.sockets[r] = {
+            }(e.serverid, s) : (e.uid = generateKey(10), e.serverid = s, r.sockets[s] || (r.sockets[s] = {
                 wss: {},
                 next: 0,
                 length: 0,
                 keys: []
-            }, t.length++, t.keys = Object.keys(t.sockets)), t.sockets[r].wss[e.uid] = e, t.sockets[r].keys = Object.keys(t.sockets[r].wss), 
-            t.sockets[r].length++);
-        }), e.on("close", (r, s) => {
-            e.uid && (delete t.sockets[e.serverid].wss[e.uid], t.sockets[e.serverid].keys = Object.keys(t.sockets[e.serverid].wss), 
-            t.sockets[e.serverid].length--, t.sockets[e.serverid].length || (delete t.sockets[e.serverid], 
-            t.keys = Object.keys(t.sockets), t.length--)), e = null;
+            }, r.length++, r.keys = keysOf(r.sockets)), r.sockets[s].wss[e.uid] = e, r.sockets[s].keys = keysOf(r.sockets[s].wss), 
+            r.sockets[s].length++);
+        }), e.on("close", (s, t) => {
+            e.uid && (delete r.sockets[e.serverid].wss[e.uid], r.sockets[e.serverid].keys = keysOf(r.sockets[e.serverid].wss), 
+            r.sockets[e.serverid].length--, r.sockets[e.serverid].length || (delete r.sockets[e.serverid], 
+            r.keys = keysOf(r.sockets), r.length--)), e = null;
         });
-    }), n.heartbeat(2e4);
+    }), s.heartbeat(2e4);
 }
 
 function InternalBrokerServer(e, r, s) {
@@ -430,7 +431,7 @@ function InternalBrokerServer(e, r, s) {
     if (o.on("connection", e => {
         e.uid = generateKey(10), e.channels = {
             "#sendToWorkers": !0
-        }, t.sockets[e.uid] = e, t.length++, t.keys = Object.keys(t.sockets), e.on("message", r => {
+        }, t.sockets[e.uid] = e, t.length++, t.keys = keysOf(t.sockets), e.on("message", r => {
             if ("string" == typeof r) if ("[" !== r[0]) e.channels[r] = e.channels[r] ? null : 1; else {
                 const s = JSON.parse(r);
                 for (let r = 0, t = s.length; r < t; r++) e.channels[s[r]] = !0;
@@ -442,22 +443,22 @@ function InternalBrokerServer(e, r, s) {
                 s.send(r);
             }(r);
         }), e.on("close", (r, s) => {
-            delete t.sockets[e.uid], t.length--, t.keys = Object.keys(t.sockets), e = null;
+            delete t.sockets[e.uid], t.length--, t.keys = keysOf(t.sockets), e = null;
         });
     }), o.heartbeat(2e4), s) {
         s.masterOptions && l(`${s.masterOptions.tlsOptions ? "wss" : "ws"}://127.0.0.1:${s.masterOptions.port}/?token=${s.key}`);
         for (let e = 0, r = s.brokersUrls.length; e < r; e++) l(`${s.brokersUrls[e]}/?token=${s.key}`);
     }
     function i(e) {
-        n.brokers[e] && (delete n.brokers[e], n.brokersKeys = Object.keys(n.brokers), n.brokersAmount--);
+        n.brokers[e] && (delete n.brokers[e], n.brokersKeys = keysOf(n.brokers), n.brokersAmount--);
     }
     function l(e) {
         BrokerClient(e, {
             clearBroker: i,
             broadcastMessage: a,
             setBroker: (e, r) => {
-                n.brokers[r] = e, n.brokersKeys = Object.keys(n.brokers), n.brokersAmount = n.brokersKeys.length, 
-                e.send(s.serverID);
+                n.brokers[r] = e, n.brokersKeys = keysOf(n.brokers), n.brokersAmount = n.brokersKeys.length, 
+                e.send(s.serverId);
             }
         });
     }
@@ -475,7 +476,7 @@ function InternalBrokerServer(e, r, s) {
 
 function masterProcess(e) {
     let r = !1;
-    const s = {}, t = {}, n = generateKey(15), o = generateKey(15);
+    const s = {}, t = {}, n = generateKey(10), o = generateKey(10);
     if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let r = 0; r < e.brokers; r++) i("Broker", r);
     function i(l, a) {
         let c = cluster.fork();
@@ -489,7 +490,7 @@ function masterProcess(e) {
                     t[a] = `\tWorker: ${a}, PID ${n.pid}`;
                 },
                 Broker: () => {
-                    if (s[a] = `>>>  Broker on: ${e.brokersPorts[a]}, PID ${n.pid}`, Object.keys(s).length === e.brokers) for (let r = 0; r < e.workers; r++) i("Worker", r);
+                    if (s[a] = `>>>  Broker on: ${e.brokersPorts[a]}, PID ${n.pid}`, keysOf(s).length === e.brokers) for (let r = 0; r < e.workers; r++) i("Worker", r);
                 }
             })[l](), keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
             logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
@@ -510,11 +511,11 @@ function workerProcess(e) {
     process.on("message", r => {
         const s = {
             Worker: () => new Worker(e, r.securityKey),
+            Scaler: () => e.horizontalScaleOptions && GlobalBrokerServer(e.horizontalScaleOptions),
             Broker: () => {
-                e.horizontalScaleOptions && (e.horizontalScaleOptions.serverID = r.uniqueServerId), 
+                e.horizontalScaleOptions && (e.horizontalScaleOptions.serverId = r.uniqueServerId), 
                 InternalBrokerServer(e.brokersPorts[r.processId], r.securityKey, e.horizontalScaleOptions);
-            },
-            Scaler: () => e.horizontalScaleOptions && GlobalBrokerServer(e.horizontalScaleOptions.masterOptions.port, e.horizontalScaleOptions.key || "", e.horizontalScaleOptions.masterOptions.tlsOptions)
+            }
         };
         s[r.processName] && s[r.processName]();
     }), process.on("uncaughtException", e => {

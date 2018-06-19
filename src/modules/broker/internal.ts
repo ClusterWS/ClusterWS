@@ -1,30 +1,17 @@
 import { UWebSocket } from '../uws/client';
-import { generateKey } from '../../utils/functions';
 import { BrokerClient } from './client';
 import { UWebSocketsServer } from '../uws/server';
-import { Message, CustomObject } from '../../utils/types';
-
-type Clients = {
-  sockets: CustomObject;
-  length: number;
-  keys: string[];
-};
-
-type GlobalBrokers = {
-  brokers: CustomObject;
-  nextBroker: number;
-  brokersKeys: string[];
-  brokersAmount: number;
-};
+import { generateKey, keysOf } from '../../utils/functions';
+import { Message, CustomObject, BrokerClients, Brokers } from '../../utils/types';
 
 export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void {
-  const clients: Clients = {
+  const clients: BrokerClients = {
     sockets: {},
     length: 0,
     keys: []
   };
 
-  const globalBrokers: GlobalBrokers = {
+  const globalBrokers: Brokers = {
     brokers: {},
     nextBroker: -1,
     brokersKeys: [],
@@ -34,7 +21,8 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
   const server: UWebSocketsServer = new UWebSocketsServer(
     {
       port,
-      verifyClient: (info: CustomObject, done: (next: boolean) => void): void => done(info.req.url === `/?token=${securityKey}`)
+      verifyClient: (info: CustomObject, done: (next: boolean) => void): void =>
+        done(info.req.url === `/?token=${securityKey}`)
     },
     (): void => process.send({ event: 'READY', pid: process.pid })
   );
@@ -46,7 +34,7 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
       socket.channels = { '#sendToWorkers': true };
       clients.sockets[socket.uid] = socket;
       clients.length++;
-      clients.keys = Object.keys(clients.sockets);
+      clients.keys = keysOf(clients.sockets);
 
       socket.on(
         'message',
@@ -56,7 +44,8 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
               socket.channels[message] = socket.channels[message] ? null : 1;
             } else {
               const channelsArray: string[] = JSON.parse(message);
-              for (let i: number = 0, len: number = channelsArray.length; i < len; i++) socket.channels[channelsArray[i]] = true;
+              for (let i: number = 0, len: number = channelsArray.length; i < len; i++)
+                socket.channels[channelsArray[i]] = true;
             }
           } else {
             broadcast(socket.uid, message);
@@ -70,7 +59,7 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
         (code: number, reason?: string): void => {
           delete clients.sockets[socket.uid];
           clients.length--;
-          clients.keys = Object.keys(clients.sockets);
+          clients.keys = keysOf(clients.sockets);
           socket = null;
         }
       );
@@ -83,9 +72,9 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
 
   horizontalScaleOptions.masterOptions &&
     createClient(
-      `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${horizontalScaleOptions.masterOptions.port}/?token=${
-        horizontalScaleOptions.key
-      }`
+      `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${
+        horizontalScaleOptions.masterOptions.port
+      }/?token=${horizontalScaleOptions.key}`
     );
 
   for (let i: number = 0, len: number = horizontalScaleOptions.brokersUrls.length; i < len; i++)
@@ -93,7 +82,9 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
 
   function globalBroadcast(message: Message): void {
     if (globalBrokers.brokersAmount <= 0) return;
-    globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1 ? (globalBrokers.nextBroker = 0) : globalBrokers.nextBroker++;
+    globalBrokers.nextBroker >= globalBrokers.brokersAmount - 1
+      ? (globalBrokers.nextBroker = 0)
+      : globalBrokers.nextBroker++;
 
     const receiver: CustomObject = globalBrokers.brokers[globalBrokers.brokersKeys[globalBrokers.nextBroker]];
 
@@ -107,7 +98,7 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
   function clearBroker(url: string): void {
     if (!globalBrokers.brokers[url]) return;
     delete globalBrokers.brokers[url];
-    globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
+    globalBrokers.brokersKeys = keysOf(globalBrokers.brokers);
     globalBrokers.brokersAmount--;
   }
 
@@ -117,9 +108,9 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
       broadcastMessage: broadcast,
       setBroker: (br: UWebSocket, url: string): void => {
         globalBrokers.brokers[url] = br;
-        globalBrokers.brokersKeys = Object.keys(globalBrokers.brokers);
+        globalBrokers.brokersKeys = keysOf(globalBrokers.brokers);
         globalBrokers.brokersAmount = globalBrokers.brokersKeys.length;
-        br.send(horizontalScaleOptions.serverID);
+        br.send(horizontalScaleOptions.serverId);
       }
     });
   }

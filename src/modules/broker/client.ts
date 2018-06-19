@@ -1,6 +1,6 @@
 import { UWebSocket } from '../uws/client';
-import { logWarning, logReady, logError } from '../../utils/functions';
-import { CustomObject, Message, Listener } from '../../utils/types';
+import { logWarning, logReady } from '../../utils/functions';
+import { CustomObject, Message } from '../../utils/types';
 
 export function BrokerClient(url: string, broadcaster: CustomObject, tries: number = 0, reconnected?: boolean): void {
   let websocket: CustomObject = new UWebSocket(url);
@@ -30,8 +30,12 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries: numb
     (err: Error): void => {
       websocket = null;
       broadcaster.clearBroker(url);
-      if (tries === 5) logWarning(`Can not connect to the Broker ${url}. System in reconnection please check your Broker and Token\n`);
-      setTimeout(() => BrokerClient(url, broadcaster, ++tries, reconnected || tries > 5), Math.floor(Math.random() * 1000) + 500);
+      if (tries === 5)
+        logWarning(`Can not connect to the Broker ${url}. System in reconnection please check your Broker and Token\n`);
+      setTimeout(
+        () => BrokerClient(url, broadcaster, ++tries, reconnected || tries > 5),
+        Math.floor(Math.random() * 1000) + 500
+      );
     }
   );
 

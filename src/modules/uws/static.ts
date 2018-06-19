@@ -11,7 +11,9 @@ export const DEFAULT_PAYLOAD_LIMIT: number = 16777216;
 
 export const native: any = ((): void => {
   try {
-    return require(`${require.resolve('uws').replace('uws.js', '')}uws_${process.platform}_${process.versions.modules}`);
+    return require(`${require.resolve('uws').replace('uws.js', '')}uws_${process.platform}_${
+      process.versions.modules
+    }`);
   } catch (e) {
     const version: number[] = process.version
       .substring(1)
@@ -19,7 +21,8 @@ export const native: any = ((): void => {
       .map((n: any) => parseInt(n, 10));
     const lessThanSixFour: boolean = version[0] < 6 || (version[0] === 6 && version[1] < 4);
 
-    if (process.platform === 'win32' && lessThanSixFour) throw new Error('µWebSockets requires Node.js 8.0.0 or greater on Windows.');
+    if (process.platform === 'win32' && lessThanSixFour)
+      throw new Error('µWebSockets requires Node.js 8.0.0 or greater on Windows.');
     throw new Error('Could not run µWebSockets bindings');
   }
 })();

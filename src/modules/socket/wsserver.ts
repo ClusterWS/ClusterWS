@@ -1,22 +1,15 @@
 import { Socket } from './socket';
 import { UWebSocket } from '../uws/client';
-import { logWarning } from '../../utils/functions';
 import { EventEmitterMany } from '../emitter/many';
 import { EventEmitterSingle } from '../emitter/single';
-import { CustomObject, Message, Listener } from '../../utils/types';
-
-type InternalBrokers = {
-  brokers: CustomObject;
-  nextBroker: number;
-  brokersKeys: string[];
-  brokersAmount: number;
-};
+import { logWarning, keysOf } from '../../utils/functions';
+import { CustomObject, Message, Listener, Brokers } from '../../utils/types';
 
 export class WSServer extends EventEmitterSingle {
   public channels: EventEmitterMany = new EventEmitterMany();
   public middleware: CustomObject = {};
 
-  private internalBrokers: InternalBrokers = {
+  private internalBrokers: Brokers = {
     brokers: {},
     nextBroker: -1,
     brokersKeys: [],
@@ -64,7 +57,9 @@ export class WSServer extends EventEmitterSingle {
       ? (this.internalBrokers.nextBroker = 0)
       : this.internalBrokers.nextBroker++;
 
-    const receiver: CustomObject = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]];
+    const receiver: CustomObject = this.internalBrokers.brokers[
+      this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]
+    ];
 
     if (receiver.readyState !== 1) {
       this.clearBroker(this.internalBrokers.brokersKeys[this.internalBrokers.nextBroker]);
@@ -73,7 +68,8 @@ export class WSServer extends EventEmitterSingle {
 
     receiver.send(Buffer.from(`${channel}%${JSON.stringify({ message })}`));
 
-    if (channel === '#sendToWorkers') return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(message);
+    if (channel === '#sendToWorkers')
+      return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(message);
 
     this.channels.publish(channel, message);
     this.middleware.onPublish && this.middleware.onPublish(channel, message);
@@ -83,9 +79,10 @@ export class WSServer extends EventEmitterSingle {
     const parsedMessage: Message = Buffer.from(message);
     const devider: number = parsedMessage.indexOf(37);
     const channel: string = parsedMessage.slice(0, devider).toString();
-    const decodedMessage: any = JSON.parse(parsedMessage.slice(devider + 1)).message;
+    const decodedMessage: Message = JSON.parse(parsedMessage.slice(devider + 1)).message;
 
-    if (channel === '#sendToWorkers') return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(decodedMessage);
+    if (channel === '#sendToWorkers')
+      return this.middleware.onMessageFromWorker && this.middleware.onMessageFromWorker(decodedMessage);
 
     this.middleware.onPublish && this.middleware.onPublish(channel, decodedMessage);
     this.channels.publish(channel, decodedMessage);
@@ -94,16 +91,16 @@ export class WSServer extends EventEmitterSingle {
   public clearBroker(url: string): void {
     if (!this.internalBrokers.brokers[url]) return;
     delete this.internalBrokers.brokers[url];
-    this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers);
+    this.internalBrokers.brokersKeys = keysOf(this.internalBrokers.brokers);
     this.internalBrokers.brokersAmount--;
   }
 
   public setBroker(br: UWebSocket, url: string): void {
     this.internalBrokers.brokers[url] = br;
-    this.internalBrokers.brokersKeys = Object.keys(this.internalBrokers.brokers);
+    this.internalBrokers.brokersKeys = keysOf(this.internalBrokers.brokers);
     this.internalBrokers.brokersAmount = this.internalBrokers.brokersKeys.length;
 
-    const connectedChannels: string[] = Object.keys(this.channels.events);
+    const connectedChannels: string[] = keysOf(this.channels.events);
     if (connectedChannels.length) br.send(JSON.stringify(connectedChannels));
   }
 }

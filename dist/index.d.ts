@@ -14,7 +14,7 @@ export default class ClusterWS {
 
 export function BrokerClient(url: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
 
-export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions?: TlsOptions): void;
+export function GlobalBrokerServer(hrScale: HorizontalScaleOptions): void;
 
 export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void;
 
@@ -145,7 +145,7 @@ export type HorizontalScaleOptions = {
     };
     brokersUrls?: string[];
     key?: string;
-    serverID?: string;
+    serverId?: string;
 };
 export type Configurations = {
     worker: WorkerFunction;
@@ -174,6 +174,17 @@ export type Options = {
     restartWorkerOnFail: boolean;
     horizontalScaleOptions: HorizontalScaleOptions | false;
     encodeDecodeEngine: EncodeDecodeEngine | false;
+};
+export type Brokers = {
+    brokers: CustomObject;
+    nextBroker: number;
+    brokersKeys: string[];
+    brokersAmount: number;
+};
+export type BrokerClients = {
+    sockets: CustomObject;
+    length: number;
+    keys: string[];
 };
 export type EncodeDecodeEngine = {
     encode: (message: Message) => Message;

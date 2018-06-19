@@ -41,7 +41,10 @@ native.client.group.onError(
   }
 );
 
-native.client.group.onMessage(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.internalOnMessage(message));
+native.client.group.onMessage(
+  clientGroup,
+  (message: Message, webSocket: CustomObject): void => webSocket.internalOnMessage(message)
+);
 native.client.group.onPing(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onping(message));
 native.client.group.onPong(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onpong(message));
 

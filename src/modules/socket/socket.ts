@@ -1,11 +1,11 @@
 import { Worker } from '../worker';
 import { UWebSocket } from '../uws/client';
 import { EventEmitterSingle } from '../emitter/single';
-import { logError, generateKey } from '../../utils/functions';
+import { logError, generateKey, keysOf } from '../../utils/functions';
 import { CustomObject, Listener, Message } from '../../utils/types';
 
 export class Socket {
-  public id: string = generateKey(8);
+  public id: string = generateKey(10);
   private events: EventEmitterSingle = new EventEmitterSingle();
   private channels: CustomObject = {};
   private onPublishEvent: (...args: any[]) => void;
@@ -30,7 +30,7 @@ export class Socket {
     this.socket.on(
       'close',
       (code?: number, reason?: string): void => {
-        for (let i: number = 0, keys: string[] = Object.keys(this.channels), len: number = keys.length; i < len; i++)
+        for (let i: number = 0, keys: string[] = keysOf(this.channels), len: number = keys.length; i < len; i++)
           this.worker.wss.channels.unsubscribe(keys[i], this.id);
         this.events.emit('disconnect', code, reason);
         this.events.removeEvents();
@@ -83,6 +83,7 @@ export class Socket {
       p: (): void => this.channels[message['#'][1]] && this.worker.wss.publish(message['#'][1], userMessage),
       s: {
         s: (): void => {
+          if (this.channels[userMessage]) return;
           const subscribe: Listener = (): void => {
             this.channels[userMessage] = 1;
             this.worker.wss.channels.subscibe(userMessage, this.onPublishEvent, this.id);
@@ -92,6 +93,7 @@ export class Socket {
             : subscribe();
         },
         u: (): void => {
+          if (!this.channels[userMessage]) return;
           this.worker.wss.channels.unsubscribe(userMessage, this.id);
           this.channels[userMessage] = null;
         }

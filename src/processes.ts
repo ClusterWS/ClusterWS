@@ -35,14 +35,14 @@ export function masterProcess(options: Options): void {
           },
           Broker: (): void => {
             brokersReady[processId] = `>>>  Broker on: ${options.brokersPorts[processId]}, PID ${message.pid}`;
-            if (Object.keys(brokersReady).length === options.brokers)
+            if (keysOf(brokersReady).length === options.brokers)
               for (let i: number = 0; i < options.workers; i++) launchNewProcess('Worker', i);
           }
         };
 
         actions[processName]();
 
-        // Checks if all processes are running
+        // Print to console after all processes are ready
         if (keysOf(brokersReady).length === options.brokers && keysOf(workersReady).length === options.workers) {
           serverIsReady = true;
           logReady(`>>>  Master on: ${options.port}, PID: ${process.pid} ${options.tlsOptions ? ' (secure)' : ''}`);
@@ -71,21 +71,15 @@ export function workerProcess(options: Options): void {
     (message: Message): void => {
       const actions: CustomObject = {
         Worker: (): Worker => new Worker(options, message.securityKey),
+        Scaler: (): void => options.horizontalScaleOptions && GlobalBrokerServer(options.horizontalScaleOptions),
         Broker: (): void => {
-          options.horizontalScaleOptions && (options.horizontalScaleOptions.serverID = message.uniqueServerId);
+          options.horizontalScaleOptions && (options.horizontalScaleOptions.serverId = message.uniqueServerId);
           InternalBrokerServer(
             options.brokersPorts[message.processId],
             message.securityKey,
             options.horizontalScaleOptions
           );
-        },
-        Scaler: (): void =>
-          options.horizontalScaleOptions &&
-          GlobalBrokerServer(
-            options.horizontalScaleOptions.masterOptions.port,
-            options.horizontalScaleOptions.key || '',
-            options.horizontalScaleOptions.masterOptions.tlsOptions
-          )
+        }
       };
       actions[message.processName] && actions[message.processName]();
     }

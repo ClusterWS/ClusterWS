@@ -21,7 +21,7 @@ export type HorizontalScaleOptions = {
   };
   brokersUrls?: string[];
   key?: string;
-  serverID?: string;
+  serverId?: string;
 };
 
 export type Configurations = {
@@ -52,6 +52,19 @@ export type Options = {
   restartWorkerOnFail: boolean;
   horizontalScaleOptions: HorizontalScaleOptions | false;
   encodeDecodeEngine: EncodeDecodeEngine | false;
+};
+
+export type Brokers = {
+  brokers: CustomObject;
+  nextBroker: number;
+  brokersKeys: string[];
+  brokersAmount: number;
+};
+
+export type BrokerClients = {
+  sockets: CustomObject;
+  length: number;
+  keys: string[];
 };
 
 export type EncodeDecodeEngine = {

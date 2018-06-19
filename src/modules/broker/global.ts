@@ -1,18 +1,13 @@
 import * as HTTPS from 'https';
 
-import { generateKey } from '../../utils/functions';
 import { UWebSocketsServer } from '../uws/server';
-import { Message, CustomObject, TlsOptions } from '../../utils/types';
+import { generateKey, keysOf } from '../../utils/functions';
+import { Message, CustomObject, HorizontalScaleOptions, BrokerClients } from '../../utils/types';
 
 // TODO: Implement protection from broken brokers connections
-type Clients = {
-  sockets: CustomObject;
-  length: number;
-  keys: string[];
-};
 
-export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions?: TlsOptions): void {
-  const clients: Clients = {
+export function GlobalBrokerServer(hrScale: HorizontalScaleOptions): void {
+  const clients: BrokerClients = {
     sockets: {},
     length: 0,
     keys: []
@@ -20,16 +15,17 @@ export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions
 
   let server: UWebSocketsServer;
   const wsOptions: CustomObject = {
-    port,
-    verifyClient: (info: CustomObject, done: (next: boolean) => void): void => done(info.req.url === `/?token=${securityKey}`)
+    port: hrScale.masterOptions.port,
+    verifyClient: (info: CustomObject, done: (next: boolean) => void): void =>
+      done(info.req.url === `/?token=${hrScale.key || ''}`)
   };
 
-  if (tlsOptions) {
-    const httpsServer: HTTPS.Server = HTTPS.createServer(tlsOptions);
+  if (hrScale.masterOptions.tlsOptions) {
+    const httpsServer: HTTPS.Server = HTTPS.createServer(hrScale.masterOptions.tlsOptions);
     wsOptions.port = null;
     wsOptions.server = httpsServer;
     server = new UWebSocketsServer(wsOptions);
-    httpsServer.listen(port, (): void => process.send({ event: 'READY', pid: process.pid }));
+    httpsServer.listen(hrScale.masterOptions.port, (): void => process.send({ event: 'READY', pid: process.pid }));
   } else server = new UWebSocketsServer(wsOptions, (): void => process.send({ event: 'READY', pid: process.pid }));
 
   server.on(
@@ -45,11 +41,11 @@ export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions
             if (!clients.sockets[message]) {
               clients.sockets[message] = { wss: {}, next: 0, length: 0, keys: [] };
               clients.length++;
-              clients.keys = Object.keys(clients.sockets);
+              clients.keys = keysOf(clients.sockets);
             }
 
             clients.sockets[message].wss[socket.uid] = socket;
-            clients.sockets[message].keys = Object.keys(clients.sockets[message].wss);
+            clients.sockets[message].keys = keysOf(clients.sockets[message].wss);
             clients.sockets[message].length++;
           } else if (socket.uid) broadcast(socket.serverid, message);
         }
@@ -60,12 +56,12 @@ export function GlobalBrokerServer(port: number, securityKey: string, tlsOptions
         (code: number, reason?: string): void => {
           if (socket.uid) {
             delete clients.sockets[socket.serverid].wss[socket.uid];
-            clients.sockets[socket.serverid].keys = Object.keys(clients.sockets[socket.serverid].wss);
+            clients.sockets[socket.serverid].keys = keysOf(clients.sockets[socket.serverid].wss);
             clients.sockets[socket.serverid].length--;
 
             if (!clients.sockets[socket.serverid].length) {
               delete clients.sockets[socket.serverid];
-              clients.keys = Object.keys(clients.sockets);
+              clients.keys = keysOf(clients.sockets);
               clients.length--;
             }
           }

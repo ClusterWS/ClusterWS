@@ -21,7 +21,8 @@ export class UWebSocketsServer extends EventEmitterSingle {
     if (!options || (!options.port && !options.server && !options.noServer)) throw new TypeError('Wrong options');
 
     this.noDelay = options.noDelay || true;
-    this.httpServer = options.server || HTTP.createServer((request: CustomObject, response: CustomObject) => response.end());
+    this.httpServer =
+      options.server || HTTP.createServer((request: CustomObject, response: CustomObject) => response.end());
     this.serverGroup = native.server.group.create(
       options.perMessageDeflate ? PERMESSAGE_DEFLATE : 0,
       options.maxPayload || DEFAULT_PAYLOAD_LIMIT
@@ -43,7 +44,9 @@ export class UWebSocketsServer extends EventEmitterSingle {
             options.verifyClient(
               info,
               (result: any, code: any, name: any): void =>
-                result ? this.handleUpgrade(request, socket, head, this.emitConnection) : this.abortConnection(socket, code, name)
+                result
+                  ? this.handleUpgrade(request, socket, head, this.emitConnection)
+                  : this.abortConnection(socket, code, name)
             );
           } else this.handleUpgrade(request, socket, head, this.emitConnection);
         } else if (this.lastUpgradeListener) this.abortConnection(socket, 400, 'URL not supported');
@@ -92,8 +95,14 @@ export class UWebSocketsServer extends EventEmitterSingle {
       }
     );
 
-    native.server.group.onPing(this.serverGroup, (message: Message, webSocket: UWebSocket): void => webSocket.onping(message));
-    native.server.group.onPong(this.serverGroup, (message: Message, webSocket: UWebSocket): void => webSocket.onpong(message));
+    native.server.group.onPing(
+      this.serverGroup,
+      (message: Message, webSocket: UWebSocket): void => webSocket.onping(message)
+    );
+    native.server.group.onPong(
+      this.serverGroup,
+      (message: Message, webSocket: UWebSocket): void => webSocket.onpong(message)
+    );
 
     if (!options.port) return;
     this.httpServer.listen(
@@ -136,7 +145,12 @@ export class UWebSocketsServer extends EventEmitterSingle {
     socket.end(`HTTP/1.1 ${code} ${name}\r\n\r\n`);
   }
 
-  private handleUpgrade(request: CustomObject, socket: CustomObject, upgradeHead: CustomObject, callback: Listener): void {
+  private handleUpgrade(
+    request: CustomObject,
+    socket: CustomObject,
+    upgradeHead: CustomObject,
+    callback: Listener
+  ): void {
     if (socket._isNative) {
       if (this.serverGroup) {
         this.upgradeReq = request;
