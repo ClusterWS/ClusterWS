@@ -7,7 +7,10 @@ describe('Global Broker Create Server', () => {
   it('Broker server Should start up', (done) => {
     // reasign process done
     process.send = () => done(null);
-    GlobalBrokerServer(4000, 'key', null);
+    GlobalBrokerServer({
+      masterOptions: { port: 4000 },
+      key: 'key'
+    });
   });
 });
 
