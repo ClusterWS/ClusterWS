@@ -1,34 +1,43 @@
-import { UWebSocket } from '../uws/uws.client'
+import { UWebSocket } from '../uws/client';
+import { logWarning, logReady } from '../../utils/functions';
+import { CustomObject, Message } from '../../utils/types';
 
-import { CustomObject, Message } from '../../utils/types'
-import { logError, logWarning, logReady } from '../../utils/functions'
+export function BrokerClient(url: string, broadcaster: CustomObject, tries: number = 0, reconnected?: boolean): void {
+  let websocket: CustomObject = new UWebSocket(url);
 
-export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries: number = 0, reconnected?: boolean): void {
-  let websocket: UWebSocket = new UWebSocket(url)
-  websocket.on('open', (): void => {
-    tries = 0
-    broadcaster.setBroker(websocket, url)
-    reconnected && logReady(`Broker has been connected to ${url} \n`)
-    websocket.send(securityKey)
-  })
-
-  websocket.on('error', (err: Error): NodeJS.Timer => {
-    websocket = null
-    if (err.stack === 'uWs client connection error') {
-      tries === 5 &&
-        logWarning(`Can not connect to the Broker ${url}. System in reconnection state please check your Broker and URL \n`)
-      return setTimeout(() => BrokerClient(url, securityKey, broadcaster, ++tries, reconnected || tries > 5), 500)
+  websocket.on(
+    'open',
+    (): void => {
+      tries = 0;
+      broadcaster.setBroker(websocket, url);
+      reconnected && logReady(`Broker has been connected to ${url} \n`);
     }
-    logError(`Socket ${process.pid} has an issue: \n ${err.stack} \n`)
-  })
+  );
 
-  websocket.on('close', (code: number): void => {
-    websocket = null
-    if (code === 4000)
-      return logError('Can not connect to the broker wrong authorization key \n')
-    logWarning(`Broker has disconnected, system is trying to reconnect to ${url} \n`)
-    setTimeout(() => BrokerClient(url, securityKey, broadcaster, ++tries, true), 500)
-  })
+  websocket.on(
+    'close',
+    (code: number, reason: string): void => {
+      websocket = null;
+      if (code === 1000) return logWarning(`Broker has disconnected from ${url} with code 1000 \n`);
+      broadcaster.clearBroker(url);
+      logWarning(`Broker has disconnected, system is trying to reconnect to ${url} \n`);
+      setTimeout(() => BrokerClient(url, broadcaster, ++tries, true), Math.floor(Math.random() * 1000) + 500);
+    }
+  );
 
-  websocket.on('message', (message: Message): void => broadcaster.broadcastMessage('', message))
+  websocket.on(
+    'error',
+    (err: Error): void => {
+      websocket = null;
+      broadcaster.clearBroker(url);
+      if (tries === 5)
+        logWarning(`Can not connect to the Broker ${url}. System in reconnection please check your Broker and Token\n`);
+      setTimeout(
+        () => BrokerClient(url, broadcaster, ++tries, reconnected || tries > 5),
+        Math.floor(Math.random() * 1000) + 500
+      );
+    }
+  );
+
+  websocket.on('message', (message: Message): void => broadcaster.broadcastMessage(null, message));
 }

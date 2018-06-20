@@ -12,15 +12,19 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
-export function BrokerClient(url: string, securityKey: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
+export function BrokerClient(url: string, broadcaster: CustomObject, tries?: number, reconnected?: boolean): void;
 
-export function BrokerServer(port: number, securityKey: string, horizontalScaleOptions: HorizontalScaleOptions | false, serverType: string): void;
+export function GlobalBrokerServer(hrScale: HorizontalScaleOptions): void;
+
+export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void;
 
 export class EventEmitterMany {
-    onMany(event: string, listener: (event: string, ...args: any[]) => void): void;
-    emitMany(event: string, ...args: any[]): void;
-    removeListener(event: string, listener: Listener): any;
+    events: CustomObject;
+    subscibe(event: string, listener: (event: string, ...args: any[]) => void, token: string): void;
+    publish(event: string, ...args: any[]): void;
+    unsubscribe(event: string, token: string): void;
     exist(event: string): boolean;
+    changeChannelStatusInBroker(event: string): void;
 }
 
 export class EventEmitterSingle {
@@ -31,14 +35,10 @@ export class EventEmitterSingle {
     removeEvents(): void;
 }
 
-export function encode(event: string, data: Message, eventType: string): string;
-export function decode(socket: Socket, message: Message): void;
-
 export class Socket {
     worker: Worker;
-    events: EventEmitterSingle;
-    channels: CustomObject;
-    onPublishEvent: (...args: any[]) => void;
+    socket: UWebSocket;
+    id: string;
     constructor(worker: Worker, socket: UWebSocket);
     on(event: 'error', listener: (err: Error) => void): void;
     on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;
@@ -51,13 +51,17 @@ export class Socket {
 export class WSServer extends EventEmitterSingle {
     channels: EventEmitterMany;
     middleware: CustomObject;
+    constructor();
     setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void;
     setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
     setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
+    setWatcher(channelName: string, listener: Listener): void;
+    removeWatcher(channelName: string): void;
     publishToWorkers(message: Message): void;
     publish(channel: string, message: Message, tries?: number): void;
     broadcastMessage(_: string, message: Message): void;
+    clearBroker(url: string): void;
     setBroker(br: UWebSocket, url: string): void;
 }
 
@@ -82,7 +86,7 @@ export class UWebSocket {
     close(code: number, reason: string): void;
 }
 
-export class UWebSocketServer extends EventEmitterSingle {
+export class UWebSocketsServer extends EventEmitterSingle {
     noDelay: boolean;
     upgradeReq: any;
     httpServer: HTTP.Server;
@@ -105,12 +109,16 @@ export const DEFAULT_PAYLOAD_LIMIT: number;
 export const native: any;
 
 export class Worker {
+    options: Options;
     wss: WSServer;
     server: HTTP.Server | HTTPS.Server;
-    options: Options;
     constructor(options: Options, securityKey: string);
 }
 
+export function masterProcess(options: Options): void;
+export function workerProcess(options: Options): void;
+
+export function keysOf(object: CustomObject): string[];
 export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;
@@ -137,6 +145,7 @@ export type HorizontalScaleOptions = {
     };
     brokersUrls?: string[];
     key?: string;
+    serverId?: string;
 };
 export type Configurations = {
     worker: WorkerFunction;
@@ -165,6 +174,17 @@ export type Options = {
     restartWorkerOnFail: boolean;
     horizontalScaleOptions: HorizontalScaleOptions | false;
     encodeDecodeEngine: EncodeDecodeEngine | false;
+};
+export type Brokers = {
+    brokers: CustomObject;
+    nextBroker: number;
+    brokersKeys: string[];
+    brokersAmount: number;
+};
+export type BrokerClients = {
+    sockets: CustomObject;
+    length: number;
+    keys: string[];
 };
 export type EncodeDecodeEngine = {
     encode: (message: Message) => Message;
