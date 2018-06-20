@@ -72,3 +72,26 @@ describe('WSServer test resubsrcibtion to all channels in broker', () => {
     wss.setBroker(broker, 'superurl');
   });
 });
+
+describe('WSServer test setWatcher and removeWatcher functions', () => {
+  it('Should setWatcher and get message', (done) => {
+    const wss = new WSServer();
+    wss.setWatcher('hello world', (message) => {
+      expect(message).to.equal(`i am publishing message`);
+      done(null);
+    });
+
+    wss.channels.publish('hello world', 'i am publishing message');
+  });
+
+  it('Should removeWatcher and do not get message', (done) => {
+    const wss = new WSServer();
+    wss.setWatcher('hello world', (message) => {
+      done('Should not be executed');
+    });
+
+    wss.removeWatcher('hello world');
+    wss.channels.publish('hello world', 'i am publishing message');
+    setTimeout(() => done(null), 500);
+  });
+});
