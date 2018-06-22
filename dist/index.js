@@ -481,20 +481,21 @@ function masterProcess(e) {
     function i(l, a) {
         let c = cluster.fork();
         c.on("message", n => {
+            if ("READY" !== n.event) return;
             if (r) return logReady(`${l} PID ${n.pid} has been restarted`);
             ({
                 Scaler: () => {
                     for (let r = 0; r < e.brokers; r++) i("Broker", r);
                 },
-                Worker: () => {
-                    t[a] = `\tWorker: ${a}, PID ${n.pid}`;
-                },
                 Broker: () => {
                     if (s[a] = `>>>  Broker on: ${e.brokersPorts[a]}, PID ${n.pid}`, keysOf(s).length === e.brokers) for (let r = 0; r < e.workers; r++) i("Worker", r);
+                },
+                Worker: () => {
+                    t[a] = `\tWorker: ${a}, PID ${n.pid}`, keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
+                    logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
+                    keysOf(s).forEach(e => logReady(s[e])), keysOf(t).forEach(e => logReady(t[e])));
                 }
-            })[l](), keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
-            logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
-            keysOf(s).forEach(e => logReady(s[e])), keysOf(t).forEach(e => logReady(t[e])));
+            })[l]();
         }), c.on("exit", () => {
             c = null, logError(`${l} has exited \n`), e.restartWorkerOnFail && (logWarning(`${l} is restarting \n`), 
             i(l, a));
