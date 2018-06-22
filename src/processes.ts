@@ -24,31 +24,32 @@ export function masterProcess(options: Options): void {
     newProcess.on(
       'message',
       (message: Message): void => {
+        if (message.event !== 'READY') return;
         if (serverIsReady) return logReady(`${processName} PID ${message.pid} has been restarted`);
 
         const actions: CustomObject = {
           Scaler: (): void => {
             for (let i: number = 0; i < options.brokers; i++) launchNewProcess('Broker', i);
           },
-          Worker: (): void => {
-            workersReady[processId] = `\tWorker: ${processId}, PID ${message.pid}`;
-          },
           Broker: (): void => {
             brokersReady[processId] = `>>>  Broker on: ${options.brokersPorts[processId]}, PID ${message.pid}`;
             if (keysOf(brokersReady).length === options.brokers)
               for (let i: number = 0; i < options.workers; i++) launchNewProcess('Worker', i);
+          },
+          Worker: (): void => {
+            workersReady[processId] = `\tWorker: ${processId}, PID ${message.pid}`;
+
+            // Print to console after all processes are ready
+            if (keysOf(brokersReady).length === options.brokers && keysOf(workersReady).length === options.workers) {
+              serverIsReady = true;
+              logReady(`>>>  Master on: ${options.port}, PID: ${process.pid} ${options.tlsOptions ? ' (secure)' : ''}`);
+              keysOf(brokersReady).forEach((key: string) => logReady(brokersReady[key]));
+              keysOf(workersReady).forEach((key: string) => logReady(workersReady[key]));
+            }
           }
         };
 
         actions[processName]();
-
-        // Print to console after all processes are ready
-        if (keysOf(brokersReady).length === options.brokers && keysOf(workersReady).length === options.workers) {
-          serverIsReady = true;
-          logReady(`>>>  Master on: ${options.port}, PID: ${process.pid} ${options.tlsOptions ? ' (secure)' : ''}`);
-          keysOf(brokersReady).forEach((key: string) => logReady(brokersReady[key]));
-          keysOf(workersReady).forEach((key: string) => logReady(workersReady[key]));
-        }
       }
     );
 
