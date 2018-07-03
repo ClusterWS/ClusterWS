@@ -74,11 +74,11 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
     createClient(
       `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${
         horizontalScaleOptions.masterOptions.port
-      }/?token=${horizontalScaleOptions.key}`
+      }/?token=${horizontalScaleOptions.key || ''}`
     );
 
   for (let i: number = 0, len: number = horizontalScaleOptions.brokersUrls.length; i < len; i++)
-    createClient(`${horizontalScaleOptions.brokersUrls[i]}/?token=${horizontalScaleOptions.key}`);
+    createClient(`${horizontalScaleOptions.brokersUrls[i]}/?token=${horizontalScaleOptions.key || ''}`);
 
   function globalBroadcast(message: Message): void {
     if (globalBrokers.brokersAmount <= 0) return;

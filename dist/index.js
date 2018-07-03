@@ -446,8 +446,8 @@ function InternalBrokerServer(e, r, s) {
             delete t.sockets[e.uid], t.length--, t.keys = keysOf(t.sockets), e = null;
         });
     }), o.heartbeat(2e4), s) {
-        s.masterOptions && l(`${s.masterOptions.tlsOptions ? "wss" : "ws"}://127.0.0.1:${s.masterOptions.port}/?token=${s.key}`);
-        for (let e = 0, r = s.brokersUrls.length; e < r; e++) l(`${s.brokersUrls[e]}/?token=${s.key}`);
+        s.masterOptions && l(`${s.masterOptions.tlsOptions ? "wss" : "ws"}://127.0.0.1:${s.masterOptions.port}/?token=${s.key || ""}`);
+        for (let e = 0, r = s.brokersUrls.length; e < r; e++) l(`${s.brokersUrls[e]}/?token=${s.key || ""}`);
     }
     function i(e) {
         n.brokers[e] && (delete n.brokers[e], n.brokersKeys = keysOf(n.brokers), n.brokersAmount--);
