@@ -33,6 +33,7 @@ export class UWebSocketsServer extends EventEmitterSingle {
     this.httpServer.on(
       'upgrade',
       (request: any, socket: any, head: any): void => {
+        request.remoteAddress = socket.remoteAddress;
         if (!options.path || options.path === request.url.split('?')[0].split('#')[0]) {
           if (options.verifyClient) {
             const info: any = {

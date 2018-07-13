@@ -72,15 +72,15 @@ function keysOf(e) {
 }
 
 function logError(e) {
-    return process.stdout.write(`[31mError PID ${process.pid}:[0m  ${e} \n`);
+    return process.stdout.write(`[31mError PID ${process.pid}:[0m  ${e}\n`);
 }
 
 function logReady(e) {
-    return process.stdout.write(`[32m✓ ${e}[0m \n`);
+    return process.stdout.write(`[32m✓ ${e}[0m\n`);
 }
 
 function logWarning(e) {
-    return process.stdout.write(`[33mWarning PID ${process.pid}:[0m ${e} \n`);
+    return process.stdout.write(`[33mWarning PID ${process.pid}:[0m ${e}\n`);
 }
 
 function isFunction(e) {
@@ -117,7 +117,7 @@ class UWebSocketsServer extends EventEmitterSingle {
         this.noDelay = e.noDelay || !0, this.httpServer = e.server || HTTP.createServer((e, r) => r.end()), 
         this.serverGroup = native.server.group.create(e.perMessageDeflate ? PERMESSAGE_DEFLATE : 0, e.maxPayload || DEFAULT_PAYLOAD_LIMIT), 
         !e.path || e.path.length && "/" === e.path[0] || (e.path = `/${e.path}`), this.httpServer.on("upgrade", (r, s, t) => {
-            if (e.path && e.path !== r.url.split("?")[0].split("#")[0]) this.lastUpgradeListener && this.abortConnection(s, 400, "URL not supported"); else if (e.verifyClient) {
+            if (r.remoteAddress = s.remoteAddress, e.path && e.path !== r.url.split("?")[0].split("#")[0]) this.lastUpgradeListener && this.abortConnection(s, 400, "URL not supported"); else if (e.verifyClient) {
                 const n = {
                     origin: r.headers.origin,
                     secure: !(!r.connection.authorized && !r.connection.encrypted),
