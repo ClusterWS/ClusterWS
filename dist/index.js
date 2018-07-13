@@ -72,15 +72,15 @@ function keysOf(e) {
 }
 
 function logError(e) {
-    return console.log(`[31m${e}[0m`);
+    return process.stdout.write(`[31mError PID ${process.pid}:[0m  ${e} \n`);
 }
 
 function logReady(e) {
-    return console.log(`[36m${e}[0m`);
+    return process.stdout.write(`[32m✓ ${e}[0m \n`);
 }
 
 function logWarning(e) {
-    return console.log(`[33m${e}[0m`);
+    return process.stdout.write(`[33mWarning PID ${process.pid}:[0m ${e} \n`);
 }
 
 function isFunction(e) {
@@ -191,7 +191,7 @@ class Socket {
             try {
                 this.decode(JSON.parse(e));
             } catch (e) {
-                logError(`PID: ${process.pid}\n${e}\n`);
+                logError(`\n${e}\n`);
             }
         }), this.socket.on("close", (e, r) => {
             for (let e = 0, r = keysOf(this.channels), s = r.length; e < s; e++) this.worker.wss.channels.unsubscribe(r[e], this.id);
@@ -335,10 +335,10 @@ class WSServer extends EventEmitterSingle {
 function BrokerClient(e, r, s = 0, t) {
     let n = new UWebSocket(e);
     n.on("open", () => {
-        s = 0, r.setBroker(n, e), t && logReady(`Broker has been connected to ${e} \n`);
+        s = 0, r.setBroker(n, e), t && logReady(`Broker PID ${process.pid} has been connected to ${e}\n`);
     }), n.on("close", (t, o) => {
-        if (n = null, 1e3 === t) return logWarning(`Broker has disconnected from ${e} with code 1000 \n`);
-        r.clearBroker(e), logWarning(`Broker has disconnected, system is trying to reconnect to ${e} \n`), 
+        if (n = null, 1e3 === t) return logWarning(`Broker has disconnected from ${e} with code 1000\n`);
+        r.clearBroker(e), logWarning(`Broker has disconnected, system is trying to reconnect to ${e}\n`), 
         setTimeout(() => BrokerClient(e, r, ++s, !0), Math.floor(1e3 * Math.random()) + 500);
     }), n.on("error", o => {
         n = null, r.clearBroker(e), 5 === s && logWarning(`Can not connect to the Broker ${e}. System in reconnection please check your Broker and Token\n`), 
@@ -488,11 +488,11 @@ function masterProcess(e) {
                     for (let r = 0; r < e.brokers; r++) i("Broker", r);
                 },
                 Broker: () => {
-                    if (s[a] = `>>>  Broker on: ${e.brokersPorts[a]}, PID ${n.pid}`, keysOf(s).length === e.brokers) for (let r = 0; r < e.workers; r++) i("Worker", r);
+                    if (s[a] = ` Broker on: ${e.brokersPorts[a]}, PID ${n.pid}`, keysOf(s).length === e.brokers) for (let r = 0; r < e.workers; r++) i("Worker", r);
                 },
                 Worker: () => {
-                    t[a] = `\tWorker: ${a}, PID ${n.pid}`, keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
-                    logReady(`>>>  Master on: ${e.port}, PID: ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
+                    t[a] = ` \tWorker: ${a}, PID ${n.pid}`, keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
+                    logReady(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
                     keysOf(s).forEach(e => logReady(s[e])), keysOf(t).forEach(e => logReady(t[e])));
                 }
             })[l]();

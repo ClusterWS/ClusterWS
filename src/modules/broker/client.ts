@@ -10,7 +10,7 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries: numb
     (): void => {
       tries = 0;
       broadcaster.setBroker(websocket, url);
-      reconnected && logReady(`Broker has been connected to ${url} \n`);
+      reconnected && logReady(`Broker PID ${process.pid} has been connected to ${url}\n`);
     }
   );
 
@@ -18,9 +18,9 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries: numb
     'close',
     (code: number, reason: string): void => {
       websocket = null;
-      if (code === 1000) return logWarning(`Broker has disconnected from ${url} with code 1000 \n`);
+      if (code === 1000) return logWarning(`Broker has disconnected from ${url} with code 1000\n`);
       broadcaster.clearBroker(url);
-      logWarning(`Broker has disconnected, system is trying to reconnect to ${url} \n`);
+      logWarning(`Broker has disconnected, system is trying to reconnect to ${url}\n`);
       setTimeout(() => BrokerClient(url, broadcaster, ++tries, true), Math.floor(Math.random() * 1000) + 500);
     }
   );

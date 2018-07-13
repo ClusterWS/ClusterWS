@@ -6,15 +6,15 @@ export function keysOf(object: CustomObject): string[] {
 }
 
 export function logError<T>(data: T): any {
-  return console.log(`\x1b[31m${data}\x1b[0m`);
+  return process.stdout.write(`\x1b[31mError PID ${process.pid}:\x1b[0m  ${data}\n`);
 }
 
 export function logReady<T>(data: T): any {
-  return console.log(`\x1b[36m${data}\x1b[0m`);
+  return process.stdout.write(`\x1b[32m\u2713 ${data}\x1b[0m\n`);
 }
 
 export function logWarning<T>(data: T): any {
-  return console.log(`\x1b[33m${data}\x1b[0m`);
+  return process.stdout.write(`\x1b[33mWarning PID ${process.pid}:\x1b[0m ${data}\n`);
 }
 
 export function isFunction<T>(fn: T): boolean {
