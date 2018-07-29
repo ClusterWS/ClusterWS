@@ -491,7 +491,7 @@ function masterProcess(e) {
                     if (s[a] = ` Broker on: ${e.brokersPorts[a]}, PID ${n.pid}`, keysOf(s).length === e.brokers) for (let r = 0; r < e.workers; r++) i("Worker", r);
                 },
                 Worker: () => {
-                    t[a] = ` \tWorker: ${a}, PID ${n.pid}`, keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
+                    t[a] = `    Worker: ${a}, PID ${n.pid}`, keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
                     logReady(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
                     keysOf(s).forEach(e => logReady(s[e])), keysOf(t).forEach(e => logReady(t[e])));
                 }

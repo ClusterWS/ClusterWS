@@ -37,7 +37,7 @@ export function masterProcess(options: Options): void {
               for (let i: number = 0; i < options.workers; i++) launchNewProcess('Worker', i);
           },
           Worker: (): void => {
-            workersReady[processId] = ` \tWorker: ${processId}, PID ${message.pid}`;
+            workersReady[processId] = `    Worker: ${processId}, PID ${message.pid}`;
 
             // Print to console after all processes are ready
             if (keysOf(brokersReady).length === options.brokers && keysOf(workersReady).length === options.workers) {
