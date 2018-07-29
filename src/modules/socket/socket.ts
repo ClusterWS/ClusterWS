@@ -22,7 +22,7 @@ export class Socket {
         try {
           this.decode(JSON.parse(message));
         } catch (e) {
-          logError(`PID: ${process.pid}\n${e}\n`);
+          logError(`\n${e}\n`);
         }
       }
     );
