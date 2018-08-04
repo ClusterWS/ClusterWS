@@ -20,7 +20,7 @@ let many = new EventEmitterMany();
 
 console.time('Set listeners');
 let called = 0;
-for (let i = 1000000; i > 0; i--) many.subscibe('test', () => called++, '' + i);
+for (let i = 1000000; i > 0; i--) many.subscribe('test', () => called++, '' + i);
 console.log(called);
 console.timeEnd('Set listeners');
 

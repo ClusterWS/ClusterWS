@@ -20,11 +20,11 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
 
 export class EventEmitterMany {
     events: CustomObject;
-    subscibe(event: string, listener: (event: string, ...args: any[]) => void, token: string): void;
+    subscribe(event: string, listener: (event: string, ...args: any[]) => void, token: string): void;
     publish(event: string, ...args: any[]): void;
     unsubscribe(event: string, token: string): void;
     exist(event: string): boolean;
-    changeChannelStatusInBroker(event: string): void;
+    changeChannelStatusInBroker(event: string, eventType: string): void;
 }
 
 export class EventEmitterSingle {
@@ -54,8 +54,10 @@ export class WSServer extends EventEmitterSingle {
     constructor();
     setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void;
     setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
+    setMiddleware(name: 'onUnsubscribe', listener: (socket: Socket, channel: string) => void): void;
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
     setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
+    setMiddleware(name: 'onChannelClose' | 'onChannelOpen', listener: (channel: string) => void): void;
     setWatcher(channelName: string, listener: Listener): void;
     removeWatcher(channelName: string): void;
     publishToWorkers(message: Message): void;
