@@ -189,7 +189,7 @@ class Socket {
         this.send("configuration", s, "system"), this.onPublishEvent = ((e, r) => this.send(e, r, "publish")), 
         this.socket.on("message", e => {
             try {
-                this.worker.wss.middleware.onMessageFromClient ? this.worker.wss.middleware.onMessageFromClient(this, e, e => {
+                this.worker.wss.middleware.onMessageRecieve ? this.worker.wss.middleware.onMessageRecieve(this, e, e => {
                     e && this.decode(e);
                 }) : this.decode(JSON.parse(e));
             } catch (e) {
