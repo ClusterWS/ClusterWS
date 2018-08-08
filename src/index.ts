@@ -2,7 +2,7 @@ import * as cluster from 'cluster';
 
 import { UWebSocket } from './modules/uws/client';
 import { UWebSocketsServer } from './modules/uws/server';
-import { logError, isFunction, logWarning, logReady } from './utils/functions';
+import { logError, isFunction } from './utils/functions';
 import { Configurations, Options } from './utils/types';
 import { masterProcess, workerProcess } from './processes';
 
