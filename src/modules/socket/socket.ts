@@ -20,8 +20,8 @@ export class Socket {
       'message',
       (message: Message): void => {
         try {
-          this.worker.wss.middleware.onMessageRecieve ?
-            this.worker.wss.middleware.onMessageRecieve(this, message, (convertedMessage: CustomObject) => {
+          this.worker.wss.middleware.onMessageReceive ?
+            this.worker.wss.middleware.onMessageReceive(this, message, (convertedMessage: CustomObject) => {
               if (convertedMessage) this.decode(convertedMessage);
             }) : this.decode(JSON.parse(message));
         } catch (e) {

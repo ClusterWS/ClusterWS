@@ -56,7 +56,7 @@ export class WSServer extends EventEmitterSingle {
     setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
     setMiddleware(name: 'onUnsubscribe', listener: (socket: Socket, channel: string) => void): void;
     setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
-    setMiddleware(name: 'onMessageRecieve', listener: (socket: Socket, message: Message, next: Listener) => void): void;
+    setMiddleware(name: 'onMessageReceive', listener: (socket: Socket, message: Message, next: Listener) => void): void;
     setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
     setMiddleware(name: 'onChannelClose' | 'onChannelOpen', listener: (channel: string) => void): void;
     setWatcher(channelName: string, listener: Listener): void;

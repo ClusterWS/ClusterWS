@@ -25,15 +25,16 @@ export class EventEmitterMany {
     const listeners: CustomObject[] = this.events[event];
     if (!listeners) return;
 
-    for (let i: number = 0, len: number = listeners.length; i < len; i++)
+    for (let i: number = 0, len: number = listeners.length; i < len; i++) {
       if (listeners[i].token === token) {
         listeners.splice(i, 1);
         break;
       }
+    }
 
     if (listeners.length === 0) {
       this.events[event] = null;
-      this.changeChannelStatusInBroker(event, 'destory');
+      this.changeChannelStatusInBroker(event, 'destroy');
     }
   }
 
