@@ -11,7 +11,7 @@ describe('Event Emitter Many Tests', () => {
     done(null);
   });
   it('Should Subscribe to the event and emit event', (done) => {
-    emitter.subscibe(
+    emitter.subscribe(
       'test',
       (event, testmessage) => {
         expect(testmessage).to.equal('testmessage');
@@ -25,7 +25,7 @@ describe('Event Emitter Many Tests', () => {
 
   it('Should remove listener and do not call it', (done) => {
     let listener = (event) => done('Did not remove listener');
-    emitter.subscibe('testListener', listener, 'secondKey');
+    emitter.subscribe('testListener', listener, 'secondKey');
     emitter.unsubscribe('testListener', 'secondKey');
     emitter.publish('testListener', 'Hello teset');
     setTimeout(() => done(null), 1500);
@@ -33,7 +33,7 @@ describe('Event Emitter Many Tests', () => {
 
   it('Should Subscribe to the same event few times and emit all of them', (done) => {
     let emitedNUmber = 0;
-    emitter.subscibe(
+    emitter.subscribe(
       'manyevents',
       (event, testmessage) => {
         expect(testmessage).to.equal('testmessage');
@@ -43,7 +43,7 @@ describe('Event Emitter Many Tests', () => {
       'thirdKey'
     );
 
-    emitter.subscibe(
+    emitter.subscribe(
       'manyevents',
       (event, testmessage) => {
         expect(testmessage).to.equal('testmessage');
@@ -58,7 +58,7 @@ describe('Event Emitter Many Tests', () => {
 
   it('Should call new changeChannelStatusInBroker function', (done) => {
     emitter.changeChannelStatusInBroker = (string) => done(null);
-    emitter.subscibe('testnewSubscribe', (event) => {}, 'thirdKey');
+    emitter.subscribe('testnewSubscribe', (event) => {}, 'thirdKey');
   });
 });
 
