@@ -27,6 +27,17 @@
     <a href="https://github.com/ClusterWS/ClusterWS-Client-JS"><img src="https://user-images.githubusercontent.com/18750503/37686031-9fa2d888-2cfa-11e8-911e-d844a8753b88.png" width="150"/></a>
 </p>
 
+<h3 align="center">
+    Please consider to support ClusterWS development
+</h3>
+<h4 align="center">
+    <a href="https://www.patreon.com/clusterws">Become a Backer on Patreon</a>
+</h4>
+<h4 align="center">
+    <a href="https://www.paypal.me/goriunov">One time Donation via PayPal</a>
+</h4>
+
+
 <h1></h1>
 <h3 align="center">
     Find more about ClusterWS in <a href="https://github.com/ClusterWS/ClusterWS/wiki"><strong>Wiki Documentation</strong></a>.
