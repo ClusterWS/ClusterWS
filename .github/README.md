@@ -12,11 +12,12 @@
     <a href="#"><img src="https://img.shields.io/badge/NODE.JS-8+-AE1E80.svg?style=for-the-badge" alt="GitHub license"/></a>
 </p>
 
+<h3 align="center"><strong>This branch is under work for version v4.0.0 check master for stable v3.2.0</strong></h3>
+
 <p align="center">
     <i><strong>Lightweight</strong>, <strong>fast</strong> and <strong>powerful</strong> framework for building <strong>scalable</strong> WebSocket applications in Node.js. ClusterWS uses <a href="https://github.com/uNetworking/uWebSockets">uWebSockets</a> - one of the most lightweight, efficient & scalable WebSocket library.</i>
 </p>
 
-<p align="center"><strong>This branch is under work for version 4.0.0 check master for stable 3.2.0</strong></p>
 
 <h3 align="center">
     Official Client Libraries
