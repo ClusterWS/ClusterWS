@@ -1,0 +1,53 @@
+{
+  "extends": [
+    "tslint:recommended",
+    "tslint-eslint-rules"
+  ],
+  "rules": {
+    "typedef": [
+      true,
+      "call-signature",
+      "arrow-call-signature",
+      "parameter",
+      "arrow-parameter",
+      "property-declaration",
+      "variable-declaration",
+      "member-variable-declaration",
+      "object-destructuring",
+      "array-destructuring"
+    ],
+    "object-literal-shorthand": true,
+    "interface-over-type-literal": false,
+    "no-unused-expression": false,
+    "eofline": false,
+    "object-literal-sort-keys": false,
+    "ordered-imports": false,
+    "prefer-const": true,
+    "no-var-keyword": true,
+    "quotemark": [
+      true,
+      "single",
+      "jsx-double"
+    ],
+    "trailing-comma": [
+      false
+    ],
+    "semicolon": [
+      true,
+      "always"
+    ],
+    "no-console": false,
+    "curly": true,
+    "brace-style": [
+      true,
+      "1tbs",
+      {
+        "allowSingleLine": true
+      }
+    ],
+    "max-line-length": [
+      true,
+      180
+    ]
+  }
+}

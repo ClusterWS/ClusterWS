@@ -1,41 +1,41 @@
 import * as cluster from 'cluster';
 
-import { UWebSocket } from './modules/uws/client';
-import { UWebSocketsServer } from './modules/uws/server';
-import { logError, isFunction } from './utils/functions';
-import { Configurations, Options } from './utils/types';
-import { masterProcess, workerProcess } from './processes';
+import { logError } from './utils/functions';
+import { Options, Configurations } from './utils/types';
 
 export default class ClusterWS {
-  public static uWebSocket: any = UWebSocket;
-  public static uWebSocketServer: any = UWebSocketsServer;
+  private options: Options;
 
   constructor(configurations: Configurations) {
-    const options: Options = {
+    this.options = {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
-      host: configurations.host || null,
+      host: configurations.host,
       worker: configurations.worker,
       workers: configurations.workers || 1,
       brokers: configurations.brokers || 1,
-      useBinary: configurations.useBinary || false,
-      tlsOptions: configurations.tlsOptions || false,
+      useBinary: configurations.useBinary,
+      tlsOptions: configurations.tlsOptions,
       pingInterval: configurations.pingInterval || 20000,
       brokersPorts: configurations.brokersPorts || [],
-      encodeDecodeEngine: configurations.encodeDecodeEngine || false,
-      restartWorkerOnFail: configurations.restartWorkerOnFail || false,
-      horizontalScaleOptions: configurations.horizontalScaleOptions || false
+      encodeDecodeEngine: configurations.encodeDecodeEngine,
+      restartWorkerOnFail: configurations.restartWorkerOnFail,
+      horizontalScaleOptions: configurations.horizontalScaleOptions
     };
 
-    if (!options.brokersPorts.length)
-      for (let i: number = 0; i < options.brokers; i++) options.brokersPorts.push(i + 9400);
+    // If ports were not provided then generate them from 9400+
+    if (!this.options.brokersPorts.length) {
+      for (let i: number = 0; i < this.options.brokers; i++) {
+        this.options.brokersPorts.push(i + 9400);
+      }
+    }
 
-    if (options.brokers !== options.brokersPorts.length || !isFunction(options.worker))
-      return logError(
-        !isFunction(options.worker)
-          ? 'Worker param must be provided and it must be a function \n'
-          : 'Number of broker ports should be the same as number of brokers\n'
-      );
-
-    cluster.isMaster ? masterProcess(options) : workerProcess(options);
+    if (!this.options.worker) {
+      // need to add proper error handler
+      logError('Here is error');
+    }
+    // if (!configurations.worker) {
+    //     throw "hello world";
+    // }
+    // console.log(cluster);
   }
 }

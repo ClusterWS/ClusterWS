@@ -1,0 +1,60 @@
+{
+    "src": "./src/",
+    "main": "index.ts",
+    "tslint": "./tslint.json",
+    "distFolder": "./dist/",
+    "output": {
+        "format": "cjs",
+        "file": "index.js",
+        "name": "ClusterWS"
+    },
+    "uglify": {
+        "mangle": true,
+        "output": {
+            "beautify": true
+        }
+    },
+    "copy": [
+        {
+            "src": "./LICENSE",
+            "dist": "./dist/LICENSE"
+        },
+        {
+            "src": "./.github/README.md",
+            "dist": "./dist/README.md"
+        },
+        {
+            "src": "./package.json",
+            "dist": "./dist/package.json",
+            "remove": [
+                "devDependencies",
+                "scripts"
+            ]
+        }
+    ],
+    "external": [
+        "cluster",
+        "http",
+        "https",
+        "uws",
+        "crypto"
+    ],
+    "tsConfigs": {
+        "compilerOptions": {
+            "target": "es6",
+            "module": "ES2015",
+            "removeComments": true,
+            "moduleResolution": "node",
+            "declaration": true
+        },
+        "files": [
+            "./node_modules/@types/node/index.d.ts"
+        ],
+        "exclude": [
+            "./src/**/*.test.ts"
+        ],
+        "include": [
+            "./src/**/*"
+        ]
+    }
+}

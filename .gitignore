@@ -2,6 +2,6 @@
 .idea/
 .vscode/
 
-src1/
+old/
 node_modules/
 package-lock.json

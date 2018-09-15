@@ -1,27 +1,18 @@
+import * as HTTPS from 'https';
+
+// for SocketMessage use string | Buffer
 export type Message = any;
 export type Listener = (...args: any[]) => void;
 export type WorkerFunction = () => void;
 
-export type CustomObject = {
-  [propName: string]: any;
-};
-
-export type TlsOptions = {
-  ca?: string;
-  pfx?: string;
-  key?: string;
-  cert?: string;
-  passphrase?: string;
-};
-
 export type HorizontalScaleOptions = {
-  masterOptions?: {
-    port: number;
-    tlsOptions?: TlsOptions;
-  };
-  brokersUrls?: string[];
   key?: string;
   serverId?: string;
+  brokersUrls?: string[];
+  masterOptions?: {
+    port: number;
+    tlsOptions?: HTTPS.ServerOptions;
+  };
 };
 
 export type Configurations = {
@@ -32,7 +23,7 @@ export type Configurations = {
   brokers?: number;
   useBinary?: boolean;
   brokersPorts?: number[];
-  tlsOptions?: TlsOptions;
+  tlsOptions?: HTTPS.ServerOptions;
   pingInterval?: number;
   restartWorkerOnFail?: boolean;
   horizontalScaleOptions?: HorizontalScaleOptions;
@@ -42,32 +33,48 @@ export type Configurations = {
 export type Options = {
   worker: WorkerFunction;
   port: number;
-  host: string;
+  host: string | null;
   workers: number;
   brokers: number;
   useBinary: boolean;
   brokersPorts: number[];
-  tlsOptions: TlsOptions | false;
+  tlsOptions: HTTPS.ServerOptions | null;
   pingInterval: number;
   restartWorkerOnFail: boolean;
-  horizontalScaleOptions: HorizontalScaleOptions | false;
-  encodeDecodeEngine: EncodeDecodeEngine | false;
+  horizontalScaleOptions: HorizontalScaleOptions | null;
+  encodeDecodeEngine: EncodeDecodeEngine | null;
 };
 
-export type Brokers = {
-  brokers: CustomObject;
-  nextBroker: number;
-  brokersKeys: string[];
-  brokersAmount: number;
-};
-
-export type BrokerClients = {
-  sockets: CustomObject;
-  length: number;
-  keys: string[];
-};
-
+/// TODO: Make sure that types fit
 export type EncodeDecodeEngine = {
   encode: (message: Message) => Message;
   decode: (message: Message) => Message;
 };
+
+//  need to fix this
+// export type Brokers = {
+//   brokers: CustomObject;
+//   nextBroker: number;
+//   brokersKeys: string[];
+//   brokersAmount: number;
+// };
+
+// export type BrokerClients = {
+//   sockets: CustomObject;
+//   length: number;
+//   keys: string[];
+// };
+
+// Removed object
+
+// export type CustomObject = {
+//   [propName: string]: any;
+// };
+
+// export type TlsOptions = {
+//   ca?: string;
+//   pfx?: string;
+//   key?: string;
+//   cert?: string;
+//   passphrase?: string;
+// };

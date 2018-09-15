@@ -1,6 +1,6 @@
 {
 	"name": "clusterws",
-	"version": "3.2.0",
+	"version": "4.0.0",
 	"description": "ClusterWS - lightweight, fast and powerful framework for building scalable WebSocket applications in Node.js.",
 	"main": "index.js",
 	"types": "index.d.ts",
@@ -22,13 +22,6 @@
 		"javascript"
 	],
 	"dependencies": {
-		"uws": "10.148.1"
-	},
-	"prettier": {
-		"semi": true,
-		"printWidth": 120,
-		"singleQuote": true,
-		"arrowParens": "always",
-		"disableLanguages": []
+		"clusterws-uws": "^0.4.0"
 	}
 }
