@@ -4,9 +4,18 @@ import { expect } from 'chai';
 import { stdout } from 'test-console';
 import * as proxyquire from 'proxyquire';
 
-describe('ClusterWS should have proper Options asigned', () => {
+const rootFile = './index';
+const depReplace = {
+  'cluster': {},
+  './processes': {
+    'workerProcess': () => { },
+    'masterProcess': () => { }
+  }
+};
+
+describe('index.ts', () => {
   it('Should generate custom ports if they are not provided', () => {
-    const CluterWS = proxyquire.noCallThru()('./index', { 'cluster': {} }).default;
+    const CluterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
     const cws = new CluterWS({
       worker: () => { },
       brokers: 5
@@ -16,7 +25,7 @@ describe('ClusterWS should have proper Options asigned', () => {
   });
 
   it('Should have user broker ports if they are provided', () => {
-    const CluterWS = proxyquire.noCallThru()('./index', { 'cluster': {} }).default;
+    const CluterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
     const cws = new CluterWS({
       worker: () => { },
       brokers: 5,
@@ -27,9 +36,21 @@ describe('ClusterWS should have proper Options asigned', () => {
   });
 
   it('Should print error if no worker function provided', () => {
-    const CluterWS = proxyquire.noCallThru()('./index', { 'cluster': {} }).default;
+    const CluterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
     const console_output = stdout.inspectSync(() => new CluterWS({}));
 
-    expect(console_output[0]).deep.equal(`\u001b[31mError PID ${process.pid}:\u001b[0m  Here is error\n`)
-  })
+    expect(console_output[0]).deep.equal(`\u001b[31mError PID ${process.pid}:\u001b[0m  Worker must be provided and it must be a function\n`)
+  });
+
+
+  it('Should print error if wrong number of broker ports provided', () => {
+    const CluterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
+    const console_output = stdout.inspectSync(() => new CluterWS({
+      worker: () => { },
+      brokers: 3,
+      brokersPorts: [100, 101]
+    }));
+
+    expect(console_output[0]).deep.equal(`\u001b[31mError PID ${process.pid}:\u001b[0m  Number of broker ports should be the same as number of brokers\n`)
+  });
 });

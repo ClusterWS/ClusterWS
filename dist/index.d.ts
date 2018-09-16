@@ -8,6 +8,19 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
+export class Room {
+    constructor(roomName: string);
+    publish(userId: string, message: string): void;
+    subscribe(user: any): void;
+    unsubscribe(): void;
+    broadcast(): void;
+}
+
+
+
+export function logError<T>(data: T): any;
+export function isFunction<T>(fn: T): boolean;
+
 export type Message = any;
 export type Listener = (...args: any[]) => void;
 export type WorkerFunction = () => void;

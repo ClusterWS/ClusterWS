@@ -1,7 +1,8 @@
 import * as cluster from 'cluster';
 
-import { logError } from './utils/functions';
+import { logError, isFunction } from './utils/functions';
 import { Options, Configurations } from './utils/types';
+import { workerProcess, masterProcess } from './processes';
 
 export default class ClusterWS {
   private options: Options;
@@ -29,13 +30,16 @@ export default class ClusterWS {
       }
     }
 
-    if (!this.options.worker) {
-      // need to add proper error handler
-      logError('Here is error');
+    // Make sure that worker function is provided
+    if (!isFunction(this.options.worker)) {
+      return logError('Worker must be provided and it must be a function');
     }
-    // if (!configurations.worker) {
-    //     throw "hello world";
-    // }
-    // console.log(cluster);
+
+    // Make sure that brokersPorts are provided properly
+    if (this.options.brokers !== this.options.brokersPorts.length) {
+      return logError('Number of broker ports should be the same as number of brokers');
+    }
+
+    cluster.isMaster ? masterProcess(this.options) : workerProcess(this.options);
   }
 }
