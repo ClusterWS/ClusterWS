@@ -1,16 +1,27 @@
 import * as cluster from 'cluster';
 
-import { Options } from './utils/types';
-import { logError } from './utils/functions';
+import { Options, Message } from './utils/types';
+import { logError, generateKey } from './utils/functions';
 
 export function masterProcess(options: Options): void {
-  // Master process
+  const serverId: string = generateKey(20);
+  const internalSecurityKey: string = generateKey(20);
+
+  // check if we run Scaler process, if not then boot brokers
+  // we can have only one scaler per server scaler id always -1
+  if (options.horizontalScaleOptions && options.horizontalScaleOptions.masterOptions) {
+    createNewProcess('Scaler', -1);
+  } else {
+    for (let i: number = 0; i < options.brokers; i++) {
+      createNewProcess('Broker', i);
+    }
+  }
 
   function createNewProcess(processName: string, processId: number): void {
     const newProcess: cluster.Worker = cluster.fork();
 
-    newProcess.on('message', () => {
-      //
+    newProcess.on('message', (message: Message): void => {
+      // implement logic to register redy processes
     });
 
     newProcess.on('exit', (): void => {
@@ -20,7 +31,8 @@ export function masterProcess(options: Options): void {
         createNewProcess(processName, processId);
       }
     });
-    //
+
+    newProcess.send({ processId, processName, serverId, internalSecurityKey });
   }
 }
 

@@ -2,5 +2,5 @@
 
 ### Types
 
-* Remove `TlsOptions` instead use `HTTPS.ServerOptions`
+* Remove `TlsOptions` instead use `SecureContextOptions` from node `tls`
 * Remove `CustomObject` type instead implement specific types for everything

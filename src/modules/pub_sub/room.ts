@@ -1,4 +1,4 @@
-// experementatl logic (!00% will be changed)
+// experementatl logic (100% will be changed)
 export class Room {
   private users: any; // need to think about this
   private batch: any[] = [];

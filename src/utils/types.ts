@@ -1,8 +1,9 @@
-import * as HTTPS from 'https';
+import { SecureContextOptions } from 'tls';
 
 // for SocketMessage use string | Buffer
 export type Message = any;
 export type Listener = (...args: any[]) => void;
+export type ListenerMany = (eventName: string, ...args: any[]) => void;
 export type WorkerFunction = () => void;
 
 export type HorizontalScaleOptions = {
@@ -11,7 +12,7 @@ export type HorizontalScaleOptions = {
   brokersUrls?: string[];
   masterOptions?: {
     port: number;
-    tlsOptions?: HTTPS.ServerOptions;
+    tlsOptions?: SecureContextOptions;
   };
 };
 
@@ -23,7 +24,7 @@ export type Configurations = {
   brokers?: number;
   useBinary?: boolean;
   brokersPorts?: number[];
-  tlsOptions?: HTTPS.ServerOptions;
+  tlsOptions?: SecureContextOptions;
   pingInterval?: number;
   restartWorkerOnFail?: boolean;
   horizontalScaleOptions?: HorizontalScaleOptions;
@@ -38,7 +39,7 @@ export type Options = {
   brokers: number;
   useBinary: boolean;
   brokersPorts: number[];
-  tlsOptions: HTTPS.ServerOptions | null;
+  tlsOptions: SecureContextOptions | null;
   pingInterval: number;
   restartWorkerOnFail: boolean;
   horizontalScaleOptions: HorizontalScaleOptions | null;

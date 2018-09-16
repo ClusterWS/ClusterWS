@@ -45,6 +45,10 @@
         "allowSingleLine": true
       }
     ],
+    "max-classes-per-file": [
+      true,
+      2
+    ],
     "max-line-length": [
       true,
       180
