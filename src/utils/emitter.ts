@@ -55,5 +55,39 @@ export class EventEmitterMany {
     }
   }
 
+  public removeByListener(event: string, listener: Listener): void {
+    const listeners: [{ token: string, listener: ListenerMany }] = this.events[event];
+    if (listeners) {
+      for (let i: number = 0, len: number = listeners.length; i < len; i++) {
+        if (listeners[i].listener === listener) {
+          listeners.splice(i, 1);
+          break;
+        }
+      }
+
+      if (!listeners.length) {
+        delete this.events[event];
+        this.action('destroy', event);
+      }
+    }
+  }
+
+  public removeByToken(event: string, token: string): void {
+    const listeners: [{ token: string, listener: ListenerMany }] = this.events[event];
+    if (listeners) {
+      for (let i: number = 0, len: number = listeners.length; i < len; i++) {
+        if (listeners[i].token === token) {
+          listeners.splice(i, 1);
+          break;
+        }
+      }
+
+      if (!listeners.length) {
+        delete this.events[event];
+        this.action('destroy', event);
+      }
+    }
+  }
+
   public action(action: string, event: string): void { /** Should be overwritten by user */ }
 }
