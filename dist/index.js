@@ -2,52 +2,95 @@
 
 var crypto = require("crypto"), cluster = require("cluster");
 
-function logError(r) {
-    return process.stdout.write(`[31mError PID ${process.pid}:[0m  ${r}\n`);
+function logError(e) {
+    return process.stdout.write(`[31mError PID ${process.pid}:[0m  ${e}\n`);
 }
 
-function isFunction(r) {
-    return "[object Function]" === {}.toString.call(r);
+function isFunction(e) {
+    return "[object Function]" === {}.toString.call(e);
 }
 
-function generateKey(r) {
-    return crypto.randomBytes(r).toString("hex");
+function generateKey(e) {
+    return crypto.randomBytes(e).toString("hex");
 }
 
-function masterProcess(r) {
-    const o = generateKey(20), e = generateKey(20);
-    if (r.horizontalScaleOptions && r.horizontalScaleOptions.masterOptions) t("Scaler", -1); else for (let o = 0; o < r.brokers; o++) t("Broker", o);
-    function t(s, n) {
+class EventEmitterMany {
+    constructor() {
+        this.events = {};
+    }
+    on(e, t, r) {
+        if (!isFunction(t)) return logError("Listener must be a function");
+        this.events[e] ? this.events[e].push({
+            token: r,
+            listener: t
+        }) : (this.events[e] = [ {
+            token: r,
+            listener: t
+        } ], this.action("create", e));
+    }
+    emit(e, ...t) {
+        const r = this.events[e];
+        if (r) for (let o = 0, s = r.length; o < s; o++) r[o].listener(e, ...t);
+    }
+    removeByListener(e, t) {
+        const r = this.events[e];
+        if (r) {
+            for (let e = 0, o = r.length; e < o; e++) if (r[e].listener === t) {
+                r.splice(e, 1);
+                break;
+            }
+            r.length || (delete this.events[e], this.action("destroy", e));
+        }
+    }
+    removeByToken(e, t) {
+        const r = this.events[e];
+        if (r) {
+            for (let e = 0, o = r.length; e < o; e++) if (r[e].token === t) {
+                r.splice(e, 1);
+                break;
+            }
+            r.length || (delete this.events[e], this.action("destroy", e));
+        }
+    }
+    action(e, t) {}
+}
+
+function masterProcess(e) {
+    const t = generateKey(20), r = generateKey(20);
+    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) o("Scaler", -1); else for (let t = 0; t < e.brokers; t++) o("Broker", t);
+    function o(s, n) {
         const i = cluster.fork();
-        i.on("message", r => {}), i.on("exit", () => {
-            logError(`${s} has exited`), r.restartWorkerOnFail && t(s, n);
+        i.on("message", e => {}), i.on("exit", () => {
+            logError(`${s} has exited`), e.restartWorkerOnFail && o(s, n);
         }), i.send({
-            processName: s,
             processId: n,
-            serverId: o,
-            internalSecurityKey: e
+            processName: s,
+            serverId: t,
+            internalSecurityKey: r
         });
     }
 }
 
-function workerProcess(r) {}
+function workerProcess(e) {}
 
 class ClusterWS {
-    constructor(r) {
+    constructor(e) {
+        const t = new EventEmitterMany();
         if (this.options = {
-            port: r.port || (r.tlsOptions ? 443 : 80),
-            host: r.host,
-            worker: r.worker,
-            workers: r.workers || 1,
-            brokers: r.brokers || 1,
-            useBinary: r.useBinary,
-            tlsOptions: r.tlsOptions,
-            pingInterval: r.pingInterval || 2e4,
-            brokersPorts: r.brokersPorts || [],
-            encodeDecodeEngine: r.encodeDecodeEngine,
-            restartWorkerOnFail: r.restartWorkerOnFail,
-            horizontalScaleOptions: r.horizontalScaleOptions
-        }, !this.options.brokersPorts.length) for (let r = 0; r < this.options.brokers; r++) this.options.brokersPorts.push(r + 9400);
+            port: e.port || (e.tlsOptions ? 443 : 80),
+            host: e.host,
+            worker: e.worker,
+            workers: e.workers || 1,
+            brokers: e.brokers || 1,
+            useBinary: e.useBinary,
+            tlsOptions: e.tlsOptions,
+            pingInterval: e.pingInterval || 2e4,
+            brokersPorts: e.brokersPorts || [],
+            encodeDecodeEngine: e.encodeDecodeEngine,
+            restartWorkerOnFail: e.restartWorkerOnFail,
+            horizontalScaleOptions: e.horizontalScaleOptions
+        }, !this.options.brokersPorts.length) for (let e = 0; e < this.options.brokers; e++) this.options.brokersPorts.push(e + 9400), 
+        t.emit("hello");
         return isFunction(this.options.worker) ? this.options.brokers !== this.options.brokersPorts.length ? logError("Number of broker ports should be the same as number of brokers") : void (cluster.isMaster ? masterProcess(this.options) : workerProcess(this.options)) : logError("Worker must be provided and it must be a function");
     }
 }

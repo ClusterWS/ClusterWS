@@ -19,12 +19,28 @@ export class Room {
 export function masterProcess(options: Options): void;
 export function workerProcess(options: Options): void;
 
+export class EventEmitter {
+    on(event: string, listener: Listener): void;
+    emit(event: string, message: Message): void;
+    emit(event: string, ...args: any[]): void;
+    removeEvent(event: string): void;
+    removeEvents(): void;
+}
+export class EventEmitterMany {
+    on(event: string, listener: ListenerMany, token: string): void;
+    emit(event: string, ...args: any[]): void;
+    removeByListener(event: string, listener: Listener): void;
+    removeByToken(event: string, token: string): void;
+    action(action: string, event: string): void;
+}
+
 export function logError<T>(data: T): any;
 export function isFunction<T>(fn: T): boolean;
 export function generateKey(length: number): string;
 
 export type Message = any;
 export type Listener = (...args: any[]) => void;
+export type ListenerMany = (eventName: string, ...args: any[]) => void;
 export type WorkerFunction = () => void;
 export type HorizontalScaleOptions = {
     key?: string;

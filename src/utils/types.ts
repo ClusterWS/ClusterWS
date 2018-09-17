@@ -29,6 +29,7 @@ export type Configurations = {
   restartWorkerOnFail?: boolean;
   horizontalScaleOptions?: HorizontalScaleOptions;
   encodeDecodeEngine?: EncodeDecodeEngine;
+  // logger: Logger
 };
 
 export type Options = {
@@ -51,6 +52,13 @@ export type EncodeDecodeEngine = {
   encode: (message: Message) => Message;
   decode: (message: Message) => Message;
 };
+
+// export type Logger = {
+//   info: () => any;
+//   error: () => any;
+//   debug: () => any;
+//   warning: () => any;
+// };
 
 //  need to fix this
 // export type Brokers = {
