@@ -1,5 +1,6 @@
 import * as cluster from 'cluster';
 
+import { Worker } from './modules/worker';
 import { Options, Message } from './utils/types';
 import { logError, generateKey, logWarning, logReady } from './utils/functions';
 
@@ -71,6 +72,15 @@ export function masterProcess(options: Options): void {
 }
 
 export function workerProcess(options: Options): void {
+  process.on('message', (message: Message): Worker => {
+    switch (message.processName) {
+      case 'Worker':
+        return new Worker(options);
+
+    }
+    // add diferent cases
+  });
+
   // worker process add logic to create instances
   process.on('uncaughtException', (error: Error) => {
     logError(`PID: ${process.pid}\n ${error.stack || error}\n`);

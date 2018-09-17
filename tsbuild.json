@@ -36,8 +36,8 @@
     "cluster",
     "http",
     "https",
-    "uws",
-    "crypto"
+    "crypto",
+    "clusterws-uws"
   ],
   "tsConfigs": {
     "compilerOptions": {
