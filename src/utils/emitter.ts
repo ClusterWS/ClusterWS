@@ -21,6 +21,10 @@ export class EventEmitter {
     listener && listener(...args);
   }
 
+  public exist(event: string): boolean {
+    return !!this.events[event];
+  }
+
   public removeEvent(event: string): void {
     delete this.events[event];
   }
@@ -87,6 +91,10 @@ export class EventEmitterMany {
         this.action('destroy', event);
       }
     }
+  }
+
+  public exist(event: string): boolean {
+    return !!this.events[event];
   }
 
   public action(action: string, event: string): void { /** Should be overwritten by user */ }
