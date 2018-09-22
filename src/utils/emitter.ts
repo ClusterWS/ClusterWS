@@ -1,10 +1,11 @@
+import { Socket } from '../modules/socket/socket';
 import { logError, isFunction } from './functions';
 import { Listener, Message, ListenerMany } from './types';
 
 export class EventEmitter {
   private events: { [key: string]: Listener } = {};
 
-  // public on(event: 'connection', listener: (socket: Socket) => void): void;
+  public on(event: 'connection', listener: (socket: Socket) => void): void;
   public on(event: string, listener: Listener): void;
   public on(event: string, listener: Listener): void {
     if (!isFunction(listener)) {

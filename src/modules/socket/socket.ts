@@ -11,7 +11,7 @@ export class Socket {
   constructor(private worker: Worker, private socket: WebSocket) {
     this.socket.on('message', (message: string | Buffer): void => {
       try {
-        // need to verify if it can parse Array Buffer
+        // need to verify if it can parse Buffer from c++
         decode(this, JSON.stringify(message), this.worker.options);
       } catch (err) { logError(err); }
     });
@@ -66,7 +66,7 @@ function encode(event: string, data: Message, eventType: string, option: Options
   return option.useBinary ? Buffer.from(readyMessage) : readyMessage;
 }
 
-// decode message protocall and execute right call
+// decode message protocall && call socket functions
 function decode(socket: Socket, data: Message, option: Options): void {
   // parse data with user provided decode function
   let [msgType, param, message]: [string, string, Message] = data['#'];
@@ -84,11 +84,15 @@ function decode(socket: Socket, data: Message, option: Options): void {
       // need to cast any to be able to use private param
       return (socket as any).channels[param] && null /** need to add emit function */;
     case 's':
-      if (param === 's') {
-        // add on subscribe
+      const channel: number = (socket as any).channels[message];
+      if (param === 's' && !channel) {
+        (socket as any).channels[message] = 1;
+        // add on subscribe to the wss server
       }
-      if (param === 'u') {
-        // ass on unsubscribe
+      if (param === 'u' && channel) {
+        delete (socket as any).channels[message];
+        // add on unsubscribe to wss server
       }
+      break;
   }
 }

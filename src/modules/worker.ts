@@ -1,16 +1,17 @@
 import * as HTTP from 'http';
 import * as HTTPS from 'https';
 
+import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
 import { Options, Listener } from '../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo } from 'clusterws-uws';
 
 export class Worker {
-  public wss: WSServer = new WSServer();
+  public wss: WSServer;
   public server: HTTP.Server | HTTPS.Server;
 
   constructor(public options: Options) {
-    // need to add brokers connection
+    this.wss = new WSServer(this.options);
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 
     const uServer: WebSocketServer = new WebSocketServer({
@@ -19,8 +20,7 @@ export class Worker {
     });
 
     uServer.on('connection', (socket: WebSocket) => {
-      this.wss.emit('connection' /** Nedd to return Websocket connection */);
-      // add on connection logic
+      this.wss.emit('connection', new Socket(this, socket));
     });
 
     uServer.startAutoPing(this.options.pingInterval, true);

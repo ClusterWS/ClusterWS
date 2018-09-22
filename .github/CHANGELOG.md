@@ -2,10 +2,10 @@
 
 ### Types
 
-* Remove `TlsOptions` instead use `SecureContextOptions` from node `tls`
-* Remove `CustomObject` type instead implement specific types for everything
+* Remove `TlsOptions` type from now on use `SecureContextOptions` from node `tls` types (default Node.js)
+* Remove `CustomObject` type instead implement specific types for everything (really was making live easier but we want a good type system)
 
 
 ### uWebsocket 
-* Now on `onVerifyClient` returns info with `headers` instead of just `origin`
+* Now on `onVerifyClient` returns info with full `headers` instead of just `origin` part (custom change in uWebsocket)
 

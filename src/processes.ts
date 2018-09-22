@@ -6,7 +6,7 @@ import { logError, generateKey, logWarning, logReady } from './utils/functions';
 
 export function masterProcess(options: Options): void {
   let isReady: boolean = false;
-  // TODO: Fix types on this thing why string[] does not work !!
+  // TODO: Fix types on this things why string[] does not work it is pain :( !!
   const brokersReady: any = [];
   const workersReady: any = [];
 
@@ -76,9 +76,11 @@ export function workerProcess(options: Options): void {
     switch (message.processName) {
       case 'Worker':
         return new Worker(options);
-
+      case 'Broker':
+        break;
+      case 'Scaler':
+        break;
     }
-    // add diferent cases
   });
 
   // worker process add logic to create instances
