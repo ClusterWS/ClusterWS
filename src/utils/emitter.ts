@@ -35,6 +35,7 @@ export class EventEmitter {
   }
 }
 
+// We may not need event emitter many any more as we use Room for pub sub
 export class EventEmitterMany {
   private events: { [key: string]: [{ token: string, listener: ListenerMany }] } = {};
 
@@ -47,7 +48,7 @@ export class EventEmitterMany {
       this.events[event].push({ token, listener });
     } else {
       this.events[event] = [{ token, listener }];
-      this.action('create', event);
+      // this.action('create', event);
     }
   }
 
@@ -72,7 +73,7 @@ export class EventEmitterMany {
 
       if (!listeners.length) {
         delete this.events[event];
-        this.action('destroy', event);
+        // this.action('destroy', event);
       }
     }
   }
@@ -89,7 +90,7 @@ export class EventEmitterMany {
 
       if (!listeners.length) {
         delete this.events[event];
-        this.action('destroy', event);
+        // this.action('destroy', event);
       }
     }
   }
@@ -98,5 +99,5 @@ export class EventEmitterMany {
     return !!this.events[event];
   }
 
-  public action(action: string, event: string): void { /** Should be overwritten by user */ }
+  // public action(action: string, event: string): void { /** Should be overwritten by user */ }
 }
