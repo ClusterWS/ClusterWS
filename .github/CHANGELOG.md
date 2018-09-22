@@ -8,3 +8,4 @@
 
 ### uWebsocket 
 * Now on `onVerifyClient` returns info with `headers` instead of just `origin`
+

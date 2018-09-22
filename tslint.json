@@ -22,7 +22,12 @@
     "eofline": false,
     "object-literal-sort-keys": false,
     "ordered-imports": false,
-    "prefer-const": true,
+    "prefer-const": [
+      true,
+      {
+        "destructuring": "all"
+      }
+    ],
     "no-var-keyword": true,
     "quotemark": [
       true,
