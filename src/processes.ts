@@ -77,6 +77,7 @@ export function workerProcess(options: Options): void {
       case 'Worker':
         return new Worker(options);
       case 'Broker':
+        process.send({ event: 'READY', pid: process.pid });
         break;
       case 'Scaler':
         break;
@@ -85,7 +86,7 @@ export function workerProcess(options: Options): void {
 
   // worker process add logic to create instances
   process.on('uncaughtException', (error: Error) => {
-    logError(`PID: ${process.pid}\n ${error.stack || error}\n`);
+    logError(`${error.stack || error}`);
     process.exit();
   });
 }

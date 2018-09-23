@@ -3,6 +3,7 @@ import * as HTTPS from 'https';
 
 import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
+import { logError } from '../utils/functions';
 import { Options, Listener } from '../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo } from 'clusterws-uws';
 
@@ -16,7 +17,7 @@ export class Worker {
 
     const uServer: WebSocketServer = new WebSocketServer({
       server: this.server,
-      verifyClient: (info: ConnectionInfo, next: Listener): void => {/** Need to add logic */ }
+      // verifyClient: (info: ConnectionInfo, next: Listener): void => {/** Need to add logic */ }
     });
 
     uServer.on('connection', (socket: WebSocket) => {
@@ -24,6 +25,11 @@ export class Worker {
     });
 
     uServer.startAutoPing(this.options.pingInterval, true);
+
+    this.server.on('error', (error: Error) => {
+      logError(`${error.stack || error}`);
+      process.exit();
+    });
 
     this.server.listen(this.options.port, this.options.host, (): void => {
       this.options.worker.call(this);

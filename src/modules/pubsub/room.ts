@@ -20,21 +20,26 @@ export class Room {
     this.usersListeners[userId] = listener;
   }
 
-  public unsusbcribe(userId: string): void {
+  public unsubscribe(userId: string): void {
     delete this.usersListeners[userId];
     // need to rethink remove logic
     this.usersIds.splice(this.usersIds.indexOf(userId), 1);
 
-    // may need to subscribe to 2 channels
+    // may need to subscribe to 2 channels for publish event
     if (!this.usersIds.length) {
-      this.destroy();
-      this.action(this.roomName);
-      // call destroy to propogate to wsserver
+      this.usersIds = [];
+      this.messagesBatch = [];
+      this.usersListeners = {};
+      this.action('destroy', this.roomName);
     }
   }
 
   // instead of recraeting array i can use gap to replace data for that use
   public flush(): void {
+    if (!this.messagesBatch.length) {
+      return;
+    }
+
     for (let i: number = 0, len: number = this.usersIds.length; i < len; i++) {
       const userId: string = this.usersIds[i];
       const sendMessage: Message = [];
@@ -44,8 +49,13 @@ export class Room {
         }
       }
 
-      this.usersListeners[userId](sendMessage);
+      if (sendMessage.length) {
+        this.usersListeners[userId](this.roomName, sendMessage);
+      }
     }
+
+    // can pass message array through this one
+    // this.action('publish', this.roomName);
 
     this.messagesBatch = [];
   }
@@ -57,59 +67,5 @@ export class Room {
     }
   }
 
-  public destroy(): void {
-    this.usersIds = [];
-    this.messagesBatch = [];
-    this.usersListeners = {};
-  }
-
-  public action(channel: string): void { /** To overwrite by user */ }
+  public action(event: string, channel: string): void { /** To overwrite by user */ }
 }
-
-// // experementatl logic (100% will be changed)
-// export class Room {
-//   private userIds: any[]; // need to think about this
-//   private batch: any[] = [];
-
-//   constructor(private users: any) { }
-
-//   public publish(userId: string, message: string): void {
-//     this.batch.push({
-//       userId,
-//       message
-//     });
-//   }
-
-//   public subscribe(userId: any): void {
-//     this.userIds.push(userId);
-//   }
-
-//   public unsubscribe(userId: any): void {
-//     this.userIds.splice(this.userIds.indexOf(userId), 1);
-//     /// remove user from object
-//   }
-
-//   public broadcast(): void {
-//     for (let i: number = 0, len: number = this.userIds.length; i < len; i++) {
-//       const user: any = this.users[this.userIds[i]];
-
-//       if (!user) {
-//         continue;
-//       }
-
-//       const messagesToSend: any[] = [];
-
-//       for (let j: number = 0, msgLen: number = this.batch.length; j < msgLen; j++) {
-//         const msg: any = this.batch[j];
-//         if (msg.userId !== user.id) {
-//           messagesToSend.push(msg.message);
-//         }
-//       }
-
-//       user.send(Buffer.from(messagesToSend));
-//     }
-
-//     // reset batch
-//     this.batch = [];
-//   }
-// }

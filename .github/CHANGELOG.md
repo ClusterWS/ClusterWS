@@ -9,3 +9,6 @@
 ### uWebsocket 
 * Now on `onVerifyClient` returns info with full `headers` instead of just `origin` part (custom change in uWebsocket)
 
+
+### Other
+* Encode Decode engine is not in stable (may need to be clarified)
