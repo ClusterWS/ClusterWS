@@ -2,12 +2,12 @@ import { Listener, Message } from '../../utils/types';
 
 // experementatl logic
 // need to check if client exist and connected
-export class Room {
+export class Channel {
   public usersIds: string[] = [];
   public usersListeners: { [key: string]: Listener } = {};
   private messagesBatch: Message[] = [];
 
-  constructor(public roomName: string, userId: string, listener: Listener) {
+  constructor(public channelName: string, userId: string, listener: Listener) {
     this.subscribe(userId, listener);
   }
 
@@ -30,7 +30,7 @@ export class Room {
       this.usersIds = [];
       this.messagesBatch = [];
       this.usersListeners = {};
-      this.action('destroy', this.roomName);
+      this.action('destroy', this.channelName);
     }
   }
 
@@ -50,11 +50,11 @@ export class Room {
       }
 
       if (sendMessage.length) {
-        this.usersListeners[userId](this.roomName, sendMessage);
+        this.usersListeners[userId](this.channelName, sendMessage);
       }
     }
 
-    // can pass message array through this one
+    // can pass message array through this one to publish to the publish client
     // this.action('publish', this.roomName);
 
     this.messagesBatch = [];
