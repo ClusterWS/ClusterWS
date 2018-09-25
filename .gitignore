@@ -3,5 +3,6 @@
 .vscode/
 
 old/
+play.js
 node_modules/
 package-lock.json
