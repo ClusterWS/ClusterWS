@@ -17,7 +17,8 @@ export class Worker {
 
     const uServer: WebSocketServer = new WebSocketServer({
       server: this.server,
-      // verifyClient: (info: ConnectionInfo, next: Listener): void => {/** Need to add logic */ }
+      // need to add midleware to handle this fanction
+      verifyClient: (info: ConnectionInfo, next: Listener): void => {/** Need to add logic */ }
     });
 
     uServer.on('connection', (socket: WebSocket) => {
