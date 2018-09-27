@@ -14,12 +14,37 @@ export default class ClusterWS {
     constructor(configurations: Configurations);
 }
 
+export class BrokerClient {
+    constructor(url: string, broadcast: any);
+}
+
+export class ClientManager {
+    constructor(urls: string[]);
+}
+
+
+
 export class Room {
     constructor(roomName: string);
     publish(userId: string, message: string): void;
     subscribe(user: any): void;
     unsubscribe(): void;
     broadcast(): void;
+}
+
+export class Channel {
+    channelName: string;
+    usersIds: string[];
+    usersListeners: {
+        [key: string]: Listener;
+    };
+    constructor(channelName: string, userId: string, listener: Listener);
+    publish(id: string, message: Message): void;
+    subscribe(userId: string, listener: Listener): void;
+    unsubscribe(userId: string): void;
+    flush(): void;
+    unfilteredFlush(message: Message): void;
+    action(event: string, channel: string): void;
 }
 
 export class Room {
@@ -48,16 +73,16 @@ export class Socket {
 
 export class WSServer extends EventEmitter {
     channels: {
-        [key: string]: Room;
+        [key: string]: Channel;
     };
     middleware: {
         [key: string]: Listener;
     };
     constructor(options: Options);
     setMiddleware(name: string, listener: Listener): void;
-    publish(channel: string, message: Message, id?: string): void;
-    subscribe(channel: string, id: string, listener: Listener): void;
-    unsubscribe(channel: string, id: string): void;
+    publish(channelName: string, message: Message, id?: string): void;
+    subscribe(channelName: string, id: string, listener: Listener): void;
+    unsubscribe(channelName: string, id: string): void;
 }
 
 export class Worker {
@@ -79,14 +104,8 @@ export class EventEmitter {
     removeEvent(event: string): void;
     removeEvents(): void;
 }
-export class EventEmitterMany {
-    on(event: string, listener: ListenerMany, token: string): void;
-    emit(event: string, ...args: any[]): void;
-    removeByListener(event: string, listener: Listener): void;
-    removeByToken(event: string, token: string): void;
-    exist(event: string): boolean;
-}
 
+export function getRandom(min: number, max: number): number;
 export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;

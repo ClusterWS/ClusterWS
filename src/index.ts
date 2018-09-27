@@ -4,6 +4,8 @@ import { logError, isFunction } from './utils/functions';
 import { Options, Configurations } from './utils/types';
 import { workerProcess, masterProcess } from './processes';
 
+import { BrokerClient } from './modules/broker/client';
+
 export default class ClusterWS {
   private options: Options;
 

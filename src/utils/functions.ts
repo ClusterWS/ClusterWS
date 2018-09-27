@@ -1,5 +1,9 @@
 import { randomBytes } from 'crypto';
 
+export function getRandom(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 export function logError<T>(data: T): any {
   return process.stdout.write(`\x1b[31mError PID ${process.pid}:\x1b[0m  ${data}\n`);
 }
