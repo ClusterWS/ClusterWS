@@ -1,5 +1,5 @@
 import { WebSocket } from 'clusterws-uws';
-import { logWarning, logReady, getRandom } from '../../utils/functions';
+import { logWarning, logReady, random } from '../../utils/functions';
 
 export class BrokerClient {
   private socket: WebSocket;
@@ -30,7 +30,7 @@ export class BrokerClient {
       this.socket = null;
       this.attempts++;
 
-      setTimeout(() => this.createSocket(), getRandom(1000, 2000));
+      setTimeout(() => this.createSocket(), random(1000, 2000));
     });
 
     this.socket.on('close', (code: number, reason: string): void => {
@@ -44,7 +44,7 @@ export class BrokerClient {
 
       logWarning(`Disconnected from Broker: ${this.url} (reconnecting)`);
 
-      setTimeout(() => this.createSocket(), getRandom(1000, 2000));
+      setTimeout(() => this.createSocket(), random(1000, 2000));
     });
   }
 }
