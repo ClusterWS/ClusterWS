@@ -1,14 +1,23 @@
 import { Channel } from '../pubsub/channel';
 import { EventEmitter } from '../../utils/emitter';
+import { BrokerClient } from '../broker/client';
 import { Message, Options, Listener } from '../../utils/types';
 
 export class WSServer extends EventEmitter {
   public channels: { [key: string]: Channel } = {};
   public middleware: { [key: string]: Listener } = {};
 
+  private brokers: BrokerClient[];
+  private nextBrokerId: number = 0;
+
   constructor(private options: Options) {
     super();
+
     // create connections to the brokers (still need to work on broker part)
+    for (let i: number = 0; i < this.options.brokers; i++) {
+      // need to add token to verify client
+      this.brokers.push(new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}`));
+    }
 
     this.channelsLoop();
   }
@@ -30,7 +39,7 @@ export class WSServer extends EventEmitter {
       const channel: Channel = new Channel(channelName, id, listener);
       // this line will pass destroy function in to the channel component
       // need to test if destroy channel will work
-      channel.action = this.removeChannel;
+      channel.action = this.actionsFromChannels;
       this.channels[channelName] = channel;
     } else {
       this.channels[channelName].subscribe(id, listener);
@@ -47,20 +56,46 @@ export class WSServer extends EventEmitter {
     // need to extract channel check if it exists and then publish with unfilteredFlush Channel
   }
 
-  // this function is called from inside of channel component check actions
-  private removeChannel(event: string, channelName: string): void {
-    delete this.channels[channelName];
+  private actionsFromChannels(event: string, channelName: string, data?: Message): void {
+    switch (event) {
+      case 'destroy':
+        delete this.channels[channelName];
+        break;
+      case 'publish':
+        // we need to perepare message before sending
+
+        let attemps: number = 0;
+        let isCompleted: boolean = false;
+
+        const brokersLength: number = this.brokers.length;
+
+        while (!isCompleted && attemps < brokersLength * 2) {
+          if (this.nextBrokerId >= brokersLength) {
+            this.nextBrokerId = 0;
+          }
+
+          // need to pass message in
+          if (this.brokers[this.nextBrokerId].publish('')) {
+            isCompleted = true;
+          }
+
+          attemps++;
+          this.nextBrokerId++;
+        }
+
+        break;
+    }
+
   }
 
   private channelsLoop(): void {
     setTimeout(() => {
-      // think if we should have different timeouts for each of them
       for (const channel in this.channels) {
         if (this.channels[channel]) {
           this.channels[channel].flush();
         }
       }
       this.channelsLoop();
-    }, 10);
+    }, 10); // need to think about the timeout (should it be 5) ?
   }
 }

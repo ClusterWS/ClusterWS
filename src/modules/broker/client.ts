@@ -5,8 +5,18 @@ export class BrokerClient {
   private socket: WebSocket;
   private attempts: number = 0;
 
-  constructor(private url: string, private broadcast: any) {
+  constructor(private url: string) {
     this.createSocket();
+  }
+
+  public publish(message: string | Buffer): boolean {
+    // if socket is ready then we can publish
+    if (this.socket.readyState === this.socket.OPEN) {
+      this.socket.send(message);
+      return true;
+    }
+    // handle if socket connected
+    return false;
   }
 
   private createSocket(): void {
@@ -43,7 +53,6 @@ export class BrokerClient {
       }
 
       logWarning(`Disconnected from Broker: ${this.url} (reconnecting)`);
-
       setTimeout(() => this.createSocket(), random(1000, 2000));
     });
   }
