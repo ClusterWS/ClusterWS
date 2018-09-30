@@ -4,6 +4,14 @@ import { EventEmitter } from '../../utils/emitter';
 import { logError, generateKey } from '../../utils/functions';
 import { Listener, Message, Options } from '../../utils/types';
 
+type PrivateSocket = {
+  id: string,
+  worker: Worker,
+  onPublish: Listener,
+  emitter: EventEmitter,
+  channels: { [key: string]: number }
+};
+
 export class Socket {
   public id: string = generateKey(10);
   private emitter: EventEmitter = new EventEmitter();
@@ -18,7 +26,7 @@ export class Socket {
     this.socket.on('message', (message: string | Buffer): void => {
       try {
         // need to verify if it can parse Buffer from c++
-        decode(this, JSON.stringify(message), this.worker.options);
+        decode(this as any, JSON.stringify(message), this.worker.options);
       } catch (err) { logError(err); }
     });
 
@@ -78,11 +86,10 @@ function encode(event: string, data: Message, eventType: string, option: Options
 }
 
 // decode message protocall && call socket functions
-function decode(socket: Socket, data: Message, option: Options): void {
+function decode(socket: PrivateSocket, data: Message, option: Options): void {
   // parse data with user provided decode function
   let [msgType, param, message]: [string, string, Message] = data['#'];
 
-  // data = data['#'];
   if (msgType !== 's' && option.encodeDecodeEngine) {
     message = option.encodeDecodeEngine.decode(message);
   }
@@ -90,18 +97,18 @@ function decode(socket: Socket, data: Message, option: Options): void {
   // need to cast any to be able to use private param
   switch (msgType) {
     case 'e':
-      return (socket as any).emitter.emit(param, message);
+      return socket.emitter.emit(param, message);
     case 'p':
-      return (socket as any).channels[param] && (socket as any).worker.wss.publish(param, message, socket.id);
+      return socket.channels[param] && socket.worker.wss.publish(param, message, socket.id);
     case 's':
-      const channel: number = (socket as any).channels[message];
+      const channel: number = socket.channels[message];
       if (param === 's' && !channel) {
-        (socket as any).channels[message] = 1;
-        (socket as any).worker.wss.subscribe(message, socket.id, (socket as any).onPublish);
+        socket.channels[message] = 1;
+        socket.worker.wss.subscribe(message, socket.id, socket.onPublish);
       }
       if (param === 'u' && channel) {
-        delete (socket as any).channels[message];
-        (socket as any).worker.wss.unsubscribe(message, socket.id);
+        delete socket.channels[message];
+        socket.worker.wss.unsubscribe(message, socket.id);
       }
       break;
   }
