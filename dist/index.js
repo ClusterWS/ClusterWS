@@ -189,7 +189,9 @@ class Socket {
         this.send("configuration", s, "system"), this.onPublishEvent = ((e, r) => this.send(e, r, "publish")), 
         this.socket.on("message", e => {
             try {
-                this.decode(JSON.parse(e));
+                this.worker.wss.middleware.onMessageReceive ? this.worker.wss.middleware.onMessageReceive(this, e, e => {
+                    e && this.decode(e);
+                }) : this.decode(JSON.parse(e));
             } catch (e) {
                 logError(`\n${e}\n`);
             }
@@ -231,12 +233,13 @@ class Socket {
                 s: () => {
                     if (this.channels[r]) return;
                     const e = () => {
-                        this.channels[r] = 1, this.worker.wss.channels.subscibe(r, this.onPublishEvent, this.id);
+                        this.channels[r] = 1, this.worker.wss.channels.subscribe(r, this.onPublishEvent, this.id);
                     };
                     this.worker.wss.middleware.onSubscribe ? this.worker.wss.middleware.onSubscribe(this, r, r => r && e()) : e();
                 },
                 u: () => {
-                    this.channels[r] && (this.worker.wss.channels.unsubscribe(r, this.id), this.channels[r] = null);
+                    this.channels[r] && (this.worker.wss.channels.unsubscribe(r, this.id), this.worker.wss.middleware.onUnsubscribe && this.worker.wss.middleware.onUnsubscribe(this, r), 
+                    this.channels[r] = null);
                 }
             }
         };
@@ -248,7 +251,7 @@ class EventEmitterMany {
     constructor() {
         this.events = {};
     }
-    subscibe(e, r, s) {
+    subscribe(e, r, s) {
         if (!isFunction(r)) return logError("Listener must be a function");
         this.events[e] ? this.events[e].push({
             token: s,
@@ -256,7 +259,7 @@ class EventEmitterMany {
         }) : (this.events[e] = [ {
             token: s,
             listener: r
-        } ], this.changeChannelStatusInBroker(e));
+        } ], this.changeChannelStatusInBroker(e, "create"));
     }
     publish(e, ...r) {
         const s = this.events[e];
@@ -269,13 +272,13 @@ class EventEmitterMany {
                 s.splice(e, 1);
                 break;
             }
-            0 === s.length && (this.events[e] = null, this.changeChannelStatusInBroker(e));
+            0 === s.length && (this.events[e] = null, this.changeChannelStatusInBroker(e, "destroy"));
         }
     }
     exist(e) {
         return this.events[e];
     }
-    changeChannelStatusInBroker(e) {}
+    changeChannelStatusInBroker(e, r) {}
 }
 
 class WSServer extends EventEmitterSingle {
@@ -285,7 +288,9 @@ class WSServer extends EventEmitterSingle {
             nextBroker: -1,
             brokersKeys: [],
             brokersAmount: 0
-        }, this.channels.changeChannelStatusInBroker = (e => {
+        }, this.channels.changeChannelStatusInBroker = ((e, r) => {
+            "create" === r && this.middleware.onChannelOpen && this.middleware.onChannelOpen(e), 
+            "destroy" === r && this.middleware.onChannelClose && this.middleware.onChannelClose(e);
             for (let r = 0; r < this.internalBrokers.brokersAmount; r++) {
                 const s = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[r]];
                 1 === s.readyState && s.send(e);
@@ -296,7 +301,7 @@ class WSServer extends EventEmitterSingle {
         this.middleware[e] = r;
     }
     setWatcher(e, r) {
-        this.channels.subscibe(e, (e, ...s) => r(...s), "worker");
+        this.channels.subscribe(e, (e, ...s) => r(...s), "worker");
     }
     removeWatcher(e) {
         this.channels.unsubscribe(e, "worker");
@@ -491,7 +496,7 @@ function masterProcess(e) {
                     if (s[a] = ` Broker on: ${e.brokersPorts[a]}, PID ${n.pid}`, keysOf(s).length === e.brokers) for (let r = 0; r < e.workers; r++) i("Worker", r);
                 },
                 Worker: () => {
-                    t[a] = ` \tWorker: ${a}, PID ${n.pid}`, keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
+                    t[a] = `    Worker: ${a}, PID ${n.pid}`, keysOf(s).length === e.brokers && keysOf(t).length === e.workers && (r = !0, 
                     logReady(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? " (secure)" : ""}`), 
                     keysOf(s).forEach(e => logReady(s[e])), keysOf(t).forEach(e => logReady(t[e])));
                 }

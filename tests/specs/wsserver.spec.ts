@@ -37,7 +37,7 @@ describe('WSServer Functions Tests', () => {
     wss.setBroker(broker, 'broker/url');
 
     // Subscribe to the channel through wss channel
-    wss.channels.subscibe(
+    wss.channels.subscribe(
       'testchannel',
       (_, message) => {
         expect(message).to.equal(`hello world`);
@@ -67,7 +67,7 @@ describe('WSServer test resubsrcibtion to all channels in broker', () => {
     // connect broker
     wss.setBroker(broker, 'superurl');
     // Subscribe to channel
-    wss.channels.subscibe('testchannel', (_, message) => {}, 'channelKey');
+    wss.channels.subscribe('testchannel', (_, message) => {}, 'channelKey');
     // Reconnect broker
     wss.setBroker(broker, 'superurl');
   });

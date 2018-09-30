@@ -19,7 +19,13 @@ export class WSServer extends EventEmitterSingle {
   constructor() {
     super();
 
-    this.channels.changeChannelStatusInBroker = (event: string): void => {
+    this.channels.changeChannelStatusInBroker = (event: string, eventType: string): void => {
+      if (eventType === 'create') {
+        this.middleware.onChannelOpen && this.middleware.onChannelOpen(event);
+      }
+      if (eventType === 'destroy') {
+        this.middleware.onChannelClose && this.middleware.onChannelClose(event);
+      }
       for (let i: number = 0; i < this.internalBrokers.brokersAmount; i++) {
         const receiver: UWebSocket = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[i]];
         if (receiver.readyState === 1) receiver.send(event);
@@ -29,14 +35,17 @@ export class WSServer extends EventEmitterSingle {
 
   public setMiddleware(name: 'onPublish', listener: (channel: string, message: Message) => void): void;
   public setMiddleware(name: 'onSubscribe', listener: (socket: Socket, channel: string, next: Listener) => void): void;
+  public setMiddleware(name: 'onUnsubscribe', listener: (socket: Socket, channel: string) => void): void;
   public setMiddleware(name: 'verifyConnection', listener: (info: CustomObject, next: Listener) => void): void;
+  public setMiddleware(name: 'onMessageReceive', listener: (socket: Socket, message: Message, next: Listener) => void): void;
   public setMiddleware(name: 'onMessageFromWorker', listener: (message: Message) => void): void;
+  public setMiddleware(name: 'onChannelClose' | 'onChannelOpen', listener: (channel: string) => void): void;
   public setMiddleware(name: string, listener: Listener): void {
     this.middleware[name] = listener;
   }
 
   public setWatcher(channelName: string, listener: Listener): void {
-    this.channels.subscibe(channelName, (_: string, ...args: any[]) => listener(...args), 'worker');
+    this.channels.subscribe(channelName, (_: string, ...args: any[]) => listener(...args), 'worker');
   }
 
   public removeWatcher(channelName: string): void {

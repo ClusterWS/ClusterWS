@@ -20,7 +20,10 @@ export class Socket {
       'message',
       (message: Message): void => {
         try {
-          this.decode(JSON.parse(message));
+          this.worker.wss.middleware.onMessageReceive ?
+            this.worker.wss.middleware.onMessageReceive(this, message, (convertedMessage: CustomObject) => {
+              if (convertedMessage) this.decode(convertedMessage);
+            }) : this.decode(JSON.parse(message));
         } catch (e) {
           logError(`\n${e}\n`);
         }
@@ -86,7 +89,7 @@ export class Socket {
           if (this.channels[userMessage]) return;
           const subscribe: Listener = (): void => {
             this.channels[userMessage] = 1;
-            this.worker.wss.channels.subscibe(userMessage, this.onPublishEvent, this.id);
+            this.worker.wss.channels.subscribe(userMessage, this.onPublishEvent, this.id);
           };
           this.worker.wss.middleware.onSubscribe
             ? this.worker.wss.middleware.onSubscribe(this, userMessage, (allow: boolean): void => allow && subscribe())
@@ -95,6 +98,7 @@ export class Socket {
         u: (): void => {
           if (!this.channels[userMessage]) return;
           this.worker.wss.channels.unsubscribe(userMessage, this.id);
+          this.worker.wss.middleware.onUnsubscribe && this.worker.wss.middleware.onUnsubscribe(this, userMessage);
           this.channels[userMessage] = null;
         }
       }

@@ -5,7 +5,6 @@ import { generateKey, keysOf } from '../../utils/functions';
 import { Message, CustomObject, HorizontalScaleOptions, BrokerClients } from '../../utils/types';
 
 // TODO: Implement protection from broken brokers connections
-
 export function GlobalBrokerServer(hrScale: HorizontalScaleOptions): void {
   const clients: BrokerClients = {
     sockets: {},
