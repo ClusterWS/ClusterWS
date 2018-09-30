@@ -75,7 +75,7 @@ export function workerProcess(options: Options): void {
   process.on('message', (message: Message): Worker => {
     switch (message.processName) {
       case 'Worker':
-        return new Worker(options);
+        return new Worker(options, message.internalSecurityKey);
       case 'Broker':
         process.send({ event: 'READY', pid: process.pid });
         break;

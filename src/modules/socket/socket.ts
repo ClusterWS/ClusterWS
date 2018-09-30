@@ -87,12 +87,11 @@ function decode(socket: Socket, data: Message, option: Options): void {
     message = option.encodeDecodeEngine.decode(message);
   }
 
+  // need to cast any to be able to use private param
   switch (msgType) {
     case 'e':
-      // need to cast any to be able to use private param
       return (socket as any).emitter.emit(param, message);
     case 'p':
-      // need to cast any to be able to use private param
       return (socket as any).channels[param] && (socket as any).worker.wss.publish(param, message, socket.id);
     case 's':
       const channel: number = (socket as any).channels[message];

@@ -11,8 +11,8 @@ export class Worker {
   public wss: WSServer;
   public server: HTTP.Server | HTTPS.Server;
 
-  constructor(public options: Options) {
-    this.wss = new WSServer(this.options);
+  constructor(public options: Options, internalSecurityKey: string) {
+    this.wss = new WSServer(this.options, internalSecurityKey);
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 
     const uServer: WebSocketServer = new WebSocketServer({

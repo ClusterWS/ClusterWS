@@ -10,13 +10,12 @@ export class WSServer extends EventEmitter {
   private brokers: BrokerClient[];
   private nextBrokerId: number = 0;
 
-  constructor(private options: Options) {
+  constructor(private options: Options, internalSecurityKey: string) {
     super();
 
     // create connections to the brokers (still need to work on broker part)
     for (let i: number = 0; i < this.options.brokers; i++) {
-      // need to add token to verify client
-      this.brokers.push(new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}`));
+      this.brokers.push(new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`));
     }
 
     this.channelsLoop();
@@ -39,7 +38,7 @@ export class WSServer extends EventEmitter {
       const channel: Channel = new Channel(channelName, id, listener);
       // this line will pass destroy function in to the channel component
       // need to test if destroy channel will work
-      channel.action = this.actionsFromChannels;
+      channel.action = this.actionsFromChannel;
       this.channels[channelName] = channel;
     } else {
       this.channels[channelName].subscribe(id, listener);
@@ -56,17 +55,16 @@ export class WSServer extends EventEmitter {
     // need to extract channel check if it exists and then publish with unfilteredFlush Channel
   }
 
-  private actionsFromChannels(event: string, channelName: string, data?: Message): void {
+  private actionsFromChannel(event: string, channelName: string, data?: Message[]): void {
     switch (event) {
       case 'destroy':
         delete this.channels[channelName];
         break;
       case 'publish':
-        // we need to perepare message before sending
-
         let attemps: number = 0;
         let isCompleted: boolean = false;
 
+        const message: Buffer = Buffer.from(`${channelName}%${JSON.stringify(data)}`);
         const brokersLength: number = this.brokers.length;
 
         while (!isCompleted && attemps < brokersLength * 2) {
@@ -74,10 +72,7 @@ export class WSServer extends EventEmitter {
             this.nextBrokerId = 0;
           }
 
-          // need to pass message in
-          if (this.brokers[this.nextBrokerId].publish('')) {
-            isCompleted = true;
-          }
+          isCompleted = this.brokers[this.nextBrokerId].publish(message);
 
           attemps++;
           this.nextBrokerId++;

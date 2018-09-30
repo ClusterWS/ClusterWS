@@ -15,7 +15,8 @@ export default class ClusterWS {
 }
 
 export class BrokerClient {
-    constructor(url: string, broadcast: any);
+    constructor(url: string);
+    publish(message: string | Buffer): boolean;
 }
 
 export class ClientManager {
@@ -34,17 +35,17 @@ export class Room {
 
 export class Channel {
     channelName: string;
-    usersIds: string[];
-    usersListeners: {
+    subs: {
         [key: string]: Listener;
     };
+    subsIds: string[];
     constructor(channelName: string, userId: string, listener: Listener);
     publish(id: string, message: Message): void;
     subscribe(userId: string, listener: Listener): void;
     unsubscribe(userId: string): void;
     flush(): void;
     unfilteredFlush(message: Message): void;
-    action(event: string, channel: string): void;
+    action(event: string, channel: string, data?: Message): void;
 }
 
 export class Room {
@@ -78,7 +79,7 @@ export class WSServer extends EventEmitter {
     middleware: {
         [key: string]: Listener;
     };
-    constructor(options: Options);
+    constructor(options: Options, internalSecurityKey: string);
     setMiddleware(name: string, listener: Listener): void;
     publish(channelName: string, message: Message, id?: string): void;
     subscribe(channelName: string, id: string, listener: Listener): void;
@@ -89,7 +90,7 @@ export class Worker {
     options: Options;
     wss: WSServer;
     server: HTTP.Server | HTTPS.Server;
-    constructor(options: Options);
+    constructor(options: Options, internalSecurityKey: string);
 }
 
 export function masterProcess(options: Options): void;
@@ -105,7 +106,7 @@ export class EventEmitter {
     removeEvents(): void;
 }
 
-export function getRandom(min: number, max: number): number;
+export function random(min: number, max: number): number;
 export function logError<T>(data: T): any;
 export function logReady<T>(data: T): any;
 export function logWarning<T>(data: T): any;
