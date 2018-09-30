@@ -2,6 +2,7 @@
 .idea/
 .vscode/
 
-src1/
+play.js
+old/
 node_modules/
 package-lock.json

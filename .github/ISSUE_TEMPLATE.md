@@ -1,15 +1,20 @@
 ### Submitting
-<!-- Select from following by placing `x` between braces like: [x] -->
+<!-- 
+Select from following by placing `x` between brackets, ex: 
+  - [x] Bug (do not forget to remove space after/before `x`)
+-->
 - [ ] Bug
 - [ ] Question
-- [ ] Suggetion
+- [ ] Suggestion
 - [ ] Other
 
-### Details
+#### Details 
 <!-- 
-#### Please include following details if you have any issues
-1. What version of ClusterWS do you use (you can find it in package.json)
-2. The operating system you are running on.
-3. Describe the problem as clear as possible.
-#### We will reply as soon as we can. Have a good time. 
+Describe your bug, question, suggestion below.
+In case of bug do not forget to mention:
+      - Node version, 
+      - ClusterWS version,
+      - Way(s) to reproduce
 -->
+
+
