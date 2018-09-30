@@ -8,7 +8,7 @@ Select from following by placing `x` between brackets, ex:
 - [ ] Suggestion
 - [ ] Other
 
-#### Details 
+### Details 
 <!-- 
 Describe your bug, question, suggestion below.
 In case of bug do not forget to mention:
