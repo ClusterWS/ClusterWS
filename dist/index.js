@@ -26,6 +26,77 @@ function generateKey(s) {
     return crypto.randomBytes(s).toString("hex");
 }
 
+class Channel {
+    constructor(s, e, t) {
+        this.channelName = s, this.subs = {}, this.subsIds = [], this.messagesBatch = [], 
+        this.subscribe(e, t);
+    }
+    publish(s, e) {
+        this.messagesBatch.push({
+            id: s,
+            message: e
+        });
+    }
+    subscribe(s, e) {
+        this.subsIds.push(s), this.subs[s] = e;
+    }
+    unsubscribe(s) {
+        delete this.subs[s], this.subsIds.splice(this.subsIds.indexOf(s), 1), this.subsIds.length || (this.subs = {}, 
+        this.subsIds = [], this.messagesBatch = [], this.action("destroy", this.channelName));
+    }
+    flush() {
+        const s = this.subsIds.length, e = this.messagesBatch.length;
+        if (!e) return;
+        for (let t = 0; t < s; t++) {
+            const s = this.subsIds[t], r = [];
+            for (let s = 0; s < e; s++) r.push(this.messagesBatch[s].message);
+            r.length && this.subs[s](this.channelName, r);
+        }
+        const t = [];
+        for (let s = 0, r = e; s < r; s++) t.push(this.messagesBatch[s].message);
+        this.action("publish", this.channelName, t), this.messagesBatch = [];
+    }
+    unfilteredFlush(s) {
+        for (let e = 0, t = this.subsIds.length; e < t; e++) this.subs[this.subsIds[e]](s);
+    }
+    action(s, e, t) {}
+}
+
+class BrokerServer {
+    constructor(s, e, t) {
+        this.channels = {}, this.wsserver = new clusterwsUws.WebSocketServer({
+            port: s,
+            verifyClient: (s, e) => {
+                e(s.req.url === `/?token=${t}`);
+            }
+        }, () => process.send({
+            event: "READY",
+            pid: process.pid
+        })), this.wsserver.on("connection", s => {
+            s.id = generateKey(10), s.on("message", e => {
+                if ("string" == typeof e) {
+                    const t = (e, t) => {
+                        console.log(JSON.stringify(t)), s.send(Buffer.from(`${e}%${JSON.stringify(t)}`));
+                    };
+                    if (this.channels[e]) this.channels[e].subscribe(s.id, t); else {
+                        const r = new Channel(e, s.id, t);
+                        this.channels[e] = r;
+                    }
+                } else {
+                    const t = (e = Buffer.from(e)).slice(0, e.indexOf(37)).toString();
+                    this.channels[t] && this.channels[t].publish(s.id, e.slice(e.indexOf(37) + 1, e.length));
+                }
+            }), s.on("error", s => {}), s.on("close", (s, e) => {});
+        }), this.channelsLoop(), this.wsserver.startAutoPing(2e4);
+    }
+    channelsLoop() {
+        setTimeout(() => {
+            for (const s in this.channels) this.channels[s] && this.channels[s].flush();
+            this.channelsLoop();
+        }, 10);
+    }
+}
+
 class EventEmitter {
     constructor() {
         this.events = {};
@@ -90,63 +161,27 @@ function encode(s, e, t, r) {
         system: {
             configuration: [ "s", "c", e ]
         }
-    }, i = JSON.stringify({
+    }, n = JSON.stringify({
         "#": o[t][s] || o[t]
     });
-    return r.useBinary ? Buffer.from(i) : i;
+    return r.useBinary ? Buffer.from(n) : n;
 }
 
 function decode(s, e, t) {
-    let [r, o, i] = e["#"];
-    switch ("s" !== r && t.encodeDecodeEngine && (i = t.encodeDecodeEngine.decode(i)), 
+    let [r, o, n] = e["#"];
+    switch ("s" !== r && t.encodeDecodeEngine && (n = t.encodeDecodeEngine.decode(n)), 
     r) {
       case "e":
-        return s.emitter.emit(o, i);
+        return s.emitter.emit(o, n);
 
       case "p":
-        return s.channels[o] && s.worker.wss.publish(o, i, s.id);
+        return s.channels[o] && s.worker.wss.publish(o, n, s.id);
 
       case "s":
-        const e = s.channels[i];
-        "s" !== o || e || (s.channels[i] = 1, s.worker.wss.subscribe(i, s.id, s.onPublish)), 
-        "u" === o && e && (delete s.channels[i], s.worker.wss.unsubscribe(i, s.id));
+        const e = s.channels[n];
+        "s" !== o || e || (s.channels[n] = 1, s.worker.wss.subscribe(n, s.id, s.onPublish)), 
+        "u" === o && e && (delete s.channels[n], s.worker.wss.unsubscribe(n, s.id));
     }
-}
-
-class Channel {
-    constructor(s, e, t) {
-        this.channelName = s, this.subs = {}, this.subsIds = [], this.messagesBatch = [], 
-        this.subscribe(e, t);
-    }
-    publish(s, e) {
-        this.messagesBatch.push({
-            id: s,
-            message: e
-        });
-    }
-    subscribe(s, e) {
-        this.subsIds.push(s), this.subs[s] = e;
-    }
-    unsubscribe(s) {
-        delete this.subs[s], this.subsIds.splice(this.subsIds.indexOf(s), 1), this.subsIds.length || (this.subs = {}, 
-        this.subsIds = [], this.messagesBatch = [], this.action("destroy", this.channelName));
-    }
-    flush() {
-        const s = this.subsIds.length, e = this.messagesBatch.length;
-        if (!e) return;
-        for (let t; t < s; t++) {
-            const s = this.subsIds[t], r = [];
-            for (let t = 0; t < e; t++) this.messagesBatch[t].id !== s && r.push(this.messagesBatch[t].message);
-            r.length && this.subs[s](this.channelName, r);
-        }
-        const t = [];
-        for (let s = 0, r = e; s < r; s++) t.push(this.messagesBatch[s].message);
-        this.action("publish", this.channelName, t), this.messagesBatch = [];
-    }
-    unfilteredFlush(s) {
-        for (let e = 0, t = this.subsIds.length; e < t; e++) this.subs[this.subsIds[e]](s);
-    }
-    action(s, e, t) {}
 }
 
 class BrokerClient {
@@ -155,6 +190,9 @@ class BrokerClient {
     }
     publish(s) {
         return this.socket.readyState === this.socket.OPEN && (this.socket.send(s), !0);
+    }
+    onMessage(s) {
+        this.socket.on("message", s);
     }
     createSocket() {
         this.socket = new clusterwsUws.WebSocket(this.url), this.socket.on("open", () => {
@@ -171,8 +209,14 @@ class BrokerClient {
 
 class WSServer extends EventEmitter {
     constructor(s, e) {
-        super(), this.options = s, this.channels = {}, this.middleware = {}, this.nextBrokerId = 0;
-        for (let s = 0; s < this.options.brokers; s++) this.brokers.push(new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[s]}/?token=${e}`));
+        super(), this.options = s, this.channels = {}, this.middleware = {}, this.brokers = [], 
+        this.nextBrokerId = 0;
+        for (let s = 0; s < this.options.brokers; s++) {
+            const t = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[s]}/?token=${e}`);
+            t.onMessage(s => {
+                console.log(Buffer.from(s).toString());
+            }), this.brokers.push(t);
+        }
         this.channelsLoop();
     }
     setMiddleware(s, e) {
@@ -184,8 +228,11 @@ class WSServer extends EventEmitter {
     subscribe(s, e, t) {
         if (this.channels[s]) this.channels[s].subscribe(e, t); else {
             const r = new Channel(s, e, t);
-            r.action = this.actionsFromChannel, this.channels[s] = r;
+            r.action = this.actionsFromChannel.bind(this), this.channels[s] = r;
         }
+        this.brokers.forEach(e => {
+            e.publish(s);
+        });
     }
     unsubscribe(s, e) {
         this.channels[s].unsubscribe(e);
@@ -199,8 +246,8 @@ class WSServer extends EventEmitter {
 
           case "publish":
             let r = 0, o = !1;
-            const i = Buffer.from(`${e}%${JSON.stringify(t)}`), n = this.brokers.length;
-            for (;!o && r < 2 * n; ) this.nextBrokerId >= n && (this.nextBrokerId = 0), o = this.brokers[this.nextBrokerId].publish(i), 
+            const n = Buffer.from(`${e}%${JSON.stringify(t)}`), i = this.brokers.length;
+            for (;!o && r < 2 * i; ) this.nextBrokerId >= i && (this.nextBrokerId = 0), o = this.brokers[this.nextBrokerId].publish(n), 
             r++, this.nextBrokerId++;
         }
     }
@@ -216,8 +263,7 @@ class Worker {
     constructor(s, e) {
         this.options = s, this.wss = new WSServer(this.options, e), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
         const t = new clusterwsUws.WebSocketServer({
-            server: this.server,
-            verifyClient: (s, e) => {}
+            server: this.server
         });
         t.on("connection", s => {
             this.wss.emit("connection", new Socket(this, s));
@@ -234,16 +280,16 @@ class Worker {
 
 function masterProcess(s) {
     let e = !1;
-    const t = [], r = [], o = generateKey(20), i = generateKey(20);
-    if (s.horizontalScaleOptions && s.horizontalScaleOptions.masterOptions) n("Scaler", -1); else for (let e = 0; e < s.brokers; e++) n("Broker", e);
-    function n(c, h) {
+    const t = [], r = [], o = generateKey(20), n = generateKey(20);
+    if (s.horizontalScaleOptions && s.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let e = 0; e < s.brokers; e++) i("Broker", e);
+    function i(c, h) {
         const a = cluster.fork();
         a.on("message", o => {
             if ("READY" === o.event) {
                 if (e) return logReady(`${c} ${h} PID ${o.pid} has been restarted`);
                 switch (c) {
                   case "Broker":
-                    if (t[h] = ` Broker on: ${s.brokersPorts[h]}, PID ${o.pid}`, !t.includes(void 0) && t.length === s.brokers) for (let e = 0; e < s.workers; e++) n("Worker", e);
+                    if (t[h] = ` Broker on: ${s.brokersPorts[h]}, PID ${o.pid}`, !t.includes(void 0) && t.length === s.brokers) for (let e = 0; e < s.workers; e++) i("Worker", e);
                     break;
 
                   case "Worker":
@@ -253,17 +299,17 @@ function masterProcess(s) {
                     break;
 
                   case "Scaler":
-                    for (let e = 0; e < s.brokers; e++) n("Broker", e);
+                    for (let e = 0; e < s.brokers; e++) i("Broker", e);
                 }
             }
         }), a.on("exit", () => {
             logError(`${c} ${h} has exited`), s.restartWorkerOnFail && (logWarning(`${c} ${h} is restarting \n`), 
-            n(c, h));
+            i(c, h));
         }), a.send({
             processId: h,
             processName: c,
             serverId: o,
-            internalSecurityKey: i
+            internalSecurityKey: n
         });
     }
 }
@@ -275,10 +321,7 @@ function workerProcess(s) {
             return new Worker(s, e.internalSecurityKey);
 
           case "Broker":
-            process.send({
-                event: "READY",
-                pid: process.pid
-            });
+            return new BrokerServer(s.brokersPorts[e.processId], s, e.internalSecurityKey);
         }
     }), process.on("uncaughtException", s => {
         logError(`${s.stack || s}`), process.exit();

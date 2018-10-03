@@ -1,5 +1,6 @@
 import * as cluster from 'cluster';
 
+import { BrokerServer } from './modules/broker/server';
 import { Worker } from './modules/worker';
 import { Options, Message } from './utils/types';
 import { logError, generateKey, logWarning, logReady } from './utils/functions';
@@ -72,13 +73,12 @@ export function masterProcess(options: Options): void {
 }
 
 export function workerProcess(options: Options): void {
-  process.on('message', (message: Message): Worker => {
+  process.on('message', (message: Message): Worker | BrokerServer => {
     switch (message.processName) {
       case 'Worker':
         return new Worker(options, message.internalSecurityKey);
       case 'Broker':
-        process.send({ event: 'READY', pid: process.pid });
-        break;
+        return new BrokerServer(options.brokersPorts[message.processId], options, message.internalSecurityKey);
       case 'Scaler':
         break;
     }

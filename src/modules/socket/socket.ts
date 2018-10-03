@@ -31,9 +31,9 @@ export class Socket {
     });
 
     this.socket.on('close', (code?: number, reason?: string): void => {
-      for (const channle in this.channels) {
-        if (this.channels[channle]) {
-          this.worker.wss.unsubscribe(channle, this.id);
+      for (const channel in this.channels) {
+        if (this.channels[channel]) {
+          this.worker.wss.unsubscribe(channel, this.id);
         }
       }
 

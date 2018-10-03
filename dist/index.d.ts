@@ -17,13 +17,16 @@ export default class ClusterWS {
 export class BrokerClient {
     constructor(url: string);
     publish(message: string | Buffer): boolean;
+    onMessage(listener: Listener): void;
 }
 
 export class ClientManager {
     constructor(urls: string[]);
 }
 
-
+export class BrokerServer {
+    constructor(port: number, options: Options, securityKey: string);
+}
 
 export class Room {
     constructor(roomName: string);

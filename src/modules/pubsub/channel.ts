@@ -1,7 +1,6 @@
 import { Listener, Message } from '../../utils/types';
 
-// experementatl logic
-// need to check if client exist and connected
+// experimental logic
 export class Channel {
   public subs: { [key: string]: Listener } = {};
   public subsIds: string[] = [];
@@ -34,7 +33,7 @@ export class Channel {
     }
   }
 
-  // instead of recraeting array i can use gap to replace data for that use
+  // instead of recreating array i can use gap to replace data for that use
   // actually send message to the broker
   public flush(): void {
     const subsLength: number = this.subsIds.length;
@@ -44,14 +43,14 @@ export class Channel {
       return;
     }
 
-    for (let i: number; i < subsLength; i++) {
+    for (let i: number = 0; i < subsLength; i++) {
       const subId: string = this.subsIds[i];
       const messages: Message = [];
 
       for (let j: number = 0; j < batchLength; j++) {
-        if (this.messagesBatch[j].id !== subId) {
+        // if (this.messagesBatch[j].id !== subId) {
           messages.push(this.messagesBatch[j].message);
-        }
+        // }
       }
 
       if (messages.length) {

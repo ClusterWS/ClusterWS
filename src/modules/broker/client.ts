@@ -1,9 +1,11 @@
 import { WebSocket } from 'clusterws-uws';
 import { logWarning, logReady, random } from '../../utils/functions';
+import { Listener } from '../../utils/types';
 
 export class BrokerClient {
   private socket: WebSocket;
   private attempts: number = 0;
+  private messageListener: Listener;
 
   constructor(private url: string) {
     this.createSocket();
@@ -17,6 +19,10 @@ export class BrokerClient {
     }
     // handle if socket connected
     return false;
+  }
+
+  public onMessage(listener: Listener): void {
+    this.socket.on('message', listener);
   }
 
   private createSocket(): void {

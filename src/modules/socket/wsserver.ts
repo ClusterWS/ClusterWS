@@ -7,7 +7,7 @@ export class WSServer extends EventEmitter {
   public channels: { [key: string]: Channel } = {};
   public middleware: { [key: string]: Listener } = {};
 
-  private brokers: BrokerClient[];
+  private brokers: BrokerClient[] = [];
   private nextBrokerId: number = 0;
 
   constructor(private options: Options, internalSecurityKey: string) {
@@ -15,13 +15,17 @@ export class WSServer extends EventEmitter {
 
     // create connections to the brokers (still need to work on broker part)
     for (let i: number = 0; i < this.options.brokers; i++) {
-      this.brokers.push(new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`));
+      const brokerConnection: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
+      brokerConnection.onMessage((message: string | Buffer) => {
+        console.log(Buffer.from(message as Buffer).toString());
+      });
+      this.brokers.push(brokerConnection);
     }
 
     this.channelsLoop();
   }
 
-  // need to add types for set middeware
+  // need to add types for set middleware
   public setMiddleware(name: string, listener: Listener): void {
     this.middleware[name] = listener;
   }
@@ -38,11 +42,18 @@ export class WSServer extends EventEmitter {
       const channel: Channel = new Channel(channelName, id, listener);
       // this line will pass destroy function in to the channel component
       // need to test if destroy channel will work
-      channel.action = this.actionsFromChannel;
+      // need to fix this object
+      channel.action = this.actionsFromChannel.bind(this);
       this.channels[channelName] = channel;
     } else {
       this.channels[channelName].subscribe(id, listener);
     }
+
+    // subscribe to the channels on the server
+    // need to fix this one
+    this.brokers.forEach((broker: BrokerClient) => {
+      broker.publish(channelName);
+    });
   }
 
   public unsubscribe(channelName: string, id: string): void {
@@ -61,20 +72,20 @@ export class WSServer extends EventEmitter {
         delete this.channels[channelName];
         break;
       case 'publish':
-        let attemps: number = 0;
+        let attempts: number = 0;
         let isCompleted: boolean = false;
 
         const message: Buffer = Buffer.from(`${channelName}%${JSON.stringify(data)}`);
         const brokersLength: number = this.brokers.length;
 
-        while (!isCompleted && attemps < brokersLength * 2) {
+        while (!isCompleted && attempts < brokersLength * 2) {
           if (this.nextBrokerId >= brokersLength) {
             this.nextBrokerId = 0;
           }
 
           isCompleted = this.brokers[this.nextBrokerId].publish(message);
 
-          attemps++;
+          attempts++;
           this.nextBrokerId++;
         }
 
