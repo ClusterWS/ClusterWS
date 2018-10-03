@@ -16,13 +16,14 @@ export class WSServer extends EventEmitter {
     // create connections to the brokers (still need to work on broker part)
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerConnection: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
+      // need to fix this
       brokerConnection.onMessage((message: string | Buffer) => {
         console.log(Buffer.from(message as Buffer).toString());
       });
       this.brokers.push(brokerConnection);
     }
 
-    this.channelsLoop();
+    this.flushLoop();
   }
 
   // need to add types for set middleware
@@ -31,7 +32,6 @@ export class WSServer extends EventEmitter {
   }
 
   public publish(channelName: string, message: Message, id?: string): void {
-    // this should send to the clients and broker from inside of publish event (need to think)
     if (this.channels[channelName]) {
       this.channels[channelName].publish(id, message);
     }
@@ -40,20 +40,41 @@ export class WSServer extends EventEmitter {
   public subscribe(channelName: string, id: string, listener: Listener): void {
     if (!this.channels[channelName]) {
       const channel: Channel = new Channel(channelName, id, listener);
-      // this line will pass destroy function in to the channel component
-      // need to test if destroy channel will work
-      // need to fix this object
-      channel.action = this.actionsFromChannel.bind(this);
+
+      channel.on('publish', (chName: string, data: Message[]) => {
+        // need to work on this function a bit :)
+        let attempts: number = 0;
+        let isCompleted: boolean = false;
+
+        const message: Buffer = Buffer.from(`${channelName}%${JSON.stringify(data)}`);
+        const brokersLength: number = this.brokers.length;
+
+        while (!isCompleted && attempts < brokersLength * 2) {
+          if (this.nextBrokerId >= brokersLength) {
+            this.nextBrokerId = 0;
+          }
+
+          isCompleted = this.brokers[this.nextBrokerId].send(message);
+
+          attempts++;
+          this.nextBrokerId++;
+        }
+      });
+
+      channel.on('destroy', (chName: string) => {
+        delete this.channels[chName];
+      });
+
       this.channels[channelName] = channel;
+
+      // inform all brokers about new subscription
+      // need to work out how subscription will work
+      for (let i: number = 0, len: number = this.brokers.length; i < len; i++) {
+        this.brokers[i].send(channelName);
+      }
     } else {
       this.channels[channelName].subscribe(id, listener);
     }
-
-    // subscribe to the channels on the server
-    // need to fix this one
-    this.brokers.forEach((broker: BrokerClient) => {
-      broker.publish(channelName);
-    });
   }
 
   public unsubscribe(channelName: string, id: string): void {
@@ -66,42 +87,14 @@ export class WSServer extends EventEmitter {
     // need to extract channel check if it exists and then publish with unfilteredFlush Channel
   }
 
-  private actionsFromChannel(event: string, channelName: string, data?: Message[]): void {
-    switch (event) {
-      case 'destroy':
-        delete this.channels[channelName];
-        break;
-      case 'publish':
-        let attempts: number = 0;
-        let isCompleted: boolean = false;
-
-        const message: Buffer = Buffer.from(`${channelName}%${JSON.stringify(data)}`);
-        const brokersLength: number = this.brokers.length;
-
-        while (!isCompleted && attempts < brokersLength * 2) {
-          if (this.nextBrokerId >= brokersLength) {
-            this.nextBrokerId = 0;
-          }
-
-          isCompleted = this.brokers[this.nextBrokerId].publish(message);
-
-          attempts++;
-          this.nextBrokerId++;
-        }
-
-        break;
-    }
-
-  }
-
-  private channelsLoop(): void {
+  private flushLoop(): void {
     setTimeout(() => {
       for (const channel in this.channels) {
         if (this.channels[channel]) {
-          this.channels[channel].flush();
+          this.channels[channel].batchFlush();
         }
       }
-      this.channelsLoop();
-    }, 10); // need to think about the timeout (should it be 5) ?
+      this.flushLoop();
+    }, 10);
   }
 }
