@@ -40,8 +40,7 @@ export class Channel extends EventEmitter {
     }
   }
 
-  // instead of recreating array i can use gap to replace data for that use
-  // actually send message to the broker
+  // actually send message to every subscribed user
   public batchFlush(): void {
     const batchLn: number = this.batch.length;
     const subscribersLn: number = this.subscribersIds.length;

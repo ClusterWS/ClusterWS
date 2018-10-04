@@ -8,7 +8,7 @@ type SocketExtend = {
   channels: any
 };
 
-export class BrokerServer {
+export class Broker {
   private wsserver: WebSocketServer;
   private channels: { [key: string]: Channel } = {};
 
@@ -69,7 +69,7 @@ export class BrokerServer {
     setTimeout(() => {
       for (const channel in this.channels) {
         if (this.channels[channel]) {
-          this.channels[channel].flush();
+          this.channels[channel].batchFlush();
         }
       }
       this.channelsLoop();

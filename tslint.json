@@ -4,6 +4,7 @@
     "tslint-eslint-rules"
   ],
   "rules": {
+    "no-string-literal": false,
     "typedef": [
       true,
       "call-signature",

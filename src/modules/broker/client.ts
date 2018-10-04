@@ -1,14 +1,18 @@
+import { Listener } from '../../utils/types';
 import { WebSocket } from 'clusterws-uws';
 import { logWarning, logReady, random } from '../../utils/functions';
-import { Listener } from '../../utils/types';
 
 export class BrokerClient {
   private socket: WebSocket;
+  private events: { [key: string]: Listener } = {};
   private attempts: number = 0;
-  private messageListener: Listener;
 
   constructor(private url: string) {
     this.createSocket();
+  }
+
+  public on(event: string, listener: Listener): void {
+    this.events[event] = listener;
   }
 
   public send(message: string | Buffer): boolean {
@@ -17,12 +21,7 @@ export class BrokerClient {
       this.socket.send(message);
       return true;
     }
-    // handle if socket connected
     return false;
-  }
-
-  public onMessage(listener: Listener): void {
-    this.socket.on('message', listener);
   }
 
   private createSocket(): void {
@@ -33,8 +32,6 @@ export class BrokerClient {
       if (this.attempts > 1) {
         logReady(`Reconnected to the Broker: ${this.url}`);
       }
-      // need to set socket in the
-      // this.broadcast.setBroker(this.url, this.socket);
     });
 
     this.socket.on('error', (_: Error): void => {
@@ -60,6 +57,13 @@ export class BrokerClient {
 
       logWarning(`Disconnected from Broker: ${this.url} (reconnecting)`);
       setTimeout(() => this.createSocket(), random(1000, 2000));
+    });
+
+    this.socket.on('message', (message: string | Buffer) => {
+      const listener: Listener = this.events['message'];
+      if (listener) {
+        listener(message);
+      }
     });
   }
 }

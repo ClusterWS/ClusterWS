@@ -13,14 +13,10 @@ export class WSServer extends EventEmitter {
   constructor(private options: Options, internalSecurityKey: string) {
     super();
 
-    // create connections to the brokers (still need to work on broker part)
     for (let i: number = 0; i < this.options.brokers; i++) {
-      const brokerConnection: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
-      // need to fix this
-      brokerConnection.onMessage((message: string | Buffer) => {
-        console.log(Buffer.from(message as Buffer).toString());
-      });
-      this.brokers.push(brokerConnection);
+      const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
+      brokerClient.on('message', this.onBrokerMessage.bind(this));
+      this.brokers.push(brokerClient);
     }
 
     this.flushLoop();
@@ -81,10 +77,10 @@ export class WSServer extends EventEmitter {
     this.channels[channelName].unsubscribe(id);
   }
 
-  // need to work on this part
-  private broadcastMessage(): void {
-    // this function should send message to the clients only
-    // need to extract channel check if it exists and then publish with unfilteredFlush Channel
+  private onBrokerMessage(message: string | Buffer): void {
+    // need to transform message for buffer to proper readable format and publish it to the user
+    // handle message from broker
+    console.log(message);
   }
 
   private flushLoop(): void {

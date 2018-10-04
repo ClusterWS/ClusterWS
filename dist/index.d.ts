@@ -16,15 +16,15 @@ export default class ClusterWS {
 
 export class BrokerClient {
     constructor(url: string);
-    publish(message: string | Buffer): boolean;
-    onMessage(listener: Listener): void;
+    on(event: string, listener: Listener): void;
+    send(message: string | Buffer): boolean;
 }
 
 export class ClientManager {
     constructor(urls: string[]);
 }
 
-export class BrokerServer {
+export class Broker {
     constructor(port: number, options: Options, securityKey: string);
 }
 
@@ -36,19 +36,18 @@ export class Room {
     broadcast(): void;
 }
 
-export class Channel {
+export class Channel extends EventEmitter {
     channelName: string;
-    subs: {
+    subscribers: {
         [key: string]: Listener;
     };
-    subsIds: string[];
+    subscribersIds: string[];
     constructor(channelName: string, userId: string, listener: Listener);
     publish(id: string, message: Message): void;
+    forcePublish(message: Message): void;
     subscribe(userId: string, listener: Listener): void;
     unsubscribe(userId: string): void;
-    flush(): void;
-    unfilteredFlush(message: Message): void;
-    action(event: string, channel: string, data?: Message): void;
+    batchFlush(): void;
 }
 
 export class Room {
