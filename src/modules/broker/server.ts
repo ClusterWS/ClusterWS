@@ -1,5 +1,5 @@
-import { generateKey } from '../../utils/functions';
 import { Channel } from '../pubsub/channel';
+import { generateKey } from '../../utils/functions';
 import { Options, Listener, Message } from '../../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo } from 'clusterws-uws';
 
@@ -9,33 +9,31 @@ type SocketExtend = {
 };
 
 export class Broker {
-  private wsserver: WebSocketServer;
+  private server: WebSocketServer;
   private channels: { [key: string]: Channel } = {};
 
   constructor(port: number, options: Options, securityKey: string) {
-    this.wsserver = new WebSocketServer({
+    this.server = new WebSocketServer({
       port,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
         next(info.req.url === `/?token=${securityKey}`);
       }
     }, (): void => process.send({ event: 'READY', pid: process.pid }));
 
-    this.wsserver.on('connection', (socket: WebSocket & SocketExtend): void => {
-      // console.log('Connected');
+    this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
       socket.id = generateKey(10);
-      // need to think on how to implement broadcast messages
-      // socket.channels
-      // need to handle connection
 
       socket.on('message', (message: string | Buffer): void => {
         if (typeof message === 'string') {
+
+          // move this handler to separate function
           const handler: any = (channel: string, mergedMessage: Message): void => {
             console.log(JSON.stringify(mergedMessage));
             socket.send(Buffer.from(`${channel}%${JSON.stringify(mergedMessage)}`));
           };
+
           // need to add unsubscribe
           if (!this.channels[message]) {
-
             const channel: Channel = new Channel(message, socket.id, handler);
             this.channels[message] = channel;
           } else {
@@ -62,7 +60,7 @@ export class Broker {
     });
 
     this.channelsLoop();
-    this.wsserver.startAutoPing(20000);
+    this.server.startAutoPing(20000);
   }
 
   private channelsLoop(): void {

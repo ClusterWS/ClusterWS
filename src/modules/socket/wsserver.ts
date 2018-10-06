@@ -15,7 +15,7 @@ export class WSServer extends EventEmitter {
 
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
-      brokerClient.on('message', this.onBrokerMessage.bind(this));
+      brokerClient.on('message', this.onBrokerMessage); // need to check if we need bind(this);
       this.brokers.push(brokerClient);
     }
 

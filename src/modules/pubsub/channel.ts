@@ -27,9 +27,14 @@ export class Channel extends EventEmitter {
     this.subscribersIds.push(userId);
   }
 
-  public unsubscribe(userId: string): void {
-    delete this.subscribers[userId];
-    this.subscribersIds.splice(this.subscribersIds.indexOf(userId), 1);
+  public unsubscribe(subscriberId: string): void {
+    const subscriberIdIndex: number = this.subscribersIds.indexOf(subscriberId);
+    if (subscriberIdIndex === -1) {
+      return;
+    }
+
+    delete this.subscribers[subscriberId];
+    this.subscribersIds.splice(subscriberIdIndex, 1);
 
     if (!this.subscribersIds.length) {
       this.batch = [];
