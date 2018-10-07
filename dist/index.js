@@ -1,6 +1,6 @@
 "use strict";
 
-var crypto = require("crypto"), clusterwsUws = require("clusterws-uws"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
+var crypto = require("crypto"), uws = require("@clusterws/uws"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
 
 function random(e, s) {
     return Math.floor(Math.random() * (s - e + 1)) + e;
@@ -67,9 +67,9 @@ class Channel extends EventEmitter {
         this.subscribers[e] = s, this.subscribersIds.push(e);
     }
     unsubscribe(e) {
-        delete this.subscribers[e], this.subscribersIds.splice(this.subscribersIds.indexOf(e), 1), 
-        this.subscribersIds.length || (this.batch = [], this.subscribers = {}, this.emit("destroy", this.channelName), 
-        this.removeEvents());
+        const s = this.subscribersIds.indexOf(e);
+        -1 !== s && (delete this.subscribers[e], this.subscribersIds.splice(s, 1), this.subscribersIds.length || (this.batch = [], 
+        this.subscribers = {}, this.emit("destroy", this.channelName), this.removeEvents()));
     }
     batchFlush() {
         const e = this.batch.length, s = this.subscribersIds.length;
@@ -87,7 +87,7 @@ class Channel extends EventEmitter {
 
 class Broker {
     constructor(e, s, t) {
-        this.channels = {}, this.wsserver = new clusterwsUws.WebSocketServer({
+        this.channels = {}, this.server = new uws.WebSocketServer({
             port: e,
             verifyClient: (e, s) => {
                 s(e.req.url === `/?token=${t}`);
@@ -95,7 +95,7 @@ class Broker {
         }, () => process.send({
             event: "READY",
             pid: process.pid
-        })), this.wsserver.on("connection", e => {
+        })), this.server.on("connection", e => {
             e.id = generateKey(10), e.on("message", s => {
                 if ("string" == typeof s) {
                     const t = (s, t) => {
@@ -110,7 +110,7 @@ class Broker {
                     this.channels[t] && this.channels[t].publish(e.id, s.slice(s.indexOf(37) + 1, s.length));
                 }
             }), e.on("error", e => {}), e.on("close", (e, s) => {});
-        }), this.channelsLoop(), this.wsserver.startAutoPing(2e4);
+        }), this.channelsLoop(), this.server.startAutoPing(2e4);
     }
     channelsLoop() {
         setTimeout(() => {
@@ -195,7 +195,7 @@ class BrokerClient {
         return this.socket.readyState === this.socket.OPEN && (this.socket.send(e), !0);
     }
     createSocket() {
-        this.socket = new clusterwsUws.WebSocket(this.url), this.socket.on("open", () => {
+        this.socket = new uws.WebSocket(this.url), this.socket.on("open", () => {
             this.attempts = 0, this.attempts > 1 && logReady(`Reconnected to the Broker: ${this.url}`);
         }), this.socket.on("error", e => {
             (this.attempts > 0 && this.attempts % 10 == 0 || 1 === this.attempts) && logWarning(`Can not connect to the Broker: ${this.url} (reconnecting)`), 
@@ -216,7 +216,7 @@ class WSServer extends EventEmitter {
         this.nextBrokerId = 0;
         for (let e = 0; e < this.options.brokers; e++) {
             const t = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}/?token=${s}`);
-            t.on("message", this.onBrokerMessage.bind(this)), this.brokers.push(t);
+            t.on("message", this.onBrokerMessage), this.brokers.push(t);
         }
         this.flushLoop();
     }
@@ -250,14 +250,14 @@ class WSServer extends EventEmitter {
         setTimeout(() => {
             for (const e in this.channels) this.channels[e] && this.channels[e].batchFlush();
             this.flushLoop();
-        }, 1e4);
+        }, 10);
     }
 }
 
 class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        const t = new clusterwsUws.WebSocketServer({
+        const t = new uws.WebSocketServer({
             server: this.server
         });
         t.on("connection", e => {

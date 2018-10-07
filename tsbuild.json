@@ -33,11 +33,11 @@
     }
   ],
   "external": [
-    "cluster",
     "http",
     "https",
     "crypto",
-    "clusterws-uws"
+    "cluster",
+    "@clusterws/uws"
   ],
   "tsConfigs": {
     "compilerOptions": {

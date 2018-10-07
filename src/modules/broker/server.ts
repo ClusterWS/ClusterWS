@@ -1,7 +1,7 @@
 import { Channel } from '../pubsub/channel';
 import { generateKey } from '../../utils/functions';
 import { Options, Listener, Message } from '../../utils/types';
-import { WebSocket, WebSocketServer, ConnectionInfo } from 'clusterws-uws';
+import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
 
 type SocketExtend = {
   id: string,

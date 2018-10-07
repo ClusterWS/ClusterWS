@@ -5,7 +5,7 @@ import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
 import { logError } from '../utils/functions';
 import { Options, Listener } from '../utils/types';
-import { WebSocket, WebSocketServer, ConnectionInfo } from 'clusterws-uws';
+import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
 
 export class Worker {
   public wss: WSServer;

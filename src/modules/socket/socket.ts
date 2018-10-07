@@ -1,5 +1,5 @@
 import { Worker } from '../worker';
-import { WebSocket } from 'clusterws-uws';
+import { WebSocket } from '@clusterws/uws';
 import { EventEmitter } from '../../utils/emitter';
 import { logError, generateKey } from '../../utils/functions';
 import { Listener, Message, Options } from '../../utils/types';
@@ -16,12 +16,12 @@ export class Socket {
   public id: string = generateKey(10);
   private emitter: EventEmitter = new EventEmitter();
   private channels: { [key: string]: number } = {};
-  private onPublish: Listener;
+  // private onPublish: Listener;
 
   constructor(private worker: Worker, private socket: WebSocket) {
-    this.onPublish = (channel: string, message: Message): void => {
-      this.send(channel, message, 'publish');
-    };
+    // this.onPublish = (channel: string, message: Message): void => {
+    //   this.send(channel, message, 'publish');
+    // };
 
     this.socket.on('message', (message: string | Buffer): void => {
       try {
@@ -65,10 +65,14 @@ export class Socket {
   public terminate(): void {
     this.socket.terminate();
   }
+
+  private onPublish(channel: string, message: Message): void {
+    this.send(channel, message, 'publish');
+  }
 }
 
 function encode(event: string, data: Message, eventType: string, option: Options): string | Buffer {
-  // encode only data provied by user
+  // encode only data provided by user
   if (eventType === 'system' && option.encodeDecodeEngine) {
     data = option.encodeDecodeEngine.encode(data);
   }
@@ -85,7 +89,7 @@ function encode(event: string, data: Message, eventType: string, option: Options
   return option.useBinary ? Buffer.from(readyMessage) : readyMessage;
 }
 
-// decode message protocall && call socket functions
+// decode message protocol && call socket functions
 function decode(socket: PrivateSocket, data: Message, option: Options): void {
   // parse data with user provided decode function
   let [msgType, param, message]: [string, string, Message] = data['#'];
@@ -104,6 +108,7 @@ function decode(socket: PrivateSocket, data: Message, option: Options): void {
       const channel: number = socket.channels[message];
       if (param === 's' && !channel) {
         socket.channels[message] = 1;
+        // will need to add  if publish does not work
         socket.worker.wss.subscribe(message, socket.id, socket.onPublish);
       }
       if (param === 'u' && channel) {
