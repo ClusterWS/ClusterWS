@@ -20,20 +20,8 @@ export class BrokerClient {
     send(message: string | Buffer): boolean;
 }
 
-export class ClientManager {
-    constructor(urls: string[]);
-}
-
 export class Broker {
     constructor(port: number, options: Options, securityKey: string);
-}
-
-export class Room {
-    constructor(roomName: string);
-    publish(userId: string, message: string): void;
-    subscribe(user: any): void;
-    unsubscribe(): void;
-    broadcast(): void;
 }
 
 export class Channel extends EventEmitter {
@@ -48,21 +36,6 @@ export class Channel extends EventEmitter {
     subscribe(userId: string, listener: Listener): void;
     unsubscribe(subscriberId: string): void;
     batchFlush(): void;
-}
-
-export class Room {
-    roomName: string;
-    usersIds: string[];
-    usersListeners: {
-        [key: string]: Listener;
-    };
-    constructor(roomName: string, userId: string, listener: Listener);
-    publish(id: string, message: Message): void;
-    subscribe(userId: string, listener: Listener): void;
-    unsubscribe(userId: string): void;
-    flush(): void;
-    unfilteredFlush(message: Message): void;
-    action(event: string, channel: string): void;
 }
 
 export class Socket {

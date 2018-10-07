@@ -123,9 +123,7 @@ class Broker {
 class Socket {
     constructor(e, s) {
         this.worker = e, this.socket = s, this.id = generateKey(10), this.emitter = new EventEmitter(), 
-        this.channels = {}, this.onPublish = ((e, s) => {
-            this.send(e, s, "publish");
-        }), this.socket.on("message", e => {
+        this.channels = {}, this.socket.on("message", e => {
             try {
                 decode(this, JSON.stringify(e), this.worker.options);
             } catch (e) {
@@ -150,6 +148,9 @@ class Socket {
     }
     terminate() {
         this.socket.terminate();
+    }
+    onPublish(e, s) {
+        this.send(e, s, "publish");
     }
 }
 

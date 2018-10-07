@@ -22,7 +22,7 @@
     "chai": "^4.1.2",
     "mocha": "^5.2.0",
     "proxyquire": "^2.1.0",
-    "ts-builder": "^0.7.4",
+    "ts-builder": "^0.8.0",
     "ts-node": "^7.0.1",
     "test-console": "^1.1.0"
   },
