@@ -15,7 +15,7 @@ export class WSServer extends EventEmitter {
 
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
-      brokerClient.on('message', this.onBrokerMessage); // need to check if we need bind(this);
+      brokerClient.on('message', this.onBrokerMessage.bind(this)); // need to check if we need bind(this);
       this.brokers.push(brokerClient);
     }
 
@@ -80,7 +80,14 @@ export class WSServer extends EventEmitter {
   private onBrokerMessage(message: string | Buffer): void {
     // need to transform message for buffer to proper readable format and publish it to the user
     // handle message from broker
-    console.log(message);
+    message = Buffer.from(message as Buffer);
+    const index: number = message.indexOf(37);
+    const channel: string = message.slice(0, index).toString();
+    /// need to decode message properly !
+    if (this.channels[channel]) {
+      this.channels[channel].forcePublish(message.slice(index + 1, message.length).toString());
+    }
+    // console.log(message);
   }
 
   private flushLoop(): void {

@@ -16,13 +16,8 @@ export class Socket {
   public id: string = generateKey(10);
   private emitter: EventEmitter = new EventEmitter();
   private channels: { [key: string]: number } = {};
-  // private onPublish: Listener;
 
   constructor(private worker: Worker, private socket: WebSocket) {
-    // this.onPublish = (channel: string, message: Message): void => {
-    //   this.send(channel, message, 'publish');
-    // };
-
     this.socket.on('message', (message: string | Buffer): void => {
       try {
         // need to verify if it can parse Buffer from c++
@@ -108,8 +103,7 @@ function decode(socket: PrivateSocket, data: Message, option: Options): void {
       const channel: number = socket.channels[message];
       if (param === 's' && !channel) {
         socket.channels[message] = 1;
-        // will need to add  if publish does not work
-        socket.worker.wss.subscribe(message, socket.id, socket.onPublish);
+        socket.worker.wss.subscribe(message, socket.id, socket.onPublish.bind(socket));
       }
       if (param === 'u' && channel) {
         delete socket.channels[message];

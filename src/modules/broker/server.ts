@@ -16,7 +16,7 @@ export class Broker {
     this.server = new WebSocketServer({
       port,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
-        next(info.req.url === `/?token=${securityKey}`);
+        return next(info.req.url === `/?token=${securityKey}`);
       }
     }, (): void => process.send({ event: 'READY', pid: process.pid }));
 
@@ -25,28 +25,28 @@ export class Broker {
 
       socket.on('message', (message: string | Buffer): void => {
         if (typeof message === 'string') {
-
-          // move this handler to separate function
-          const handler: any = (channel: string, mergedMessage: Message): void => {
-            console.log(JSON.stringify(mergedMessage));
-            socket.send(Buffer.from(`${channel}%${JSON.stringify(mergedMessage)}`));
-          };
-
           // need to add unsubscribe
           if (!this.channels[message]) {
-            const channel: Channel = new Channel(message, socket.id, handler);
+            const channel: Channel = new Channel(message, socket.id, this.messagePublisher.bind(null, socket));
+            channel.on('publish', (chName: string, data: Message[]) => {
+              // handler channel logic
+            });
+
+            channel.on('destroy', (chName: string) => {
+              // handle channel destroy
+            });
+
             this.channels[message] = channel;
           } else {
-            this.channels[message].subscribe(socket.id, handler);
+            this.channels[message].subscribe(socket.id, this.messagePublisher.bind(null, socket));
           }
         } else {
-          // need to optimize this functions
           message = Buffer.from(message);
-          const channel: string = message.slice(0, message.indexOf(37)).toString();
+          const index: number = message.indexOf(37);
+          const channel: string = message.slice(0, index).toString();
           if (this.channels[channel]) {
-            this.channels[channel].publish(socket.id, message.slice(message.indexOf(37) + 1, message.length));
+            this.channels[channel].publish(socket.id, message.slice(index + 1, message.length));
           }
-          // need to pass it to the channel
         }
       });
 
@@ -59,18 +59,22 @@ export class Broker {
       });
     });
 
-    this.channelsLoop();
+    this.flushLoop();
     this.server.startAutoPing(20000);
   }
 
-  private channelsLoop(): void {
+  private messagePublisher(socket: WebSocket, channel: string, mergedMessage: Message): void {
+    socket.send(Buffer.from(`${channel}%${JSON.stringify(mergedMessage)}`));
+  }
+
+  private flushLoop(): void {
     setTimeout(() => {
       for (const channel in this.channels) {
         if (this.channels[channel]) {
           this.channels[channel].batchFlush();
         }
       }
-      this.channelsLoop();
+      this.flushLoop();
     }, 10); // need to think about the timeout (should it be 5) ?
   }
 }
