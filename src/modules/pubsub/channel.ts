@@ -18,7 +18,7 @@ export class Channel extends EventEmitter {
   // publish specific message without batch
   public forcePublish(message: Message): void {
     for (let i: number = 0, len: number = this.subscribersIds.length; i < len; i++) {
-      this.subscribers[this.subscribersIds[i]](message);
+      this.subscribers[this.subscribersIds[i]](this.channelName, message);
     }
   }
 

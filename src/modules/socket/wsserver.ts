@@ -15,7 +15,7 @@ export class WSServer extends EventEmitter {
 
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
-      brokerClient.on('message', this.onBrokerMessage.bind(this)); // need to check if we need bind(this);
+      brokerClient.on('message', this.onBrokerMessage.bind(this));
       this.brokers.push(brokerClient);
     }
 
@@ -66,7 +66,7 @@ export class WSServer extends EventEmitter {
       // inform all brokers about new subscription
       // need to work out how subscription will work
       for (let i: number = 0, len: number = this.brokers.length; i < len; i++) {
-        this.brokers[i].send(channelName);
+        this.brokers[i].send(JSON.stringify({ type: 's', channel: channelName }));
       }
     } else {
       this.channels[channelName].subscribe(id, listener);
@@ -78,16 +78,18 @@ export class WSServer extends EventEmitter {
   }
 
   private onBrokerMessage(message: string | Buffer): void {
-    // need to transform message for buffer to proper readable format and publish it to the user
-    // handle message from broker
     message = Buffer.from(message as Buffer);
     const index: number = message.indexOf(37);
     const channel: string = message.slice(0, index).toString();
-    /// need to decode message properly !
+
     if (this.channels[channel]) {
-      this.channels[channel].forcePublish(message.slice(index + 1, message.length).toString());
+      let actualMessage: Message[] = [];
+      const parsedMessage: Message = JSON.parse(message.slice(index + 1, message.length) as any);
+      for (let i: number = 0, len: number = parsedMessage.length; i < len; i++) {
+        actualMessage = actualMessage.concat(JSON.parse(Buffer.from(parsedMessage[i]) as any));
+      }
+      this.channels[channel].forcePublish(actualMessage);
     }
-    // console.log(message);
   }
 
   private flushLoop(): void {
@@ -98,6 +100,6 @@ export class WSServer extends EventEmitter {
         }
       }
       this.flushLoop();
-    }, 10);
+    }, 20000);
   }
 }

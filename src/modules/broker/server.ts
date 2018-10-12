@@ -25,20 +25,28 @@ export class Broker {
 
       socket.on('message', (message: string | Buffer): void => {
         if (typeof message === 'string') {
-          // need to add unsubscribe
-          if (!this.channels[message]) {
-            const channel: Channel = new Channel(message, socket.id, this.messagePublisher.bind(null, socket));
+
+          // perform fixes
+          const decodeMessage: any = JSON.parse(message);
+
+          if (decodeMessage.type === 'u' && this.channels[decodeMessage.channel]) {
+            return this.channels[decodeMessage.channel].unsubscribe(socket.id);
+          }
+
+          if (!this.channels[decodeMessage.channel]) {
+            const channel: Channel = new Channel(decodeMessage.channel, socket.id, this.messagePublisher.bind(null, socket));
             channel.on('publish', (chName: string, data: Message[]) => {
               // handler channel logic
+              // this should send message to the external scaler server
             });
 
             channel.on('destroy', (chName: string) => {
-              // handle channel destroy
+              delete this.channels[chName];
             });
 
-            this.channels[message] = channel;
+            this.channels[decodeMessage.channel] = channel;
           } else {
-            this.channels[message].subscribe(socket.id, this.messagePublisher.bind(null, socket));
+            this.channels[decodeMessage.channel].subscribe(socket.id, this.messagePublisher.bind(null, socket));
           }
         } else {
           message = Buffer.from(message);
@@ -64,6 +72,7 @@ export class Broker {
   }
 
   private messagePublisher(socket: WebSocket, channel: string, mergedMessage: Message): void {
+    // need to encode message properly
     socket.send(Buffer.from(`${channel}%${JSON.stringify(mergedMessage)}`));
   }
 
@@ -75,6 +84,6 @@ export class Broker {
         }
       }
       this.flushLoop();
-    }, 10); // need to think about the timeout (should it be 5) ?
+    }, 10);
   }
 }
