@@ -25,16 +25,14 @@ export class Broker {
 
       socket.on('message', (message: string | Buffer): void => {
         if (typeof message === 'string') {
+          const [type, channelName]: string[] = JSON.parse(message);
 
-          // perform fixes
-          const decodeMessage: any = JSON.parse(message);
-
-          if (decodeMessage.type === 'u' && this.channels[decodeMessage.channel]) {
-            return this.channels[decodeMessage.channel].unsubscribe(socket.id);
+          if (type === 'u' && this.channels[channelName]) {
+            return this.channels[channelName].unsubscribe(socket.id);
           }
 
-          if (!this.channels[decodeMessage.channel]) {
-            const channel: Channel = new Channel(decodeMessage.channel, socket.id, this.messagePublisher.bind(null, socket));
+          if (!this.channels[channelName]) {
+            let channel: Channel = new Channel(channelName, socket.id, this.messagePublisher.bind(null, socket));
             channel.on('publish', (chName: string, data: Message[]) => {
               // handler channel logic
               // this should send message to the external scaler server
@@ -42,18 +40,19 @@ export class Broker {
 
             channel.on('destroy', (chName: string) => {
               delete this.channels[chName];
+              channel = null;
             });
 
-            this.channels[decodeMessage.channel] = channel;
+            this.channels[channelName] = channel;
           } else {
-            this.channels[decodeMessage.channel].subscribe(socket.id, this.messagePublisher.bind(null, socket));
+            this.channels[channelName].subscribe(socket.id, this.messagePublisher.bind(null, socket));
           }
         } else {
           message = Buffer.from(message);
           const index: number = message.indexOf(37);
-          const channel: string = message.slice(0, index).toString();
-          if (this.channels[channel]) {
-            this.channels[channel].publish(socket.id, message.slice(index + 1, message.length));
+          const channelName: string = message.slice(0, index).toString();
+          if (this.channels[channelName]) {
+            this.channels[channelName].publish(socket.id, message.slice(index + 1, message.length));
           }
         }
       });
@@ -84,6 +83,6 @@ export class Broker {
         }
       }
       this.flushLoop();
-    }, 10);
+    }, 10000);
   }
 }

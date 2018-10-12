@@ -12,7 +12,7 @@ export class WSServer extends EventEmitter {
 
   constructor(private options: Options, internalSecurityKey: string) {
     super();
-
+    // need to add auto channel resubscribe on reconnect
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
       brokerClient.on('message', this.onBrokerMessage.bind(this));
@@ -35,10 +35,9 @@ export class WSServer extends EventEmitter {
 
   public subscribe(channelName: string, id: string, listener: Listener): void {
     if (!this.channels[channelName]) {
-      const channel: Channel = new Channel(channelName, id, listener);
+      let channel: Channel = new Channel(channelName, id, listener);
 
       channel.on('publish', (chName: string, data: Message[]) => {
-        // need to work on this function a bit :)
         let attempts: number = 0;
         let isCompleted: boolean = false;
 
@@ -59,14 +58,16 @@ export class WSServer extends EventEmitter {
 
       channel.on('destroy', (chName: string) => {
         delete this.channels[chName];
+        channel = null;
+        for (let i: number = 0, len: number = this.brokers.length; i < len; i++) {
+          this.brokers[i].send(JSON.stringify(['u', chName]));
+        }
       });
 
       this.channels[channelName] = channel;
 
-      // inform all brokers about new subscription
-      // need to work out how subscription will work
       for (let i: number = 0, len: number = this.brokers.length; i < len; i++) {
-        this.brokers[i].send(JSON.stringify({ type: 's', channel: channelName }));
+        this.brokers[i].send(JSON.stringify(['s', channelName]));
       }
     } else {
       this.channels[channelName].subscribe(id, listener);
@@ -78,6 +79,7 @@ export class WSServer extends EventEmitter {
   }
 
   private onBrokerMessage(message: string | Buffer): void {
+    // work out this part a bit more
     message = Buffer.from(message as Buffer);
     const index: number = message.indexOf(37);
     const channel: string = message.slice(0, index).toString();
@@ -88,6 +90,7 @@ export class WSServer extends EventEmitter {
       for (let i: number = 0, len: number = parsedMessage.length; i < len; i++) {
         actualMessage = actualMessage.concat(JSON.parse(Buffer.from(parsedMessage[i]) as any));
       }
+
       this.channels[channel].forcePublish(actualMessage);
     }
   }
@@ -100,6 +103,6 @@ export class WSServer extends EventEmitter {
         }
       }
       this.flushLoop();
-    }, 20000);
+    }, 10000);
   }
 }
