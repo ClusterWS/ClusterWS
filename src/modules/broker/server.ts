@@ -51,6 +51,7 @@ export class Broker {
           message = Buffer.from(message);
           const index: number = message.indexOf(37);
           const channelName: string = message.slice(0, index).toString();
+          // need to propagate message to scaler even if channel does not exist in this broker !
           if (this.channels[channelName]) {
             this.channels[channelName].publish(socket.id, message.slice(index + 1, message.length));
           }
@@ -71,7 +72,6 @@ export class Broker {
   }
 
   private messagePublisher(socket: WebSocket, channel: string, mergedMessage: Message): void {
-    // need to encode message properly
     socket.send(Buffer.from(`${channel}%${JSON.stringify(mergedMessage)}`));
   }
 
