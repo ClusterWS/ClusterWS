@@ -61,6 +61,7 @@ export class Socket {
     this.socket.terminate();
   }
 
+  // this functions is used in decode
   private onPublish(channel: string, message: Message): void {
     this.send(channel, message, 'publish');
   }
@@ -80,14 +81,14 @@ function encode(event: string, data: Message, eventType: string, option: Options
     }
   };
 
-  const readyMessage: string = JSON.stringify({ '#': message[eventType][event] || message[eventType] });
+  const readyMessage: string = JSON.stringify(message[eventType][event] || message[eventType]);
   return option.useBinary ? Buffer.from(readyMessage) : readyMessage;
 }
 
 // decode message protocol && call socket functions
 function decode(socket: PrivateSocket, data: Message, option: Options): void {
   // parse data with user provided decode function
-  let [msgType, param, message]: [string, string, Message] = data['#'];
+  let [msgType, param, message]: [string, string, Message] = data;
 
   if (msgType !== 's' && option.encodeDecodeEngine) {
     message = option.encodeDecodeEngine.decode(message);

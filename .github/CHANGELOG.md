@@ -1,6 +1,6 @@
 # Version 4.0.0
 
-This section specifies only braking changes from version 3.
+This section specifies only braking changes and new tings from version 3.
 
 ### Types
 
@@ -13,6 +13,13 @@ This section specifies only braking changes from version 3.
 
 ### New
 * Middelware use new Enum(JS Object) instead of passing string.
+* Pass custom logger to clusterws options
+* Development mode (without cluster)
+* Pass env variables to the Worker
 
 ### Other
 * Encode Decode engine is not in stable (may need to be clarified)
+
+## Protocol
+
+* Remove useless symbols `{#:[type, event, data]}` to `[type, event, data]`

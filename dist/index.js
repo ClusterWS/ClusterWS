@@ -97,11 +97,11 @@ class Broker {
             e.id = generateKey(10), e.on("message", s => {
                 if ("string" == typeof s) {
                     const [t, r] = JSON.parse(s);
-                    if ("u" === t && this.channels[r]) return console.log("u has been called"), this.channels[r].unsubscribe(e.id);
+                    if ("u" === t && this.channels[r]) return this.channels[r].unsubscribe(e.id);
                     if (this.channels[r]) this.channels[r].subscribe(e.id, this.messagePublisher.bind(null, e)); else {
-                        const s = new Channel(r, e.id, this.messagePublisher.bind(null, e));
+                        let s = new Channel(r, e.id, this.messagePublisher.bind(null, e));
                         s.on("publish", (e, s) => {}), s.on("destroy", e => {
-                            console.log("channel destroyed"), delete this.channels[e];
+                            delete this.channels[e], s = null;
                         }), this.channels[r] = s;
                     }
                 } else {
@@ -164,14 +164,12 @@ function encode(e, s, t, r) {
         system: {
             configuration: [ "s", "c", s ]
         }
-    }, n = JSON.stringify({
-        "#": o[t][e] || o[t]
-    });
+    }, n = JSON.stringify(o[t][e] || o[t]);
     return r.useBinary ? Buffer.from(n) : n;
 }
 
 function decode(e, s, t) {
-    let [r, o, n] = s["#"];
+    let [r, o, n] = s;
     switch ("s" !== r && t.encodeDecodeEngine && (n = t.encodeDecodeEngine.decode(n)), 
     r) {
       case "e":
@@ -231,14 +229,14 @@ class WSServer extends EventEmitter {
     }
     subscribe(e, s, t) {
         if (this.channels[e]) this.channels[e].subscribe(s, t); else {
-            const r = new Channel(e, s, t);
+            let r = new Channel(e, s, t);
             r.on("publish", (s, t) => {
                 let r = 0, o = !1;
                 const n = Buffer.from(`${e}%${JSON.stringify(t)}`), i = this.brokers.length;
                 for (;!o && r < 2 * i; ) this.nextBrokerId >= i && (this.nextBrokerId = 0), o = this.brokers[this.nextBrokerId].send(n), 
                 r++, this.nextBrokerId++;
             }), r.on("destroy", e => {
-                delete this.channels[e];
+                delete this.channels[e], r = null;
                 for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "u", e ]));
             }), this.channels[e] = r;
             for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "s", e ]));
@@ -253,7 +251,7 @@ class WSServer extends EventEmitter {
             let r = [];
             const o = JSON.parse(e.slice(s + 1, e.length));
             for (let e = 0, s = o.length; e < s; e++) r = r.concat(JSON.parse(Buffer.from(o[e])));
-            console.log(r), this.channels[t].forcePublish(r);
+            this.channels[t].forcePublish(r);
         }
     }
     flushLoop() {
@@ -287,18 +285,18 @@ function masterProcess(e) {
     let s = !1;
     const t = [], r = [], o = generateKey(20), n = generateKey(20);
     if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let s = 0; s < e.brokers; s++) i("Broker", s);
-    function i(c, h) {
-        const l = cluster.fork();
+    function i(h, c) {
+        const l = cluster.fork(e);
         l.on("message", o => {
             if ("READY" === o.event) {
-                if (s) return logReady(`${c} ${h} PID ${o.pid} has been restarted`);
-                switch (c) {
+                if (s) return logReady(`${h} ${c} PID ${o.pid} has been restarted`);
+                switch (h) {
                   case "Broker":
-                    if (t[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${o.pid}`, !t.includes(void 0) && t.length === e.brokers) for (let s = 0; s < e.workers; s++) i("Worker", s);
+                    if (t[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${o.pid}`, !t.includes(void 0) && t.length === e.brokers) for (let s = 0; s < e.workers; s++) i("Worker", s);
                     break;
 
                   case "Worker":
-                    r[h] = `    Worker: ${h}, PID ${o.pid}`, r.includes(void 0) || r.length !== e.workers || (s = !0, 
+                    r[c] = `    Worker: ${c}, PID ${o.pid}`, r.includes(void 0) || r.length !== e.workers || (s = !0, 
                     logReady(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
                     t.forEach(logReady), r.forEach(logReady));
                     break;
@@ -308,11 +306,11 @@ function masterProcess(e) {
                 }
             }
         }), l.on("exit", () => {
-            logError(`${c} ${h} has exited`), e.restartWorkerOnFail && (logWarning(`${c} ${h} is restarting \n`), 
-            i(c, h));
+            logError(`${h} ${c} has exited`), e.restartWorkerOnFail && (logWarning(`${h} ${c} is restarting \n`), 
+            i(h, c));
         }), l.send({
-            processId: h,
-            processName: c,
+            processId: c,
+            processName: h,
             serverId: o,
             internalSecurityKey: n
         });
