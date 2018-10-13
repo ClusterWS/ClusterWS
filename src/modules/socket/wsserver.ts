@@ -41,6 +41,10 @@ export class WSServer extends EventEmitter {
         let attempts: number = 0;
         let isCompleted: boolean = false;
 
+        if (!data.length) {
+          return;
+        }
+
         const message: Buffer = Buffer.from(`${channelName}%${JSON.stringify(data)}`);
         const brokersLength: number = this.brokers.length;
 
@@ -85,13 +89,13 @@ export class WSServer extends EventEmitter {
     const channel: string = message.slice(0, index).toString();
 
     if (this.channels[channel]) {
-      let actualMessage: Message[] = [];
+      const actualMessage: Message[] = [];
       const parsedMessage: Message = JSON.parse(message.slice(index + 1, message.length) as any);
       for (let i: number = 0, len: number = parsedMessage.length; i < len; i++) {
-        actualMessage = actualMessage.concat(JSON.parse(Buffer.from(parsedMessage[i]) as any));
+        Array.prototype.push.apply(actualMessage, JSON.parse(Buffer.from(parsedMessage[i]) as any));
       }
 
-      this.channels[channel].forcePublish(actualMessage);
+      this.channels[channel].publish('from_broker', actualMessage);
     }
   }
 
@@ -103,6 +107,6 @@ export class WSServer extends EventEmitter {
         }
       }
       this.flushLoop();
-    }, 10000);
+    }, 10);
   }
 }

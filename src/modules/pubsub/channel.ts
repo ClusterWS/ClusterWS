@@ -15,12 +15,13 @@ export class Channel extends EventEmitter {
   public publish(id: string, message: Message): void {
     this.batch.push({ id, message });
   }
+
   // publish specific message without batch
-  public forcePublish(message: Message): void {
-    for (let i: number = 0, len: number = this.subscribersIds.length; i < len; i++) {
-      this.subscribers[this.subscribersIds[i]](this.channelName, message);
-    }
-  }
+  // public forcePublish(message: Message): void {
+  //   for (let i: number = 0, len: number = this.subscribersIds.length; i < len; i++) {
+  //     this.subscribers[this.subscribersIds[i]](this.channelName, message);
+  //   }
+  // }
 
   public subscribe(userId: string, listener: Listener): void {
     this.subscribers[userId] = listener;
@@ -60,7 +61,9 @@ export class Channel extends EventEmitter {
 
       for (let j: number = 0; j < batchLn; j++) {
         if (this.batch[j].id !== subscriberId) {
-          messages.push(this.batch[j].message);
+          this.batch[j].id === 'from_broker' ?
+            Array.prototype.push.apply(messages, this.batch[j].message) :
+            messages.push(this.batch[j].message);
         }
       }
 
@@ -72,7 +75,9 @@ export class Channel extends EventEmitter {
     // we can move this message gen to above loop (in future);
     const brokerMessage: Message = [];
     for (let i: number = 0, len: number = batchLn; i < len; i++) {
-      brokerMessage.push(this.batch[i].message);
+      if (this.batch[i].id !== 'from_broker') {
+        brokerMessage.push(this.batch[i].message);
+      }
     }
 
     this.batch = [];

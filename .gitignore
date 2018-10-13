@@ -1,9 +1,8 @@
+.npm
 .idea/
 .vscode/
 
 old/
-node_modules/
-
-.npm
 play.js
+node_modules/
 package-lock.json

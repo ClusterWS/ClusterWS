@@ -32,7 +32,6 @@ export class Channel extends EventEmitter {
     subscribersIds: string[];
     constructor(channelName: string, userId: string, listener: Listener);
     publish(id: string, message: Message): void;
-    forcePublish(message: Message): void;
     subscribe(userId: string, listener: Listener): void;
     unsubscribe(subscriberId: string): void;
     batchFlush(): void;

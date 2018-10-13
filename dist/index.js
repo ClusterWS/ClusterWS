@@ -60,9 +60,6 @@ class Channel extends EventEmitter {
             message: s
         });
     }
-    forcePublish(e) {
-        for (let s = 0, t = this.subscribersIds.length; s < t; s++) this.subscribers[this.subscribersIds[s]](this.channelName, e);
-    }
     subscribe(e, s) {
         this.subscribers[e] = s, this.subscribersIds.push(e);
     }
@@ -76,11 +73,11 @@ class Channel extends EventEmitter {
         if (!e) return;
         for (let t = 0; t < s; t++) {
             const s = [], r = this.subscribersIds[t];
-            for (let t = 0; t < e; t++) this.batch[t].id !== r && s.push(this.batch[t].message);
+            for (let t = 0; t < e; t++) this.batch[t].id !== r && ("from_broker" === this.batch[t].id ? Array.prototype.push.apply(s, this.batch[t].message) : s.push(this.batch[t].message));
             s.length && this.subscribers[r](this.channelName, s);
         }
         const t = [];
-        for (let s = 0, r = e; s < r; s++) t.push(this.batch[s].message);
+        for (let s = 0, r = e; s < r; s++) "from_broker" !== this.batch[s].id && t.push(this.batch[s].message);
         this.batch = [], this.emit("publish", this.channelName, t);
     }
 }
@@ -118,7 +115,7 @@ class Broker {
         setTimeout(() => {
             for (const e in this.channels) this.channels[e] && this.channels[e].batchFlush();
             this.flushLoop();
-        }, 1e4);
+        }, 10);
     }
 }
 
@@ -232,6 +229,7 @@ class WSServer extends EventEmitter {
             let r = new Channel(e, s, t);
             r.on("publish", (s, t) => {
                 let r = 0, o = !1;
+                if (!t.length) return;
                 const n = Buffer.from(`${e}%${JSON.stringify(t)}`), i = this.brokers.length;
                 for (;!o && r < 2 * i; ) this.nextBrokerId >= i && (this.nextBrokerId = 0), o = this.brokers[this.nextBrokerId].send(n), 
                 r++, this.nextBrokerId++;
@@ -248,17 +246,16 @@ class WSServer extends EventEmitter {
     onBrokerMessage(e) {
         const s = (e = Buffer.from(e)).indexOf(37), t = e.slice(0, s).toString();
         if (this.channels[t]) {
-            let r = [];
-            const o = JSON.parse(e.slice(s + 1, e.length));
-            for (let e = 0, s = o.length; e < s; e++) r = r.concat(JSON.parse(Buffer.from(o[e])));
-            this.channels[t].forcePublish(r);
+            const r = [], o = JSON.parse(e.slice(s + 1, e.length));
+            for (let e = 0, s = o.length; e < s; e++) Array.prototype.push.apply(r, JSON.parse(Buffer.from(o[e])));
+            this.channels[t].publish("from_broker", r);
         }
     }
     flushLoop() {
         setTimeout(() => {
             for (const e in this.channels) this.channels[e] && this.channels[e].batchFlush();
             this.flushLoop();
-        }, 1e4);
+        }, 10);
     }
 }
 
@@ -286,7 +283,7 @@ function masterProcess(e) {
     const t = [], r = [], o = generateKey(20), n = generateKey(20);
     if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let s = 0; s < e.brokers; s++) i("Broker", s);
     function i(h, c) {
-        const l = cluster.fork(e);
+        const l = cluster.fork();
         l.on("message", o => {
             if ("READY" === o.event) {
                 if (s) return logReady(`${h} ${c} PID ${o.pid} has been restarted`);

@@ -15,8 +15,8 @@ const depReplace = {
 
 describe('index.ts', () => {
   it('Should generate custom ports if they are not provided', () => {
-    const CluterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
-    const cws = new CluterWS({
+    const ClusterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
+    const cws = new ClusterWS({
       worker: () => { },
       brokers: 5
     });
@@ -25,8 +25,8 @@ describe('index.ts', () => {
   });
 
   it('Should have user broker ports if they are provided', () => {
-    const CluterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
-    const cws = new CluterWS({
+    const ClusterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
+    const cws = new ClusterWS({
       worker: () => { },
       brokers: 5,
       brokersPorts: [100, 106, 104, 105, 107]
@@ -36,16 +36,16 @@ describe('index.ts', () => {
   });
 
   it('Should print error if no worker function provided', () => {
-    const CluterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
-    const console_output = stdout.inspectSync(() => new CluterWS({}));
+    const ClusterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
+    const console_output = stdout.inspectSync(() => new ClusterWS({}));
 
     expect(console_output[0]).deep.equal(`\u001b[31mError PID ${process.pid}:\u001b[0m  Worker must be provided and it must be a function\n`)
   });
 
 
   it('Should print error if wrong number of broker ports provided', () => {
-    const CluterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
-    const console_output = stdout.inspectSync(() => new CluterWS({
+    const ClusterWS = proxyquire.noCallThru()(rootFile, depReplace).default;
+    const console_output = stdout.inspectSync(() => new ClusterWS({
       worker: () => { },
       brokers: 3,
       brokersPorts: [100, 101]

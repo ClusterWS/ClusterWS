@@ -83,6 +83,6 @@ export class Broker {
         }
       }
       this.flushLoop();
-    }, 10000);
+    }, 10);
   }
 }
