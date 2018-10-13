@@ -15,7 +15,7 @@ This section specifies only braking changes and new tings from version 3.
 * Middelware use new Enum(JS Object) instead of passing string.
 * Pass custom logger to clusterws options
 * Development mode (without cluster)
-* Pass env variables to the Worker
+* Pass custom env variables to the Worker processes
 
 ### Other
 * Encode Decode engine is not in stable (may need to be clarified)
