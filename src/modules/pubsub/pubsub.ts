@@ -7,16 +7,23 @@ export class PubSubEngine {
   private registeredChannels: any = {};
 
   constructor(private loopInterval: number) {
-    // execute start
+    this.loop();
   }
 
   public register(userId: string, listener: Listener): void {
     this.registeredUsers[userId] = listener;
   }
 
+  public deRegister(userId: string, channels: string[]): void {
+    for (let i: number = 0, len: number = channels.length; i < len; i++) {
+      this.unsubscribe(channels[i], userId);
+    }
+    delete this.registeredUsers[userId];
+  }
+
   public subscribe(channel: string, userId: string): void {
     if (!this.registeredUsers[userId]) {
-      return null;
+      return;
     }
 
     if (this.registeredChannels[channel]) {
@@ -26,8 +33,17 @@ export class PubSubEngine {
     this.registeredChannels[channel] = [userId];
   }
 
-  public unsubscribe(): void {
-    // unsubscribe from the channel
+  public unsubscribe(channelName: string, userId: string): void {
+    const channel: string[] = this.registeredChannels[channelName];
+
+    if (!channel) {
+      return;
+    }
+
+    const userIndex: number = channel.indexOf(userId);
+    if (userIndex !== -1) {
+      channel.splice(userIndex, 1);
+    }
   }
 
   public publish(channel: string, message: Message, id?: string): void {
@@ -44,7 +60,53 @@ export class PubSubEngine {
   }
 
   private flush(): void {
-    // execute flush for the loop
+    if (!this.changes.length) {
+      return;
+    }
+
+    const allMessages: any = {};
+
+    for (let i: number = 0, len: number = this.changes.length; i < len; i++) {
+      const channel: string = this.changes[i];
+      const batch: any[] = this.batches[channel];
+
+      if (!batch || !batch.length) {
+        continue;
+      }
+
+      const batchLen: number = batch.length;
+
+      const users: string[] = this.registeredChannels[channel];
+      for (let j: number = 0, userLen: number = users.length; j < userLen; j++) {
+        const userId: string = users[j];
+        const userMessages: any[] = [];
+
+        for (let k: number = 0; k < batchLen; k++) {
+          if (batch[k].id !== userId) {
+            userMessages.push(batch[k].message);
+          }
+        }
+
+        if (!userMessages.length) {
+          continue;
+        }
+
+        if (!allMessages[userId]) {
+          allMessages[userId] = {};
+        }
+        allMessages[userId][channel] = userMessages;
+      }
+
+      this.batches[channel] = [];
+    }
+
+    this.changes = [];
+
+    for (const userId in allMessages) {
+      if (allMessages[userId] && this.registeredUsers[userId]) {
+        this.registeredUsers[userId](allMessages[userId]);
+      }
+    }
   }
 
   private loop(): void {
