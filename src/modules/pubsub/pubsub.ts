@@ -18,7 +18,6 @@ export class PubSubEngine {
     for (let i: number = 0, len: number = channels.length; i < len; i++) {
       this.unsubscribe(channels[i], userId);
     }
-
     delete this.registeredUsers[userId];
   }
 

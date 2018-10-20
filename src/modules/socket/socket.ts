@@ -7,7 +7,6 @@ import { Listener, Message, Options } from '../../utils/types';
 type PrivateSocket = {
   id: string,
   worker: Worker,
-  onPublish: Listener,
   emitter: EventEmitter,
   channels: { [key: string]: number }
 };
