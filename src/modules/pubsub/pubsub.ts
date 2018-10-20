@@ -18,6 +18,7 @@ export class PubSubEngine {
     for (let i: number = 0, len: number = channels.length; i < len; i++) {
       this.unsubscribe(channels[i], userId);
     }
+
     delete this.registeredUsers[userId];
   }
 
@@ -44,9 +45,17 @@ export class PubSubEngine {
     if (userIndex !== -1) {
       channel.splice(userIndex, 1);
     }
+
+    if (!channel.length) {
+      delete this.registeredChannels[channelName];
+    }
   }
 
   public publish(channel: string, message: Message, id?: string): void {
+    if (!this.registeredChannels[channel]) {
+      return;
+    }
+
     if (this.changes.indexOf(channel) === -1) {
       this.changes.push(channel);
     }

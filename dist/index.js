@@ -26,6 +26,33 @@ function generateKey(e) {
     return crypto.randomBytes(e).toString("hex");
 }
 
+class Broker {
+    constructor(e, s, t) {
+        this.server = new uws.WebSocketServer({
+            port: e,
+            verifyClient: (e, s) => s(e.req.url === `/?token=${t}`)
+        }, () => process.send({
+            event: "READY",
+            pid: process.pid
+        })), this.server.on("connection", e => {
+            e.id = generateKey(10), e.on("message", e => {
+                if ("string" == typeof e) {
+                    const [s, t] = JSON.parse(e);
+                } else {
+                    const s = (e = Buffer.from(e)).indexOf(37);
+                    e.slice(0, s).toString();
+                }
+            }), e.on("error", e => {}), e.on("close", (e, s) => {});
+        }), this.flushLoop(), this.server.startAutoPing(2e4);
+    }
+    messagePublisher(e, s, t) {
+        e.send(Buffer.from(`${s}%${JSON.stringify(t)}`));
+    }
+    flushLoop() {
+        setTimeout(() => {}, 10);
+    }
+}
+
 class EventEmitter {
     constructor() {
         this.events = {};
@@ -49,88 +76,20 @@ class EventEmitter {
     }
 }
 
-class Channel extends EventEmitter {
-    constructor(e, s, t) {
-        super(), this.channelName = e, this.subscribers = {}, this.subscribersIds = [], 
-        this.batch = [], this.subscribe(s, t);
-    }
-    publish(e, s) {
-        this.batch.push({
-            id: e,
-            message: s
-        });
-    }
-    subscribe(e, s) {
-        this.subscribers[e] = s, this.subscribersIds.push(e);
-    }
-    unsubscribe(e) {
-        const s = this.subscribersIds.indexOf(e);
-        -1 !== s && (delete this.subscribers[e], this.subscribersIds.splice(s, 1), this.subscribersIds.length || (this.batch = [], 
-        this.subscribers = {}, this.emit("destroy", this.channelName), this.removeEvents()));
-    }
-    batchFlush() {
-        const e = this.batch.length, s = this.subscribersIds.length;
-        if (!e) return;
-        for (let t = 0; t < s; t++) {
-            const s = [], r = this.subscribersIds[t];
-            for (let t = 0; t < e; t++) this.batch[t].id !== r && ("from_broker" === this.batch[t].id ? Array.prototype.push.apply(s, this.batch[t].message) : s.push(this.batch[t].message));
-            s.length && this.subscribers[r](this.channelName, s);
-        }
-        const t = [];
-        for (let s = 0, r = e; s < r; s++) "from_broker" !== this.batch[s].id && t.push(this.batch[s].message);
-        this.batch = [], this.emit("publish", this.channelName, t);
-    }
-}
-
-class Broker {
-    constructor(e, s, t) {
-        this.channels = {}, this.server = new uws.WebSocketServer({
-            port: e,
-            verifyClient: (e, s) => s(e.req.url === `/?token=${t}`)
-        }, () => process.send({
-            event: "READY",
-            pid: process.pid
-        })), this.server.on("connection", e => {
-            e.id = generateKey(10), e.on("message", s => {
-                if ("string" == typeof s) {
-                    const [t, r] = JSON.parse(s);
-                    if ("u" === t && this.channels[r]) return this.channels[r].unsubscribe(e.id);
-                    if (this.channels[r]) this.channels[r].subscribe(e.id, this.messagePublisher.bind(null, e)); else {
-                        let s = new Channel(r, e.id, this.messagePublisher.bind(null, e));
-                        s.on("publish", (e, s) => {}), s.on("destroy", e => {
-                            delete this.channels[e], s = null;
-                        }), this.channels[r] = s;
-                    }
-                } else {
-                    const t = (s = Buffer.from(s)).indexOf(37), r = s.slice(0, t).toString();
-                    this.channels[r] && this.channels[r].publish(e.id, s.slice(t + 1, s.length));
-                }
-            }), e.on("error", e => {}), e.on("close", (e, s) => {});
-        }), this.flushLoop(), this.server.startAutoPing(2e4);
-    }
-    messagePublisher(e, s, t) {
-        e.send(Buffer.from(`${s}%${JSON.stringify(t)}`));
-    }
-    flushLoop() {
-        setTimeout(() => {
-            for (const e in this.channels) this.channels[e] && this.channels[e].batchFlush();
-            this.flushLoop();
-        }, 10);
-    }
-}
-
 class Socket {
     constructor(e, s) {
         this.worker = e, this.socket = s, this.id = generateKey(10), this.emitter = new EventEmitter(), 
-        this.channels = {}, this.socket.on("message", e => {
+        this.channels = {}, this.worker.wss.pubSub.register(this.id, e => {
+            this.send(null, e, "publish");
+        }), this.socket.on("message", e => {
             try {
                 decode(this, JSON.stringify(e), this.worker.options);
             } catch (e) {
                 logError(e);
             }
         }), this.socket.on("close", (e, s) => {
-            for (const e in this.channels) this.channels[e] && this.worker.wss.unsubscribe(e, this.id);
-            this.emitter.emit("disconnect", e, s), this.emitter.removeEvents();
+            this.worker.wss.pubSub.deRegister(this.id, Object.keys(this.channels)), this.emitter.emit("disconnect", e, s), 
+            this.emitter.removeEvents();
         }), this.socket.on("error", e => {
             if (!this.emitter.exist("error")) return logError(e), this.socket.terminate();
             this.emitter.emit("error", e);
@@ -148,9 +107,6 @@ class Socket {
     terminate() {
         this.socket.terminate();
     }
-    onPublish(e, s) {
-        this.send(e, s, "publish");
-    }
 }
 
 function encode(e, s, t, r) {
@@ -161,24 +117,82 @@ function encode(e, s, t, r) {
         system: {
             configuration: [ "s", "c", s ]
         }
-    }, n = JSON.stringify(o[t][e] || o[t]);
-    return r.useBinary ? Buffer.from(n) : n;
+    }, i = JSON.stringify(o[t][e] || o[t]);
+    return r.useBinary ? Buffer.from(i) : i;
 }
 
 function decode(e, s, t) {
-    let [r, o, n] = s;
-    switch ("s" !== r && t.encodeDecodeEngine && (n = t.encodeDecodeEngine.decode(n)), 
+    let [r, o, i] = s;
+    switch ("s" !== r && t.encodeDecodeEngine && (i = t.encodeDecodeEngine.decode(i)), 
     r) {
       case "e":
-        return e.emitter.emit(o, n);
+        return e.emitter.emit(o, i);
 
       case "p":
-        return e.channels[o] && e.worker.wss.publish(o, n, e.id);
+        return e.channels[o] && e.worker.wss.publish(o, i, e.id);
 
       case "s":
-        const s = e.channels[n];
-        "s" !== o || s || (e.channels[n] = 1, e.worker.wss.subscribe(n, e.id, e.onPublish.bind(e))), 
-        "u" === o && s && (delete e.channels[n], e.worker.wss.unsubscribe(n, e.id));
+        const s = e.channels[i];
+        "s" !== o || s || (e.channels[i] = 1, e.worker.wss.subscribe(i, e.id)), "u" === o && s && (delete e.channels[i], 
+        e.worker.wss.unsubscribe(i, e.id));
+    }
+}
+
+class PubSubEngine {
+    constructor(e) {
+        this.loopInterval = e, this.changes = [], this.batches = {}, this.registeredUsers = {}, 
+        this.registeredChannels = {}, this.loop();
+    }
+    register(e, s) {
+        this.registeredUsers[e] = s;
+    }
+    deRegister(e, s) {
+        for (let t = 0, r = s.length; t < r; t++) this.unsubscribe(s[t], e);
+        delete this.registeredUsers[e];
+    }
+    subscribe(e, s) {
+        if (this.registeredUsers[s]) return this.registeredChannels[e] ? this.registeredChannels[e].push(s) : void (this.registeredChannels[e] = [ s ]);
+    }
+    unsubscribe(e, s) {
+        const t = this.registeredChannels[e];
+        if (!t) return;
+        const r = t.indexOf(s);
+        -1 !== r && t.splice(r, 1), t.length || delete this.registeredChannels[e];
+    }
+    publish(e, s, t) {
+        if (console.log(this.registeredChannels), !this.registeredChannels[e]) return;
+        -1 === this.changes.indexOf(e) && this.changes.push(e);
+        const r = this.batches[e];
+        if (r) return r.push({
+            id: t,
+            message: s
+        });
+        this.batches[e] = [ {
+            id: t,
+            message: s
+        } ];
+    }
+    flush() {
+        if (!this.changes.length) return;
+        const e = {};
+        for (let s = 0, t = this.changes.length; s < t; s++) {
+            const t = this.changes[s], r = this.batches[t];
+            if (!r || !r.length) continue;
+            const o = r.length, i = this.registeredChannels[t];
+            for (let s = 0, n = i.length; s < n; s++) {
+                const n = i[s], c = [];
+                for (let e = 0; e < o; e++) r[e].id !== n && c.push(r[e].message);
+                c.length && (e[n] || (e[n] = {}), e[n][t] = c);
+            }
+            this.batches[t] = [];
+        }
+        this.changes = [];
+        for (const s in e) e[s] && this.registeredUsers[s] && this.registeredUsers[s](e[s]);
+    }
+    loop() {
+        setTimeout(() => {
+            this.flush(), this.loop();
+        }, this.loopInterval);
     }
 }
 
@@ -210,53 +224,26 @@ class BrokerClient {
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(), this.options = e, this.channels = {}, this.middleware = {}, this.brokers = [], 
-        this.nextBrokerId = 0;
+        super(), this.options = e, this.pubSub = new PubSubEngine(10), this.middleware = {}, 
+        this.brokers = [], this.nextBrokerId = 0;
         for (let e = 0; e < this.options.brokers; e++) {
             const t = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}/?token=${s}`);
             t.on("message", this.onBrokerMessage.bind(this)), this.brokers.push(t);
         }
-        this.flushLoop();
     }
     setMiddleware(e, s) {
         this.middleware[e] = s;
     }
     publish(e, s, t) {
-        this.channels[e] && this.channels[e].publish(t, s);
+        this.pubSub.publish(e, s, t);
     }
-    subscribe(e, s, t) {
-        if (this.channels[e]) this.channels[e].subscribe(s, t); else {
-            let r = new Channel(e, s, t);
-            r.on("publish", (s, t) => {
-                let r = 0, o = !1;
-                if (!t.length) return;
-                const n = Buffer.from(`${e}%${JSON.stringify(t)}`), i = this.brokers.length;
-                for (;!o && r < 2 * i; ) this.nextBrokerId >= i && (this.nextBrokerId = 0), o = this.brokers[this.nextBrokerId].send(n), 
-                r++, this.nextBrokerId++;
-            }), r.on("destroy", e => {
-                delete this.channels[e], r = null;
-                for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "u", e ]));
-            }), this.channels[e] = r;
-            for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "s", e ]));
-        }
+    subscribe(e, s) {
+        this.pubSub.subscribe(e, s);
     }
     unsubscribe(e, s) {
-        this.channels[e].unsubscribe(s);
+        this.unsubscribe(e, s);
     }
-    onBrokerMessage(e) {
-        const s = (e = Buffer.from(e)).indexOf(37), t = e.slice(0, s).toString();
-        if (this.channels[t]) {
-            const r = [], o = JSON.parse(e.slice(s + 1, e.length));
-            for (let e = 0, s = o.length; e < s; e++) Array.prototype.push.apply(r, JSON.parse(Buffer.from(o[e])));
-            this.channels[t].publish("from_broker", r);
-        }
-    }
-    flushLoop() {
-        setTimeout(() => {
-            for (const e in this.channels) this.channels[e] && this.channels[e].batchFlush();
-            this.flushLoop();
-        }, 10);
-    }
+    onBrokerMessage(e) {}
 }
 
 class Worker {
@@ -280,36 +267,36 @@ class Worker {
 
 function masterProcess(e) {
     let s = !1;
-    const t = [], r = [], o = generateKey(20), n = generateKey(20);
-    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let s = 0; s < e.brokers; s++) i("Broker", s);
-    function i(h, c) {
-        const l = cluster.fork();
-        l.on("message", o => {
+    const t = [], r = [], o = generateKey(20), i = generateKey(20);
+    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) n("Scaler", -1); else for (let s = 0; s < e.brokers; s++) n("Broker", s);
+    function n(c, h) {
+        const a = cluster.fork();
+        a.on("message", o => {
             if ("READY" === o.event) {
-                if (s) return logReady(`${h} ${c} PID ${o.pid} has been restarted`);
-                switch (h) {
+                if (s) return logReady(`${c} ${h} PID ${o.pid} has been restarted`);
+                switch (c) {
                   case "Broker":
-                    if (t[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${o.pid}`, !t.includes(void 0) && t.length === e.brokers) for (let s = 0; s < e.workers; s++) i("Worker", s);
+                    if (t[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${o.pid}`, !t.includes(void 0) && t.length === e.brokers) for (let s = 0; s < e.workers; s++) n("Worker", s);
                     break;
 
                   case "Worker":
-                    r[c] = `    Worker: ${c}, PID ${o.pid}`, r.includes(void 0) || r.length !== e.workers || (s = !0, 
+                    r[h] = `    Worker: ${h}, PID ${o.pid}`, r.includes(void 0) || r.length !== e.workers || (s = !0, 
                     logReady(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
                     t.forEach(logReady), r.forEach(logReady));
                     break;
 
                   case "Scaler":
-                    for (let s = 0; s < e.brokers; s++) i("Broker", s);
+                    for (let s = 0; s < e.brokers; s++) n("Broker", s);
                 }
             }
-        }), l.on("exit", () => {
-            logError(`${h} ${c} has exited`), e.restartWorkerOnFail && (logWarning(`${h} ${c} is restarting \n`), 
-            i(h, c));
-        }), l.send({
-            processId: c,
-            processName: h,
+        }), a.on("exit", () => {
+            logError(`${c} ${h} has exited`), e.restartWorkerOnFail && (logWarning(`${c} ${h} is restarting \n`), 
+            n(c, h));
+        }), a.send({
+            processId: h,
+            processName: c,
             serverId: o,
-            internalSecurityKey: n
+            internalSecurityKey: i
         });
     }
 }

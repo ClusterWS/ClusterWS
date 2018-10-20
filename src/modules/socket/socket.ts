@@ -18,6 +18,10 @@ export class Socket {
   private channels: { [key: string]: number } = {};
 
   constructor(private worker: Worker, private socket: WebSocket) {
+    this.worker.wss.pubSub.register(this.id, (message: any) => {
+      this.send(null, message, 'publish');
+    });
+
     this.socket.on('message', (message: string | Buffer): void => {
       try {
         // need to verify if it can parse Buffer from c++
@@ -26,12 +30,7 @@ export class Socket {
     });
 
     this.socket.on('close', (code?: number, reason?: string): void => {
-      for (const channel in this.channels) {
-        if (this.channels[channel]) {
-          this.worker.wss.unsubscribe(channel, this.id);
-        }
-      }
-
+      this.worker.wss.pubSub.deRegister(this.id, Object.keys(this.channels));
       this.emitter.emit('disconnect', code, reason);
       this.emitter.removeEvents();
     });
@@ -59,11 +58,6 @@ export class Socket {
 
   public terminate(): void {
     this.socket.terminate();
-  }
-
-  // this functions is used in decode
-  private onPublish(channel: string, message: Message): void {
-    this.send(channel, message, 'publish');
   }
 }
 
@@ -94,7 +88,6 @@ function decode(socket: PrivateSocket, data: Message, option: Options): void {
     message = option.encodeDecodeEngine.decode(message);
   }
 
-  // need to cast any to be able to use private param
   switch (msgType) {
     case 'e':
       return socket.emitter.emit(param, message);
@@ -104,7 +97,7 @@ function decode(socket: PrivateSocket, data: Message, option: Options): void {
       const channel: number = socket.channels[message];
       if (param === 's' && !channel) {
         socket.channels[message] = 1;
-        socket.worker.wss.subscribe(message, socket.id, socket.onPublish.bind(socket));
+        socket.worker.wss.subscribe(message, socket.id);
       }
       if (param === 'u' && channel) {
         delete socket.channels[message];

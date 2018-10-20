@@ -20,21 +20,20 @@ export class BrokerClient {
     send(message: string | Buffer): boolean;
 }
 
+export class Scaler {
+}
+
 export class Broker {
     constructor(port: number, options: Options, securityKey: string);
 }
 
-export class Channel extends EventEmitter {
-    channelName: string;
-    subscribers: {
-        [key: string]: Listener;
-    };
-    subscribersIds: string[];
-    constructor(channelName: string, userId: string, listener: Listener);
-    publish(id: string, message: Message): void;
-    subscribe(userId: string, listener: Listener): void;
-    unsubscribe(subscriberId: string): void;
-    batchFlush(): void;
+export class PubSubEngine {
+    constructor(loopInterval: number);
+    register(userId: string, listener: Listener): void;
+    deRegister(userId: string, channels: string[]): void;
+    subscribe(channel: string, userId: string): void;
+    unsubscribe(channelName: string, userId: string): void;
+    publish(channel: string, message: Message, id?: string): void;
 }
 
 export class Socket {
@@ -47,16 +46,14 @@ export class Socket {
 }
 
 export class WSServer extends EventEmitter {
-    channels: {
-        [key: string]: Channel;
-    };
+    pubSub: PubSubEngine;
     middleware: {
         [key: string]: Listener;
     };
     constructor(options: Options, internalSecurityKey: string);
     setMiddleware(name: string, listener: Listener): void;
     publish(channelName: string, message: Message, id?: string): void;
-    subscribe(channelName: string, id: string, listener: Listener): void;
+    subscribe(channelName: string, id: string): void;
     unsubscribe(channelName: string, id: string): void;
 }
 
