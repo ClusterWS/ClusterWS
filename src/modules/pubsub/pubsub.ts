@@ -5,9 +5,18 @@ export class PubSubEngine {
   private batches: any = {};
   private registeredUsers: any = {};
   private registeredChannels: any = {};
+  private hooks: any = {};
 
   constructor(private loopInterval: number) {
     this.loop();
+  }
+
+  public on(name: string, listener: Listener): void {
+    this.hooks[name] = listener;
+  }
+
+  public getAllChannels(): string[] {
+    return Object.keys(this.registeredChannels);
   }
 
   public register(userId: string, listener: Listener): void {
@@ -21,16 +30,17 @@ export class PubSubEngine {
     delete this.registeredUsers[userId];
   }
 
-  public subscribe(channel: string, userId: string): void {
+  public subscribe(channelName: string, userId: string): void {
     if (!this.registeredUsers[userId]) {
       return;
     }
 
-    if (this.registeredChannels[channel]) {
-      return this.registeredChannels[channel].push(userId);
+    if (this.registeredChannels[channelName]) {
+      return this.registeredChannels[channelName].push(userId);
     }
 
-    this.registeredChannels[channel] = [userId];
+    this.registeredChannels[channelName] = [userId];
+    this.hooks['channelNew'] && this.hooks['channelNew'](channelName);
   }
 
   public unsubscribe(channelName: string, userId: string): void {
@@ -47,6 +57,7 @@ export class PubSubEngine {
 
     if (!channel.length) {
       delete this.registeredChannels[channelName];
+      this.hooks['channelRemove'] && this.hooks['channelRemove'](channelName);
     }
   }
 
