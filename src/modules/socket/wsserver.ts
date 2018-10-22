@@ -1,3 +1,4 @@
+import { random } from '../../utils/functions';
 import { PubSubEngine } from '../pubsub/pubsub';
 import { EventEmitter } from '../../utils/emitter';
 import { BrokerClient } from '../broker/client';
@@ -8,10 +9,11 @@ export class WSServer extends EventEmitter {
   public middleware: { [key: string]: Listener } = {};
 
   private brokers: BrokerClient[] = [];
-  private nextBrokerId: number = 0;
+  private nextBrokerId: number;
 
   constructor(private options: Options, internalSecurityKey: string) {
     super();
+    this.nextBrokerId = random(0, this.options.brokers - 1);
     // need to add auto channel resubscribe on reconnect event
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
