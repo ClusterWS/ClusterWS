@@ -17,13 +17,14 @@ export class Socket {
   private channels: { [key: string]: number } = {};
 
   constructor(private worker: Worker, private socket: WebSocket) {
-    this.worker.wss.pubSub.register(this.id, (message: any) => {
+    this.worker.wss.pubSub.register(this.id, (message: Message) => {
       this.send(null, message, 'publish');
     });
 
     this.socket.on('message', (message: string | Buffer): void => {
       try {
         // need to verify if it can parse Buffer from c++
+        // handle binary data
         decode(this as any, JSON.stringify(message), this.worker.options);
       } catch (err) { logError(err); }
     });

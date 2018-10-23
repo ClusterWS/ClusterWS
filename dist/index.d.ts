@@ -29,9 +29,11 @@ export class Broker {
 
 export class PubSubEngine {
     constructor(loopInterval: number);
+    on(name: string, listener: Listener): void;
+    getAllChannels(): string[];
     register(userId: string, listener: Listener): void;
     deRegister(userId: string, channels: string[]): void;
-    subscribe(channel: string, userId: string): void;
+    subscribe(channelName: string, userId: string): void;
     unsubscribe(channelName: string, userId: string): void;
     publish(channel: string, message: Message, id?: string): void;
 }

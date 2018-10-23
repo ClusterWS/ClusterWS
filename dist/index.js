@@ -43,13 +43,10 @@ class Broker {
                     e.slice(0, s).toString();
                 }
             }), e.on("error", e => {}), e.on("close", (e, s) => {});
-        }), this.flushLoop(), this.server.startAutoPing(2e4);
+        }), this.server.startAutoPing(2e4);
     }
     messagePublisher(e, s, t) {
         e.send(Buffer.from(`${s}%${JSON.stringify(t)}`));
-    }
-    flushLoop() {
-        setTimeout(() => {}, 10);
     }
 }
 
@@ -140,8 +137,14 @@ function decode(e, s, t) {
 
 class PubSubEngine {
     constructor(e) {
-        this.loopInterval = e, this.changes = [], this.batches = {}, this.registeredUsers = {}, 
+        this.loopInterval = e, this.hooks = {}, this.changes = [], this.batches = {}, this.registeredUsers = {}, 
         this.registeredChannels = {}, this.loop();
+    }
+    on(e, s) {
+        this.hooks[e] = s;
+    }
+    getAllChannels() {
+        return Object.keys(this.registeredChannels);
     }
     register(e, s) {
         this.registeredUsers[e] = s;
@@ -151,16 +154,19 @@ class PubSubEngine {
         delete this.registeredUsers[e];
     }
     subscribe(e, s) {
-        if (this.registeredUsers[s]) return this.registeredChannels[e] ? this.registeredChannels[e].push(s) : void (this.registeredChannels[e] = [ s ]);
+        if (this.registeredUsers[s]) {
+            if (this.registeredChannels[e]) return this.registeredChannels[e].push(s);
+            this.registeredChannels[e] = [ s ], this.hooks.channelNew && this.hooks.channelNew(e);
+        }
     }
     unsubscribe(e, s) {
         const t = this.registeredChannels[e];
         if (!t) return;
         const r = t.indexOf(s);
-        -1 !== r && t.splice(r, 1), t.length || delete this.registeredChannels[e];
+        -1 !== r && t.splice(r, 1), t.length || (delete this.registeredChannels[e], this.hooks.channelRemove && this.hooks.channelRemove(e));
     }
     publish(e, s, t) {
-        if (console.log(this.registeredChannels), !this.registeredChannels[e]) return;
+        if (!this.registeredChannels[e]) return;
         -1 === this.changes.indexOf(e) && this.changes.push(e);
         const r = this.batches[e];
         if (r) return r.push({
@@ -179,6 +185,7 @@ class PubSubEngine {
             const t = this.changes[s], r = this.batches[t];
             if (!r || !r.length) continue;
             const o = r.length, i = this.registeredChannels[t];
+            i.push("broker");
             for (let s = 0, n = i.length; s < n; s++) {
                 const n = i[s], c = [];
                 for (let e = 0; e < o; e++) r[e].id !== n && c.push(r[e].message);
@@ -225,10 +232,13 @@ class BrokerClient {
 class WSServer extends EventEmitter {
     constructor(e, s) {
         super(), this.options = e, this.pubSub = new PubSubEngine(10), this.middleware = {}, 
-        this.brokers = [], this.nextBrokerId = 0;
+        this.brokers = [], this.nextBrokerId = random(0, this.options.brokers - 1), this.pubSub.register("broker", e => {
+            console.log("Message to broker", e);
+        });
+        const t = this.onBrokerMessage.bind(this);
         for (let e = 0; e < this.options.brokers; e++) {
-            const t = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}/?token=${s}`);
-            t.on("message", this.onBrokerMessage.bind(this)), this.brokers.push(t);
+            const r = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}/?token=${s}`);
+            r.on("message", t), this.brokers.push(r);
         }
     }
     setMiddleware(e, s) {

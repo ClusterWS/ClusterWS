@@ -67,22 +67,10 @@ export class Broker {
       });
     });
 
-    this.flushLoop();
     this.server.startAutoPing(20000);
   }
 
   private messagePublisher(socket: WebSocket, channel: string, mergedMessage: Message): void {
     socket.send(Buffer.from(`${channel}%${JSON.stringify(mergedMessage)}`));
-  }
-
-  private flushLoop(): void {
-    setTimeout(() => {
-      // for (const channel in this.channels) {
-      // if (this.channels[channel]) {
-      //   this.channels[channel].batchFlush();
-      // }
-      // }
-      // this.flushLoop();
-    }, 10);
   }
 }

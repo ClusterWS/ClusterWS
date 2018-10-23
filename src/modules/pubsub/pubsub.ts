@@ -1,11 +1,11 @@
 import { Listener, Message } from '../../utils/types';
 
 export class PubSubEngine {
+  private hooks: any = {};
   private changes: string[] = [];
   private batches: any = {};
   private registeredUsers: any = {};
   private registeredChannels: any = {};
-  private hooks: any = {};
 
   constructor(private loopInterval: number) {
     this.loop();
@@ -96,6 +96,8 @@ export class PubSubEngine {
       const batchLen: number = batch.length;
 
       const users: string[] = this.registeredChannels[channel];
+      users.push('broker');
+
       for (let j: number = 0, userLen: number = users.length; j < userLen; j++) {
         const userId: string = users[j];
         const userMessages: any[] = [];

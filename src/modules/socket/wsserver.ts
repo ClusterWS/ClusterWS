@@ -14,10 +14,17 @@ export class WSServer extends EventEmitter {
   constructor(private options: Options, internalSecurityKey: string) {
     super();
     this.nextBrokerId = random(0, this.options.brokers - 1);
+
+    this.pubSub.register('broker', (message: Message): void => {
+      console.log('Message to broker', message);
+      // message to the broker
+    });
+
     // need to add auto channel resubscribe on reconnect event
+    const onBrokerMessage: Listener = this.onBrokerMessage.bind(this);
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
-      brokerClient.on('message', this.onBrokerMessage.bind(this));
+      brokerClient.on('message', onBrokerMessage);
       this.brokers.push(brokerClient);
     }
   }
