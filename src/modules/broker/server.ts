@@ -1,4 +1,3 @@
-// import { Channel } from '../pubsub/channel';
 import { generateKey } from '../../utils/functions';
 import { Options, Listener, Message } from '../../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
@@ -25,7 +24,21 @@ export class Broker {
 
       socket.on('message', (message: string | Buffer): void => {
         if (typeof message === 'string') {
-          const [type, channelName]: string[] = JSON.parse(message);
+          const [type, data]: any = JSON.parse(message);
+
+          if (type === 'u') {
+            // handle unsubscribe event
+            return
+          }
+
+          if (typeof data === 'string') {
+            // handle one channel at once
+          } else {
+            for (let i: number = 0, len: number = data.length; i < len; i++) {
+              // handle many channels at once
+            }
+          }
+
 
           // if (type === 'u' && this.channels[channelName]) {
           //   return this.channels[channelName].unsubscribe(socket.id);
@@ -48,6 +61,7 @@ export class Broker {
           //   this.channels[channelName].subscribe(socket.id, this.messagePublisher.bind(null, socket));
           // }
         } else {
+          // we need to decode message and generate different message publish for each server
           message = Buffer.from(message);
           const index: number = message.indexOf(37);
           const channelName: string = message.slice(0, index).toString();

@@ -15,9 +15,22 @@ export class WSServer extends EventEmitter {
     super();
     this.nextBrokerId = random(0, this.options.brokers - 1);
 
+    this.pubSub.on('channelNew', (channelName: string) => {
+      for (let i: number = 0, len: number = this.brokers.length; i < len; i++) {
+        this.brokers[i].send(JSON.stringify(['s', channelName]));
+      }
+    });
+
+    this.pubSub.on('channelRemove', (channelName: string) => {
+      for (let i: number = 0, len: number = this.brokers.length; i < len; i++) {
+        this.brokers[i].send(JSON.stringify(['u', channelName]));
+      }
+    });
+
     this.pubSub.register('broker', (message: Message): void => {
       console.log('Message to broker', message);
-      // message to the broker
+      // send message array to the broker encode it properly before sending
+      // handle broker selection
     });
 
     // need to add auto channel resubscribe on reconnect event
@@ -40,7 +53,6 @@ export class WSServer extends EventEmitter {
 
   public subscribe(channelName: string, id: string): void {
     this.pubSub.subscribe(channelName, id);
-    // need to inform brokers about new subscribed channel and unsubscribed
   }
 
   public unsubscribe(channelName: string, id: string): void {

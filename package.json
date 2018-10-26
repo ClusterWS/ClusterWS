@@ -38,6 +38,6 @@
     "javascript"
   ],
   "dependencies": {
-    "@clusterws/uws": "^0.4.7"
+    "@clusterws/uws": "^0.5.0"
   }
 }
