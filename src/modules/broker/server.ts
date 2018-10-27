@@ -39,7 +39,8 @@ export class Broker {
             }
           }
         } else {
-          const decodedMessage: Message = JSON.parse(message as any);
+          const decodedMessage: Message = JSON.parse(Buffer.from(message) as any);
+          console.log('Got in the broker', decodedMessage);
           // we need to decode message and generate different message publish for each server
           // message = Buffer.from(message);
           // const index: number = message.indexOf(37);
@@ -63,6 +64,7 @@ export class Broker {
     this.server.startAutoPing(20000);
   }
 
+  // need a function to handle each user
   private messagePublisher(socket: WebSocket, channel: string, mergedMessage: Message): void {
     socket.send(Buffer.from(`${channel}%${JSON.stringify(mergedMessage)}`));
   }

@@ -39,7 +39,7 @@ export class PubSubEngine {
       return this.registeredChannels[channelName].push(userId);
     }
 
-    this.registeredChannels[channelName] = [userId];
+    this.registeredChannels[channelName] = ['broker', userId];
     this.hooks['channelNew'] && this.hooks['channelNew'](channelName);
   }
 
@@ -55,7 +55,7 @@ export class PubSubEngine {
       channel.splice(userIndex, 1);
     }
 
-    if (!channel.length) {
+    if (channel.length === 1 && channel[0] === 'broker') {
       delete this.registeredChannels[channelName];
       this.hooks['channelRemove'] && this.hooks['channelRemove'](channelName);
     }
@@ -96,7 +96,6 @@ export class PubSubEngine {
       const batchLen: number = batch.length;
 
       const users: string[] = this.registeredChannels[channel];
-      users.push('broker');
 
       for (let j: number = 0, userLen: number = users.length; j < userLen; j++) {
         const userId: string = users[j];

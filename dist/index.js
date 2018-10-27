@@ -38,10 +38,11 @@ class Broker {
             e.id = generateKey(10), e.channels = {}, e.on("message", s => {
                 if ("string" == typeof s) {
                     const [t, r] = JSON.parse(s);
-                    if ("u" === t) return delete e.channels[r];
+                    if (console.log(e.channels), "u" === t) return delete e.channels[r];
                     if ("string" == typeof r) e.channels[r] = 1; else for (let s = 0, t = r.length; s < t; s++) e.channels[r[s]] = 1;
                 } else {
-                    JSON.parse(s);
+                    const e = JSON.parse(Buffer.from(s));
+                    console.log("Got in the broker", e);
                 }
             }), e.on("error", e => {}), e.on("close", (e, s) => {});
         }), this.server.startAutoPing(2e4);
@@ -157,14 +158,15 @@ class PubSubEngine {
     subscribe(e, s) {
         if (this.registeredUsers[s]) {
             if (this.registeredChannels[e]) return this.registeredChannels[e].push(s);
-            this.registeredChannels[e] = [ s ], this.hooks.channelNew && this.hooks.channelNew(e);
+            this.registeredChannels[e] = [ "broker", s ], this.hooks.channelNew && this.hooks.channelNew(e);
         }
     }
     unsubscribe(e, s) {
         const t = this.registeredChannels[e];
         if (!t) return;
         const r = t.indexOf(s);
-        -1 !== r && t.splice(r, 1), t.length || (delete this.registeredChannels[e], this.hooks.channelRemove && this.hooks.channelRemove(e));
+        -1 !== r && t.splice(r, 1), 1 === t.length && "broker" === t[0] && (delete this.registeredChannels[e], 
+        this.hooks.channelRemove && this.hooks.channelRemove(e));
     }
     publish(e, s, t) {
         if (!this.registeredChannels[e]) return;
@@ -186,7 +188,6 @@ class PubSubEngine {
             const t = this.changes[s], r = this.batches[t];
             if (!r || !r.length) continue;
             const o = r.length, n = this.registeredChannels[t];
-            n.push("broker");
             for (let s = 0, i = n.length; s < i; s++) {
                 const i = n[s], h = [];
                 for (let e = 0; e < o; e++) r[e].id !== i && h.push(r[e].message);
@@ -238,7 +239,10 @@ class WSServer extends EventEmitter {
         }), this.pubSub.on("channelRemove", e => {
             for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "u", e ]));
         }), this.pubSub.register("broker", e => {
-            console.log("Message to broker", e);
+            let s = 0, t = !1;
+            const r = Buffer.from(JSON.stringify(e)), o = this.brokers.length;
+            for (;!t && s < 2 * o; ) this.nextBrokerId >= o && (this.nextBrokerId = 0), t = this.brokers[this.nextBrokerId].send(r), 
+            s++, this.nextBrokerId++;
         });
         const t = this.onBrokerMessage.bind(this);
         for (let e = 0; e < this.options.brokers; e++) {
@@ -286,8 +290,8 @@ function masterProcess(e) {
     const t = [], r = [], o = generateKey(20), n = generateKey(20);
     if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let s = 0; s < e.brokers; s++) i("Broker", s);
     function i(h, c) {
-        const a = cluster.fork();
-        a.on("message", o => {
+        const l = cluster.fork();
+        l.on("message", o => {
             if ("READY" === o.event) {
                 if (s) return logReady(`${h} ${c} PID ${o.pid} has been restarted`);
                 switch (h) {
@@ -305,10 +309,10 @@ function masterProcess(e) {
                     for (let s = 0; s < e.brokers; s++) i("Broker", s);
                 }
             }
-        }), a.on("exit", () => {
+        }), l.on("exit", () => {
             logError(`${h} ${c} has exited`), e.restartWorkerOnFail && (logWarning(`${h} ${c} is restarting \n`), 
             i(h, c));
-        }), a.send({
+        }), l.send({
             processId: c,
             processName: h,
             serverId: o,

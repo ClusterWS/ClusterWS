@@ -21,6 +21,7 @@ export class BrokerClient {
       this.socket.send(message);
       return true;
     }
+
     return false;
   }
 

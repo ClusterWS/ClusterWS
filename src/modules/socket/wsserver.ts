@@ -27,9 +27,22 @@ export class WSServer extends EventEmitter {
     });
 
     this.pubSub.register('broker', (message: Message): void => {
-      console.log('Message to broker', message);
-      // send message array to the broker encode it properly before sending
-      // handle broker selection
+      let attempts: number = 0;
+      let isCompleted: boolean = false;
+
+      const readyMessage: Buffer = Buffer.from(JSON.stringify(message));
+      const brokersLength: number = this.brokers.length;
+
+      while (!isCompleted && attempts < brokersLength * 2) {
+        if (this.nextBrokerId >= brokersLength) {
+          this.nextBrokerId = 0;
+        }
+
+        isCompleted = this.brokers[this.nextBrokerId].send(readyMessage);
+
+        attempts++;
+        this.nextBrokerId++;
+      }
     });
 
     // need to add auto channel resubscribe on reconnect event
