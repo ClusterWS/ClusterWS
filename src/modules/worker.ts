@@ -16,7 +16,7 @@ export class Worker {
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 
     const uServer: WebSocketServer = new WebSocketServer({
-      path: this.options.wssPath,
+      path: this.options.wsPath,
       server: this.server,
       // need to add middleware to handle this function
       // verifyClient: (info: ConnectionInfo, next: Listener): void => {/** Need to add logic */ }

@@ -103,7 +103,7 @@ export type Configurations = {
     worker: WorkerFunction;
     port?: number;
     host?: string;
-    wssPath?: string;
+    wsPath?: string;
     workers?: number;
     brokers?: number;
     useBinary?: boolean;
@@ -118,7 +118,7 @@ export type Options = {
     worker: WorkerFunction;
     port: number;
     host: string | null;
-    wssPath: string;
+    wsPath: string;
     workers: number;
     brokers: number;
     useBinary: boolean;

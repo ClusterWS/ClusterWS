@@ -28,14 +28,14 @@ function generateKey(e) {
 
 class Broker {
     constructor(e, s, t) {
-        this.server = new uws.WebSocketServer({
+        this.sockets = [], this.server = new uws.WebSocketServer({
             port: e,
             verifyClient: (e, s) => s(e.req.url === `/?token=${t}`)
         }, () => process.send({
             event: "READY",
             pid: process.pid
         })), this.server.on("connection", e => {
-            e.id = generateKey(10), e.on("message", s => {
+            e.id = generateKey(10), e.channels = {}, e.on("message", s => {
                 if ("string" == typeof s) {
                     const [t, r] = JSON.parse(s);
                     if ("u" === t) return delete e.channels[r];
@@ -265,7 +265,7 @@ class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
         const t = new uws.WebSocketServer({
-            path: this.options.wssPath,
+            path: this.options.wsPath,
             server: this.server
         });
         t.on("connection", e => {
@@ -337,7 +337,7 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             host: e.host,
             worker: e.worker,
-            wssPath: e.wssPath || null,
+            wsPath: e.wsPath || null,
             workers: e.workers || 1,
             brokers: e.brokers || 1,
             useBinary: e.useBinary,
