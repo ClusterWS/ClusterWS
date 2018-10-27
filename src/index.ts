@@ -12,6 +12,7 @@ export default class ClusterWS {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
       host: configurations.host,
       worker: configurations.worker,
+      wssPath: configurations.wssPath || null,
       workers: configurations.workers || 1,
       brokers: configurations.brokers || 1,
       useBinary: configurations.useBinary,

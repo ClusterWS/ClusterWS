@@ -9,11 +9,10 @@ export class WSServer extends EventEmitter {
   public middleware: { [key: string]: Listener } = {};
 
   private brokers: BrokerClient[] = [];
-  private nextBrokerId: number;
+  private nextBrokerId: number = random(0, this.options.brokers - 1);
 
   constructor(private options: Options, internalSecurityKey: string) {
     super();
-    this.nextBrokerId = random(0, this.options.brokers - 1);
 
     this.pubSub.on('channelNew', (channelName: string) => {
       for (let i: number = 0, len: number = this.brokers.length; i < len; i++) {

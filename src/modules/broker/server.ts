@@ -4,12 +4,12 @@ import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
 
 type SocketExtend = {
   id: string,
-  channels: any
+  channels: { [key: string]: number }
 };
 
 export class Broker {
   private server: WebSocketServer;
-  // private channels: { [key: string]: Channel } = {};
+  private sockets: any[] = [];
 
   constructor(port: number, options: Options, securityKey: string) {
     this.server = new WebSocketServer({
@@ -21,50 +21,29 @@ export class Broker {
 
     this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
       socket.id = generateKey(10);
+      socket.channels = {};
 
-      socket.on('message', (message: string | Buffer): void => {
+      socket.on('message', (message: string | Buffer): void | boolean => {
         if (typeof message === 'string') {
           const [type, data]: any = JSON.parse(message);
 
           if (type === 'u') {
-            // handle unsubscribe event
-            return
+            return delete socket.channels[data];
           }
 
           if (typeof data === 'string') {
-            // handle one channel at once
+            socket.channels[data] = 1;
           } else {
             for (let i: number = 0, len: number = data.length; i < len; i++) {
-              // handle many channels at once
+              socket.channels[data[i]] = 1;
             }
           }
-
-
-          // if (type === 'u' && this.channels[channelName]) {
-          //   return this.channels[channelName].unsubscribe(socket.id);
-          // }
-
-          // if (!this.channels[channelName]) {
-          //   let channel: Channel = new Channel(channelName, socket.id, this.messagePublisher.bind(null, socket));
-          //   channel.on('publish', (chName: string, data: Message[]) => {
-          //     // handler channel logic
-          //     // this should send message to the external scaler server
-          //   });
-
-          //   channel.on('destroy', (chName: string) => {
-          //     delete this.channels[chName];
-          //     channel = null;
-          //   });
-
-          //   this.channels[channelName] = channel;
-          // } else {
-          //   this.channels[channelName].subscribe(socket.id, this.messagePublisher.bind(null, socket));
-          // }
         } else {
+          const decodedMessage: Message = JSON.parse(message as any);
           // we need to decode message and generate different message publish for each server
-          message = Buffer.from(message);
-          const index: number = message.indexOf(37);
-          const channelName: string = message.slice(0, index).toString();
+          // message = Buffer.from(message);
+          // const index: number = message.indexOf(37);
+          // const channelName: string = message.slice(0, index).toString();
           // need to propagate message to scaler even if channel does not exist in this broker !
           // if (this.channels[channelName]) {
           //   this.channels[channelName].publish(socket.id, message.slice(index + 1, message.length));

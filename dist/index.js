@@ -35,12 +35,13 @@ class Broker {
             event: "READY",
             pid: process.pid
         })), this.server.on("connection", e => {
-            e.id = generateKey(10), e.on("message", e => {
-                if ("string" == typeof e) {
-                    const [s, t] = JSON.parse(e);
+            e.id = generateKey(10), e.on("message", s => {
+                if ("string" == typeof s) {
+                    const [t, r] = JSON.parse(s);
+                    if ("u" === t) return delete e.channels[r];
+                    if ("string" == typeof r) e.channels[r] = 1; else for (let s = 0, t = r.length; s < t; s++) e.channels[r[s]] = 1;
                 } else {
-                    const s = (e = Buffer.from(e)).indexOf(37);
-                    e.slice(0, s).toString();
+                    JSON.parse(s);
                 }
             }), e.on("error", e => {}), e.on("close", (e, s) => {});
         }), this.server.startAutoPing(2e4);
@@ -114,24 +115,24 @@ function encode(e, s, t, r) {
         system: {
             configuration: [ "s", "c", s ]
         }
-    }, i = JSON.stringify(o[t][e] || o[t]);
-    return r.useBinary ? Buffer.from(i) : i;
+    }, n = JSON.stringify(o[t][e] || o[t]);
+    return r.useBinary ? Buffer.from(n) : n;
 }
 
 function decode(e, s, t) {
-    let [r, o, i] = s;
-    switch ("s" !== r && t.encodeDecodeEngine && (i = t.encodeDecodeEngine.decode(i)), 
+    let [r, o, n] = s;
+    switch ("s" !== r && t.encodeDecodeEngine && (n = t.encodeDecodeEngine.decode(n)), 
     r) {
       case "e":
-        return e.emitter.emit(o, i);
+        return e.emitter.emit(o, n);
 
       case "p":
-        return e.channels[o] && e.worker.wss.publish(o, i, e.id);
+        return e.channels[o] && e.worker.wss.publish(o, n, e.id);
 
       case "s":
-        const s = e.channels[i];
-        "s" !== o || s || (e.channels[i] = 1, e.worker.wss.subscribe(i, e.id)), "u" === o && s && (delete e.channels[i], 
-        e.worker.wss.unsubscribe(i, e.id));
+        const s = e.channels[n];
+        "s" !== o || s || (e.channels[n] = 1, e.worker.wss.subscribe(n, e.id)), "u" === o && s && (delete e.channels[n], 
+        e.worker.wss.unsubscribe(n, e.id));
     }
 }
 
@@ -184,12 +185,12 @@ class PubSubEngine {
         for (let s = 0, t = this.changes.length; s < t; s++) {
             const t = this.changes[s], r = this.batches[t];
             if (!r || !r.length) continue;
-            const o = r.length, i = this.registeredChannels[t];
-            i.push("broker");
-            for (let s = 0, n = i.length; s < n; s++) {
-                const n = i[s], c = [];
-                for (let e = 0; e < o; e++) r[e].id !== n && c.push(r[e].message);
-                c.length && (e[n] || (e[n] = {}), e[n][t] = c);
+            const o = r.length, n = this.registeredChannels[t];
+            n.push("broker");
+            for (let s = 0, i = n.length; s < i; s++) {
+                const i = n[s], h = [];
+                for (let e = 0; e < o; e++) r[e].id !== i && h.push(r[e].message);
+                h.length && (e[i] || (e[i] = {}), e[i][t] = h);
             }
             this.batches[t] = [];
         }
@@ -232,7 +233,11 @@ class BrokerClient {
 class WSServer extends EventEmitter {
     constructor(e, s) {
         super(), this.options = e, this.pubSub = new PubSubEngine(10), this.middleware = {}, 
-        this.brokers = [], this.nextBrokerId = random(0, this.options.brokers - 1), this.pubSub.register("broker", e => {
+        this.brokers = [], this.nextBrokerId = random(0, this.options.brokers - 1), this.pubSub.on("channelNew", e => {
+            for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "s", e ]));
+        }), this.pubSub.on("channelRemove", e => {
+            for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "u", e ]));
+        }), this.pubSub.register("broker", e => {
             console.log("Message to broker", e);
         });
         const t = this.onBrokerMessage.bind(this);
@@ -260,6 +265,7 @@ class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
         const t = new uws.WebSocketServer({
+            path: this.options.wssPath,
             server: this.server
         });
         t.on("connection", e => {
@@ -277,36 +283,36 @@ class Worker {
 
 function masterProcess(e) {
     let s = !1;
-    const t = [], r = [], o = generateKey(20), i = generateKey(20);
-    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) n("Scaler", -1); else for (let s = 0; s < e.brokers; s++) n("Broker", s);
-    function n(c, h) {
+    const t = [], r = [], o = generateKey(20), n = generateKey(20);
+    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let s = 0; s < e.brokers; s++) i("Broker", s);
+    function i(h, c) {
         const a = cluster.fork();
         a.on("message", o => {
             if ("READY" === o.event) {
-                if (s) return logReady(`${c} ${h} PID ${o.pid} has been restarted`);
-                switch (c) {
+                if (s) return logReady(`${h} ${c} PID ${o.pid} has been restarted`);
+                switch (h) {
                   case "Broker":
-                    if (t[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${o.pid}`, !t.includes(void 0) && t.length === e.brokers) for (let s = 0; s < e.workers; s++) n("Worker", s);
+                    if (t[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${o.pid}`, !t.includes(void 0) && t.length === e.brokers) for (let s = 0; s < e.workers; s++) i("Worker", s);
                     break;
 
                   case "Worker":
-                    r[h] = `    Worker: ${h}, PID ${o.pid}`, r.includes(void 0) || r.length !== e.workers || (s = !0, 
+                    r[c] = `    Worker: ${c}, PID ${o.pid}`, r.includes(void 0) || r.length !== e.workers || (s = !0, 
                     logReady(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
                     t.forEach(logReady), r.forEach(logReady));
                     break;
 
                   case "Scaler":
-                    for (let s = 0; s < e.brokers; s++) n("Broker", s);
+                    for (let s = 0; s < e.brokers; s++) i("Broker", s);
                 }
             }
         }), a.on("exit", () => {
-            logError(`${c} ${h} has exited`), e.restartWorkerOnFail && (logWarning(`${c} ${h} is restarting \n`), 
-            n(c, h));
+            logError(`${h} ${c} has exited`), e.restartWorkerOnFail && (logWarning(`${h} ${c} is restarting \n`), 
+            i(h, c));
         }), a.send({
-            processId: h,
-            processName: c,
+            processId: c,
+            processName: h,
             serverId: o,
-            internalSecurityKey: i
+            internalSecurityKey: n
         });
     }
 }
@@ -331,6 +337,7 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             host: e.host,
             worker: e.worker,
+            wssPath: e.wssPath || null,
             workers: e.workers || 1,
             brokers: e.brokers || 1,
             useBinary: e.useBinary,

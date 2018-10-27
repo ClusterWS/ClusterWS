@@ -103,12 +103,13 @@ export type Configurations = {
     worker: WorkerFunction;
     port?: number;
     host?: string;
+    wssPath?: string;
     workers?: number;
     brokers?: number;
     useBinary?: boolean;
-    brokersPorts?: number[];
     tlsOptions?: SecureContextOptions;
     pingInterval?: number;
+    brokersPorts?: number[];
     restartWorkerOnFail?: boolean;
     horizontalScaleOptions?: HorizontalScaleOptions;
     encodeDecodeEngine?: EncodeDecodeEngine;
@@ -117,6 +118,7 @@ export type Options = {
     worker: WorkerFunction;
     port: number;
     host: string | null;
+    wssPath: string;
     workers: number;
     brokers: number;
     useBinary: boolean;
