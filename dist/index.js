@@ -28,24 +28,40 @@ function generateKey(e) {
 
 class Broker {
     constructor(e, s, t) {
-        this.sockets = [], this.server = new uws.WebSocketServer({
+        this.sockets = [], setInterval(() => console.log(JSON.stringify(this.sockets)), 5e3), 
+        this.server = new uws.WebSocketServer({
             port: e,
             verifyClient: (e, s) => s(e.req.url === `/?token=${t}`)
         }, () => process.send({
             event: "READY",
             pid: process.pid
         })), this.server.on("connection", e => {
-            e.id = generateKey(10), e.channels = {}, e.on("message", s => {
+            e.id = generateKey(10), e.channels = {}, this.sockets.push(e), e.on("message", s => {
                 if ("string" == typeof s) {
                     const [t, r] = JSON.parse(s);
-                    if (console.log(e.channels), "u" === t) return delete e.channels[r];
+                    if ("u" === t) return delete e.channels[r];
                     if ("string" == typeof r) e.channels[r] = 1; else for (let s = 0, t = r.length; s < t; s++) e.channels[r[s]] = 1;
                 } else {
-                    const e = JSON.parse(Buffer.from(s));
-                    console.log("Got in the broker", e);
+                    const t = JSON.parse(Buffer.from(s));
+                    this.broadcastMessage(e.id, t);
                 }
             }), e.on("error", e => {}), e.on("close", (e, s) => {});
         }), this.server.startAutoPing(2e4);
+    }
+    broadcastMessage(e, s) {
+        const t = Object.keys(s);
+        for (let r = 0, o = this.sockets.length; r < o; r++) {
+            const o = this.sockets[r];
+            if (o.id !== e) {
+                let e = !1;
+                const r = {};
+                for (let n = 0, i = t.length; n < i; n++) {
+                    const i = t[n];
+                    o.channels[i] && (e = !0, r[i] = s[i]);
+                }
+                e && o.readyState === o.OPEN && o.send(Buffer.from(JSON.stringify(r)));
+            }
+        }
     }
     messagePublisher(e, s, t) {
         e.send(Buffer.from(`${s}%${JSON.stringify(t)}`));
@@ -262,7 +278,9 @@ class WSServer extends EventEmitter {
     unsubscribe(e, s) {
         this.unsubscribe(e, s);
     }
-    onBrokerMessage(e) {}
+    onBrokerMessage(e) {
+        console.log("Got message from the Broker", e);
+    }
 }
 
 class Worker {

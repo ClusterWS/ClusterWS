@@ -72,6 +72,7 @@ export class WSServer extends EventEmitter {
   }
 
   private onBrokerMessage(message: string | Buffer): void {
+    console.log('Got message from the Broker', message);
     // work out this part a bit more
     // message = Buffer.from(message as Buffer);
     // const index: number = message.indexOf(37);
