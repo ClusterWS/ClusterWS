@@ -28,8 +28,7 @@ function generateKey(e) {
 
 class Broker {
     constructor(e, s, t) {
-        this.sockets = [], setInterval(() => console.log(JSON.stringify(this.sockets)), 5e3), 
-        this.server = new uws.WebSocketServer({
+        this.sockets = [], this.server = new uws.WebSocketServer({
             port: e,
             verifyClient: (e, s) => s(e.req.url === `/?token=${t}`)
         }, () => process.send({
@@ -41,11 +40,17 @@ class Broker {
                     const [t, r] = JSON.parse(s);
                     if ("u" === t) return delete e.channels[r];
                     if ("string" == typeof r) e.channels[r] = 1; else for (let s = 0, t = r.length; s < t; s++) e.channels[r[s]] = 1;
-                } else {
-                    const t = JSON.parse(Buffer.from(s));
-                    this.broadcastMessage(e.id, t);
+                } else this.broadcastMessage(e.id, JSON.parse(Buffer.from(s)));
+            }), e.on("error", e => {
+                logError(`Error in broker: ${e}`);
+            }), e.on("close", (s, t) => {
+                e.channels = {};
+                for (let s = 0, t = this.sockets.length; s < t; s++) if (this.sockets[s].id === e.id) {
+                    this.sockets.splice(s, 1);
+                    break;
                 }
-            }), e.on("error", e => {}), e.on("close", (e, s) => {});
+                e = null;
+            });
         }), this.server.startAutoPing(2e4);
     }
     broadcastMessage(e, s) {
@@ -62,9 +67,6 @@ class Broker {
                 e && o.readyState === o.OPEN && o.send(Buffer.from(JSON.stringify(r)));
             }
         }
-    }
-    messagePublisher(e, s, t) {
-        e.send(Buffer.from(`${s}%${JSON.stringify(t)}`));
     }
 }
 
@@ -233,7 +235,8 @@ class BrokerClient {
     }
     createSocket() {
         this.socket = new uws.WebSocket(this.url), this.socket.on("open", () => {
-            this.attempts = 0, this.attempts > 1 && logReady(`Reconnected to the Broker: ${this.url}`);
+            this.attempts > 1 && logReady(`Reconnected to the Broker: ${this.url}`), this.events.connect && this.events.connect(), 
+            this.attempts = 0;
         }), this.socket.on("error", e => {
             (this.attempts > 0 && this.attempts % 10 == 0 || 1 === this.attempts) && logWarning(`Can not connect to the Broker: ${this.url} (reconnecting)`), 
             this.socket = null, this.attempts++, setTimeout(() => this.createSocket(), random(1e3, 2e3));
@@ -241,15 +244,14 @@ class BrokerClient {
             if (this.socket = null, this.attempts++, 1e3 === e) return logWarning(`Disconnected from Broker: ${this.url} (code ${e})`);
             logWarning(`Disconnected from Broker: ${this.url} (reconnecting)`), setTimeout(() => this.createSocket(), random(1e3, 2e3));
         }), this.socket.on("message", e => {
-            const s = this.events.message;
-            s && s(e);
+            this.events.message && this.events.message(e);
         });
     }
 }
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(), this.options = e, this.pubSub = new PubSubEngine(10), this.middleware = {}, 
+        super(), this.options = e, this.pubSub = new PubSubEngine(5), this.middleware = {}, 
         this.brokers = [], this.nextBrokerId = random(0, this.options.brokers - 1), this.pubSub.on("channelNew", e => {
             for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "s", e ]));
         }), this.pubSub.on("channelRemove", e => {
@@ -263,7 +265,9 @@ class WSServer extends EventEmitter {
         const t = this.onBrokerMessage.bind(this);
         for (let e = 0; e < this.options.brokers; e++) {
             const r = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}/?token=${s}`);
-            r.on("message", t), this.brokers.push(r);
+            r.on("message", t), r.on("connect", () => {
+                console.log("Connected");
+            }), this.brokers.push(r);
         }
     }
     setMiddleware(e, s) {
@@ -279,7 +283,11 @@ class WSServer extends EventEmitter {
         this.unsubscribe(e, s);
     }
     onBrokerMessage(e) {
-        console.log("Got message from the Broker", e);
+        const s = JSON.parse(Buffer.from(e));
+        for (const e in s) if (s[e]) {
+            const t = s[e];
+            for (let s = 0, r = t.length; s < r; s++) this.publish(e, t[s], "broker");
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-import { generateKey } from '../../utils/functions';
+import { generateKey, logError } from '../../utils/functions';
 import { Options, Listener, Message } from '../../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
 
@@ -15,7 +15,7 @@ export class Broker {
     this.server = new WebSocketServer({
       port,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
-        return next(info.req.url === `/?token=${securityKey}`);
+        next(info.req.url === `/?token=${securityKey}`);
       }
     }, (): void => process.send({ event: 'READY', pid: process.pid }));
 
@@ -45,12 +45,19 @@ export class Broker {
       });
 
       socket.on('error', (err: Error): void => {
-        // handle error
+        // need to fix this error message
+        logError(`Error in broker: ${err}`);
       });
 
       socket.on('close', (code: number, reason: string): void => {
-        // add close event
-        // remove socket from sockets and clean up all data
+        socket.channels = {};
+        for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
+          if (this.sockets[i].id === socket.id) {
+            this.sockets.splice(i, 1);
+            break;
+          }
+        }
+        socket = null;
       });
     });
 
@@ -78,10 +85,5 @@ export class Broker {
         }
       }
     }
-  }
-
-  // need a function to handle each user
-  private messagePublisher(socket: WebSocket, channel: string, mergedMessage: Message): void {
-    socket.send(Buffer.from(`${channel}%${JSON.stringify(mergedMessage)}`));
   }
 }

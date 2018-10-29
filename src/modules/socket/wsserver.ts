@@ -5,7 +5,7 @@ import { BrokerClient } from '../broker/client';
 import { Message, Options, Listener } from '../../utils/types';
 
 export class WSServer extends EventEmitter {
-  public pubSub: PubSubEngine = new PubSubEngine(10);
+  public pubSub: PubSubEngine = new PubSubEngine(5);
   public middleware: { [key: string]: Listener } = {};
 
   private brokers: BrokerClient[] = [];
@@ -50,6 +50,10 @@ export class WSServer extends EventEmitter {
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
       brokerClient.on('message', onBrokerMessage);
+      brokerClient.on('connect', () => {
+        // console.log('Connected');
+        // need to get all channels and resubscribe to the broker
+      });
       this.brokers.push(brokerClient);
     }
   }
@@ -72,20 +76,15 @@ export class WSServer extends EventEmitter {
   }
 
   private onBrokerMessage(message: string | Buffer): void {
-    console.log('Got message from the Broker', message);
-    // work out this part a bit more
-    // message = Buffer.from(message as Buffer);
-    // const index: number = message.indexOf(37);
-    // const channel: string = message.slice(0, index).toString();
-
-    // if (this.channels[channel]) {
-    //   const actualMessage: Message[] = [];
-    //   const parsedMessage: Message = JSON.parse(message.slice(index + 1, message.length) as any);
-    //   for (let i: number = 0, len: number = parsedMessage.length; i < len; i++) {
-    //     Array.prototype.push.apply(actualMessage, JSON.parse(Buffer.from(parsedMessage[i]) as any));
-    //   }
-
-    // this.channels[channel].publish('from_broker', actualMessage);
-    // }
+    // Can optimize this function by passing whole array to the pubsub engine
+    const msg: Message = JSON.parse(Buffer.from(message as Buffer) as any);
+    for (const key in msg) {
+      if (msg[key]) {
+        const allMessages: Message[] = msg[key];
+        for (let i: number = 0, len: number = allMessages.length; i < len; i++) {
+          this.publish(key, allMessages[i], 'broker');
+        }
+      }
+    }
   }
 }

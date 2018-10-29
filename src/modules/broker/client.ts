@@ -28,11 +28,11 @@ export class BrokerClient {
   private createSocket(): void {
     this.socket = new WebSocket(this.url);
     this.socket.on('open', (): void => {
-      this.attempts = 0;
-
       if (this.attempts > 1) {
         logReady(`Reconnected to the Broker: ${this.url}`);
       }
+      this.events['connect'] && this.events['connect']();
+      this.attempts = 0;
     });
 
     this.socket.on('error', (_: Error): void => {
@@ -61,10 +61,7 @@ export class BrokerClient {
     });
 
     this.socket.on('message', (message: string | Buffer) => {
-      const listener: Listener = this.events['message'];
-      if (listener) {
-        listener(message);
-      }
+      this.events['message'] && this.events['message'](message);
     });
   }
 }
