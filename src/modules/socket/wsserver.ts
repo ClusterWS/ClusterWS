@@ -51,8 +51,10 @@ export class WSServer extends EventEmitter {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);
       brokerClient.on('message', onBrokerMessage);
       brokerClient.on('connect', () => {
-        // console.log('Connected');
-        // need to get all channels and resubscribe to the broker
+        const allChannels: string[] = this.pubSub.getAllChannels();
+        if (allChannels.length) {
+          brokerClient.send(JSON.stringify(['s', allChannels]));
+        }
       });
       this.brokers.push(brokerClient);
     }

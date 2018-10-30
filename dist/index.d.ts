@@ -33,7 +33,7 @@ export class PubSubEngine {
     getAllChannels(): string[];
     register(userId: string, listener: Listener): void;
     deRegister(userId: string, channels: string[]): void;
-    subscribe(channelName: string, userId: string): void;
+    subscribe(channelName: string, userId: string): any;
     unsubscribe(channelName: string, userId: string): void;
     publish(channel: string, message: Message, id?: string): void;
 }

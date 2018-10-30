@@ -30,7 +30,9 @@ class Broker {
     constructor(e, s, t) {
         this.sockets = [], this.server = new uws.WebSocketServer({
             port: e,
-            verifyClient: (e, s) => s(e.req.url === `/?token=${t}`)
+            verifyClient: (e, s) => {
+                s(e.req.url === `/?token=${t}`);
+            }
         }, () => process.send({
             event: "READY",
             pid: process.pid
@@ -266,7 +268,8 @@ class WSServer extends EventEmitter {
         for (let e = 0; e < this.options.brokers; e++) {
             const r = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[e]}/?token=${s}`);
             r.on("message", t), r.on("connect", () => {
-                console.log("Connected");
+                const e = this.pubSub.getAllChannels();
+                e.length && r.send(JSON.stringify([ "s", e ]));
             }), this.brokers.push(r);
         }
     }

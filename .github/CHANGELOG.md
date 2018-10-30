@@ -16,6 +16,7 @@ This section specifies only braking changes and new tings from version 3.
 * Pass custom logger to clusterws options
 * Development mode (without cluster)
 * Pass custom env variables to the Worker processes
+* New option `wsPath` now you can specify different path for websocket connection
 
 ### Other
 * Encode Decode engine is not in stable (may need to be clarified)

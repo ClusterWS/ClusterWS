@@ -1,11 +1,11 @@
 import { Listener, Message } from '../../utils/types';
 
 export class PubSubEngine {
-  private hooks: any = {};
+  private hooks: { [key: string]: Listener } = {};
   private changes: string[] = [];
-  private batches: any = {};
-  private registeredUsers: any = {};
-  private registeredChannels: any = {};
+  private batches: { [key: string]: any[] } = {};
+  private registeredUsers: { [key: string]: Listener } = {};
+  private registeredChannels: { [key: string]: string[] } = {};
 
   constructor(private loopInterval: number) {
     this.loop();
@@ -30,7 +30,7 @@ export class PubSubEngine {
     delete this.registeredUsers[userId];
   }
 
-  public subscribe(channelName: string, userId: string): void {
+  public subscribe(channelName: string, userId: string): any {
     if (!this.registeredUsers[userId]) {
       return;
     }
