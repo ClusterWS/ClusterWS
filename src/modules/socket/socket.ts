@@ -12,7 +12,7 @@ type PrivateSocket = {
 };
 
 export class Socket {
-  public id: string = generateKey(10);
+  public id: string = generateKey(8);
   private emitter: EventEmitter = new EventEmitter();
   private channels: { [key: string]: number } = {};
 

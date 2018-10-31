@@ -45,7 +45,6 @@ export class WSServer extends EventEmitter {
       }
     });
 
-    // need to add auto channel resubscribe on reconnect event
     const onBrokerMessage: Listener = this.onBrokerMessage.bind(this);
     for (let i: number = 0; i < this.options.brokers; i++) {
       const brokerClient: BrokerClient = new BrokerClient(`ws://127.0.0.1:${this.options.brokersPorts[i]}/?token=${internalSecurityKey}`);

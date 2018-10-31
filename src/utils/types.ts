@@ -61,31 +61,3 @@ export type EncodeDecodeEngine = {
 //   debug: () => any;
 //   warning: () => any;
 // };
-
-//  need to fix this
-// export type Brokers = {
-//   brokers: CustomObject;
-//   nextBroker: number;
-//   brokersKeys: string[];
-//   brokersAmount: number;
-// };
-
-// export type BrokerClients = {
-//   sockets: CustomObject;
-//   length: number;
-//   keys: string[];
-// };
-
-// Removed object
-
-// export type CustomObject = {
-//   [propName: string]: any;
-// };
-
-// export type TlsOptions = {
-//   ca?: string;
-//   pfx?: string;
-//   key?: string;
-//   cert?: string;
-//   passphrase?: string;
-// };

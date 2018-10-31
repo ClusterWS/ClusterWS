@@ -11,7 +11,7 @@ export class Broker {
   private server: WebSocketServer;
   private sockets: Array<WebSocket & SocketExtend> = [];
 
-  constructor(port: number, options: Options, securityKey: string) {
+  constructor(private options: Options, port: number, securityKey: string) {
     this.server = new WebSocketServer({
       port,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
@@ -20,7 +20,7 @@ export class Broker {
     }, (): void => process.send({ event: 'READY', pid: process.pid }));
 
     this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
-      socket.id = generateKey(10);
+      socket.id = generateKey(8);
       socket.channels = {};
       this.sockets.push(socket);
 

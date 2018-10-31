@@ -1,7 +1,8 @@
 import * as cluster from 'cluster';
 
-import { Broker } from './modules/broker/server';
 import { Worker } from './modules/worker';
+import { Scaler } from './modules/broker/scaler';
+import { Broker } from './modules/broker/server';
 import { Options, Message } from './utils/types';
 import { logError, generateKey, logWarning, logReady } from './utils/functions';
 
@@ -73,14 +74,14 @@ export function masterProcess(options: Options): void {
 }
 
 export function workerProcess(options: Options): void {
-  process.on('message', (message: Message): Worker | Broker => {
+  process.on('message', (message: Message): Worker | Broker | Scaler => {
     switch (message.processName) {
+      case 'Scaler':
+        return new Scaler(options.horizontalScaleOptions);
       case 'Worker':
         return new Worker(options, message.internalSecurityKey);
       case 'Broker':
-        return new Broker(options.brokersPorts[message.processId], options, message.internalSecurityKey);
-      case 'Scaler':
-        break;
+        return new Broker(options, options.brokersPorts[message.processId], message.internalSecurityKey);
     }
   });
 
