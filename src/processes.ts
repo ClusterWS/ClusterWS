@@ -8,9 +8,9 @@ import { logError, generateKey, logWarning, logReady } from './utils/functions';
 
 export function masterProcess(options: Options): void {
   let isReady: boolean = false;
-  // TODO: Fix types on this things why string[] does not work it is pain :( !!
-  const brokersReady: any = [];
-  const workersReady: any = [];
+
+  const brokersReady: any[] = [];
+  const workersReady: any[] = [];
 
   const serverId: string = generateKey(20);
   const internalSecurityKey: string = generateKey(20);

@@ -23,8 +23,10 @@ export class Socket {
 
     this.socket.on('message', (message: string | Buffer): void => {
       try {
-        // need to verify if it can parse Buffer from c++
-        // handle binary data
+        if (typeof message !== 'string') {
+          message = Buffer.from(message);
+        }
+
         decode(this as any, JSON.stringify(message), this.worker.options);
       } catch (err) { logError(err); }
     });

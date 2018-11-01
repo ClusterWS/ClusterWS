@@ -47,6 +47,7 @@ export type Options = {
   restartWorkerOnFail: boolean;
   horizontalScaleOptions: HorizontalScaleOptions | null;
   encodeDecodeEngine: EncodeDecodeEngine | null;
+  // logger: Logger
 };
 
 /// TODO: Make sure that types fit
