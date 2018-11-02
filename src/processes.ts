@@ -9,8 +9,9 @@ import { logError, generateKey, logWarning, logReady } from './utils/functions';
 export function masterProcess(options: Options): void {
   let isReady: boolean = false;
 
-  const brokersReady: any[] = [];
-  const workersReady: any[] = [];
+  // string[] does not compile because includes does not exist
+  const brokersReady: any = [];
+  const workersReady: any = [];
 
   const serverId: string = generateKey(20);
   const internalSecurityKey: string = generateKey(20);

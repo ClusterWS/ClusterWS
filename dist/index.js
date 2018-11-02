@@ -26,52 +26,6 @@ function generateKey(e) {
     return crypto.randomBytes(e).toString("hex");
 }
 
-class Broker {
-    constructor(e, s, t) {
-        this.sockets = [], this.server = new uws.WebSocketServer({
-            port: e,
-            verifyClient: (e, s) => {
-                s(e.req.url === `/?token=${t}`);
-            }
-        }, () => process.send({
-            event: "READY",
-            pid: process.pid
-        })), this.server.on("connection", e => {
-            e.id = generateKey(10), e.channels = {}, this.sockets.push(e), e.on("message", s => {
-                if ("string" == typeof s) {
-                    const [t, r] = JSON.parse(s);
-                    if ("u" === t) return delete e.channels[r];
-                    if ("string" == typeof r) e.channels[r] = 1; else for (let s = 0, t = r.length; s < t; s++) e.channels[r[s]] = 1;
-                } else this.broadcastMessage(e.id, JSON.parse(Buffer.from(s)));
-            }), e.on("error", e => {
-                logError(`Error in broker: ${e}`);
-            }), e.on("close", (s, t) => {
-                e.channels = {};
-                for (let s = 0, t = this.sockets.length; s < t; s++) if (this.sockets[s].id === e.id) {
-                    this.sockets.splice(s, 1);
-                    break;
-                }
-                e = null;
-            });
-        }), this.server.startAutoPing(2e4);
-    }
-    broadcastMessage(e, s) {
-        const t = Object.keys(s);
-        for (let r = 0, o = this.sockets.length; r < o; r++) {
-            const o = this.sockets[r];
-            if (o.id !== e) {
-                let e = !1;
-                const r = {};
-                for (let n = 0, i = t.length; n < i; n++) {
-                    const i = t[n];
-                    o.channels[i] && (e = !0, r[i] = s[i]);
-                }
-                e && o.readyState === o.OPEN && o.send(Buffer.from(JSON.stringify(r)));
-            }
-        }
-    }
-}
-
 class EventEmitter {
     constructor() {
         this.events = {};
@@ -97,12 +51,12 @@ class EventEmitter {
 
 class Socket {
     constructor(e, s) {
-        this.worker = e, this.socket = s, this.id = generateKey(10), this.emitter = new EventEmitter(), 
+        this.worker = e, this.socket = s, this.id = generateKey(8), this.emitter = new EventEmitter(), 
         this.channels = {}, this.worker.wss.pubSub.register(this.id, e => {
             this.send(null, e, "publish");
         }), this.socket.on("message", e => {
             try {
-                decode(this, JSON.stringify(e), this.worker.options);
+                "string" != typeof e && (e = Buffer.from(e)), decode(this, JSON.stringify(e), this.worker.options);
             } catch (e) {
                 logError(e);
             }
@@ -314,6 +268,73 @@ class Worker {
     }
 }
 
+class Scaler {
+    constructor(e) {
+        this.horizontalScaleOptions = e, this.sockets = [], this.server = new uws.WebSocketServer({
+            port: this.horizontalScaleOptions.masterOptions.port,
+            verifyClient: (e, s) => {
+                s(e.req.url === `/?token=${this.horizontalScaleOptions.key}`);
+            }
+        }, () => process.send({
+            event: "READY",
+            pid: process.pid
+        })), this.server.on("connection", e => {
+            e.id = generateKey(8), this.sockets.push(e), e.on("message", s => {
+                for (let t = 0, r = this.sockets.length; t < r; t++) {
+                    const r = this.sockets[t];
+                    e.id != e.id && e.readyState === e.OPEN && r.send(s);
+                }
+            }), e.on("error", e => {}), e.on("close", (e, s) => {});
+        }), this.server.startAutoPing(2e4);
+    }
+}
+
+class Broker {
+    constructor(e, s, t) {
+        this.options = e, this.sockets = [], this.server = new uws.WebSocketServer({
+            port: s,
+            verifyClient: (e, s) => {
+                s(e.req.url === `/?token=${t}`);
+            }
+        }, () => process.send({
+            event: "READY",
+            pid: process.pid
+        })), this.server.on("connection", e => {
+            e.id = generateKey(8), e.channels = {}, this.sockets.push(e), e.on("message", s => {
+                if ("string" == typeof s) {
+                    const [t, r] = JSON.parse(s);
+                    if ("u" === t) return delete e.channels[r];
+                    if ("string" == typeof r) e.channels[r] = 1; else for (let s = 0, t = r.length; s < t; s++) e.channels[r[s]] = 1;
+                } else this.broadcastMessage(e.id, JSON.parse(Buffer.from(s)));
+            }), e.on("error", e => {
+                logError(`Error in broker: ${e}`);
+            }), e.on("close", (s, t) => {
+                e.channels = {};
+                for (let s = 0, t = this.sockets.length; s < t; s++) if (this.sockets[s].id === e.id) {
+                    this.sockets.splice(s, 1);
+                    break;
+                }
+                e = null;
+            });
+        }), this.server.startAutoPing(2e4);
+    }
+    broadcastMessage(e, s) {
+        const t = Object.keys(s);
+        for (let r = 0, o = this.sockets.length; r < o; r++) {
+            const o = this.sockets[r];
+            if (o.id !== e) {
+                let e = !1;
+                const r = {};
+                for (let n = 0, i = t.length; n < i; n++) {
+                    const i = t[n];
+                    o.channels[i] && (e = !0, r[i] = s[i]);
+                }
+                e && o.readyState === o.OPEN && o.send(Buffer.from(JSON.stringify(r)));
+            }
+        }
+    }
+}
+
 function masterProcess(e) {
     let s = !1;
     const t = [], r = [], o = generateKey(20), n = generateKey(20);
@@ -353,11 +374,14 @@ function masterProcess(e) {
 function workerProcess(e) {
     process.on("message", s => {
         switch (s.processName) {
+          case "Scaler":
+            return new Scaler(e.horizontalScaleOptions);
+
           case "Worker":
             return new Worker(e, s.internalSecurityKey);
 
           case "Broker":
-            return new Broker(e.brokersPorts[s.processId], e, s.internalSecurityKey);
+            return new Broker(e, e.brokersPorts[s.processId], s.internalSecurityKey);
         }
     }), process.on("uncaughtException", e => {
         logError(`${e.stack || e}`), process.exit();

@@ -21,10 +21,11 @@ export class BrokerClient {
 }
 
 export class Scaler {
+    constructor(horizontalScaleOptions: HorizontalScaleOptions);
 }
 
 export class Broker {
-    constructor(port: number, options: Options, securityKey: string);
+    constructor(options: Options, port: number, securityKey: string);
 }
 
 export class PubSubEngine {
