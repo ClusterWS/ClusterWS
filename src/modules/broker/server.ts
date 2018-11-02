@@ -45,8 +45,8 @@ export class Broker {
       });
 
       socket.on('error', (err: Error): void => {
-        // need to fix this error message
-        logError(`Error in broker: ${err}`);
+        // clean on error
+        // this function will call close event
       });
 
       socket.on('close', (code: number, reason: string): void => {

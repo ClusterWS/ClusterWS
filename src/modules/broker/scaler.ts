@@ -1,6 +1,6 @@
-import { generateKey, logError } from '../../utils/functions';
+import { generateKey } from '../../utils/functions';
+import { Listener, HorizontalScaleOptions } from '../../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
-import { Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
 type SocketExtend = {
   id: string
@@ -34,10 +34,17 @@ export class Scaler {
 
       socket.on('error', (err: Error): void => {
         // clean on error
+        // this function will call close event
       });
 
       socket.on('close', (code: number, reason: string): void => {
-        // clean on close
+        for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
+          if (this.sockets[i].id === socket.id) {
+            this.sockets.splice(i, 1);
+            break;
+          }
+        }
+        socket = null;
       });
     });
 
