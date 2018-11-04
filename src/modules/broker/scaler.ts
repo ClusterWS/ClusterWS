@@ -23,10 +23,14 @@ export class Scaler {
     if (horizontalScaleOptions.masterOptions.tlsOptions) {
       options.server = HTTPS.createServer(horizontalScaleOptions.masterOptions.tlsOptions);
       this.server = new WebSocketServer(options);
-      options.server.listen(this.horizontalScaleOptions.masterOptions.port, (): void => process.send({ event: 'READY', pid: process.pid }));
+      options.server.listen(this.horizontalScaleOptions.masterOptions.port, (): void => {
+        process.send({ event: 'READY', pid: process.pid });
+      });
     } else {
       options.port = this.horizontalScaleOptions.masterOptions.port;
-      this.server = new WebSocketServer(options, (): void => process.send({ event: 'READY', pid: process.pid }));
+      this.server = new WebSocketServer(options, (): void => {
+        process.send({ event: 'READY', pid: process.pid });
+      });
     }
 
     this.server.on('connection', (socket: WebSocket & SocketExtend): void => {

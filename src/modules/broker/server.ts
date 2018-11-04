@@ -1,6 +1,6 @@
 import { generateKey, logError } from '../../utils/functions';
-import { Options, Listener, Message } from '../../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
+import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
 type SocketExtend = {
   id: string,
@@ -58,10 +58,14 @@ export class Broker {
     });
 
     this.server.startAutoPing(20000);
+    this.connectScaler(this.options.horizontalScaleOptions);
   }
 
-  private connectScaler(): void {
-    // connect to the scaler
+  private connectScaler(horizontalScaleOptions: HorizontalScaleOptions): void {
+    if (horizontalScaleOptions.masterOptions) {
+      // connect to the current server master
+    }
+    // connect to all other scalers
   }
 
   private broadcastMessage(id: string, message: Message): void {
