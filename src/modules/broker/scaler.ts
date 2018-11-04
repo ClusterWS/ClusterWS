@@ -1,6 +1,8 @@
+import * as HTTPS from 'https';
+
 import { generateKey } from '../../utils/functions';
 import { Listener, HorizontalScaleOptions } from '../../utils/types';
-import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
+import { WebSocket, WebSocketServer, ConnectionInfo, ServerConfigs } from '@clusterws/uws';
 
 type SocketExtend = {
   id: string,
@@ -12,13 +14,20 @@ export class Scaler {
   private sockets: Array<WebSocket & SocketExtend> = [];
 
   constructor(private horizontalScaleOptions: HorizontalScaleOptions) {
-    // add https connection
-    this.server = new WebSocketServer({
-      port: this.horizontalScaleOptions.masterOptions.port,
+    const options: ServerConfigs = {
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
         next(info.req.url === `/?token=${this.horizontalScaleOptions.key}`);
       }
-    }, (): void => process.send({ event: 'READY', pid: process.pid }));
+    };
+
+    if (horizontalScaleOptions.masterOptions.tlsOptions) {
+      options.server = HTTPS.createServer(horizontalScaleOptions.masterOptions.tlsOptions);
+      this.server = new WebSocketServer(options);
+      options.server.listen(this.horizontalScaleOptions.masterOptions.port, (): void => process.send({ event: 'READY', pid: process.pid }));
+    } else {
+      options.port = this.horizontalScaleOptions.masterOptions.port;
+      this.server = new WebSocketServer(options, (): void => process.send({ event: 'READY', pid: process.pid }));
+    }
 
     this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
       socket.id = generateKey(8);

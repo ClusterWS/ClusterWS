@@ -270,21 +270,32 @@ class Worker {
 
 class Scaler {
     constructor(e) {
-        this.horizontalScaleOptions = e, this.sockets = [], this.server = new uws.WebSocketServer({
-            port: this.horizontalScaleOptions.masterOptions.port,
+        this.horizontalScaleOptions = e, this.sockets = [];
+        const s = {
             verifyClient: (e, s) => {
                 s(e.req.url === `/?token=${this.horizontalScaleOptions.key}`);
             }
-        }, () => process.send({
+        };
+        e.masterOptions.tlsOptions ? (s.server = HTTPS.createServer(e.masterOptions.tlsOptions), 
+        this.server = new uws.WebSocketServer(s), s.server.listen(this.horizontalScaleOptions.masterOptions.port, () => process.send({
             event: "READY",
             pid: process.pid
-        })), this.server.on("connection", e => {
+        }))) : (s.port = this.horizontalScaleOptions.masterOptions.port, this.server = new uws.WebSocketServer(s, () => process.send({
+            event: "READY",
+            pid: process.pid
+        }))), this.server.on("connection", e => {
             e.id = generateKey(8), this.sockets.push(e), e.on("message", s => {
-                for (let t = 0, r = this.sockets.length; t < r; t++) {
+                if ("string" == typeof s) e.serverId = s; else if (e.serverId) for (let t = 0, r = this.sockets.length; t < r; t++) {
                     const r = this.sockets[t];
-                    e.id != e.id && e.readyState === e.OPEN && r.send(s);
+                    e.serverId !== r.serverId && r.readyState === r.OPEN && r.send(s);
                 }
-            }), e.on("error", e => {}), e.on("close", (e, s) => {});
+            }), e.on("error", e => {}), e.on("close", (s, t) => {
+                for (let s = 0, t = this.sockets.length; s < t; s++) if (this.sockets[s].id === e.id) {
+                    this.sockets.splice(s, 1);
+                    break;
+                }
+                e = null;
+            });
         }), this.server.startAutoPing(2e4);
     }
 }
@@ -306,9 +317,7 @@ class Broker {
                     if ("u" === t) return delete e.channels[r];
                     if ("string" == typeof r) e.channels[r] = 1; else for (let s = 0, t = r.length; s < t; s++) e.channels[r[s]] = 1;
                 } else this.broadcastMessage(e.id, JSON.parse(Buffer.from(s)));
-            }), e.on("error", e => {
-                logError(`Error in broker: ${e}`);
-            }), e.on("close", (s, t) => {
+            }), e.on("error", e => {}), e.on("close", (s, t) => {
                 e.channels = {};
                 for (let s = 0, t = this.sockets.length; s < t; s++) if (this.sockets[s].id === e.id) {
                     this.sockets.splice(s, 1);
@@ -318,6 +327,7 @@ class Broker {
             });
         }), this.server.startAutoPing(2e4);
     }
+    connectScaler() {}
     broadcastMessage(e, s) {
         const t = Object.keys(s);
         for (let r = 0, o = this.sockets.length; r < o; r++) {

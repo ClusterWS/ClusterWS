@@ -16,7 +16,7 @@ export class BrokerClient {
   }
 
   public send(message: string | Buffer): boolean {
-    // if socket is open and ready then we can publish
+    // if socket is open and ready then we can send
     if (this.socket.readyState === this.socket.OPEN) {
       this.socket.send(message);
       return true;
