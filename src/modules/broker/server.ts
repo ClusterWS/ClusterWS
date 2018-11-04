@@ -44,11 +44,7 @@ export class Broker {
         }
       });
 
-      socket.on('error', (err: Error): void => {
-        // clean on error
-        // this function will call close event
-      });
-
+      socket.on('error', (err: Error): void => { /** ignore error */ });
       socket.on('close', (code: number, reason: string): void => {
         socket.channels = {};
         for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
@@ -62,6 +58,10 @@ export class Broker {
     });
 
     this.server.startAutoPing(20000);
+  }
+
+  private connectScaler(): void {
+    // connect to the scaler
   }
 
   private broadcastMessage(id: string, message: Message): void {

@@ -3,7 +3,8 @@ import { Listener, HorizontalScaleOptions } from '../../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
 
 type SocketExtend = {
-  id: string
+  id: string,
+  serverId: string
 };
 
 export class Scaler {
@@ -11,6 +12,7 @@ export class Scaler {
   private sockets: Array<WebSocket & SocketExtend> = [];
 
   constructor(private horizontalScaleOptions: HorizontalScaleOptions) {
+    // add https connection
     this.server = new WebSocketServer({
       port: this.horizontalScaleOptions.masterOptions.port,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
@@ -20,23 +22,22 @@ export class Scaler {
 
     this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
       socket.id = generateKey(8);
-
       this.sockets.push(socket);
 
       socket.on('message', (message: string | Buffer): void | boolean => {
-        for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
-          const client: WebSocket & SocketExtend = this.sockets[i];
-          if (socket.id !== socket.id && socket.readyState === socket.OPEN) {
-            client.send(message);
+        if (typeof message === 'string') {
+          socket.serverId = message;
+        } else if (socket.serverId) {
+          for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
+            const client: WebSocket & SocketExtend = this.sockets[i];
+            if (socket.serverId !== client.serverId && client.readyState === client.OPEN) {
+              client.send(message);
+            }
           }
         }
       });
 
-      socket.on('error', (err: Error): void => {
-        // clean on error
-        // this function will call close event
-      });
-
+      socket.on('error', (err: Error): void => { /** ignore error */ });
       socket.on('close', (code: number, reason: string): void => {
         for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
           if (this.sockets[i].id === socket.id) {
