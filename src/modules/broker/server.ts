@@ -1,4 +1,5 @@
-import { generateKey, logError } from '../../utils/functions';
+import { BrokerClient } from './client';
+import { generateKey, logError, random } from '../../utils/functions';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
 import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
@@ -10,6 +11,8 @@ type SocketExtend = {
 export class Broker {
   private server: WebSocketServer;
   private sockets: Array<WebSocket & SocketExtend> = [];
+  private scalers: BrokerClient[] = [];
+  private nextScaler: number = random(0, this.options.brokers - 1)
 
   constructor(private options: Options, port: number, securityKey: string) {
     this.server = new WebSocketServer({
@@ -63,9 +66,16 @@ export class Broker {
 
   private connectScaler(horizontalScaleOptions: HorizontalScaleOptions): void {
     if (horizontalScaleOptions.masterOptions) {
-      // connect to the current server master
+      // move this to separate function
+      const masterUrl: string = `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${horizontalScaleOptions.masterOptions.port}`;
+      const scalerClient = new BrokerClient(`${masterUrl}/token=${horizontalScaleOptions.key || ''}`);
+      scalerClient.on('message', (msg: Message) => {
+        // handle message
+      });
+      this.scalers.push(scalerClient);
     }
-    // connect to all other scalers
+
+    // connect to all other scalers 
   }
 
   private broadcastMessage(id: string, message: Message): void {

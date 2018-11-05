@@ -16,7 +16,7 @@ export class Scaler {
   constructor(private horizontalScaleOptions: HorizontalScaleOptions) {
     const options: ServerConfigs = {
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
-        next(info.req.url === `/?token=${this.horizontalScaleOptions.key}`);
+        next(info.req.url === `/?token=${this.horizontalScaleOptions.key || ''}`);
       }
     };
 
