@@ -8,7 +8,11 @@ All bench done on arch linux.
 
 ## HTTP Req/Sec throughput with and without proper scaling 
 
-This bench is just to test raw HTTP throughput (Node.js) in different scale condition. Fro all below we used `wrk -t4 -c1000 -d10s --latency http://127.0.0.1:3000`
+This bench is just to test raw HTTP throughput (Node.js) in different scale condition. Fro all below we used:
+
+```
+wrk -t4 -c1000 -d10s --latency http://127.0.0.1:3000
+```
 
 ```
 1 Worker: 
