@@ -10,9 +10,9 @@ All bench done on arch linux.
 
 This bench is just to test raw HTTP throughput (Node.js) in different scale condition. Fro all below we used `wrk -t4 -c1000 -d10s --latency http://127.0.0.1:3000`
 
+```
 1 Worker: 
 
-```
 Running 10s test @ http://127.0.0.1:3000
   4 threads and 1000 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -29,9 +29,9 @@ Requests/sec:  36185.65
 Transfer/sec:      9.08MB
 ```
 
+```
 2 Workers:
 
-```
 Running 10s test @ http://127.0.0.1:3000
   4 threads and 1000 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -48,9 +48,9 @@ Requests/sec:  70448.90
 Transfer/sec:     17.67MB
 ```
 
+```
 Max available (bound to CPU number) Workers:
 
-```
 Running 10s test @ http://127.0.0.1:3000
   4 threads and 1000 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
