@@ -25,7 +25,7 @@ export class Scaler {
 }
 
 export class Broker {
-    constructor(options: Options, port: number, securityKey: string);
+    constructor(options: Options, port: number, securityKey: string, serverId: string);
 }
 
 export class PubSubEngine {

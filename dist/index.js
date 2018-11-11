@@ -163,9 +163,9 @@ class PubSubEngine {
             if (!r || !r.length) continue;
             const o = r.length, n = this.registeredChannels[t];
             for (let s = 0, i = n.length; s < i; s++) {
-                const i = n[s], h = [];
-                for (let e = 0; e < o; e++) r[e].id !== i && h.push(r[e].message);
-                h.length && (e[i] || (e[i] = {}), e[i][t] = h);
+                const i = n[s], c = [];
+                for (let e = 0; e < o; e++) r[e].id !== i && c.push(r[e].message);
+                c.length && (e[i] || (e[i] = {}), e[i][t] = c);
             }
             this.batches[t] = [];
         }
@@ -207,16 +207,16 @@ class BrokerClient {
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(), this.options = e, this.pubSub = new PubSubEngine(5), this.middleware = {}, 
-        this.brokers = [], this.nextBrokerId = random(0, this.options.brokers - 1), this.pubSub.on("channelNew", e => {
+        super(), this.options = e, this.pubSub = new PubSubEngine(1e3), this.middleware = {}, 
+        this.brokers = [], this.nextBroker = random(0, this.options.brokers - 1), this.pubSub.on("channelNew", e => {
             for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "s", e ]));
         }), this.pubSub.on("channelRemove", e => {
             for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "u", e ]));
         }), this.pubSub.register("broker", e => {
             let s = 0, t = !1;
             const r = Buffer.from(JSON.stringify(e)), o = this.brokers.length;
-            for (;!t && s < 2 * o; ) this.nextBrokerId >= o && (this.nextBrokerId = 0), t = this.brokers[this.nextBrokerId].send(r), 
-            s++, this.nextBrokerId++;
+            for (;!t && s < 2 * o; ) this.nextBroker >= o && (this.nextBroker = 0), t = this.brokers[this.nextBroker].send(r), 
+            s++, this.nextBroker++;
         });
         const t = this.onBrokerMessage.bind(this);
         for (let e = 0; e < this.options.brokers; e++) {
@@ -240,6 +240,7 @@ class WSServer extends EventEmitter {
         this.unsubscribe(e, s);
     }
     onBrokerMessage(e) {
+        console.log("Got message from scaler", e);
         const s = JSON.parse(Buffer.from(e));
         for (const e in s) if (s[e]) {
             const t = s[e];
@@ -273,17 +274,21 @@ class Scaler {
         this.horizontalScaleOptions = e, this.sockets = [];
         const s = {
             verifyClient: (e, s) => {
-                s(e.req.url === `/?token=${this.horizontalScaleOptions.key}`);
+                s(e.req.url === `/?token=${this.horizontalScaleOptions.key || ""}`);
             }
         };
         e.masterOptions.tlsOptions ? (s.server = HTTPS.createServer(e.masterOptions.tlsOptions), 
-        this.server = new uws.WebSocketServer(s), s.server.listen(this.horizontalScaleOptions.masterOptions.port, () => process.send({
-            event: "READY",
-            pid: process.pid
-        }))) : (s.port = this.horizontalScaleOptions.masterOptions.port, this.server = new uws.WebSocketServer(s, () => process.send({
-            event: "READY",
-            pid: process.pid
-        }))), this.server.on("connection", e => {
+        this.server = new uws.WebSocketServer(s), s.server.listen(this.horizontalScaleOptions.masterOptions.port, () => {
+            process.send({
+                event: "READY",
+                pid: process.pid
+            });
+        })) : (s.port = this.horizontalScaleOptions.masterOptions.port, this.server = new uws.WebSocketServer(s, () => {
+            process.send({
+                event: "READY",
+                pid: process.pid
+            });
+        })), this.server.on("connection", e => {
             e.id = generateKey(8), this.sockets.push(e), e.on("message", s => {
                 if ("string" == typeof s) e.serverId = s; else if (e.serverId) for (let t = 0, r = this.sockets.length; t < r; t++) {
                     const r = this.sockets[t];
@@ -301,8 +306,9 @@ class Scaler {
 }
 
 class Broker {
-    constructor(e, s, t) {
-        this.options = e, this.sockets = [], this.server = new uws.WebSocketServer({
+    constructor(e, s, t, r) {
+        this.options = e, this.serverId = r, this.sockets = [], this.scalers = [], this.nextScaler = random(0, this.options.brokers - 1), 
+        this.server = new uws.WebSocketServer({
             port: s,
             verifyClient: (e, s) => {
                 s(e.req.url === `/?token=${t}`);
@@ -316,7 +322,12 @@ class Broker {
                     const [t, r] = JSON.parse(s);
                     if ("u" === t) return delete e.channels[r];
                     if ("string" == typeof r) e.channels[r] = 1; else for (let s = 0, t = r.length; s < t; s++) e.channels[r[s]] = 1;
-                } else this.broadcastMessage(e.id, JSON.parse(Buffer.from(s)));
+                } else if (this.broadcastMessage(e.id, JSON.parse(Buffer.from(s))), this.options.horizontalScaleOptions) {
+                    let e = 0, t = !1;
+                    const r = this.scalers.length;
+                    for (;!t && e < 2 * r; ) this.nextScaler >= r && (this.nextScaler = 0), t = this.scalers[this.nextScaler].send(s), 
+                    e++, this.nextScaler++;
+                }
             }), e.on("error", e => {}), e.on("close", (s, t) => {
                 e.channels = {};
                 for (let s = 0, t = this.sockets.length; s < t; s++) if (this.sockets[s].id === e.id) {
@@ -325,9 +336,23 @@ class Broker {
                 }
                 e = null;
             });
-        }), this.server.startAutoPing(2e4);
+        }), this.server.startAutoPing(2e4), this.options.horizontalScaleOptions && this.connectScaler(this.options.horizontalScaleOptions);
     }
-    connectScaler() {}
+    connectScaler(e) {
+        if (e.masterOptions) {
+            const s = `${e.masterOptions.tlsOptions ? "wss" : "ws"}://127.0.0.1:${e.masterOptions.port}`;
+            this.scalers.push(this.createClient(s, e.key));
+        }
+        if (e.brokersUrls) for (let s = 0, t = e.brokersUrls.length; s < t; s++) this.scalers.push(this.createClient(e.brokersUrls[s], e.key));
+    }
+    createClient(e, s) {
+        const t = new BrokerClient(`${e}/?token=${s || ""}`);
+        return t.on("connect", () => {
+            t.send(this.serverId);
+        }), t.on("message", e => {
+            this.broadcastMessage(null, JSON.parse(Buffer.from(e)));
+        }), t;
+    }
     broadcastMessage(e, s) {
         const t = Object.keys(s);
         for (let r = 0, o = this.sockets.length; r < o; r++) {
@@ -346,37 +371,38 @@ class Broker {
 }
 
 function masterProcess(e) {
-    let s = !1;
-    const t = [], r = [], o = generateKey(20), n = generateKey(20);
-    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) i("Scaler", -1); else for (let s = 0; s < e.brokers; s++) i("Broker", s);
-    function i(h, c) {
-        const l = cluster.fork();
-        l.on("message", o => {
-            if ("READY" === o.event) {
-                if (s) return logReady(`${h} ${c} PID ${o.pid} has been restarted`);
+    let s, t = !1;
+    const r = [], o = [], n = generateKey(20), i = generateKey(20);
+    if (e.horizontalScaleOptions && e.horizontalScaleOptions.masterOptions) c("Scaler", -1); else for (let s = 0; s < e.brokers; s++) c("Broker", s);
+    function c(h, l) {
+        const a = cluster.fork();
+        a.on("message", n => {
+            if ("READY" === n.event) {
+                if (t) return logReady(`${h} ${l} PID ${n.pid} has been restarted`);
                 switch (h) {
                   case "Broker":
-                    if (t[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${o.pid}`, !t.includes(void 0) && t.length === e.brokers) for (let s = 0; s < e.workers; s++) i("Worker", s);
+                    if (r[l] = ` Broker on: ${e.brokersPorts[l]}, PID ${n.pid}`, !r.includes(void 0) && r.length === e.brokers) for (let s = 0; s < e.workers; s++) c("Worker", s);
                     break;
 
                   case "Worker":
-                    r[c] = `    Worker: ${c}, PID ${o.pid}`, r.includes(void 0) || r.length !== e.workers || (s = !0, 
+                    o[l] = `    Worker: ${l}, PID ${n.pid}`, o.includes(void 0) || o.length !== e.workers || (t = !0, 
                     logReady(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
-                    t.forEach(logReady), r.forEach(logReady));
+                    s && logReady(s), r.forEach(logReady), o.forEach(logReady));
                     break;
 
                   case "Scaler":
-                    for (let s = 0; s < e.brokers; s++) i("Broker", s);
+                    s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${n.pid}`;
+                    for (let s = 0; s < e.brokers; s++) c("Broker", s);
                 }
             }
-        }), l.on("exit", () => {
-            logError(`${h} ${c} has exited`), e.restartWorkerOnFail && (logWarning(`${h} ${c} is restarting \n`), 
-            i(h, c));
-        }), l.send({
-            processId: c,
+        }), a.on("exit", () => {
+            logError(`${h} ${l} has exited`), e.restartWorkerOnFail && (logWarning(`${h} ${l} is restarting \n`), 
+            c(h, l));
+        }), a.send({
+            processId: l,
             processName: h,
-            serverId: o,
-            internalSecurityKey: n
+            serverId: n,
+            internalSecurityKey: i
         });
     }
 }
@@ -391,7 +417,7 @@ function workerProcess(e) {
             return new Worker(e, s.internalSecurityKey);
 
           case "Broker":
-            return new Broker(e, e.brokersPorts[s.processId], s.internalSecurityKey);
+            return new Broker(e, e.brokersPorts[s.processId], s.internalSecurityKey, s.serverId);
         }
     }), process.on("uncaughtException", e => {
         logError(`${e.stack || e}`), process.exit();

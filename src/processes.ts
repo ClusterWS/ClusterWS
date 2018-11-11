@@ -10,6 +10,7 @@ export function masterProcess(options: Options): void {
   let isReady: boolean = false;
 
   // string[] does not compile because includes does not exist
+  let scalerReady: string;
   const brokersReady: any = [];
   const workersReady: any = [];
 
@@ -50,11 +51,15 @@ export function masterProcess(options: Options): void {
           if (!workersReady.includes(undefined) && workersReady.length === options.workers) {
             isReady = true;
             logReady(` Master on: ${options.port}, PID ${process.pid} ${options.tlsOptions ? '(secure)' : ''}`);
+            if (scalerReady) {
+              logReady(scalerReady);
+            }
             brokersReady.forEach(logReady);
             workersReady.forEach(logReady);
           }
           break;
         case 'Scaler':
+          scalerReady = ` Scaler on: ${options.horizontalScaleOptions.masterOptions.port}, PID ${message.pid}`;
           for (let i: number = 0; i < options.brokers; i++) {
             createNewProcess('Broker', i);
           }
@@ -82,7 +87,7 @@ export function workerProcess(options: Options): void {
       case 'Worker':
         return new Worker(options, message.internalSecurityKey);
       case 'Broker':
-        return new Broker(options, options.brokersPorts[message.processId], message.internalSecurityKey);
+        return new Broker(options, options.brokersPorts[message.processId], message.internalSecurityKey, message.serverId);
     }
   });
 

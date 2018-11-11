@@ -9,7 +9,7 @@ export class WSServer extends EventEmitter {
   public middleware: { [key: string]: Listener } = {};
 
   private brokers: BrokerClient[] = [];
-  private nextBrokerId: number = random(0, this.options.brokers - 1);
+  private nextBroker: number = random(0, this.options.brokers - 1);
 
   constructor(private options: Options, internalSecurityKey: string) {
     super();
@@ -34,14 +34,14 @@ export class WSServer extends EventEmitter {
       const brokersLength: number = this.brokers.length;
 
       while (!isCompleted && attempts < brokersLength * 2) {
-        if (this.nextBrokerId >= brokersLength) {
-          this.nextBrokerId = 0;
+        if (this.nextBroker >= brokersLength) {
+          this.nextBroker = 0;
         }
 
-        isCompleted = this.brokers[this.nextBrokerId].send(readyMessage);
+        isCompleted = this.brokers[this.nextBroker].send(readyMessage);
 
         attempts++;
-        this.nextBrokerId++;
+        this.nextBroker++;
       }
     });
 

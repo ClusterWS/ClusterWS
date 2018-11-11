@@ -12,9 +12,9 @@ export class Broker {
   private server: WebSocketServer;
   private sockets: Array<WebSocket & SocketExtend> = [];
   private scalers: BrokerClient[] = [];
-  private nextScaler: number = random(0, this.options.brokers - 1)
+  private nextScaler: number = random(0, this.options.brokers - 1);
 
-  constructor(private options: Options, port: number, securityKey: string) {
+  constructor(private options: Options, port: number, securityKey: string, private serverId: string) {
     this.server = new WebSocketServer({
       port,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
@@ -44,6 +44,22 @@ export class Broker {
           }
         } else {
           this.broadcastMessage(socket.id, JSON.parse(Buffer.from(message) as any));
+          if (this.options.horizontalScaleOptions) {
+            let attempts: number = 0;
+            let isCompleted: boolean = false;
+            const scalersLength: number = this.scalers.length;
+
+            while (!isCompleted && attempts < scalersLength * 2) {
+              if (this.nextScaler >= scalersLength) {
+                this.nextScaler = 0;
+              }
+
+              isCompleted = this.scalers[this.nextScaler].send(message);
+
+              attempts++;
+              this.nextScaler++;
+            }
+          }
         }
       });
 
@@ -61,21 +77,34 @@ export class Broker {
     });
 
     this.server.startAutoPing(20000);
-    this.connectScaler(this.options.horizontalScaleOptions);
+
+    if (this.options.horizontalScaleOptions) {
+      this.connectScaler(this.options.horizontalScaleOptions);
+    }
   }
 
   private connectScaler(horizontalScaleOptions: HorizontalScaleOptions): void {
     if (horizontalScaleOptions.masterOptions) {
-      // move this to separate function
       const masterUrl: string = `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${horizontalScaleOptions.masterOptions.port}`;
-      const scalerClient = new BrokerClient(`${masterUrl}/token=${horizontalScaleOptions.key || ''}`);
-      scalerClient.on('message', (msg: Message) => {
-        // handle message
-      });
-      this.scalers.push(scalerClient);
+      this.scalers.push(this.createClient(masterUrl, horizontalScaleOptions.key));
     }
 
-    // connect to all other scalers 
+    if (horizontalScaleOptions.brokersUrls) {
+      for (let i: number = 0, len: number = horizontalScaleOptions.brokersUrls.length; i < len; i++) {
+        this.scalers.push(this.createClient(horizontalScaleOptions.brokersUrls[i], horizontalScaleOptions.key));
+      }
+    }
+  }
+
+  private createClient(url: string, key?: string): BrokerClient {
+    const scalerClient: BrokerClient = new BrokerClient(`${url}/?token=${key || ''}`);
+    scalerClient.on('connect', () => {
+      scalerClient.send(this.serverId);
+    });
+    scalerClient.on('message', (message: Message) => {
+      this.broadcastMessage(null, JSON.parse(Buffer.from(message) as any));
+    });
+    return scalerClient;
   }
 
   private broadcastMessage(id: string, message: Message): void {
@@ -83,6 +112,7 @@ export class Broker {
     for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
       const socket: WebSocket & SocketExtend = this.sockets[i];
       if (socket.id !== id) {
+        // find out why do we need pass
         let pass: boolean = false;
         const readyMessage: Message = {};
 
