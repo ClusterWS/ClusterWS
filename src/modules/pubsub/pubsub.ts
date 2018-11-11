@@ -97,24 +97,26 @@ export class PubSubEngine {
 
       const users: string[] = this.registeredChannels[channel];
 
-      for (let j: number = 0, userLen: number = users.length; j < userLen; j++) {
-        const userId: string = users[j];
-        const userMessages: any[] = [];
+      if (users) {
+        for (let j: number = 0, userLen: number = users.length; j < userLen; j++) {
+          const userId: string = users[j];
+          const userMessages: any[] = [];
 
-        for (let k: number = 0; k < batchLen; k++) {
-          if (batch[k].id !== userId) {
-            userMessages.push(batch[k].message);
+          for (let k: number = 0; k < batchLen; k++) {
+            if (batch[k].id !== userId) {
+              userMessages.push(batch[k].message);
+            }
           }
-        }
 
-        if (!userMessages.length) {
-          continue;
-        }
+          if (!userMessages.length) {
+            continue;
+          }
 
-        if (!allMessages[userId]) {
-          allMessages[userId] = {};
+          if (!allMessages[userId]) {
+            allMessages[userId] = {};
+          }
+          allMessages[userId][channel] = userMessages;
         }
-        allMessages[userId][channel] = userMessages;
       }
 
       this.batches[channel] = [];

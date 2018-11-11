@@ -162,7 +162,7 @@ class PubSubEngine {
             const t = this.changes[s], r = this.batches[t];
             if (!r || !r.length) continue;
             const o = r.length, n = this.registeredChannels[t];
-            for (let s = 0, i = n.length; s < i; s++) {
+            if (n) for (let s = 0, i = n.length; s < i; s++) {
                 const i = n[s], c = [];
                 for (let e = 0; e < o; e++) r[e].id !== i && c.push(r[e].message);
                 c.length && (e[i] || (e[i] = {}), e[i][t] = c);
@@ -207,7 +207,7 @@ class BrokerClient {
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(), this.options = e, this.pubSub = new PubSubEngine(1e3), this.middleware = {}, 
+        super(), this.options = e, this.pubSub = new PubSubEngine(5), this.middleware = {}, 
         this.brokers = [], this.nextBroker = random(0, this.options.brokers - 1), this.pubSub.on("channelNew", e => {
             for (let s = 0, t = this.brokers.length; s < t; s++) this.brokers[s].send(JSON.stringify([ "s", e ]));
         }), this.pubSub.on("channelRemove", e => {
@@ -240,7 +240,6 @@ class WSServer extends EventEmitter {
         this.unsubscribe(e, s);
     }
     onBrokerMessage(e) {
-        console.log("Got message from scaler", e);
         const s = JSON.parse(Buffer.from(e));
         for (const e in s) if (s[e]) {
             const t = s[e];
@@ -259,7 +258,7 @@ class Worker {
         t.on("connection", e => {
             this.wss.emit("connection", new Socket(this, e));
         }), t.startAutoPing(this.options.pingInterval, !0), this.server.on("error", e => {
-            logError(`${e.stack || e}`), process.exit();
+            logError(`Worker ${e.stack || e}`), process.exit();
         }), this.server.listen(this.options.port, this.options.host, () => {
             this.options.worker.call(this), process.send({
                 event: "READY",
@@ -288,7 +287,9 @@ class Scaler {
                 event: "READY",
                 pid: process.pid
             });
-        })), this.server.on("connection", e => {
+        })), this.server.on("error", e => {
+            logError(`Scaler ${e.stack || e}`), process.exit();
+        }), this.server.on("connection", e => {
             e.id = generateKey(8), this.sockets.push(e), e.on("message", s => {
                 if ("string" == typeof s) e.serverId = s; else if (e.serverId) for (let t = 0, r = this.sockets.length; t < r; t++) {
                     const r = this.sockets[t];
@@ -316,7 +317,9 @@ class Broker {
         }, () => process.send({
             event: "READY",
             pid: process.pid
-        })), this.server.on("connection", e => {
+        })), this.server.on("error", e => {
+            logError(`Broker ${e.stack || e}`), process.exit();
+        }), this.server.on("connection", e => {
             e.id = generateKey(8), e.channels = {}, this.sockets.push(e), e.on("message", s => {
                 if ("string" == typeof s) {
                     const [t, r] = JSON.parse(s);

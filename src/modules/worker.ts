@@ -29,7 +29,7 @@ export class Worker {
     uServer.startAutoPing(this.options.pingInterval, true);
 
     this.server.on('error', (error: Error) => {
-      logError(`${error.stack || error}`);
+      logError(`Worker ${error.stack || error}`);
       process.exit();
     });
 

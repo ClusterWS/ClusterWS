@@ -22,6 +22,11 @@ export class Broker {
       }
     }, (): void => process.send({ event: 'READY', pid: process.pid }));
 
+    this.server.on('error', (error: any) => {
+      logError(`Broker ${error.stack || error}`);
+      process.exit();
+    });
+
     this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
       socket.id = generateKey(8);
       socket.channels = {};

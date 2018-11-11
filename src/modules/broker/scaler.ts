@@ -1,6 +1,6 @@
 import * as HTTPS from 'https';
 
-import { generateKey } from '../../utils/functions';
+import { generateKey, logError } from '../../utils/functions';
 import { Listener, HorizontalScaleOptions } from '../../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo, ServerConfigs } from '@clusterws/uws';
 
@@ -32,6 +32,11 @@ export class Scaler {
         process.send({ event: 'READY', pid: process.pid });
       });
     }
+
+    this.server.on('error', (error: any) => {
+      logError(`Scaler ${error.stack || error}`);
+      process.exit();
+    });
 
     this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
       socket.id = generateKey(8);
