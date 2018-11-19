@@ -9,7 +9,7 @@ new ClusterWS({
   // workers: 1,
   // Two instances
   // workers: 2,
-  // Maximum number we need -2 because we have one broker and worker 
+  // Maximum number we need -2 because we have one broker and master server 
   // u can specify any number you want but for max perf better use it like that
   workers: os.cpus().length - 2
 })
