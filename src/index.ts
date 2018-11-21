@@ -1,12 +1,14 @@
 import * as cluster from 'cluster';
 
 import { logError, isFunction } from './utils/functions';
-import { Options, Configurations } from './utils/types';
+import { Options, Configurations, Middleware } from './utils/types';
 import { workerProcess, masterProcess } from './processes';
 
 export default class ClusterWS {
-  private options: Options;
+  // tslint:disable-next-line
+  public static middleware = Middleware;
 
+  private options: Options;
   constructor(configurations: Configurations) {
     this.options = {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),

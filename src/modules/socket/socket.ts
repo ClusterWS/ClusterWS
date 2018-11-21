@@ -97,11 +97,22 @@ function decode(socket: PrivateSocket, data: Message, option: Options): void {
       return socket.channels[param] && socket.worker.wss.publish(param, message, socket.id);
     case 's':
       const channel: number = socket.channels[message];
+
+      const subscribe: Listener = (next: boolean): void => {
+        if (next) {
+          socket.channels[message] = 1;
+          socket.worker.wss.subscribe(message, socket.id);
+        }
+      };
+
       if (param === 's' && !channel) {
-        socket.channels[message] = 1;
-        socket.worker.wss.subscribe(message, socket.id);
+        socket.worker.wss.middleware.onSubscribe ?
+          socket.worker.wss.middleware.onSubscribe(socket, channel, subscribe) :
+          subscribe(true);
       }
       if (param === 'u' && channel) {
+        socket.worker.wss.middleware.onUnsubscribe &&
+          socket.worker.wss.middleware.onUnsubscribe(socket, channel);
         delete socket.channels[message];
         socket.worker.wss.unsubscribe(message, socket.id);
       }

@@ -2,7 +2,7 @@ import { random } from '../../utils/functions';
 import { PubSubEngine } from '../pubsub/pubsub';
 import { EventEmitter } from '../../utils/emitter';
 import { BrokerClient } from '../broker/client';
-import { Message, Options, Listener } from '../../utils/types';
+import { Message, Options, Listener, Middleware } from '../../utils/types';
 
 export class WSServer extends EventEmitter {
   public pubSub: PubSubEngine = new PubSubEngine(5);
@@ -59,8 +59,7 @@ export class WSServer extends EventEmitter {
     }
   }
 
-  // need to add types for set middleware
-  public setMiddleware(name: string, listener: Listener): void {
+  public setMiddleware(name: Middleware, listener: Listener): void {
     this.middleware[name] = listener;
   }
 

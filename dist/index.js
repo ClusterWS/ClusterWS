@@ -1,6 +1,6 @@
 "use strict";
 
-var crypto = require("crypto"), uws = require("@clusterws/uws"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
+var Middleware, crypto = require("crypto"), uws = require("@clusterws/uws"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
 
 function random(e, s) {
     return Math.floor(Math.random() * (s - e + 1)) + e;
@@ -25,6 +25,11 @@ function isFunction(e) {
 function generateKey(e) {
     return crypto.randomBytes(e).toString("hex");
 }
+
+!function(e) {
+    e.onSubscribe = "onSubscribe", e.onUnsubscribe = "onUnsubscribe", e.onWorkerMessage = "onWorkerMessage", 
+    e.verifyConnection = "verifyConnection";
+}(Middleware || (Middleware = {}));
 
 class EventEmitter {
     constructor() {
@@ -105,9 +110,12 @@ function decode(e, s, t) {
         return e.channels[o] && e.worker.wss.publish(o, n, e.id);
 
       case "s":
-        const s = e.channels[n];
-        "s" !== o || s || (e.channels[n] = 1, e.worker.wss.subscribe(n, e.id)), "u" === o && s && (delete e.channels[n], 
-        e.worker.wss.unsubscribe(n, e.id));
+        const s = e.channels[n], i = s => {
+            s && (e.channels[n] = 1, e.worker.wss.subscribe(n, e.id));
+        };
+        "s" !== o || s || (e.worker.wss.middleware.onSubscribe ? e.worker.wss.middleware.onSubscribe(e, s, i) : i(!0)), 
+        "u" === o && s && (e.worker.wss.middleware.onUnsubscribe && e.worker.wss.middleware.onUnsubscribe(e, s), 
+        delete e.channels[n], e.worker.wss.unsubscribe(n, e.id));
     }
 }
 
@@ -253,7 +261,10 @@ class Worker {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
         const t = new uws.WebSocketServer({
             path: this.options.wsPath,
-            server: this.server
+            server: this.server,
+            verifyClient: (e, s) => {
+                this.wss.middleware.verifyConnection ? this.wss.middleware.verifyConnection(e, s) : s(!0);
+            }
         });
         t.on("connection", e => {
             this.wss.emit("connection", new Socket(this, e));
@@ -448,4 +459,4 @@ class ClusterWS {
     }
 }
 
-module.exports = ClusterWS; module.exports.default = ClusterWS;
+ClusterWS.middleware = Middleware, module.exports = ClusterWS; module.exports.default = ClusterWS;

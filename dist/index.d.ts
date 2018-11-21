@@ -11,6 +11,7 @@ import * as HTTPS from 'https';
 import { SecureContextOptions } from 'tls';
 
 export default class ClusterWS {
+    static middleware: typeof Middleware;
     constructor(configurations: Configurations);
 }
 
@@ -54,7 +55,7 @@ export class WSServer extends EventEmitter {
         [key: string]: Listener;
     };
     constructor(options: Options, internalSecurityKey: string);
-    setMiddleware(name: string, listener: Listener): void;
+    setMiddleware(name: Middleware, listener: Listener): void;
     publish(channelName: string, message: Message, id?: string): void;
     subscribe(channelName: string, id: string): void;
     unsubscribe(channelName: string, id: string): void;
@@ -87,6 +88,12 @@ export function logWarning<T>(data: T): any;
 export function isFunction<T>(fn: T): boolean;
 export function generateKey(length: number): string;
 
+export enum Middleware {
+    onSubscribe = "onSubscribe",
+    onUnsubscribe = "onUnsubscribe",
+    onWorkerMessage = "onWorkerMessage",
+    verifyConnection = "verifyConnection"
+}
 export type Message = any;
 export type Listener = (...args: any[]) => void;
 export type ListenerMany = (eventName: string, ...args: any[]) => void;

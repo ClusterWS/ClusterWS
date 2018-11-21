@@ -12,6 +12,7 @@ This section specifies only braking changes and new tings from version 3.
 
 ### New
 * Middelware use new Enum(JS Object) instead of passing string.
+  * Rename from `onMessageFromWorker` to `onWorkerMessage`
 * Pass custom logger to clusterws options
 * Development mode (without cluster)
 * Pass custom env variables to the Worker processes

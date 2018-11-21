@@ -1,5 +1,12 @@
 import { SecureContextOptions } from 'tls';
 
+export enum Middleware {
+  onSubscribe = 'onSubscribe',
+  onUnsubscribe = 'onUnsubscribe',
+  onWorkerMessage = 'onWorkerMessage',
+  verifyConnection = 'verifyConnection'
+}
+
 // for SocketMessage use string | Buffer
 export type Message = any;
 export type Listener = (...args: any[]) => void;
