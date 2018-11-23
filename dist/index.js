@@ -151,7 +151,6 @@ class PubSubEngine {
         this.hooks.channelRemove && this.hooks.channelRemove(e));
     }
     publish(e, s, t) {
-        if (!this.registeredChannels[e]) return;
         -1 === this.changes.indexOf(e) && this.changes.push(e);
         const r = this.batches[e];
         if (r) return r.push({
@@ -174,6 +173,10 @@ class PubSubEngine {
                 const i = n[s], c = [];
                 for (let e = 0; e < o; e++) r[e].id !== i && c.push(r[e].message);
                 c.length && (e[i] || (e[i] = {}), e[i][t] = c);
+            } else {
+                const s = [];
+                for (let e = 0; e < o; e++) s.push(r[e].message);
+                e.broker || (e.broker = {}), e.broker[t] = s;
             }
             this.batches[t] = [];
         }

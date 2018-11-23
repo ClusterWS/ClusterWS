@@ -62,10 +62,6 @@ export class PubSubEngine {
   }
 
   public publish(channel: string, message: Message, id?: string): void {
-    if (!this.registeredChannels[channel]) {
-      return;
-    }
-
     if (this.changes.indexOf(channel) === -1) {
       this.changes.push(channel);
     }
@@ -79,6 +75,7 @@ export class PubSubEngine {
   }
 
   private flush(): void {
+    // we need to publish all data to all channels even if it does not exist on this thread
     if (!this.changes.length) {
       return;
     }
@@ -94,7 +91,6 @@ export class PubSubEngine {
       }
 
       const batchLen: number = batch.length;
-
       const users: string[] = this.registeredChannels[channel];
 
       if (users) {
@@ -117,6 +113,17 @@ export class PubSubEngine {
           }
           allMessages[userId][channel] = userMessages;
         }
+      } else {
+        // send only to broker
+        const messageToBroker: any[] = [];
+        for (let j: number = 0; j < batchLen; j++) {
+          messageToBroker.push(batch[j].message);
+        }
+
+        if (!allMessages['broker']) {
+          allMessages['broker'] = {};
+        }
+        allMessages['broker'][channel] = messageToBroker;
       }
 
       this.batches[channel] = [];
