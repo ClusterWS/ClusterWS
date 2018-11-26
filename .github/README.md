@@ -15,7 +15,7 @@
 <h3 align="center"><strong>This branch is under work for v4.0.0 check master branch for stable v3.2.0</strong></h3>
 
 <p align="center">
-    <i><strong>Lightweight</strong>, <strong>fast</strong> and <strong>powerful</strong> framework for building <strong>scalable</strong> WebSocket applications in Node.js. ClusterWS uses <a href="https://github.com/ClusterWS/cWS">cWS</a> a fork of uWebSockets (one of the most lightweight, efficient & scalable WebSocket library)</i>
+    <i><strong>Lightweight</strong>, <strong>fast</strong> and <strong>powerful</strong> framework for building <strong>scalable</strong> WebSocket applications in Node.js. ClusterWS uses <a href="https://github.com/ClusterWS/cWS">cWS</a> a fork of uWebSockets (uws is one of the most lightweight, efficient & scalable WebSocket library)</i>
 </p>
 
 <h3 align="center">
