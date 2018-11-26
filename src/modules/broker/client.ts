@@ -1,9 +1,9 @@
-import { UWebSocket } from '../uws/client';
+import { WebSocket } from '../cws/client';
 import { logWarning, logReady } from '../../utils/functions';
 import { CustomObject, Message } from '../../utils/types';
 
 export function BrokerClient(url: string, broadcaster: CustomObject, tries: number = 0, reconnected?: boolean): void {
-  let websocket: CustomObject = new UWebSocket(url);
+  let websocket: CustomObject = new WebSocket(url);
 
   websocket.on(
     'open',

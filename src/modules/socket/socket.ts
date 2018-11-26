@@ -1,5 +1,5 @@
 import { Worker } from '../worker';
-import { UWebSocket } from '../uws/client';
+import { WebSocket } from '../cws/client';
 import { EventEmitterSingle } from '../emitter/single';
 import { logError, generateKey, keysOf } from '../../utils/functions';
 import { CustomObject, Listener, Message } from '../../utils/types';
@@ -10,7 +10,7 @@ export class Socket {
   private channels: CustomObject = {};
   private onPublishEvent: (...args: any[]) => void;
 
-  constructor(public worker: Worker, public socket: UWebSocket) {
+  constructor(public worker: Worker, public socket: WebSocket) {
     const initMessage: CustomObject = { ping: this.worker.options.pingInterval, binary: this.worker.options.useBinary };
     this.send('configuration', initMessage, 'system');
     this.onPublishEvent = (channel: string, message: Message): void => this.send(channel, message, 'publish');

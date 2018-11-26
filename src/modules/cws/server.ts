@@ -1,12 +1,12 @@
 import * as HTTP from 'http';
-import { UWebSocket } from './client';
+import { WebSocket } from './client';
 import { EventEmitterSingle } from '../emitter/single';
 import { Listener, Message, CustomObject } from '../../utils/types';
 import { noop, native, PERMESSAGE_DEFLATE, DEFAULT_PAYLOAD_LIMIT, APP_PONG_CODE, APP_PING_CODE } from './static';
 
 native.setNoop(noop);
 
-export class UWebSocketsServer extends EventEmitterSingle {
+export class WebSocketsServer extends EventEmitterSingle {
   public noDelay: boolean;
   public upgradeReq: any = null;
   public httpServer: HTTP.Server;
@@ -63,7 +63,7 @@ export class UWebSocketsServer extends EventEmitterSingle {
     native.server.group.onConnection(
       this.serverGroup,
       (external: CustomObject): void => {
-        const webSocket: UWebSocket = new UWebSocket(null, external, true);
+        const webSocket: WebSocket = new WebSocket(null, external, true);
         native.setUserData(external, webSocket);
         this.upgradeCallback(webSocket);
         this.upgradeReq = null;
@@ -98,11 +98,11 @@ export class UWebSocketsServer extends EventEmitterSingle {
 
     native.server.group.onPing(
       this.serverGroup,
-      (message: Message, webSocket: UWebSocket): void => webSocket.onping(message)
+      (message: Message, webSocket: WebSocket): void => webSocket.onping(message)
     );
     native.server.group.onPong(
       this.serverGroup,
-      (message: Message, webSocket: UWebSocket): void => webSocket.onpong(message)
+      (message: Message, webSocket: WebSocket): void => webSocket.onpong(message)
     );
 
     if (!options.port) return;
@@ -124,21 +124,21 @@ export class UWebSocketsServer extends EventEmitterSingle {
     }, interval);
   }
 
-  private sendPings(ws: UWebSocket): void {
+  private sendPings(ws: WebSocket): void {
     if (ws.isAlive) {
       ws.isAlive = false;
       ws.ping();
     } else ws.terminate();
   }
 
-  private sendPingsAppLevel(ws: UWebSocket): void {
+  private sendPingsAppLevel(ws: WebSocket): void {
     if (ws.isAlive) {
       ws.isAlive = false;
       ws.send(APP_PING_CODE);
     } else ws.terminate();
   }
 
-  private emitConnection(ws: UWebSocket): void {
+  private emitConnection(ws: WebSocket): void {
     this.emit('connection', ws, this.upgradeReq);
   }
 

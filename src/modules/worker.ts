@@ -1,8 +1,8 @@
 import * as HTTP from 'http';
 import * as HTTPS from 'https';
 
-import { UWebSocket } from './uws/client';
-import { UWebSocketsServer } from './uws/server';
+import { WebSocket } from './cws/client';
+import { WebSocketsServer } from './cws/server';
 
 import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
@@ -19,13 +19,13 @@ export class Worker {
 
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 
-    const uWSServer: UWebSocketsServer = new UWebSocketsServer({
+    const uWSServer: WebSocketsServer = new WebSocketsServer({
       server: this.server,
       verifyClient: (info: CustomObject, callback: Listener): void =>
         this.wss.middleware.verifyConnection ? this.wss.middleware.verifyConnection(info, callback) : callback(true)
     });
 
-    uWSServer.on('connection', (socket: UWebSocket, upgradeReq: CustomObject) =>
+    uWSServer.on('connection', (socket: WebSocket, upgradeReq: CustomObject) =>
       this.wss.emit('connection', new Socket(this, socket), upgradeReq)
     );
 

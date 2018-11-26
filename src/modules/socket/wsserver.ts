@@ -1,5 +1,5 @@
 import { Socket } from './socket';
-import { UWebSocket } from '../uws/client';
+import { WebSocket } from '../cws/client';
 import { EventEmitterMany } from '../emitter/many';
 import { EventEmitterSingle } from '../emitter/single';
 import { logWarning, keysOf } from '../../utils/functions';
@@ -27,7 +27,7 @@ export class WSServer extends EventEmitterSingle {
         this.middleware.onChannelClose && this.middleware.onChannelClose(event);
       }
       for (let i: number = 0; i < this.internalBrokers.brokersAmount; i++) {
-        const receiver: UWebSocket = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[i]];
+        const receiver: WebSocket = this.internalBrokers.brokers[this.internalBrokers.brokersKeys[i]];
         if (receiver.readyState === 1) receiver.send(event);
       }
     };
@@ -104,7 +104,7 @@ export class WSServer extends EventEmitterSingle {
     this.internalBrokers.brokersAmount--;
   }
 
-  public setBroker(br: UWebSocket, url: string): void {
+  public setBroker(br: WebSocket, url: string): void {
     this.internalBrokers.brokers[url] = br;
     this.internalBrokers.brokersKeys = keysOf(this.internalBrokers.brokers);
     this.internalBrokers.brokersAmount = this.internalBrokers.brokersKeys.length;

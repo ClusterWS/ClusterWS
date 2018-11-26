@@ -25,8 +25,8 @@ native.client.group.onConnection(clientGroup, e => {
     }), native.clearUserData(e);
 }), native.client.group.onError(clientGroup, e => {
     process.nextTick(() => e.internalOnError({
-        message: "uWs client connection error",
-        stack: "uWs client connection error"
+        message: "cWs client connection error",
+        stack: "cWs client connection error"
     }));
 }), native.client.group.onMessage(clientGroup, (e, r) => r.internalOnMessage(e)), 
 native.client.group.onPing(clientGroup, (e, r) => r.onping(e)), native.client.group.onPong(clientGroup, (e, r) => r.onpong(e));

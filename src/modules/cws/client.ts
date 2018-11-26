@@ -34,8 +34,8 @@ native.client.group.onError(
     process.nextTick(
       (): void =>
         webSocket.internalOnError({
-          message: 'uWs client connection error',
-          stack: 'uWs client connection error'
+          message: 'cWs client connection error',
+          stack: 'cWs client connection error'
         })
     );
   }
@@ -48,7 +48,7 @@ native.client.group.onMessage(
 native.client.group.onPing(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onping(message));
 native.client.group.onPong(clientGroup, (message: Message, webSocket: CustomObject): void => webSocket.onpong(message));
 
-export class UWebSocket {
+export class WebSocket {
   public OPEN: number = 1;
   public CLOSED: number = 0;
 
