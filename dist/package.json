@@ -14,7 +14,7 @@
 		"clusterws",
 		"websocket",
 		"scale",
-		"uws",
+		"cws",
 		"node js websocket",
 		"scale node js websocket",
 		"real-time",
@@ -22,6 +22,6 @@
 		"javascript"
 	],
 	"dependencies": {
-		"@clusterws/uws": "^0.6.0"
+		"@clusterws/cws": "^0.7.1"
 	}
 }

@@ -1,6 +1,6 @@
 "use strict";
 
-var Middleware, crypto = require("crypto"), uws = require("@clusterws/uws"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
+var Middleware, crypto = require("crypto"), cws = require("@clusterws/cws"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
 
 function random(e, s) {
     return Math.floor(Math.random() * (s - e + 1)) + e;
@@ -201,7 +201,7 @@ class BrokerClient {
         return this.socket.readyState === this.socket.OPEN && (this.socket.send(e), !0);
     }
     createSocket() {
-        this.socket = new uws.WebSocket(this.url), this.socket.on("open", () => {
+        this.socket = new cws.WebSocket(this.url), this.socket.on("open", () => {
             this.attempts > 1 && logReady(`Reconnected to the Broker: ${this.url}`), this.events.connect && this.events.connect(), 
             this.attempts = 0;
         }), this.socket.on("error", e => {
@@ -262,7 +262,7 @@ class WSServer extends EventEmitter {
 class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        const t = new uws.WebSocketServer({
+        const t = new cws.WebSocketServer({
             path: this.options.wsPath,
             server: this.server,
             verifyClient: (e, s) => {
@@ -291,12 +291,12 @@ class Scaler {
             }
         };
         e.masterOptions.tlsOptions ? (s.server = HTTPS.createServer(e.masterOptions.tlsOptions), 
-        this.server = new uws.WebSocketServer(s), s.server.listen(this.horizontalScaleOptions.masterOptions.port, () => {
+        this.server = new cws.WebSocketServer(s), s.server.listen(this.horizontalScaleOptions.masterOptions.port, () => {
             process.send({
                 event: "READY",
                 pid: process.pid
             });
-        })) : (s.port = this.horizontalScaleOptions.masterOptions.port, this.server = new uws.WebSocketServer(s, () => {
+        })) : (s.port = this.horizontalScaleOptions.masterOptions.port, this.server = new cws.WebSocketServer(s, () => {
             process.send({
                 event: "READY",
                 pid: process.pid
@@ -323,7 +323,7 @@ class Scaler {
 class Broker {
     constructor(e, s, t, r) {
         this.options = e, this.serverId = r, this.sockets = [], this.scalers = [], this.nextScaler = random(0, this.options.brokers - 1), 
-        this.server = new uws.WebSocketServer({
+        this.server = new cws.WebSocketServer({
             port: s,
             verifyClient: (e, s) => {
                 s(e.req.url === `/?token=${t}`);

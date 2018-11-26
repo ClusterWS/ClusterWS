@@ -1,6 +1,6 @@
 import { BrokerClient } from './client';
 import { generateKey, logError, random } from '../../utils/functions';
-import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/uws';
+import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/cws';
 import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
 type SocketExtend = {

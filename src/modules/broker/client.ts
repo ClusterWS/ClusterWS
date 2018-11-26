@@ -1,5 +1,5 @@
 import { Listener } from '../../utils/types';
-import { WebSocket } from '@clusterws/uws';
+import { WebSocket } from '@clusterws/cws';
 import { logWarning, logReady, random } from '../../utils/functions';
 
 export class BrokerClient {

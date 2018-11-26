@@ -2,7 +2,7 @@ import * as HTTPS from 'https';
 
 import { generateKey, logError } from '../../utils/functions';
 import { Listener, HorizontalScaleOptions } from '../../utils/types';
-import { WebSocket, WebSocketServer, ConnectionInfo, ServerConfigs } from '@clusterws/uws';
+import { WebSocket, WebSocketServer, ConnectionInfo, ServerConfigs } from '@clusterws/cws';
 
 type SocketExtend = {
   id: string,

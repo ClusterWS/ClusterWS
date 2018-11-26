@@ -1,5 +1,5 @@
 import { Worker } from '../worker';
-import { WebSocket } from '@clusterws/uws';
+import { WebSocket } from '@clusterws/cws';
 import { EventEmitter } from '../../utils/emitter';
 import { logError, generateKey } from '../../utils/functions';
 import { Listener, Message, Options } from '../../utils/types';
