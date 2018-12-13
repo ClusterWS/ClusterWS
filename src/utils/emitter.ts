@@ -26,7 +26,7 @@ export class EventEmitter {
     return !!this.events[event];
   }
 
-  public removeEvent(event: string): void {
+  public off(event: string): void {
     delete this.events[event];
   }
 
