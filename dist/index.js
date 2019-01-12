@@ -1,6 +1,6 @@
 "use strict";
 
-var Middleware, crypto = require("crypto"), cws = require("@clusterws/cws"), HTTP = require("http"), HTTPS = require("https"), cluster = require("cluster");
+var Middleware, cluster = require("cluster"), crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https"), cws = require("@clusterws/cws");
 
 function random(e, s) {
     return Math.floor(Math.random() * (s - e + 1)) + e;
@@ -46,7 +46,7 @@ class EventEmitter {
     exist(e) {
         return !!this.events[e];
     }
-    removeEvent(e) {
+    off(e) {
         delete this.events[e];
     }
     removeEvents() {

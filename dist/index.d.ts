@@ -77,7 +77,7 @@ export class EventEmitter {
     emit(event: string, message: Message): void;
     emit(event: string, ...args: any[]): void;
     exist(event: string): boolean;
-    removeEvent(event: string): void;
+    off(event: string): void;
     removeEvents(): void;
 }
 
