@@ -7,8 +7,8 @@ import * as HTTP from 'http';
 import * as HTTPS from 'https';
 
 export default class ClusterWS {
-    static uWebSocket: any;
-    static uWebSocketServer: any;
+    static cWebSocket: any;
+    static cWebSocketServer: any;
     constructor(configurations: Configurations);
 }
 
@@ -17,6 +17,49 @@ export function BrokerClient(url: string, broadcaster: CustomObject, tries?: num
 export function GlobalBrokerServer(hrScale: HorizontalScaleOptions): void;
 
 export function InternalBrokerServer(port: number, securityKey: string, horizontalScaleOptions: any): void;
+
+export class WebSocket {
+    OPEN: number;
+    CLOSED: number;
+    isAlive: boolean;
+    external: CustomObject;
+    executeOn: string;
+    onping: Listener;
+    onpong: Listener;
+    internalOnOpen: Listener;
+    internalOnError: Listener;
+    internalOnClose: Listener;
+    internalOnMessage: Listener;
+    constructor(uri: string, external?: CustomObject, isServeClient?: boolean);
+    readonly readyState: number;
+    on(eventName: string, listener: Listener): this;
+    ping(message?: Message): void;
+    send(message: Message, options?: CustomObject): void;
+    terminate(): void;
+    close(code: number, reason: string): void;
+}
+
+export class WebSocketsServer extends EventEmitterSingle {
+    noDelay: boolean;
+    upgradeReq: any;
+    httpServer: HTTP.Server;
+    serverGroup: any;
+    pingIsAppLevel: boolean;
+    upgradeCallback: any;
+    lastUpgradeListener: boolean;
+    constructor(options: CustomObject, callback?: Listener);
+    heartbeat(interval: number, appLevel?: boolean): void;
+}
+
+export const noop: any;
+export const OPCODE_TEXT: number;
+export const OPCODE_PING: number;
+export const OPCODE_BINARY: number;
+export const APP_PONG_CODE: number;
+export const APP_PING_CODE: any;
+export const PERMESSAGE_DEFLATE: number;
+export const DEFAULT_PAYLOAD_LIMIT: number;
+export const native: any;
 
 export class EventEmitterMany {
     events: CustomObject;
@@ -37,9 +80,9 @@ export class EventEmitterSingle {
 
 export class Socket {
     worker: Worker;
-    socket: UWebSocket;
+    socket: WebSocket;
     id: string;
-    constructor(worker: Worker, socket: UWebSocket);
+    constructor(worker: Worker, socket: WebSocket);
     on(event: 'error', listener: (err: Error) => void): void;
     on(event: 'disconnect', listener: (code?: number, reason?: string) => void): void;
     on(event: string, listener: Listener): void;
@@ -65,57 +108,15 @@ export class WSServer extends EventEmitterSingle {
     publish(channel: string, message: Message, tries?: number): void;
     broadcastMessage(_: string, message: Message): void;
     clearBroker(url: string): void;
-    setBroker(br: UWebSocket, url: string): void;
+    setBroker(br: WebSocket, url: string): void;
 }
-
-export class UWebSocket {
-    OPEN: number;
-    CLOSED: number;
-    isAlive: boolean;
-    external: CustomObject;
-    executeOn: string;
-    onping: Listener;
-    onpong: Listener;
-    internalOnOpen: Listener;
-    internalOnError: Listener;
-    internalOnClose: Listener;
-    internalOnMessage: Listener;
-    constructor(uri: string, external?: CustomObject, isServeClient?: boolean);
-    readonly readyState: number;
-    on(eventName: string, listener: Listener): this;
-    ping(message?: Message): void;
-    send(message: Message, options?: CustomObject): void;
-    terminate(): void;
-    close(code: number, reason: string): void;
-}
-
-export class UWebSocketsServer extends EventEmitterSingle {
-    noDelay: boolean;
-    upgradeReq: any;
-    httpServer: HTTP.Server;
-    serverGroup: any;
-    pingIsAppLevel: boolean;
-    upgradeCallback: any;
-    lastUpgradeListener: boolean;
-    constructor(options: CustomObject, callback?: Listener);
-    heartbeat(interval: number, appLevel?: boolean): void;
-}
-
-export const noop: any;
-export const OPCODE_TEXT: number;
-export const OPCODE_PING: number;
-export const OPCODE_BINARY: number;
-export const APP_PONG_CODE: number;
-export const APP_PING_CODE: any;
-export const PERMESSAGE_DEFLATE: number;
-export const DEFAULT_PAYLOAD_LIMIT: number;
-export const native: any;
 
 export class Worker {
     options: Options;
+    id: number;
     wss: WSServer;
     server: HTTP.Server | HTTPS.Server;
-    constructor(options: Options, securityKey: string);
+    constructor(options: Options, id: number, securityKey: string);
 }
 
 export function masterProcess(options: Options): void;

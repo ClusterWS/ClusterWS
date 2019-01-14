@@ -1,6 +1,6 @@
-import { UWebSocket } from '../uws/client';
+import { WebSocket } from '../cws/client';
 import { BrokerClient } from './client';
-import { UWebSocketsServer } from '../uws/server';
+import { WebSocketsServer } from '../cws/server';
 import { generateKey, keysOf } from '../../utils/functions';
 import { Message, CustomObject, BrokerClients, Brokers } from '../../utils/types';
 
@@ -18,7 +18,7 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
     brokersAmount: 0
   };
 
-  const server: UWebSocketsServer = new UWebSocketsServer(
+  const server: WebSocketsServer = new WebSocketsServer(
     {
       port,
       verifyClient: (info: CustomObject, done: (next: boolean) => void): void =>
@@ -73,7 +73,7 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
   horizontalScaleOptions.masterOptions &&
     createClient(
       `${horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws'}://127.0.0.1:${
-        horizontalScaleOptions.masterOptions.port
+      horizontalScaleOptions.masterOptions.port
       }/?token=${horizontalScaleOptions.key || ''}`
     );
 
@@ -106,7 +106,7 @@ export function InternalBrokerServer(port: number, securityKey: string, horizont
     BrokerClient(brokerUrl, {
       clearBroker,
       broadcastMessage: broadcast,
-      setBroker: (br: UWebSocket, url: string): void => {
+      setBroker: (br: WebSocket, url: string): void => {
         globalBrokers.brokers[url] = br;
         globalBrokers.brokersKeys = keysOf(globalBrokers.brokers);
         globalBrokers.brokersAmount = globalBrokers.brokersKeys.length;

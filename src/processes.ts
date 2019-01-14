@@ -71,7 +71,7 @@ export function workerProcess(options: Options): void {
     'message',
     (message: Message): void => {
       const actions: CustomObject = {
-        Worker: (): Worker => new Worker(options, message.securityKey),
+        Worker: (): Worker => new Worker(options, message.processId, message.securityKey),
         Scaler: (): void => options.horizontalScaleOptions && GlobalBrokerServer(options.horizontalScaleOptions),
         Broker: (): void => {
           options.horizontalScaleOptions && (options.horizontalScaleOptions.serverId = message.uniqueServerId);

@@ -1,6 +1,6 @@
 import * as HTTPS from 'https';
 
-import { UWebSocketsServer } from '../uws/server';
+import { WebSocketsServer } from '../cws/server';
 import { generateKey, keysOf } from '../../utils/functions';
 import { Message, CustomObject, HorizontalScaleOptions, BrokerClients } from '../../utils/types';
 
@@ -12,7 +12,7 @@ export function GlobalBrokerServer(hrScale: HorizontalScaleOptions): void {
     keys: []
   };
 
-  let server: UWebSocketsServer;
+  let server: WebSocketsServer;
   const wsOptions: CustomObject = {
     port: hrScale.masterOptions.port,
     verifyClient: (info: CustomObject, done: (next: boolean) => void): void =>
@@ -23,9 +23,9 @@ export function GlobalBrokerServer(hrScale: HorizontalScaleOptions): void {
     const httpsServer: HTTPS.Server = HTTPS.createServer(hrScale.masterOptions.tlsOptions);
     wsOptions.port = null;
     wsOptions.server = httpsServer;
-    server = new UWebSocketsServer(wsOptions);
+    server = new WebSocketsServer(wsOptions);
     httpsServer.listen(hrScale.masterOptions.port, (): void => process.send({ event: 'READY', pid: process.pid }));
-  } else server = new UWebSocketsServer(wsOptions, (): void => process.send({ event: 'READY', pid: process.pid }));
+  } else server = new WebSocketsServer(wsOptions, (): void => process.send({ event: 'READY', pid: process.pid }));
 
   server.on(
     'connection',

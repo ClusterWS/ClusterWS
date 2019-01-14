@@ -1,14 +1,14 @@
 import * as cluster from 'cluster';
 
-import { UWebSocket } from './modules/uws/client';
-import { UWebSocketsServer } from './modules/uws/server';
+import { WebSocket } from './modules/cws/client';
+import { WebSocketsServer } from './modules/cws/server';
 import { logError, isFunction } from './utils/functions';
 import { Configurations, Options } from './utils/types';
 import { masterProcess, workerProcess } from './processes';
 
 export default class ClusterWS {
-  public static uWebSocket: any = UWebSocket;
-  public static uWebSocketServer: any = UWebSocketsServer;
+  public static cWebSocket: any = WebSocket;
+  public static cWebSocketServer: any = WebSocketsServer;
 
   constructor(configurations: Configurations) {
     const options: Options = {
