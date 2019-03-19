@@ -1,18 +1,17 @@
-import * as cluster from 'cluster';
-
-import { logError, isFunction } from './utils/functions';
-import { Options, Configurations, Middleware } from './utils/types';
-import { workerProcess, masterProcess } from './processes';
+import { Logger } from './utils/logger';
+import { isFunction } from './utils/helpers';
+import { runProcesses } from './processes';
+import { Options, Configurations, Mode } from './utils/types';
 
 export default class ClusterWS {
-  // tslint:disable-next-line
-  public static middleware = Middleware;
-
   private options: Options;
+
   constructor(configurations: Configurations) {
     this.options = {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
+      mode: configurations.mode || Mode.Scale,
       host: configurations.host,
+      logger: configurations.logger || new Logger('info'),
       worker: configurations.worker,
       wsPath: configurations.wsPath || null,
       workers: configurations.workers || 1,
@@ -26,7 +25,7 @@ export default class ClusterWS {
       horizontalScaleOptions: configurations.horizontalScaleOptions
     };
 
-    // If ports were not provided then generate them from 9400+
+    // populate broke ports
     if (!this.options.brokersPorts.length) {
       for (let i: number = 0; i < this.options.brokers; i++) {
         this.options.brokersPorts.push(i + 9400);
@@ -35,14 +34,15 @@ export default class ClusterWS {
 
     // Make sure that worker function is provided
     if (!isFunction(this.options.worker)) {
-      return logError('Worker must be provided and it must be a function');
+      return this.options.logger.error('Worker is not provided or is not a function');
     }
 
     // Make sure that brokersPorts are provided properly
     if (this.options.brokers !== this.options.brokersPorts.length) {
-      return logError('Number of broker ports should be the same as number of brokers');
+      return this.options.logger.error('Number of broker ports in not the same as number of brokers');
     }
 
-    cluster.isMaster ? masterProcess(this.options) : workerProcess(this.options);
+    // run actual processes
+    runProcesses(this.options);
   }
 }

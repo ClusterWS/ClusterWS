@@ -11,7 +11,6 @@ import * as HTTPS from 'https';
 import { SecureContextOptions } from 'tls';
 
 export default class ClusterWS {
-    static middleware: typeof Middleware;
     constructor(configurations: Configurations);
 }
 
@@ -68,8 +67,7 @@ export class Worker {
     constructor(options: Options, internalSecurityKey: string);
 }
 
-export function masterProcess(options: Options): void;
-export function workerProcess(options: Options): void;
+export function runProcesses(options: Options): void;
 
 export class EventEmitter {
     on(event: 'connection', listener: (socket: Socket) => void): void;
@@ -88,16 +86,22 @@ export function logWarning<T>(data: T): any;
 export function isFunction<T>(fn: T): boolean;
 export function generateKey(length: number): string;
 
-export enum Middleware {
-    onSubscribe = "onSubscribe",
-    onUnsubscribe = "onUnsubscribe",
-    onWorkerMessage = "onWorkerMessage",
-    verifyConnection = "verifyConnection"
+export function isFunction<T>(fn: T): boolean;
+
+export class Logger {
+    constructor(level: string);
+    debug(prefix: string, data: any): void;
+    info(data: any): void;
+    error(data: any): void;
+    warning(): void;
 }
+
 export type Message = any;
-export type Listener = (...args: any[]) => void;
-export type ListenerMany = (eventName: string, ...args: any[]) => void;
 export type WorkerFunction = () => void;
+export enum Mode {
+    Scale = 0,
+    CurrentProcess = 1
+}
 export type HorizontalScaleOptions = {
     key?: string;
     serverId?: string;
@@ -109,8 +113,10 @@ export type HorizontalScaleOptions = {
 };
 export type Configurations = {
     worker: WorkerFunction;
+    mode?: Mode;
     port?: number;
     host?: string;
+    logger?: Logger;
     wsPath?: string;
     workers?: number;
     brokers?: number;
@@ -124,8 +130,10 @@ export type Configurations = {
 };
 export type Options = {
     worker: WorkerFunction;
+    mode: Mode;
     port: number;
     host: string | null;
+    logger: Logger;
     wsPath: string;
     workers: number;
     brokers: number;
@@ -138,7 +146,13 @@ export type Options = {
     encodeDecodeEngine: EncodeDecodeEngine | null;
 };
 export type EncodeDecodeEngine = {
-    encode: (message: Message) => Message;
-    decode: (message: Message) => Message;
+    encode: (message: any) => any;
+    decode: (message: any) => any;
+};
+export type Logger = {
+    info?: (data: any) => any;
+    error?: (data: any) => any;
+    debug?: (prefix: string, data: any) => any;
+    warning?: (data: any) => any;
 };
 

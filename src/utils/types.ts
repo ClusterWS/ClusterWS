@@ -1,17 +1,15 @@
 import { SecureContextOptions } from 'tls';
 
-export enum Middleware {
-  onSubscribe = 'onSubscribe',
-  onUnsubscribe = 'onUnsubscribe',
-  onWorkerMessage = 'onWorkerMessage',
-  verifyConnection = 'verifyConnection'
-}
-
 // for SocketMessage use string | Buffer
 export type Message = any;
-export type Listener = (...args: any[]) => void;
-export type ListenerMany = (eventName: string, ...args: any[]) => void;
+// export type Listener = (...args: any[]) => void;
+// export type ListenerMany = (eventName: string, ...args: any[]) => void;
 export type WorkerFunction = () => void;
+
+export enum Mode {
+  Scale,
+  CurrentProcess
+}
 
 export type HorizontalScaleOptions = {
   key?: string;
@@ -25,8 +23,10 @@ export type HorizontalScaleOptions = {
 
 export type Configurations = {
   worker: WorkerFunction;
+  mode?: Mode,
   port?: number;
   host?: string;
+  logger?: Logger
   wsPath?: string;
   workers?: number;
   brokers?: number;
@@ -37,13 +37,14 @@ export type Configurations = {
   restartWorkerOnFail?: boolean;
   horizontalScaleOptions?: HorizontalScaleOptions;
   encodeDecodeEngine?: EncodeDecodeEngine;
-  // logger: Logger
 };
 
 export type Options = {
   worker: WorkerFunction;
+  mode: Mode,
   port: number;
   host: string | null;
+  logger: Logger
   wsPath: string;
   workers: number;
   brokers: number;
@@ -54,18 +55,17 @@ export type Options = {
   restartWorkerOnFail: boolean;
   horizontalScaleOptions: HorizontalScaleOptions | null;
   encodeDecodeEngine: EncodeDecodeEngine | null;
-  // logger: Logger
 };
 
 /// TODO: Make sure that types fit
 export type EncodeDecodeEngine = {
-  encode: (message: Message) => Message;
-  decode: (message: Message) => Message;
+  encode: (message: any) => any;
+  decode: (message: any) => any;
 };
 
-// export type Logger = {
-//   info: () => any;
-//   error: () => any;
-//   debug: () => any;
-//   warning: () => any;
-// };
+export type Logger = {
+  info?: (data: any) => any;
+  error?: (data: any) => any;
+  debug?: (prefix: string, data: any) => any;
+  warning?: (data: any) => any;
+};
