@@ -1,11 +1,15 @@
 import * as cluster from 'cluster';
 
+import { Worker } from './modules/worker';
+import { generateUid } from './utils/helpers';
 import { Options, Mode, Message } from './utils/types';
 
-export function runProcesses(options: Options): void {
+export function runProcesses(options: Options): any {
   // validate in which mode are we running
   if (options.mode === Mode.CurrentProcess) {
     // run everything in current process
+    options.logger.info(` Running in single process on port: ${options.port}, PID ${process.pid} ${options.tlsOptions ? '(secure)' : ''}`);
+    return new Worker(options);
   }
 
   cluster.isMaster ? masterProcess(options) : childProcess(options);
@@ -13,6 +17,8 @@ export function runProcesses(options: Options): void {
 
 function masterProcess(options: Options): void {
   let scalerReady: string;
+  const serverId: string = generateUid(10);
+  const securityKey: string = generateUid(20);
   const readyBrokers: any = [];
   const readyWorkers: any = [];
 
@@ -68,7 +74,7 @@ function masterProcess(options: Options): void {
       }
     });
 
-    forkedProcess.send({ id, name });
+    forkedProcess.send({ id, name, serverId, securityKey });
   };
 
   for (let i: number = 0; i < options.brokers; i++) {
@@ -79,6 +85,8 @@ function masterProcess(options: Options): void {
 function childProcess(options: Options): void {
   process.on('message', (message: Message) => {
     options.logger.debug('Message from master', message);
+
+    // boot correct module
     process.send({ event: 'READY', pid: process.pid });
   });
   // write child process logic

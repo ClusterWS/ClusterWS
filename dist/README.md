@@ -19,7 +19,7 @@
 </p>
 
 <h3 align="center">
-    Official Client Libraries
+    Officially Supported Client Libraries
 </h3>
 
 <p align="center">

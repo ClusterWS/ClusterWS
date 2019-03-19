@@ -1,14 +1,18 @@
 "use strict";
 
-var Mode, cluster = require("cluster");
+Object.defineProperty(exports, "__esModule", {
+    value: !0
+});
+
+var crypto = require("crypto"), cluster = require("cluster");
 
 class Logger {
     constructor(r) {
         this.level = r;
     }
-    debug(r, o) {
-        let e = o;
-        "object" == typeof o && (e = JSON.stringify(o)), process.stdout.write(`[36mDebug:[0m ${r} ${e}\n`);
+    debug(r, e) {
+        let o = e;
+        "object" == typeof e && (o = JSON.stringify(e)), process.stdout.write(`[36mDebug:[0m ${r} ${o}\n`);
     }
     info(r) {
         process.stdout.write(`[32m✓ ${r}[0m\n`);
@@ -23,40 +27,54 @@ function isFunction(r) {
     return "[object Function]" === {}.toString.call(r);
 }
 
+function generateUid(r) {
+    return crypto.randomBytes(r).toString("hex");
+}
+
+class Worker {
+    constructor(r, e) {
+        this.options = r, console.log(`called in current process ${process.pid}`);
+    }
+}
+
 function runProcesses(r) {
-    r.mode, Mode.CurrentProcess, cluster.isMaster ? masterProcess(r) : childProcess(r);
+    if (r.mode === exports.Mode.CurrentProcess) return r.logger.info(` Running in single process on port: ${r.port}, PID ${process.pid} ${r.tlsOptions ? "(secure)" : ""}`), 
+    new Worker(r);
+    cluster.isMaster ? masterProcess(r) : childProcess(r);
 }
 
 function masterProcess(r) {
-    let o;
-    const e = [], s = [], t = (n, i, l) => {
-        const c = cluster.fork();
-        c.on("message", c => {
-            if (r.logger.debug("Message from child", c), "READY" === c.event) {
-                if (l) return r.logger.info(`${i} ${n} PID ${c.pid} has been restarted`);
-                if ("Scaler" === i) {
-                    o = ` Scaler on: ${r.horizontalScaleOptions.masterOptions.port}, PID ${c.pid}`;
-                    for (let o = 0; o < r.brokers; o++) t(o, "Broker");
+    let e;
+    const o = generateUid(10), s = generateUid(20), t = [], n = [], i = (c, l, p) => {
+        const g = cluster.fork();
+        g.on("message", o => {
+            if (r.logger.debug("Message from child", o), "READY" === o.event) {
+                if (p) return r.logger.info(`${l} ${c} PID ${o.pid} has been restarted`);
+                if ("Scaler" === l) {
+                    e = ` Scaler on: ${r.horizontalScaleOptions.masterOptions.port}, PID ${o.pid}`;
+                    for (let e = 0; e < r.brokers; e++) i(e, "Broker");
                 }
-                if ("Broker" === i && (e[n] = ` Broker on: ${r.brokersPorts[n]}, PID ${c.pid}`, 
-                e.length === r.brokers && !e.includes(void 0))) for (let o = 0; o < r.workers; o++) t(o, "Worker");
-                "Worker" === i && (s[n] = `    Worker: ${n}, PID ${c.pid}`, s.length !== r.workers || s.includes(void 0) || (r.logger.info(` Master on: ${r.port}, PID ${process.pid} ${r.tlsOptions ? "(secure)" : ""}`), 
-                o && r.logger.info(o), e.forEach(r.logger.info), s.forEach(r.logger.info)));
+                if ("Broker" === l && (t[c] = ` Broker on: ${r.brokersPorts[c]}, PID ${o.pid}`, 
+                t.length === r.brokers && !t.includes(void 0))) for (let e = 0; e < r.workers; e++) i(e, "Worker");
+                "Worker" === l && (n[c] = `    Worker: ${c}, PID ${o.pid}`, n.length !== r.workers || n.includes(void 0) || (r.logger.info(` Master on: ${r.port}, PID ${process.pid} ${r.tlsOptions ? "(secure)" : ""}`), 
+                e && r.logger.info(e), t.forEach(r.logger.info), n.forEach(r.logger.info)));
             }
-        }), c.on("exit", () => {
-            r.logger.error(`${i} ${n} has exited`), r.restartWorkerOnFail && (r.logger.warning(`${i} ${n} is restarting \n`), 
-            t(n, i, !0));
-        }), c.send({
-            id: n,
-            name: i
+        }), g.on("exit", () => {
+            r.logger.error(`${l} ${c} has exited`), r.restartWorkerOnFail && (r.logger.warning(`${l} ${c} is restarting \n`), 
+            i(c, l, !0));
+        }), g.send({
+            id: c,
+            name: l,
+            serverId: o,
+            securityKey: s
         });
     };
-    for (let o = 0; o < r.brokers; o++) t(o, "Broker");
+    for (let e = 0; e < r.brokers; e++) i(e, "Broker");
 }
 
 function childProcess(r) {
-    process.on("message", o => {
-        r.logger.debug("Message from master", o), process.send({
+    process.on("message", e => {
+        r.logger.debug("Message from master", e), process.send({
             event: "READY",
             pid: process.pid
         });
@@ -65,13 +83,13 @@ function childProcess(r) {
 
 !function(r) {
     r[r.Scale = 0] = "Scale", r[r.CurrentProcess = 1] = "CurrentProcess";
-}(Mode || (Mode = {}));
+}(exports.Mode || (exports.Mode = {}));
 
 class ClusterWS {
     constructor(r) {
         if (this.options = {
             port: r.port || (r.tlsOptions ? 443 : 80),
-            mode: r.mode || Mode.Scale,
+            mode: r.mode || exports.Mode.Scale,
             host: r.host,
             logger: r.logger || new Logger("info"),
             worker: r.worker,
@@ -90,4 +108,4 @@ class ClusterWS {
     }
 }
 
-module.exports = ClusterWS; module.exports.default = ClusterWS;
+exports.default = ClusterWS; module.exports = exports["default"]
