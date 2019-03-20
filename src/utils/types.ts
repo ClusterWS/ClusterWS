@@ -2,7 +2,7 @@ import { SecureContextOptions } from 'tls';
 
 // for SocketMessage use string | Buffer
 export type Message = any;
-// export type Listener = (...args: any[]) => void;
+export type Listener = (...args: any[]) => void;
 // export type ListenerMany = (eventName: string, ...args: any[]) => void;
 export type WorkerFunction = () => void;
 
@@ -30,6 +30,7 @@ export type Configurations = {
   wsPath?: string;
   workers?: number;
   brokers?: number;
+  autoPing?: boolean;
   useBinary?: boolean;
   tlsOptions?: SecureContextOptions;
   pingInterval?: number;
@@ -48,6 +49,7 @@ export type Options = {
   wsPath: string;
   workers: number;
   brokers: number;
+  autoPing: boolean;
   useBinary: boolean;
   brokersPorts: number[];
   tlsOptions: SecureContextOptions | null;

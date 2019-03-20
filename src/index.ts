@@ -16,6 +16,7 @@ export default class ClusterWS {
       wsPath: configurations.wsPath || null,
       workers: configurations.workers || 1,
       brokers: configurations.brokers || 1,
+      autoPing: configurations.autoPing !== false,
       useBinary: configurations.useBinary,
       tlsOptions: configurations.tlsOptions,
       pingInterval: configurations.pingInterval || 20000,

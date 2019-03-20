@@ -10,7 +10,7 @@ export class Logger {
     if (typeof data === 'object') {
       printData = JSON.stringify(data);
     }
-    process.stdout.write(`\x1b[36mDebug:\x1b[0m ${prefix} ${printData}\n`);
+    process.stdout.write(`\x1b[36mDebug:\x1b[0m ${prefix} - ${printData}\n`);
   }
 
   // Green color output to console

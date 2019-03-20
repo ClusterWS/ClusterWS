@@ -2,7 +2,7 @@ import * as cluster from 'cluster';
 
 import { Worker } from './modules/worker';
 import { generateUid } from './utils/helpers';
-import { Options, Mode, Message } from './utils/types';
+import { Options, Mode, Message, Listener } from './utils/types';
 
 export function runProcesses(options: Options): any {
   // validate in which mode are we running
@@ -22,7 +22,7 @@ function masterProcess(options: Options): void {
   const readyBrokers: any = [];
   const readyWorkers: any = [];
 
-  const forkNewProcess: any = (id: number, name: string, isRestart?: boolean): void => {
+  const forkNewProcess: Listener = (id: number, name: string, isRestart?: boolean): void => {
     const forkedProcess: cluster.Worker = cluster.fork();
 
     forkedProcess.on('message', (message: Message) => {
