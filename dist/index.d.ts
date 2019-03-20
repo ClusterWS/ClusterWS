@@ -49,6 +49,10 @@ export class PubSubEngine {
 
 export class Socket {
     constructor(worker: Worker, socket: WebSocket);
+    on(event: string, listener: Listener): void;
+    send(event: string, message: Message, eventType?: string): void;
+    disconnect(code?: number, reason?: string): void;
+    terminate(): void;
 }
 
 export class WSServer extends EventEmitter {
@@ -56,6 +60,7 @@ export class WSServer extends EventEmitter {
 }
 
 export class Worker {
+    options: Options;
     wss: WSServer;
     server: HTTP.Server | HTTPS.Server;
     constructor(options: Options, securityKey?: string);
@@ -149,9 +154,9 @@ export type EncodeDecodeEngine = {
     decode: (message: any) => any;
 };
 export type Logger = {
-    info?: (data: any) => any;
-    error?: (data: any) => any;
-    debug?: (prefix: string, data: any) => any;
-    warning?: (data: any) => any;
+    info: (data: any) => any;
+    error: (data: any) => any;
+    debug: (prefix: string, data: any) => any;
+    warning: (data: any) => any;
 };
 

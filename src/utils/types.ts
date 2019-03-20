@@ -66,8 +66,8 @@ export type EncodeDecodeEngine = {
 };
 
 export type Logger = {
-  info?: (data: any) => any;
-  error?: (data: any) => any;
-  debug?: (prefix: string, data: any) => any;
-  warning?: (data: any) => any;
+  info: (data: any) => any;
+  error: (data: any) => any;
+  debug: (prefix: string, data: any) => any;
+  warning: (data: any) => any;
 };

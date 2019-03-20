@@ -6,9 +6,9 @@ class Logger {
     constructor(e) {
         this.level = e;
     }
-    debug(e, r) {
-        let o = r;
-        "object" == typeof r && (o = JSON.stringify(r)), process.stdout.write(`[36mDebug:[0m ${e} - ${o}\n`);
+    debug(e, t) {
+        let r = t;
+        "object" == typeof t && (r = JSON.stringify(t)), process.stdout.write(`[36mDebug:[0m ${e} - ${r}\n`);
     }
     info(e) {
         process.stdout.write(`[32m✓ ${e}[0m\n`);
@@ -27,23 +27,17 @@ function generateUid(e) {
     return crypto.randomBytes(e).toString("hex");
 }
 
-class Socket {
-    constructor(e, r) {
-        this.worker = e, this.socket = r;
-    }
-}
-
 class EventEmitter {
     constructor(e) {
         this.logger = e, this.events = {};
     }
-    on(e, r) {
-        if (!isFunction(r)) return this.logger.error("Listener must be a function");
-        this.events[e] = r;
+    on(e, t) {
+        if (!isFunction(t)) return this.logger.error("Listener must be a function");
+        this.events[e] = t;
     }
-    emit(e, ...r) {
-        const o = this.events[e];
-        o && o(...r);
+    emit(e, ...t) {
+        const r = this.events[e];
+        r && r(...t);
     }
     exist(e) {
         return !!this.events[e];
@@ -54,6 +48,54 @@ class EventEmitter {
     removeEvents() {
         this.events = {};
     }
+}
+
+class Socket {
+    constructor(e, t) {
+        this.worker = e, this.socket = t, this.id = generateUid(8), this.emitter = new EventEmitter(this.worker.options.logger);
+        const r = JSON.stringify([ "e", "hello", {
+            hello: "world",
+            antoehr: "lol",
+            box: "cloud"
+        } ]);
+        this.socket.on("message", e => {
+            try {
+                if ("string" != typeof e && (e = Buffer.from(r)), 91 !== e[0] && "[" !== e[0] && this.emitter.exist("message")) return this.emitter.emit("message", e);
+                decode(this, JSON.parse(e.toString()));
+            } catch (t) {
+                if (this.emitter.exist("message")) return this.emitter.emit("message", e);
+                console.log(t);
+            }
+        });
+    }
+    on(e, t) {
+        this.emitter.on(e, t);
+    }
+    send(e, t, r = "emit") {
+        this.socket.send(encode(e, t, r));
+    }
+    disconnect(e, t) {
+        this.socket.close(e, t);
+    }
+    terminate() {
+        this.socket.terminate();
+    }
+}
+
+function encode(e, t, r) {
+    const o = {
+        emit: [ "e", e, t ],
+        publish: [ "p", e, t ],
+        system: {
+            configuration: [ "s", "c", t ]
+        }
+    };
+    return JSON.stringify(o[r][e] || o[r]);
+}
+
+function decode(e, t) {
+    const [r, o, s] = t;
+    if ("e" === r) return e.emitter.emit(o, s);
 }
 
 class WSServer extends EventEmitter {
@@ -67,15 +109,15 @@ class WSServer extends EventEmitter {
 }(Mode || (Mode = {}));
 
 class Worker {
-    constructor(e, r) {
+    constructor(e, t) {
         this.options = e, this.wss = new WSServer(this.options), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        const o = new cws.WebSocketServer({
+        const r = new cws.WebSocketServer({
             path: this.options.wsPath,
             server: this.server
         });
-        o.on("connection", e => {
+        r.on("connection", e => {
             this.options.logger.debug("Worker", "new websocket connection"), this.wss.emit("connection", new Socket(this, e));
-        }), this.options.autoPing && (console.log("ping"), o.startAutoPing(this.options.pingInterval, !0)), 
+        }), this.options.autoPing && (console.log("ping"), r.startAutoPing(this.options.pingInterval, !0)), 
         this.server.on("error", e => {
             this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === Mode.Scale && process.exit();
         }), this.server.listen(this.options.port, this.options.host, () => {
@@ -94,37 +136,37 @@ function runProcesses(e) {
 }
 
 function masterProcess(e) {
-    let r;
-    const o = generateUid(10), s = generateUid(20), t = [], n = [], i = (c, l, p) => {
-        const g = cluster.fork();
-        g.on("message", o => {
-            if (e.logger.debug("Message from child", o), "READY" === o.event) {
-                if (p) return e.logger.info(`${l} ${c} PID ${o.pid} has been restarted`);
+    let t;
+    const r = generateUid(10), o = generateUid(20), s = [], i = [], n = (c, l, g) => {
+        const h = cluster.fork();
+        h.on("message", r => {
+            if (e.logger.debug("Message from child", r), "READY" === r.event) {
+                if (g) return e.logger.info(`${l} ${c} PID ${r.pid} has been restarted`);
                 if ("Scaler" === l) {
-                    r = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${o.pid}`;
-                    for (let r = 0; r < e.brokers; r++) i(r, "Broker");
+                    t = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${r.pid}`;
+                    for (let t = 0; t < e.brokers; t++) n(t, "Broker");
                 }
-                if ("Broker" === l && (t[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${o.pid}`, 
-                t.length === e.brokers && !t.includes(void 0))) for (let r = 0; r < e.workers; r++) i(r, "Worker");
-                "Worker" === l && (n[c] = `    Worker: ${c}, PID ${o.pid}`, n.length !== e.workers || n.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
-                r && e.logger.info(r), t.forEach(e.logger.info), n.forEach(e.logger.info)));
+                if ("Broker" === l && (s[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${r.pid}`, 
+                s.length === e.brokers && !s.includes(void 0))) for (let t = 0; t < e.workers; t++) n(t, "Worker");
+                "Worker" === l && (i[c] = `    Worker: ${c}, PID ${r.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+                t && e.logger.info(t), s.forEach(e.logger.info), i.forEach(e.logger.info)));
             }
-        }), g.on("exit", () => {
+        }), h.on("exit", () => {
             e.logger.error(`${l} ${c} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${l} ${c} is restarting \n`), 
-            i(c, l, !0));
-        }), g.send({
+            n(c, l, !0));
+        }), h.send({
             id: c,
             name: l,
-            serverId: o,
-            securityKey: s
+            serverId: r,
+            securityKey: o
         });
     };
-    for (let r = 0; r < e.brokers; r++) i(r, "Broker");
+    for (let t = 0; t < e.brokers; t++) n(t, "Broker");
 }
 
 function childProcess(e) {
-    process.on("message", r => {
-        e.logger.debug("Message from master", r), process.send({
+    process.on("message", t => {
+        e.logger.debug("Message from master", t), process.send({
             event: "READY",
             pid: process.pid
         });

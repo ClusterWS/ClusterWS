@@ -10,7 +10,7 @@ export class Worker {
   public wss: WSServer;
   public server: HTTP.Server | HTTPS.Server;
 
-  constructor(private options: Options, securityKey?: string) {
+  constructor(public options: Options, securityKey?: string) {
     this.wss = new WSServer(this.options);
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 

@@ -1,9 +1,8 @@
 // TODO: complete writing logger
 export class Logger {
-  constructor(private level: string) {
+  constructor(private level: string) { }
 
-  }
-
+  // blue color output to consle with Debug prefix
   public debug(prefix: string, data: any): void {
     // write debug
     let printData: any = data;
