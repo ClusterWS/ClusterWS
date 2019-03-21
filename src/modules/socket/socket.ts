@@ -14,6 +14,7 @@ type PrivateSocket = {
 export class Socket {
   private id: string = generateUid(8);
   private emitter: EventEmitter;
+  // channels is actually used in decode() function
   private channels: { [key: string]: boolean } = {};
 
   constructor(private worker: Worker, private socket: WebSocket) {

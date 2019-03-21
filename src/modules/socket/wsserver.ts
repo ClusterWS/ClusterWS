@@ -16,6 +16,8 @@ export class WSServer extends EventEmitter {
     });
   }
 
+  // TODO: add middleware
+
   public publish(channelName: string, message: Message, id?: string): void {
     this.pubSub.publish(channelName, message, id);
   }
