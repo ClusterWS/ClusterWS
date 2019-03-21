@@ -274,7 +274,7 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             mode: e.mode || Mode.Scale,
             host: e.host,
-            logger: e.logger || new Logger(Level.DEBUG),
+            logger: e.logger || new Logger(Level.INFO),
             worker: e.worker,
             wsPath: e.wsPath || null,
             workers: e.workers || 1,

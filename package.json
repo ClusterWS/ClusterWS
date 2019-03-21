@@ -1,6 +1,6 @@
 {
   "name": "clusterws",
-  "version": "4.0.0",
+  "version": "4.0.0-alpha.0",
   "description": "ClusterWS - lightweight, fast and powerful framework for building scalable WebSocket applications in Node.js.",
   "main": "index.js",
   "types": "index.d.ts",
@@ -8,7 +8,7 @@
   "scripts": {
     "test": "mocha -r ts-node/register \"./src/**/*.test.ts\" --exit",
     "build": "ts-builder -c ./tsbuild.json",
-    "publish": "npm run build && cd dist && npm publish && cd .."
+    "release": "npm run build && cd dist && npm publish --tag alpha && cd .."
   },
   "license": "MIT",
   "repository": {
