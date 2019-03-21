@@ -58,6 +58,9 @@ export class Socket {
 
 export class WSServer extends EventEmitter {
     constructor(options: Options, securityKey: string);
+    publish(channelName: string, message: Message, id?: string): void;
+    subscribe(id: string, channelName: string): void;
+    unsubscribe(id: string, channelName: string): void;
 }
 
 export class Worker {
@@ -90,8 +93,15 @@ export function generateKey(length: number): string;
 export function isFunction<T>(fn: T): boolean;
 export function generateUid(length: number): string;
 
+export enum Level {
+    ALL = 0,
+    DEBUG = 1,
+    INFO = 2,
+    WARN = 3,
+    ERROR = 4
+}
 export class Logger {
-    constructor(level: string);
+    constructor(level: Level);
     debug(prefix: string, data: any): void;
     info(data: any): void;
     error(data: any): void;
@@ -129,7 +139,6 @@ export type Configurations = {
     brokersPorts?: number[];
     restartWorkerOnFail?: boolean;
     horizontalScaleOptions?: HorizontalScaleOptions;
-    encodeDecodeEngine?: EncodeDecodeEngine;
 };
 export type Options = {
     worker: WorkerFunction;
@@ -146,13 +155,9 @@ export type Options = {
     pingInterval: number;
     restartWorkerOnFail: boolean;
     horizontalScaleOptions: HorizontalScaleOptions | null;
-    encodeDecodeEngine: EncodeDecodeEngine | null;
-};
-export type EncodeDecodeEngine = {
-    encode: (message: any) => any;
-    decode: (message: any) => any;
 };
 export type Logger = {
+    [keys: string]: any;
     info: (data: any) => any;
     error: (data: any) => any;
     debug: (prefix: string, data: any) => any;

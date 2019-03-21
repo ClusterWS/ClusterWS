@@ -1,6 +1,6 @@
-import { Logger } from './utils/logger';
 import { isFunction } from './utils/helpers';
 import { runProcesses } from './processes';
+import { Logger, Level } from './utils/logger';
 import { Options, Configurations, Mode } from './utils/types';
 
 export default class ClusterWS {
@@ -11,7 +11,7 @@ export default class ClusterWS {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
       mode: configurations.mode || Mode.Scale,
       host: configurations.host,
-      logger: configurations.logger || new Logger('info'),
+      logger: configurations.logger || new Logger(Level.INFO),
       worker: configurations.worker,
       wsPath: configurations.wsPath || null,
       workers: configurations.workers || 1,
@@ -21,7 +21,7 @@ export default class ClusterWS {
       tlsOptions: configurations.tlsOptions,
       pingInterval: configurations.pingInterval || 20000,
       brokersPorts: configurations.brokersPorts || [],
-      encodeDecodeEngine: configurations.encodeDecodeEngine,
+      // encodeDecodeEngine: configurations.encodeDecodeEngine,
       restartWorkerOnFail: configurations.restartWorkerOnFail,
       horizontalScaleOptions: configurations.horizontalScaleOptions
     };

@@ -8,15 +8,22 @@ type PrivateSocket = {
   id: string,
   worker: Worker,
   emitter: EventEmitter,
-  channels: { [key: string]: number }
+  channels: { [key: string]: boolean }
 };
 
 export class Socket {
   private id: string = generateUid(8);
   private emitter: EventEmitter;
+  private channels: { [key: string]: boolean } = {};
 
   constructor(private worker: Worker, private socket: WebSocket) {
     this.emitter = new EventEmitter(this.worker.options.logger);
+
+    // any type is to overcome private type
+    (this.worker.wss as any).pubSub.register(this.id, (message: Message) => {
+      // we dont have to pass event as publish messages is large object with structure { channel: [data] }
+      this.send(null, message, 'publish');
+    });
 
     this.socket.on('message', (message: string | Buffer): void => {
       // if user listens on 'message' event then we will not parse any messages
@@ -50,6 +57,21 @@ export class Socket {
         this.worker.options.logger.error(err);
         this.terminate();
       }
+    });
+
+    this.socket.on('close', (code?: number, reason?: string): void => {
+      // TODO: add unregister event from channels
+      this.emitter.emit('disconnect', code, reason);
+      this.emitter.removeEvents();
+    });
+
+    this.socket.on('error', (err: Error): void => {
+      if (this.emitter.exist('error')) {
+        // user can decide what to do with this error
+        return this.emitter.emit('error', err);
+      }
+      this.worker.options.logger.error(err);
+      this.socket.terminate();
     });
   }
 
@@ -86,9 +108,28 @@ function decode(socket: PrivateSocket, data: Message): void {
   // parse data with user provided decode function
   const [msgType, param, message]: [string, string, Message] = data;
 
+  // 'e' means emit
   if (msgType === 'e') {
     return socket.emitter.emit(param, message);
   }
 
-  // TODO: add the rest of the options
+  // 'p' means publish
+  if (msgType === 'p') {
+    return socket.channels[param] && socket.worker.wss.publish(param, message, socket.id);
+  }
+
+  // if we start with 's' it means system
+  if (msgType === 's') {
+    // second 's' means subscribe
+    if (param === 's') {
+      socket.channels[message] = true;
+      return socket.worker.wss.subscribe(socket.id, message);
+    }
+
+    // 'u' means unsubscribe
+    if (param === 'u') {
+      delete socket.channels[message];
+      return socket.worker.wss.unsubscribe(socket.id, message);
+    }
+  }
 }

@@ -37,7 +37,7 @@ export type Configurations = {
   brokersPorts?: number[];
   restartWorkerOnFail?: boolean;
   horizontalScaleOptions?: HorizontalScaleOptions;
-  encodeDecodeEngine?: EncodeDecodeEngine;
+  // encodeDecodeEngine?: EncodeDecodeEngine;
 };
 
 export type Options = {
@@ -56,16 +56,17 @@ export type Options = {
   pingInterval: number;
   restartWorkerOnFail: boolean;
   horizontalScaleOptions: HorizontalScaleOptions | null;
-  encodeDecodeEngine: EncodeDecodeEngine | null;
+  // encodeDecodeEngine: EncodeDecodeEngine | null;
 };
 
 /// TODO: Make sure that types fit
-export type EncodeDecodeEngine = {
-  encode: (message: any) => any;
-  decode: (message: any) => any;
-};
+// export type EncodeDecodeEngine = {
+//   encode: (message: any) => any;
+//   decode: (message: any) => any;
+// };
 
 export type Logger = {
+  [keys: string]: any,
   info: (data: any) => any;
   error: (data: any) => any;
   debug: (prefix: string, data: any) => any;

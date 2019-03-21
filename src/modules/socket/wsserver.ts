@@ -18,9 +18,13 @@ export class WSServer extends EventEmitter {
     this.pubSub.publish(channelName, message, id);
   }
 
-  public subscribe(channelName: string, id: string): void {
+  // Only for internal usage from socket.ts
+  public subscribe(id: string, channelName: string): void {
     this.pubSub.subscribe(id, channelName);
   }
 
-  // TODO: add unsubscribe
+  // Only for internal usage from socket.ts
+  public unsubscribe(id: string, channelName: string): void {
+    this.pubSub.unsubscribe(id, channelName);
+  }
 }
