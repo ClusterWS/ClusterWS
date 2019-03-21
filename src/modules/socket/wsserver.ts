@@ -7,10 +7,12 @@ export class WSServer extends EventEmitter {
 
   constructor(private options: Options, securityKey: string) {
     super(options.logger);
+    // TODO: need to fix timer for pubSub engine
     this.pubSub = new PubSubEngine(options.logger, 1000);
 
     this.pubSub.register('broker', (message: any) => {
       // to do handle messages for broker
+      // console.log(message);
     });
   }
 

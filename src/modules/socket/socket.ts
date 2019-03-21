@@ -31,6 +31,7 @@ export class Socket {
       if (this.emitter.exist('message')) {
         return this.emitter.emit('message', message);
       }
+
       // Try catch is very slow when we throw error therefore we need to try and handle as much as possible error in try method
       try {
         // make sure that incoming message is at least looking like correct structure
