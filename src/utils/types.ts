@@ -31,7 +31,7 @@ export type Configurations = {
   workers?: number;
   brokers?: number;
   autoPing?: boolean;
-  useBinary?: boolean;
+  // useBinary?: boolean;
   tlsOptions?: SecureContextOptions;
   pingInterval?: number;
   brokersPorts?: number[];
@@ -50,7 +50,7 @@ export type Options = {
   workers: number;
   brokers: number;
   autoPing: boolean;
-  useBinary: boolean;
+  // useBinary: boolean;
   brokersPorts: number[];
   tlsOptions: SecureContextOptions | null;
   pingInterval: number;

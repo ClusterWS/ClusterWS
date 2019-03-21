@@ -2,6 +2,7 @@ import { Listener, Message, Logger } from '../utils/types';
 
 // TODO: Fix serious bug with data reference :(
 export class PubSubEngine {
+  private hooks: { [key: string]: Listener } = {};
   private users: { [key: string]: Listener } = {};
   private batches: { [key: string]: Message[] } = {};
   private channels: { [key: string]: string[] } = {};
@@ -10,9 +11,15 @@ export class PubSubEngine {
     this.run();
   }
 
+  public addListener(event: string, listener: Listener): void {
+    this.hooks[event] = listener;
+  }
+
   public register(userId: string, listener: Listener): void {
     this.users[userId] = listener;
   }
+
+  // TODO: add unregister function to be able to remove old users
 
   public subscribe(userId: string, channel: string): any {
     if (!this.users[userId]) {
@@ -24,7 +31,10 @@ export class PubSubEngine {
     }
 
     this.logger.debug(`PubSubEngine`, `'${channel}' has been created`);
-    this.channels[channel] = [userId];
+    if (this.hooks['channelAdd']) {
+      this.hooks['channelAdd'](channel);
+    }
+    this.channels[channel] = ['broker', userId];
   }
 
   public unsubscribe(userId: string, channel: string): void {
@@ -37,8 +47,11 @@ export class PubSubEngine {
     }
 
     // remove channels object if there is no users any more
-    if (channelArray && !channelArray.length) {
+    if (channelArray && channelArray.length === 1) {
       this.logger.debug(`PubSubEngine`, `'${channel}' has been removed`);
+      if (this.hooks['channelDelete']) {
+        this.hooks['channelDelete'](channel);
+      }
       delete this.channels[channel];
     }
   }

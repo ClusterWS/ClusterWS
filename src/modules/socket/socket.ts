@@ -17,25 +17,24 @@ export class Socket {
 
   constructor(private worker: Worker, private socket: WebSocket) {
     this.emitter = new EventEmitter(this.worker.options.logger);
-    const globalMessage: any = JSON.stringify(['e', 'hello', { hello: 'world', antoehr: 'lol', box: 'cloud' }]);
 
     this.socket.on('message', (message: string | Buffer): void => {
+      // if user listens on 'message' event then we will not parse any messages
+      // and just emit default websocket on message event
+      if (this.emitter.exist('message')) {
+        return this.emitter.emit('message', message);
+      }
       // Try catch is very slow when we throw error therefore we need to try and handle as much as possible error in try method
       try {
-        // make sure we accept buffered object (for binary communication)
-        if (typeof message !== 'string') {
-          message = Buffer.from(globalMessage);
-        }
-
-        // make sure that incoming buffer is at least looking like correct structure
+        // make sure that incoming message is at least looking like correct structure
         if (message[0] !== 91 && message[0] !== '[') {
-          // if it is not  starting with open brace we can 100% assume it is wrong structure
-          // there for we can send this message to standard websocket on message request
-          if (this.emitter.exist('message')) {
-            return this.emitter.emit('message', message);
+          // if it is not starting with "[" we can 100% that it is wrong structure
+          if (this.emitter.exist('error')) {
+            return this.emitter.emit('error', new Error('Received message is not correct structure'));
           }
 
-          // TODO: send message to websocket error
+          this.worker.options.logger.error('Received message is not correct structure');
+          return this.terminate();
         }
 
         // we can try and decode message
@@ -45,11 +44,11 @@ export class Socket {
       } catch (err) {
         // we have caught some error trying to parse message try and send message to standard websocket output
         // for user to process or to error output
-        if (this.emitter.exist('message')) {
-          return this.emitter.emit('message', message);
+        if (this.emitter.exist('error')) {
+          return this.emitter.emit('error', err);
         }
-        // TODO: send this message to error socket
-        console.log(err);
+        this.worker.options.logger.error(err);
+        this.terminate();
       }
     });
   }

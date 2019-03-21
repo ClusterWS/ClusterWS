@@ -4,24 +4,25 @@ import * as HTTPS from 'https';
 import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
 import { Options, Mode } from '../utils/types';
-import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/cws';
+import { WebSocket, WebSocketServer, ConnectionInfo, Listener } from '@clusterws/cws';
 
 export class Worker {
   public wss: WSServer;
   public server: HTTP.Server | HTTPS.Server;
 
-  constructor(public options: Options, securityKey?: string) {
-    this.wss = new WSServer(this.options);
+  constructor(public options: Options, securityKey: string) {
+    this.wss = new WSServer(this.options, securityKey);
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 
     const uServer: WebSocketServer = new WebSocketServer({
       path: this.options.wsPath,
       server: this.server,
-      // verifyClient: (info: ConnectionInfo, next: Listener): void => {
-      //   this.wss.middleware.verifyConnection ?
-      //     this.wss.middleware.verifyConnection(info, next) :
-      //     next(true);
-      // }
+      verifyClient: (info: ConnectionInfo, next: Listener): void => {
+        next(true);
+        //   this.wss.middleware.verifyConnection ?
+        //     this.wss.middleware.verifyConnection(info, next) :
+        //     next(true);
+      }
     });
 
     uServer.on('connection', (socket: WebSocket) => {
@@ -30,7 +31,7 @@ export class Worker {
     });
 
     if (this.options.autoPing) {
-      console.log('ping');
+      // TODO: check if auto ping works correctly
       uServer.startAutoPing(this.options.pingInterval, true);
     }
 

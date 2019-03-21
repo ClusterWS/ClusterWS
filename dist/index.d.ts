@@ -30,6 +30,7 @@ export class Broker {
 
 export class PubSubEngine {
     constructor(logger: Logger, interval: number);
+    addListener(event: string, listener: Listener): void;
     register(userId: string, listener: Listener): void;
     subscribe(userId: string, channel: string): any;
     unsubscribe(userId: string, channel: string): void;
@@ -56,14 +57,14 @@ export class Socket {
 }
 
 export class WSServer extends EventEmitter {
-    constructor(options: Options);
+    constructor(options: Options, securityKey: string);
 }
 
 export class Worker {
     options: Options;
     wss: WSServer;
     server: HTTP.Server | HTTPS.Server;
-    constructor(options: Options, securityKey?: string);
+    constructor(options: Options, securityKey: string);
 }
 
 export function runProcesses(options: Options): any;
@@ -123,7 +124,6 @@ export type Configurations = {
     workers?: number;
     brokers?: number;
     autoPing?: boolean;
-    useBinary?: boolean;
     tlsOptions?: SecureContextOptions;
     pingInterval?: number;
     brokersPorts?: number[];
@@ -141,7 +141,6 @@ export type Options = {
     workers: number;
     brokers: number;
     autoPing: boolean;
-    useBinary: boolean;
     brokersPorts: number[];
     tlsOptions: SecureContextOptions | null;
     pingInterval: number;

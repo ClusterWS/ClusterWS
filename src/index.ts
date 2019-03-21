@@ -17,7 +17,7 @@ export default class ClusterWS {
       workers: configurations.workers || 1,
       brokers: configurations.brokers || 1,
       autoPing: configurations.autoPing !== false,
-      useBinary: configurations.useBinary,
+      // useBinary: configurations.useBinary,
       tlsOptions: configurations.tlsOptions,
       pingInterval: configurations.pingInterval || 20000,
       brokersPorts: configurations.brokersPorts || [],

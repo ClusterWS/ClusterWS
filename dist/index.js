@@ -6,9 +6,9 @@ class Logger {
     constructor(e) {
         this.level = e;
     }
-    debug(e, t) {
-        let r = t;
-        "object" == typeof t && (r = JSON.stringify(t)), process.stdout.write(`[36mDebug:[0m ${e} - ${r}\n`);
+    debug(e, s) {
+        let t = s;
+        "object" == typeof s && (t = JSON.stringify(s)), process.stdout.write(`[36mDebug:[0m ${e} - ${t}\n`);
     }
     info(e) {
         process.stdout.write(`[32m✓ ${e}[0m\n`);
@@ -31,13 +31,13 @@ class EventEmitter {
     constructor(e) {
         this.logger = e, this.events = {};
     }
-    on(e, t) {
-        if (!isFunction(t)) return this.logger.error("Listener must be a function");
-        this.events[e] = t;
+    on(e, s) {
+        if (!isFunction(s)) return this.logger.error("Listener must be a function");
+        this.events[e] = s;
     }
-    emit(e, ...t) {
-        const r = this.events[e];
-        r && r(...t);
+    emit(e, ...s) {
+        const t = this.events[e];
+        t && t(...s);
     }
     exist(e) {
         return !!this.events[e];
@@ -51,56 +51,116 @@ class EventEmitter {
 }
 
 class Socket {
-    constructor(e, t) {
-        this.worker = e, this.socket = t, this.id = generateUid(8), this.emitter = new EventEmitter(this.worker.options.logger);
-        const r = JSON.stringify([ "e", "hello", {
-            hello: "world",
-            antoehr: "lol",
-            box: "cloud"
-        } ]);
+    constructor(e, s) {
+        this.worker = e, this.socket = s, this.id = generateUid(8), this.emitter = new EventEmitter(this.worker.options.logger), 
         this.socket.on("message", e => {
+            if (this.emitter.exist("message")) return this.emitter.emit("message", e);
             try {
-                if ("string" != typeof e && (e = Buffer.from(r)), 91 !== e[0] && "[" !== e[0] && this.emitter.exist("message")) return this.emitter.emit("message", e);
+                if (91 !== e[0] && "[" !== e[0]) return this.emitter.exist("error") ? this.emitter.emit("error", new Error("Received message is not correct structure")) : (this.worker.options.logger.error("Received message is not correct structure"), 
+                this.terminate());
                 decode(this, JSON.parse(e.toString()));
-            } catch (t) {
-                if (this.emitter.exist("message")) return this.emitter.emit("message", e);
-                console.log(t);
+            } catch (e) {
+                if (this.emitter.exist("error")) return this.emitter.emit("error", e);
+                this.worker.options.logger.error(e), this.terminate();
             }
         });
     }
-    on(e, t) {
-        this.emitter.on(e, t);
+    on(e, s) {
+        this.emitter.on(e, s);
     }
-    send(e, t, r = "emit") {
-        this.socket.send(encode(e, t, r));
+    send(e, s, t = "emit") {
+        this.socket.send(encode(e, s, t));
     }
-    disconnect(e, t) {
-        this.socket.close(e, t);
+    disconnect(e, s) {
+        this.socket.close(e, s);
     }
     terminate() {
         this.socket.terminate();
     }
 }
 
-function encode(e, t, r) {
-    const o = {
-        emit: [ "e", e, t ],
-        publish: [ "p", e, t ],
+function encode(e, s, t) {
+    const r = {
+        emit: [ "e", e, s ],
+        publish: [ "p", e, s ],
         system: {
-            configuration: [ "s", "c", t ]
+            configuration: [ "s", "c", s ]
         }
     };
-    return JSON.stringify(o[r][e] || o[r]);
+    return JSON.stringify(r[t][e] || r[t]);
 }
 
-function decode(e, t) {
-    const [r, o, s] = t;
-    if ("e" === r) return e.emitter.emit(o, s);
+function decode(e, s) {
+    const [t, r, o] = s;
+    if ("e" === t) return e.emitter.emit(r, o);
+}
+
+class PubSubEngine {
+    constructor(e, s) {
+        this.logger = e, this.interval = s, this.hooks = {}, this.users = {}, this.batches = {}, 
+        this.channels = {}, this.run();
+    }
+    addListener(e, s) {
+        this.hooks[e] = s;
+    }
+    register(e, s) {
+        this.users[e] = s;
+    }
+    subscribe(e, s) {
+        return this.users[e] ? this.channels[s] ? this.channels[s].push(e) : (this.logger.debug("PubSubEngine", `'${s}' has been created`), 
+        this.hooks.channelAdd && this.hooks.channelAdd(s), void (this.channels[s] = [ "broker", e ])) : this.logger.warning(`Trying to subscribe not existing user ${e}`);
+    }
+    unsubscribe(e, s) {
+        const t = this.channels[s];
+        if (t && t.length) {
+            const s = t.indexOf(e);
+            -1 !== s && t.splice(s, 1);
+        }
+        t && 1 === t.length && (this.logger.debug("PubSubEngine", `'${s}' has been removed`), 
+        this.hooks.channelDelete && this.hooks.channelDelete(s), delete this.channels[s]);
+    }
+    publish(e, s, t) {
+        const r = this.batches[e];
+        if (r) return r.push({
+            userId: t,
+            message: s
+        });
+        this.batches[e] = [ {
+            userId: t,
+            message: s
+        } ];
+    }
+    flush() {
+        const e = {};
+        for (const s in this.batches) if (this.batches[s]) {
+            const t = this.channels[s];
+            if (t) {
+                const r = this.batches[s], o = r.length;
+                for (let i = 0, n = t.length; i < n; i++) {
+                    const n = t[i], c = [];
+                    for (let e = 0; e < o; e++) r[e].userId !== n && c.push(r[e].message);
+                    c.length && (e[n] || (e[n] = {}), e[n][s] = c);
+                }
+            }
+        }
+        this.batches = {};
+        for (const s in e) this.users[s] && this.users[s](e[s]);
+    }
+    run() {
+        setTimeout(() => {
+            this.flush(), this.run();
+        }, this.interval);
+    }
 }
 
 class WSServer extends EventEmitter {
-    constructor(e) {
-        super(e.logger), this.options = e;
+    constructor(e, s) {
+        super(e.logger), this.options = e, this.pubSub = new PubSubEngine(e.logger, 1e3), 
+        this.pubSub.register("broker", e => {
+            console.log(e);
+        }), this.pubSub.subscribe("broker", "any"), setInterval(() => {
+            this.pubSub.publish("any", "super", "broker");
+        }, 100);
     }
 }
 
@@ -109,16 +169,18 @@ class WSServer extends EventEmitter {
 }(Mode || (Mode = {}));
 
 class Worker {
-    constructor(e, t) {
-        this.options = e, this.wss = new WSServer(this.options), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        const r = new cws.WebSocketServer({
+    constructor(e, s) {
+        this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
+        const t = new cws.WebSocketServer({
             path: this.options.wsPath,
-            server: this.server
+            server: this.server,
+            verifyClient: (e, s) => {
+                s(!0);
+            }
         });
-        r.on("connection", e => {
+        t.on("connection", e => {
             this.options.logger.debug("Worker", "new websocket connection"), this.wss.emit("connection", new Socket(this, e));
-        }), this.options.autoPing && (console.log("ping"), r.startAutoPing(this.options.pingInterval, !0)), 
-        this.server.on("error", e => {
+        }), this.options.autoPing && t.startAutoPing(this.options.pingInterval, !0), this.server.on("error", e => {
             this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === Mode.Scale && process.exit();
         }), this.server.listen(this.options.port, this.options.host, () => {
             this.options.worker.call(this), this.options.mode === Mode.Scale && process.send({
@@ -131,45 +193,53 @@ class Worker {
 
 function runProcesses(e) {
     if (e.mode === Mode.CurrentProcess) return e.logger.info(` Running in single process on port: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
-    new Worker(e);
+    new Worker(e, "");
     cluster.isMaster ? masterProcess(e) : childProcess(e);
 }
 
 function masterProcess(e) {
-    let t;
-    const r = generateUid(10), o = generateUid(20), s = [], i = [], n = (c, l, g) => {
-        const h = cluster.fork();
-        h.on("message", r => {
-            if (e.logger.debug("Message from child", r), "READY" === r.event) {
-                if (g) return e.logger.info(`${l} ${c} PID ${r.pid} has been restarted`);
-                if ("Scaler" === l) {
-                    t = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${r.pid}`;
-                    for (let t = 0; t < e.brokers; t++) n(t, "Broker");
+    let s;
+    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (c, h, u) => {
+        const l = cluster.fork();
+        l.on("message", t => {
+            if (e.logger.debug("Message from child", t), "READY" === t.event) {
+                if (u) return e.logger.info(`${h} ${c} PID ${t.pid} has been restarted`);
+                if ("Scaler" === h) {
+                    s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
+                    for (let s = 0; s < e.brokers; s++) n(s, "Broker");
                 }
-                if ("Broker" === l && (s[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${r.pid}`, 
-                s.length === e.brokers && !s.includes(void 0))) for (let t = 0; t < e.workers; t++) n(t, "Worker");
-                "Worker" === l && (i[c] = `    Worker: ${c}, PID ${r.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
-                t && e.logger.info(t), s.forEach(e.logger.info), i.forEach(e.logger.info)));
+                if ("Broker" === h && (o[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${t.pid}`, 
+                o.length === e.brokers && !o.includes(void 0))) for (let s = 0; s < e.workers; s++) n(s, "Worker");
+                "Worker" === h && (i[c] = `    Worker: ${c}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+                s && e.logger.info(s), o.forEach(e.logger.info), i.forEach(e.logger.info)));
             }
-        }), h.on("exit", () => {
-            e.logger.error(`${l} ${c} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${l} ${c} is restarting \n`), 
-            n(c, l, !0));
-        }), h.send({
+        }), l.on("exit", () => {
+            e.logger.error(`${h} ${c} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${h} ${c} is restarting \n`), 
+            n(c, h, !0));
+        }), l.send({
             id: c,
-            name: l,
-            serverId: r,
-            securityKey: o
+            name: h,
+            serverId: t,
+            securityKey: r
         });
     };
-    for (let t = 0; t < e.brokers; t++) n(t, "Broker");
+    for (let s = 0; s < e.brokers; s++) n(s, "Broker");
 }
 
 function childProcess(e) {
-    process.on("message", t => {
-        e.logger.debug("Message from master", t), process.send({
-            event: "READY",
-            pid: process.pid
-        });
+    process.on("message", s => {
+        switch (e.logger.debug("Message from master", s), s.name) {
+          case "Worker":
+            return new Worker(e, s.securityKey);
+
+          default:
+            process.send({
+                event: "READY",
+                pid: process.pid
+            });
+        }
+    }), process.on("uncaughtException", s => {
+        e.logger.error(`${s.stack || s}`), process.exit();
     });
 }
 
@@ -185,7 +255,6 @@ class ClusterWS {
             workers: e.workers || 1,
             brokers: e.brokers || 1,
             autoPing: !1 !== e.autoPing,
-            useBinary: e.useBinary,
             tlsOptions: e.tlsOptions,
             pingInterval: e.pingInterval || 2e4,
             brokersPorts: e.brokersPorts || [],

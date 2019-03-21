@@ -7,9 +7,8 @@ import { Options, Mode, Message, Listener } from './utils/types';
 export function runProcesses(options: Options): any {
   // validate in which mode are we running
   if (options.mode === Mode.CurrentProcess) {
-    // run everything in current process
     options.logger.info(` Running in single process on port: ${options.port}, PID ${process.pid} ${options.tlsOptions ? '(secure)' : ''}`);
-    return new Worker(options);
+    return new Worker(options, '');
   }
 
   cluster.isMaster ? masterProcess(options) : childProcess(options);
@@ -85,9 +84,17 @@ function masterProcess(options: Options): void {
 function childProcess(options: Options): void {
   process.on('message', (message: Message) => {
     options.logger.debug('Message from master', message);
+    switch (message.name) {
+      case 'Worker':
+        return new Worker(options, message.securityKey);
+      default:
+        process.send({ event: 'READY', pid: process.pid });
 
-    // boot correct module
-    process.send({ event: 'READY', pid: process.pid });
+    }
   });
-  // write child process logic
+
+  process.on('uncaughtException', (error: Error) => {
+    options.logger.error(`${error.stack || error}`);
+    process.exit();
+  });
 }
