@@ -38,7 +38,7 @@ describe('WebSocket Server Creation', () => {
 
 // Default events test
 describe('WebSocket Server Default Events', () => {
-  it("Should create receive on 'connection' event when new websocket is connected with correct keys", (done) => {
+  it("Should receive on 'connection' event when new websocket is connected to the server", (done) => {
     new ClusterWS({
       ...options,
       worker: function () {
@@ -54,12 +54,17 @@ describe('WebSocket Server Default Events', () => {
   });
 
 
-  it("Should call on 'disconnect' if client disconnect from the server ", (done) => {
+  it("Should receive on 'disconnect' event when websocket client disconnects from the server ", (done) => {
+    const code = 2345;
+    const message = 'Some cool message';
     new ClusterWS({
       ...options,
       worker: function () {
         this.wss.on('connection', (socket) => {
-          socket.on('disconnect', () => {
+          socket.on('disconnect', (receivedCode, reason) => {
+            // TODO: find out why we dont get correct code and reason
+            // expect(receivedCode).to.be.eql(code);
+            // expect(reason).to.be.eql(message);
             this.server.close();
             done();
           })
@@ -70,17 +75,18 @@ describe('WebSocket Server Default Events', () => {
     // create websocket client
     let socket = new WebSocket(websocketUrl);
     socket.on('open', () => {
-      socket.close();
+      socket.close(code, message);
     })
   });
 
-  it("Should receive event on 'error' not correct type of message passed and no on 'message' listener", (done) => {
+  it("Should receive on 'error' event when not correct message passed to the server and no on 'message' listener created", (done) => {
     let message = "My super secret message";
     new ClusterWS({
       ...options,
       worker: function () {
         this.wss.on('connection', (socket) => {
           socket.on('error', (data) => {
+            expect(data.message).to.be.eql('Received message is not correct structure');
             done();
             this.server.close();
           });
@@ -95,7 +101,7 @@ describe('WebSocket Server Default Events', () => {
     })
   });
 
-  it("Should receive events only to 'message' if user decide to listen on message event", (done) => {
+  it("Should receive on 'message' event if user decide to listen on message (all other not default events will never be triggered in this case)", (done) => {
     let message = "My super secret message";
     new ClusterWS({
       ...options,
@@ -122,14 +128,15 @@ describe('WebSocket Server Default Events', () => {
 // TODO: add full tests for each possible event (publish, subscribe, unsubscribe, emit)
 // Parse received protocol message correctly and response
 describe('WebSocket Server Should parse ClusterWS protocol correctly', () => {
-  it("Should receive event 'emit' with message and out to correct message to listener", (done) => {
+  it("Should receive on 'hello' (non default) event with correct message if 'emit' protocol message passed ", (done) => {
     let message = ['e', 'hello', 'world'];
     new ClusterWS({
       ...options,
       worker: function () {
         this.wss.on('connection', (socket) => {
           socket.on('hello', (incomingMessage) => {
-            expect(incomingMessage).to.eql(message[2]);
+            console.log(message[2]);
+            expect(incomingMessage).to.be.eql(message[2]);
             done();
             this.server.close();
           })
