@@ -62,11 +62,20 @@ class Socket {
     send(e, s, t = "emit") {
         this.socket.send(encode(e, s, t));
     }
+    sendRaw(e) {
+        this.socket.send(e);
+    }
     disconnect(e, s) {
         this.socket.close(e, s);
     }
     terminate() {
         this.socket.terminate();
+    }
+    subscribe(e) {
+        this.channels[e] = !0, this.worker.wss.subscribe(this.id, e);
+    }
+    unsubscribe(e) {
+        delete this.channels[e], this.worker.wss.subscribe(this.id, e);
     }
 }
 
@@ -86,8 +95,8 @@ function decode(e, s) {
     if ("e" === t) return e.emitter.emit(r, o);
     if ("p" === t) return e.channels[r] && e.worker.wss.publish(r, o, e.id);
     if ("s" === t) {
-        if ("s" === r) return e.channels[o] = !0, e.worker.wss.subscribe(e.id, o);
-        if ("u" === r) return delete e.channels[o], e.worker.wss.unsubscribe(e.id, o);
+        if ("s" === r) return e.subscribe(o);
+        if ("u" === r) return e.unsubscribe(o);
     }
 }
 

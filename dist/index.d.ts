@@ -53,8 +53,11 @@ export class Socket {
     constructor(worker: Worker, socket: WebSocket);
     on(event: string, listener: Listener): void;
     send(event: string, message: Message, eventType?: string): void;
+    sendRaw(message: string | Buffer): void;
     disconnect(code?: number, reason?: string): void;
     terminate(): void;
+    subscribe(channel: string): void;
+    unsubscribe(channel: string): void;
 }
 
 export class WSServer extends EventEmitter {
