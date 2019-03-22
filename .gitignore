@@ -1,3 +1,4 @@
+# TODO: clean up git ignore
 .npm
 .idea/
 .vscode/
@@ -8,3 +9,6 @@ node_modules/
 package-lock.json
 
 manual-test/
+
+# Tests
+coverage/

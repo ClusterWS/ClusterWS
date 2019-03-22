@@ -114,7 +114,7 @@ export class Socket {
   public unsubscribe(channel: string): void {
     // TODO: add middleware
     delete this.channels[channel];
-    this.worker.wss.subscribe(this.id, channel);
+    this.worker.wss.unsubscribe(this.id, channel);
   }
 }
 

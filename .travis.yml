@@ -10,3 +10,5 @@ cache:
     - "node_modules"
 script:
   - npm test
+  - npm install codecov -g
+  - codecov -f coverage/coverage-final.json

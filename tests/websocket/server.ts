@@ -4,8 +4,6 @@ import { WebSocket } from '@clusterws/cws';
 
 import ClusterWS from '../../src/index';
 
-// const ClusterWS = require('../../dist/index');
-
 // This test only in CurrentProcess mode
 const port = 3000;
 const websocketUrl = `ws://localhost:${port}`;
@@ -128,7 +126,7 @@ describe('WebSocket Server Default Events', () => {
 // TODO: add full tests for each possible event (publish, subscribe, unsubscribe, emit)
 // Parse received protocol message correctly and response
 describe('WebSocket Server Should parse ClusterWS protocol correctly', () => {
-  it("Should receive on 'hello' (non default) event with correct message if 'emit' protocol message passed ", (done) => {
+  it("Should receive on 'hello' (non default) event with correct message if 'emit' protocol message received ", (done) => {
     let message = ['e', 'hello', 'world'];
     new ClusterWS({
       ...options,
@@ -150,4 +148,61 @@ describe('WebSocket Server Should parse ClusterWS protocol correctly', () => {
       socket.send(JSON.stringify(message))
     });
   });
-})
+
+  it("Should subscribe to correct channel if 'system subscribe' protocol message received ", (done) => {
+    let message = ['s', 's', 'hello world'];
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.on('connection', (socket) => {
+          // we need timeout while we receive subscribe event
+          setTimeout(() => {
+            expect(socket.channels).to.contain.keys('hello world');
+            expect(socket.worker.wss.pubSub.channels['hello world']).have.members(['broker', socket.id]);
+            done();
+            this.server.close();
+          }, 10);
+        })
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      socket.send(JSON.stringify(message))
+    });
+  });
+
+
+
+  it("Should unsubscribe from correct channel if 'system unsubscribe' protocol message received ", (done) => {
+    let message = ['s', 's', 'hello world'];
+    let unsubscribeMessage = ['s', 'u', 'hello world'];
+
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.on('connection', (socket) => {
+          // we need timeout while we receive subscribe event
+          setTimeout(() => {
+            expect(socket.channels).to.contain.keys('hello world');
+            expect(socket.worker.wss.pubSub.channels['hello world']).have.members(['broker', socket.id]);
+            setTimeout(() => {
+              expect(socket.channels).to.not.contain.keys('hello world');
+              expect(socket.worker.wss.pubSub.channels['hello world']).to.be.undefined;
+              done();
+              this.server.close();
+            }, 10)
+          }, 10);
+        })
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      socket.send(JSON.stringify(message))
+      setTimeout(() => {
+        socket.send(JSON.stringify(unsubscribeMessage));
+      }, 15);
+    });
+  });
+});

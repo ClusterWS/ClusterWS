@@ -23,5 +23,20 @@
 	],
 	"dependencies": {
 		"@clusterws/cws": "^0.11.1"
+	},
+	"nyc": {
+		"include": [
+			"src/**/*.ts"
+		],
+		"extension": [
+			".ts"
+		],
+		"require": [
+			"ts-node/register"
+		],
+		"reporter": [
+			"text-summary",
+			"html"
+		]
 	}
 }
