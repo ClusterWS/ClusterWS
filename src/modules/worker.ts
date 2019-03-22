@@ -19,6 +19,7 @@ export class Worker {
       server: this.server,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
         next(true);
+        // TODO: add middleware
         //   this.wss.middleware.verifyConnection ?
         //     this.wss.middleware.verifyConnection(info, next) :
         //     next(true);
@@ -31,7 +32,6 @@ export class Worker {
     });
 
     if (this.options.autoPing) {
-      // TODO: check if auto ping works correctly
       uServer.startAutoPing(this.options.pingInterval, true);
     }
 

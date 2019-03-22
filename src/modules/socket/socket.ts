@@ -4,17 +4,10 @@ import { generateUid } from '../../utils/helpers';
 import { EventEmitter } from '../../utils/emitter';
 import { Message, Listener } from '../../utils/types';
 
-type PrivateSocket = {
-  id: string,
-  worker: Worker,
-  emitter: EventEmitter,
-  channels: { [key: string]: boolean }
-};
-
 export class Socket {
   private id: string = generateUid(8);
   private emitter: EventEmitter;
-  // channels is actually used in decode() function
+  // channels is actually used in decode() function too
   private channels: { [key: string]: boolean } = {};
 
   constructor(private worker: Worker, private socket: WebSocket) {
@@ -35,6 +28,10 @@ export class Socket {
 
       // Try catch is very slow when we throw error therefore we need to try and handle as much as possible error in try method
       try {
+        // if message is not string then we need to get buffer
+        if (typeof message !== 'string') {
+          message = Buffer.from(message);
+        }
         // make sure that incoming message is at least looking like correct structure
         if (message[0] !== 91 && message[0] !== '[') {
           // if it is not starting with "[" we can 100% that it is wrong structure
@@ -62,7 +59,7 @@ export class Socket {
     });
 
     this.socket.on('close', (code?: number, reason?: string): void => {
-      // TODO: add unregister event from channels
+      (this.worker.wss as any).pubSub.unregister(this.id, Object.keys(this.channels));
       this.emitter.emit('disconnect', code, reason);
       this.emitter.removeEvents();
     });
@@ -77,23 +74,51 @@ export class Socket {
     });
   }
 
+  // assign listener to specific event
   public on(event: string, listener: Listener): void {
     this.emitter.on(event, listener);
   }
 
+  // Send data with encoding to ClusterWS protocol
   public send(event: string, message: Message, eventType: string = 'emit'): void {
     this.socket.send(encode(event, message, eventType));
   }
 
+  // Send data without encoding to ClusterWS protocol
+  public sendRaw(message: string | Buffer): void {
+    this.socket.send(message);
+  }
+
+  // correct way to close connection
   public disconnect(code?: number, reason?: string): void {
     this.socket.close(code, reason);
   }
 
+  // terminate connection (is used for error and no ping events)
   public terminate(): void {
     this.socket.terminate();
   }
+
+  // TODO: Currently we do not inform front end if we are subscribed or not
+  // find out what to do with that
+  // This functionality is not fully ready
+
+  // Subscribe socket to specific channel
+  public subscribe(channel: string): void {
+    // TODO: add middleware
+    this.channels[channel] = true;
+    this.worker.wss.subscribe(this.id, channel);
+  }
+
+  // unsubscribe socket from specific channel
+  public unsubscribe(channel: string): void {
+    // TODO: add middleware
+    delete this.channels[channel];
+    this.worker.wss.subscribe(this.id, channel);
+  }
 }
 
+// encode message to ClusterWS protocol
 function encode(event: string, data: Message, eventType: string): string | Buffer {
   const message: { [key: string]: any } = {
     emit: ['e', event, data],
@@ -106,32 +131,31 @@ function encode(event: string, data: Message, eventType: string): string | Buffe
   return JSON.stringify(message[eventType][event] || message[eventType]);
 }
 
-function decode(socket: PrivateSocket, data: Message): void {
+// decode message from ClusterWS protocol
+function decode(socket: Socket, data: Message): void {
   // parse data with user provided decode function
   const [msgType, param, message]: [string, string, Message] = data;
 
   // 'e' means emit
   if (msgType === 'e') {
-    return socket.emitter.emit(param, message);
+    return (socket as any).emitter.emit(param, message);
   }
 
   // 'p' means publish
   if (msgType === 'p') {
-    return socket.channels[param] && socket.worker.wss.publish(param, message, socket.id);
+    return (socket as any).channels[param] && (socket as any).worker.wss.publish(param, message, (socket as any).id);
   }
 
   // if we start with 's' it means system
   if (msgType === 's') {
     // second 's' means subscribe
     if (param === 's') {
-      socket.channels[message] = true;
-      return socket.worker.wss.subscribe(socket.id, message);
+      return socket.subscribe(message);
     }
 
     // 'u' means unsubscribe
     if (param === 'u') {
-      delete socket.channels[message];
-      return socket.worker.wss.unsubscribe(socket.id, message);
+      return socket.unsubscribe(message);
     }
   }
 }

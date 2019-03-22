@@ -32,6 +32,7 @@ export class PubSubEngine {
     constructor(logger: Logger, interval: number);
     addListener(event: string, listener: Listener): void;
     register(userId: string, listener: Listener): void;
+    unregister(userId: string, channels: string[]): void;
     subscribe(userId: string, channel: string): any;
     unsubscribe(userId: string, channel: string): void;
     publish(channel: string, message: Message, userId?: string): any;

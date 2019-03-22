@@ -1,9 +1,10 @@
 import { SecureContextOptions } from 'tls';
 
+// TODO: get rid of some options which wont be included in 4.0.0
+
 // for SocketMessage use string | Buffer
 export type Message = any;
 export type Listener = (...args: any[]) => void;
-// export type ListenerMany = (eventName: string, ...args: any[]) => void;
 export type WorkerFunction = () => void;
 
 export enum Mode {

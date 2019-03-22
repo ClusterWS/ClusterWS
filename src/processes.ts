@@ -4,6 +4,7 @@ import { Worker } from './modules/worker';
 import { generateUid } from './utils/helpers';
 import { Options, Mode, Message, Listener } from './utils/types';
 
+// check mode/process type and decide what to execute next
 export function runProcesses(options: Options): any {
   // validate in which mode are we running
   if (options.mode === Mode.CurrentProcess) {
@@ -14,6 +15,7 @@ export function runProcesses(options: Options): any {
   cluster.isMaster ? masterProcess(options) : childProcess(options);
 }
 
+// create master process and from master generate the rest of the processes
 function masterProcess(options: Options): void {
   let scalerReady: string;
   const serverId: string = generateUid(10);
@@ -73,6 +75,7 @@ function masterProcess(options: Options): void {
       }
     });
 
+    // inform created chile about who he is
     forkedProcess.send({ id, name, serverId, securityKey });
   };
 
@@ -84,12 +87,13 @@ function masterProcess(options: Options): void {
 function childProcess(options: Options): void {
   process.on('message', (message: Message) => {
     options.logger.debug('Message from master', message);
+
+    // create specified child instance
     switch (message.name) {
       case 'Worker':
         return new Worker(options, message.securityKey);
       default:
         process.send({ event: 'READY', pid: process.pid });
-
     }
   });
 

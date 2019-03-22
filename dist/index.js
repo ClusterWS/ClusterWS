@@ -41,7 +41,7 @@ class Socket {
         }), this.socket.on("message", e => {
             if (this.emitter.exist("message")) return this.emitter.emit("message", e);
             try {
-                if (91 !== e[0] && "[" !== e[0]) return this.emitter.exist("error") ? this.emitter.emit("error", new Error("Received message is not correct structure")) : (this.worker.options.logger.error("Received message is not correct structure"), 
+                if ("string" != typeof e && (e = Buffer.from(e)), 91 !== e[0] && "[" !== e[0]) return this.emitter.exist("error") ? this.emitter.emit("error", new Error("Received message is not correct structure")) : (this.worker.options.logger.error("Received message is not correct structure"), 
                 this.terminate());
                 decode(this, JSON.parse(e.toString()));
             } catch (e) {
@@ -49,7 +49,8 @@ class Socket {
                 this.worker.options.logger.error(e), this.terminate();
             }
         }), this.socket.on("close", (e, s) => {
-            this.emitter.emit("disconnect", e, s), this.emitter.removeEvents();
+            this.worker.wss.pubSub.unregister(this.id, Object.keys(this.channels)), this.emitter.emit("disconnect", e, s), 
+            this.emitter.removeEvents();
         }), this.socket.on("error", e => {
             if (this.emitter.exist("error")) return this.emitter.emit("error", e);
             this.worker.options.logger.error(e), this.socket.terminate();
@@ -101,6 +102,10 @@ class PubSubEngine {
     register(e, s) {
         this.users[e] = s;
     }
+    unregister(e, s) {
+        for (let t = 0, r = s.length; t < r; t++) this.unsubscribe(s[t], e);
+        delete this.users[e];
+    }
     subscribe(e, s) {
         return this.users[e] ? this.channels[s] ? this.channels[s].push(e) : (this.logger.debug("PubSubEngine", `'${s}' has been created`), 
         this.hooks.channelAdd && this.hooks.channelAdd(s), void (this.channels[s] = [ "broker", e ])) : this.logger.warning(`Trying to subscribe not existing user ${e}`);
@@ -132,9 +137,9 @@ class PubSubEngine {
             if (t) {
                 const r = this.batches[s], o = r.length;
                 for (let i = 0, n = t.length; i < n; i++) {
-                    const n = t[i], c = [];
-                    for (let e = 0; e < o; e++) r[e].userId !== n && c.push(r[e].message);
-                    c.length && (e[n] || (e[n] = {}), e[n][s] = c);
+                    const n = t[i], h = [];
+                    for (let e = 0; e < o; e++) r[e].userId !== n && h.push(r[e].message);
+                    h.length && (e[n] || (e[n] = {}), e[n][s] = h);
                 }
             }
         }
@@ -151,9 +156,7 @@ class PubSubEngine {
 class WSServer extends EventEmitter {
     constructor(e, s) {
         super(e.logger), this.options = e, this.pubSub = new PubSubEngine(e.logger, 1e3), 
-        this.pubSub.register("broker", e => {
-            console.log(e);
-        });
+        this.pubSub.register("broker", e => {});
     }
     publish(e, s, t) {
         this.pubSub.publish(e, s, t);
@@ -201,26 +204,26 @@ function runProcesses(e) {
 
 function masterProcess(e) {
     let s;
-    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (c, h, l) => {
-        const u = cluster.fork();
-        u.on("message", t => {
+    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (h, c, u) => {
+        const l = cluster.fork();
+        l.on("message", t => {
             if (e.logger.debug("Message from child", t), "READY" === t.event) {
-                if (l) return e.logger.info(`${h} ${c} PID ${t.pid} has been restarted`);
-                if ("Scaler" === h) {
+                if (u) return e.logger.info(`${c} ${h} PID ${t.pid} has been restarted`);
+                if ("Scaler" === c) {
                     s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
                     for (let s = 0; s < e.brokers; s++) n(s, "Broker");
                 }
-                if ("Broker" === h && (o[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${t.pid}`, 
+                if ("Broker" === c && (o[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${t.pid}`, 
                 o.length === e.brokers && !o.includes(void 0))) for (let s = 0; s < e.workers; s++) n(s, "Worker");
-                "Worker" === h && (i[c] = `    Worker: ${c}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+                "Worker" === c && (i[h] = `    Worker: ${h}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
                 s && e.logger.info(s), o.forEach(e.logger.info), i.forEach(e.logger.info)));
             }
-        }), u.on("exit", () => {
-            e.logger.error(`${h} ${c} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${h} ${c} is restarting \n`), 
-            n(c, h, !0));
-        }), u.send({
-            id: c,
-            name: h,
+        }), l.on("exit", () => {
+            e.logger.error(`${c} ${h} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${c} ${h} is restarting \n`), 
+            n(h, c, !0));
+        }), l.send({
+            id: h,
+            name: c,
             serverId: t,
             securityKey: r
         });

@@ -1,6 +1,7 @@
 import { Listener, Message, Logger } from '../utils/types';
 
-// TODO: Fix serious bug with data reference :(
+// TODO: Fix serious bug with data reference if there would be any issues :(
+// TODO: write correct documentation
 export class PubSubEngine {
   private hooks: { [key: string]: Listener } = {};
   private users: { [key: string]: Listener } = {};
@@ -19,7 +20,12 @@ export class PubSubEngine {
     this.users[userId] = listener;
   }
 
-  // TODO: add unregister function to be able to remove old users
+  public unregister(userId: string, channels: string[]): void {
+    for (let i: number = 0, len: number = channels.length; i < len; i++) {
+      this.unsubscribe(channels[i], userId);
+    }
+    delete this.users[userId];
+  }
 
   public subscribe(userId: string, channel: string): any {
     if (!this.users[userId]) {

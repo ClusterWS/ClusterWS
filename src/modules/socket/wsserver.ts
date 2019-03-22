@@ -18,6 +18,7 @@ export class WSServer extends EventEmitter {
 
   // TODO: add middleware
 
+  // publish message to specific channel (id is used to do not send message to actual publisher)
   public publish(channelName: string, message: Message, id?: string): void {
     this.pubSub.publish(channelName, message, id);
   }
