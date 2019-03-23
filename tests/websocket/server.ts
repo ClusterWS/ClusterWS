@@ -124,7 +124,7 @@ describe('WebSocket Server Default Events', () => {
 
 // TODO: add full tests for each possible event (publish, subscribe, unsubscribe, emit)
 // Parse received protocol message correctly and response
-describe('WebSocket Server Should parse ClusterWS protocol correctly', () => {
+describe('WebSocket Server Should parse (received message) ClusterWS protocol correctly', () => {
   it("Should receive on 'hello' (non default) event with correct message if 'emit' protocol message received ", (done) => {
     let message = ['e', 'hello', 'world'];
     new ClusterWS({
@@ -210,9 +210,11 @@ describe('WebSocket Server Should parse ClusterWS protocol correctly', () => {
     const message = ['p', 'hello world channel', 'my super message'];
     const subscribeMessage = ['s', 's', 'hello world channel'];
 
+    let server;
     new ClusterWS({
       ...options,
       worker: function () {
+        server = this.server;
         this.wss.on('connection', (socket) => {
 
         });
@@ -232,6 +234,7 @@ describe('WebSocket Server Should parse ClusterWS protocol correctly', () => {
       socket2.on('message', (message) => {
         setTimeout(() => {
           expect(message).to.be.eql('["p",null,{"hello world channel":["my super message"]}]');
+          server.close()
           done();
         }, 20);
       });
@@ -240,6 +243,67 @@ describe('WebSocket Server Should parse ClusterWS protocol correctly', () => {
     socket1.on('message', () => {
       done('Socket1 should not receive message');
     });
-
   });
 });
+
+
+// Test to create correct message based on protocol  and send and receive (or raw message send)
+describe('WebSocket Server Should send end receive correct messages', () => {
+  it("Should receive correct message and send beck correctly structured message", (done) => {
+    let message = ['e', 'hello', 'world'];
+
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.on('connection', (socket) => {
+          // we need timeout while we receive subscribe event
+          socket.on('hello', (incoming) => {
+            console.log("got here", incoming);
+            expect(incoming).to.be.eql(message[2]);
+            socket.send('hello', incoming);
+            this.server.close();
+          })
+        })
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      socket.send(JSON.stringify(message))
+    });
+
+    socket.on('message', (incoming) => {
+      expect(incoming).to.be.eql(JSON.stringify(message));
+      done();
+    });
+  });
+
+  it("Should receive and send raw messages if needed with `sendRaw()` and on `message` (with out using CLusterWS protocol)", (done) => {
+    let message = 'hello';
+    let messageBack = 'world';
+
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.on('connection', (socket) => {
+          // we need timeout while we receive subscribe event
+          socket.on('message', (incoming) => {
+            expect(incoming).to.be.eql(message);
+            socket.sendRaw(messageBack);
+            this.server.close();
+          })
+        })
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      socket.send(message)
+    });
+
+    socket.on('message', (incoming) => {
+      expect(incoming).to.be.eql(messageBack);
+      done();
+    });
+  });
+})
