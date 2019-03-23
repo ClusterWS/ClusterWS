@@ -33,7 +33,6 @@ describe('WebSocket Server Creation', () => {
 });
 
 
-
 // Default events test
 describe('WebSocket Server Default Events', () => {
   it("Should receive on 'connection' event when new websocket is connected to the server", (done) => {
@@ -204,5 +203,43 @@ describe('WebSocket Server Should parse ClusterWS protocol correctly', () => {
         socket.send(JSON.stringify(unsubscribeMessage));
       }, 15);
     });
+  });
+
+
+  it("Should publish message to correct channel if 'system publish' protocol message received ", (done) => {
+    const message = ['p', 'hello world channel', 'my super message'];
+    const subscribeMessage = ['s', 's', 'hello world channel'];
+
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.on('connection', (socket) => {
+
+        });
+      }
+    });
+
+
+    let socket1 = new WebSocket(websocketUrl);
+    socket1.on('open', () => {
+      socket1.send(JSON.stringify(subscribeMessage));
+      let socket2 = new WebSocket(websocketUrl);
+      socket2.on('open', () => {
+        socket2.send(JSON.stringify(subscribeMessage));
+        socket1.send(JSON.stringify(message));
+      })
+
+      socket2.on('message', (message) => {
+        setTimeout(() => {
+          expect(message).to.be.eql('["p",null,{"hello world channel":["my super message"]}]');
+          done();
+        }, 20);
+      });
+    });
+
+    socket1.on('message', () => {
+      done('Socket1 should not receive message');
+    });
+
   });
 });
