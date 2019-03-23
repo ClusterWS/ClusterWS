@@ -75,7 +75,7 @@ class Socket {
         this.channels[e] = !0, this.worker.wss.subscribe(this.id, e);
     }
     unsubscribe(e) {
-        delete this.channels[e], this.worker.wss.subscribe(this.id, e);
+        delete this.channels[e], this.worker.wss.unsubscribe(this.id, e);
     }
 }
 

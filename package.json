@@ -24,7 +24,8 @@
     "nyc": "^13.3.0",
     "ts-builder": "^0.9.0",
     "ts-node": "^7.0.1",
-    "uws": "^10.148.1"
+    "uws": "^10.148.1",
+    "ws": "^6.2.0"
   },
   "keywords": [
     "clusterws",
@@ -38,7 +39,7 @@
     "javascript"
   ],
   "dependencies": {
-    "@clusterws/cws": "^0.11.1"
+    "@clusterws/cws": "^0.12.0"
   },
   "nyc": {
     "temp-directory": "./node_modules/.cache/nyc_output",

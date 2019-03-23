@@ -33,7 +33,7 @@ describe('WebSocket Server Creation', () => {
 });
 
 
-// Default events test
+// Default events and functions test
 describe('WebSocket Server Default Events', () => {
   it("Should receive on 'connection' event when new websocket is connected to the server", (done) => {
     new ClusterWS({
@@ -52,16 +52,15 @@ describe('WebSocket Server Default Events', () => {
 
 
   it("Should receive on 'disconnect' event when websocket client disconnects from the server ", (done) => {
-    const code = 2345;
-    const message = 'Some cool message';
+    const code = 3000;
+    const message = 'My super reason';
     new ClusterWS({
       ...options,
       worker: function () {
         this.wss.on('connection', (socket) => {
           socket.on('disconnect', (receivedCode, reason) => {
-            // TODO: find out why we dont get correct code and reason
-            // expect(receivedCode).to.be.eql(code);
-            // expect(reason).to.be.eql(message);
+            expect(receivedCode).to.be.eql(code);
+            expect(reason).to.be.eql(message);
             this.server.close();
             done();
           })
@@ -119,10 +118,32 @@ describe('WebSocket Server Default Events', () => {
       socket.send(message);
     })
   });
+
+
+
+  it("Should close socket if `disconnect()` function is called", (done) => {
+    const code = 3000;
+    const message = 'My super reason';
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.on('connection', (socket) => {
+          socket.disconnect(code, message);
+          this.server.close();
+        })
+      }
+    });
+
+    // create websocket client
+    let socket = new WebSocket(websocketUrl);
+    socket.on('close', (receivedCode, reason) => {
+      expect(receivedCode).to.be.eql(code);
+      expect(reason).to.be.eql(message);
+      done();
+    });
+  });
 });
 
-
-// TODO: add full tests for each possible event (publish, subscribe, unsubscribe, emit)
 // Parse received protocol message correctly and response
 describe('WebSocket Server Should parse (received message) ClusterWS protocol correctly', () => {
   it("Should receive on 'hello' (non default) event with correct message if 'emit' protocol message received ", (done) => {
@@ -170,8 +191,6 @@ describe('WebSocket Server Should parse (received message) ClusterWS protocol co
       socket.send(JSON.stringify(message))
     });
   });
-
-
 
   it("Should unsubscribe from correct channel if 'system unsubscribe' protocol message received ", (done) => {
     let message = ['s', 's', 'hello world'];

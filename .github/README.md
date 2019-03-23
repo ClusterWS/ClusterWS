@@ -30,13 +30,13 @@
 </p>
 
 <h3 align="center">
-    Please consider to support ClusterWS development
+    Consider to support development
 </h3>
 <h4 align="center">
-    <a href="https://www.patreon.com/clusterws">Become a Backer on Patreon</a>
+    <a href="https://www.paypal.me/goriunov">Buy a coffee (via PayPal)</a>
 </h4>
 <h4 align="center">
-    <a href="https://www.paypal.me/goriunov">One time Donation via PayPal</a>
+    <a href="https://www.patreon.com/clusterws">Become a Backer on Patreon</a>
 </h4>
 
 <h1></h1>
