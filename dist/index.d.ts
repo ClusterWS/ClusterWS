@@ -10,7 +10,7 @@ import * as HTTP from 'http';
 import * as HTTPS from 'https';
 import { SecureContextOptions } from 'tls';
 
-export default class ClusterWS {
+export class ClusterWS {
     constructor(configurations: Configurations);
 }
 
@@ -61,7 +61,11 @@ export class Socket {
 }
 
 export class WSServer extends EventEmitter {
+    middleware: {
+        [s: number]: Listener;
+    };
     constructor(options: Options, securityKey: string);
+    addMiddleware(middlewareType: Middleware, listener: Listener): void;
     publish(channelName: string, message: Message, id?: string): void;
     subscribe(id: string, channelName: string): void;
     unsubscribe(id: string, channelName: string): void;
@@ -117,7 +121,14 @@ export type Listener = (...args: any[]) => void;
 export type WorkerFunction = () => void;
 export enum Mode {
     Scale = 0,
-    CurrentProcess = 1
+    SingleProcess = 1
+}
+export enum Middleware {
+    onSubscribe = 0,
+    onUnsubscribe = 1,
+    verifyConnection = 2,
+    onChannelOpen = 3,
+    onChannelClose = 4
 }
 export type HorizontalScaleOptions = {
     key?: string;

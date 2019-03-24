@@ -1,8 +1,9 @@
 import { PubSubEngine } from '../pubsub';
 import { EventEmitter } from '../../utils/emitter';
-import { Options, Message } from '../../utils/types';
+import { Options, Message, Middleware, Listener } from '../../utils/types';
 
 export class WSServer extends EventEmitter {
+  public middleware: { [s: number]: Listener } = {};
   private pubSub: PubSubEngine;
 
   constructor(private options: Options, securityKey: string) {
@@ -17,6 +18,9 @@ export class WSServer extends EventEmitter {
   }
 
   // TODO: add middleware
+  public addMiddleware(middlewareType: Middleware, listener: Listener): void {
+    this.middleware[middlewareType] = listener;
+  }
 
   // publish message to specific channel (id is used to do not send message to actual publisher)
   public publish(channelName: string, message: Message, id?: string): void {

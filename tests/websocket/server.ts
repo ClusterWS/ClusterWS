@@ -2,14 +2,14 @@
 import { expect } from 'chai';
 import { WebSocket } from '@clusterws/cws';
 
-import ClusterWS from '../../src/index';
+import { ClusterWS, Mode, Middleware } from '../../src/index';
 
-// This test only in CurrentProcess mode
+// This test only in SingleProcess mode
 const port = 3000;
 const websocketUrl = `ws://localhost:${port}`;
 
 const options = {
-  mode: 1,
+  mode: Mode.SingleProcess,
   port: port,
   logger: {
     info: () => { },
@@ -326,3 +326,33 @@ describe('WebSocket Server Should send end receive correct messages', () => {
     });
   });
 })
+
+
+
+// TODO: Add middleware tests
+
+describe('WebSocket Server Middleware', () => {
+  it("Should intercept user connection if `Middleware.verifyConnection` is enabled", (done) => {
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.addMiddleware(Middleware.verifyConnection, (info, next) => {
+          setInterval(() => {
+            this.server.close();
+            done();
+          }, 20);
+        });
+
+        this.wss.on('connection', (socket) => {
+          // we need timeout while we receive subscribe event
+          done('Should not be called')
+        });
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      done('should not be called')
+    });
+  });
+});

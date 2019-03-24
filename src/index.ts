@@ -3,7 +3,11 @@ import { runProcesses } from './processes';
 import { Logger, Level } from './utils/logger';
 import { Options, Configurations, Mode } from './utils/types';
 
-export default class ClusterWS {
+// TODO: correctly handle this type in worker function
+// Reexport important things
+export { Mode, Middleware } from './utils/types';
+
+export class ClusterWS {
   private options: Options;
 
   constructor(configurations: Configurations) {

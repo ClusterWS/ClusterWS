@@ -3,7 +3,7 @@ import * as HTTPS from 'https';
 
 import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
-import { Options, Mode } from '../utils/types';
+import { Options, Mode, Middleware } from '../utils/types';
 import { WebSocket, WebSocketServer, ConnectionInfo, Listener } from '@clusterws/cws';
 
 export class Worker {
@@ -18,11 +18,9 @@ export class Worker {
       path: this.options.wsPath,
       server: this.server,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
-        next(true);
-        // TODO: add middleware
-        //   this.wss.middleware.verifyConnection ?
-        //     this.wss.middleware.verifyConnection(info, next) :
-        //     next(true);
+        return this.wss.middleware[Middleware.verifyConnection] ?
+          this.wss.middleware[Middleware.verifyConnection](info, next) :
+          next(true);
       }
     });
 

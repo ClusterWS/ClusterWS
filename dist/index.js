@@ -1,6 +1,10 @@
 "use strict";
 
-var Mode, Level, crypto = require("crypto"), cluster = require("cluster"), HTTP = require("http"), HTTPS = require("https"), cws = require("@clusterws/cws");
+Object.defineProperty(exports, "__esModule", {
+    value: !0
+});
+
+var Level, crypto = require("crypto"), cluster = require("cluster"), HTTP = require("http"), HTTPS = require("https"), cws = require("@clusterws/cws");
 
 function isFunction(e) {
     return "[object Function]" === {}.toString.call(e);
@@ -164,8 +168,11 @@ class PubSubEngine {
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(e.logger), this.options = e, this.pubSub = new PubSubEngine(e.logger, 5), 
+        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(e.logger, 5), 
         this.pubSub.register("broker", e => {});
+    }
+    addMiddleware(e, s) {
+        this.middleware[e] = s;
     }
     publish(e, s, t) {
         this.pubSub.publish(e, s, t);
@@ -179,8 +186,12 @@ class WSServer extends EventEmitter {
 }
 
 !function(e) {
-    e[e.Scale = 0] = "Scale", e[e.CurrentProcess = 1] = "CurrentProcess";
-}(Mode || (Mode = {}));
+    e[e.Scale = 0] = "Scale", e[e.SingleProcess = 1] = "SingleProcess";
+}(exports.Mode || (exports.Mode = {})), function(e) {
+    e[e.onSubscribe = 0] = "onSubscribe", e[e.onUnsubscribe = 1] = "onUnsubscribe", 
+    e[e.verifyConnection = 2] = "verifyConnection", e[e.onChannelOpen = 3] = "onChannelOpen", 
+    e[e.onChannelClose = 4] = "onChannelClose";
+}(exports.Middleware || (exports.Middleware = {}));
 
 class Worker {
     constructor(e, s) {
@@ -188,16 +199,14 @@ class Worker {
         const t = new cws.WebSocketServer({
             path: this.options.wsPath,
             server: this.server,
-            verifyClient: (e, s) => {
-                s(!0);
-            }
+            verifyClient: (e, s) => this.wss.middleware[exports.Middleware.verifyConnection] ? this.wss.middleware[exports.Middleware.verifyConnection](e, s) : s(!0)
         });
         t.on("connection", e => {
             this.options.logger.debug("Worker", "new websocket connection"), this.wss.emit("connection", new Socket(this, e));
         }), this.options.autoPing && t.startAutoPing(this.options.pingInterval, !0), this.server.on("error", e => {
-            this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === Mode.Scale && process.exit();
+            this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === exports.Mode.Scale && process.exit();
         }), this.server.listen(this.options.port, this.options.host, () => {
-            this.options.worker.call(this), this.options.mode === Mode.Scale && process.send({
+            this.options.worker.call(this), this.options.mode === exports.Mode.Scale && process.send({
                 event: "READY",
                 pid: process.pid
             });
@@ -206,18 +215,18 @@ class Worker {
 }
 
 function runProcesses(e) {
-    if (e.mode === Mode.CurrentProcess) return e.logger.info(` Running in single process on port: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+    if (e.mode === exports.Mode.SingleProcess) return e.logger.info(` Running in single process on port: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
     new Worker(e, "");
     cluster.isMaster ? masterProcess(e) : childProcess(e);
 }
 
 function masterProcess(e) {
     let s;
-    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (h, c, u) => {
-        const l = cluster.fork();
-        l.on("message", t => {
+    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (h, c, l) => {
+        const u = cluster.fork();
+        u.on("message", t => {
             if (e.logger.debug("Message from child", t), "READY" === t.event) {
-                if (u) return e.logger.info(`${c} ${h} PID ${t.pid} has been restarted`);
+                if (l) return e.logger.info(`${c} ${h} PID ${t.pid} has been restarted`);
                 if ("Scaler" === c) {
                     s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
                     for (let s = 0; s < e.brokers; s++) n(s, "Broker");
@@ -227,10 +236,10 @@ function masterProcess(e) {
                 "Worker" === c && (i[h] = `    Worker: ${h}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
                 s && e.logger.info(s), o.forEach(e.logger.info), i.forEach(e.logger.info)));
             }
-        }), l.on("exit", () => {
+        }), u.on("exit", () => {
             e.logger.error(`${c} ${h} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${c} ${h} is restarting \n`), 
             n(h, c, !0));
-        }), l.send({
+        }), u.send({
             id: h,
             name: c,
             serverId: t,
@@ -286,7 +295,7 @@ class ClusterWS {
     constructor(e) {
         if (this.options = {
             port: e.port || (e.tlsOptions ? 443 : 80),
-            mode: e.mode || Mode.Scale,
+            mode: e.mode || exports.Mode.Scale,
             host: e.host,
             logger: e.logger || new Logger(Level.INFO),
             worker: e.worker,
@@ -304,4 +313,4 @@ class ClusterWS {
     }
 }
 
-module.exports = ClusterWS; module.exports.default = ClusterWS;
+exports.ClusterWS = ClusterWS;

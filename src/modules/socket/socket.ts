@@ -99,9 +99,8 @@ export class Socket {
     this.socket.terminate();
   }
 
-  // TODO: Currently we do not inform front end if we are subscribed or not
-  // find out what to do with that
-  // This functionality is not fully ready
+  // TODO: Currently we do not inform front end if we are subscribed or unsubscribed
+  // below functionality is not fully ready
 
   // Subscribe socket to specific channel
   public subscribe(channel: string): void {
@@ -118,6 +117,7 @@ export class Socket {
   }
 }
 
+// TODO: check encode performance
 // encode message to ClusterWS protocol
 function encode(event: string, data: Message, eventType: string): string | Buffer {
   const message: { [key: string]: any } = {

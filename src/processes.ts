@@ -7,7 +7,7 @@ import { Options, Mode, Message, Listener } from './utils/types';
 // check mode/process type and decide what to execute next
 export function runProcesses(options: Options): any {
   // validate in which mode are we running
-  if (options.mode === Mode.CurrentProcess) {
+  if (options.mode === Mode.SingleProcess) {
     options.logger.info(` Running in single process on port: ${options.port}, PID ${process.pid} ${options.tlsOptions ? '(secure)' : ''}`);
     return new Worker(options, '');
   }

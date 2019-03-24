@@ -9,7 +9,15 @@ export type WorkerFunction = () => void;
 
 export enum Mode {
   Scale,
-  CurrentProcess
+  SingleProcess
+}
+
+export enum Middleware {
+  onSubscribe,
+  onUnsubscribe,
+  verifyConnection,
+  onChannelOpen,
+  onChannelClose
 }
 
 export type HorizontalScaleOptions = {
