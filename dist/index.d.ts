@@ -14,20 +14,6 @@ export class ClusterWS {
     constructor(configurations: Configurations);
 }
 
-export class BrokerClient {
-    constructor(url: string);
-    on(event: string, listener: Listener): void;
-    send(message: string | Buffer): boolean;
-}
-
-export class Scaler {
-    constructor(horizontalScaleOptions: HorizontalScaleOptions);
-}
-
-export class Broker {
-    constructor(options: Options, port: number, securityKey: string, serverId: string);
-}
-
 export class PubSubEngine {
     constructor(logger: Logger, interval: number);
     addListener(event: string, listener: Listener): void;
@@ -36,17 +22,6 @@ export class PubSubEngine {
     subscribe(userId: string, channel: string): any;
     unsubscribe(userId: string, channel: string): void;
     publish(channel: string, message: Message, userId?: string): any;
-}
-
-export class PubSubEngine {
-    constructor(loopInterval: number);
-    on(name: string, listener: Listener): void;
-    getAllChannels(): string[];
-    register(userId: string, listener: Listener): void;
-    deRegister(userId: string, channels: string[]): void;
-    subscribe(channelName: string, userId: string): any;
-    unsubscribe(channelName: string, userId: string): void;
-    publish(channel: string, message: Message, id?: string): void;
 }
 
 export class Socket {
@@ -90,13 +65,6 @@ export class EventEmitter {
     off(event: string): void;
     removeEvents(): void;
 }
-
-export function random(min: number, max: number): number;
-export function logError<T>(data: T): any;
-export function logReady<T>(data: T): any;
-export function logWarning<T>(data: T): any;
-export function isFunction<T>(fn: T): boolean;
-export function generateKey(length: number): string;
 
 export function isFunction<T>(fn: T): boolean;
 export function generateUid(length: number): string;

@@ -2,7 +2,7 @@ import { Worker } from '../worker';
 import { WebSocket } from '@clusterws/cws';
 import { generateUid } from '../../utils/helpers';
 import { EventEmitter } from '../../utils/emitter';
-import { Message, Listener } from '../../utils/types';
+import { Message, Listener, Middleware } from '../../utils/types';
 
 export class Socket {
   private id: string = generateUid(8);
@@ -104,14 +104,27 @@ export class Socket {
 
   // Subscribe socket to specific channel
   public subscribe(channel: string): void {
-    // TODO: add middleware
+    if (this.worker.wss.middleware[Middleware.onSubscribe]) {
+      // This will allow user to decide if they want to subscribe user to specific channel
+      return this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (allow: boolean) => {
+        // TODO: make sure that it accepts errors and other things
+        if (allow) {
+          this.channels[channel] = true;
+          this.worker.wss.subscribe(this.id, channel);
+        }
+      });
+    }
     this.channels[channel] = true;
     this.worker.wss.subscribe(this.id, channel);
   }
 
   // unsubscribe socket from specific channel
   public unsubscribe(channel: string): void {
-    // TODO: add middleware
+    if (this.worker.wss.middleware[Middleware.onUnsubscribe]) {
+      // This will allow user to see if some one unsubscribes from channel
+      // User can not control unsubscribe from happening
+      this.worker.wss.middleware[Middleware.onUnsubscribe](this, channel);
+    }
     delete this.channels[channel];
     this.worker.wss.unsubscribe(this.id, channel);
   }

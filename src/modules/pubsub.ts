@@ -1,6 +1,6 @@
 import { Listener, Message, Logger } from '../utils/types';
 
-// TODO: Fix serious bug with data reference if there would be any issues :(
+// TODO: Fix possibly serious bug with data reference :(
 export class PubSubEngine {
   private hooks: { [key: string]: Listener } = {};
   private users: { [key: string]: Listener } = {};

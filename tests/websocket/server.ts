@@ -153,7 +153,6 @@ describe('WebSocket Server Should parse (received message) ClusterWS protocol co
       worker: function () {
         this.wss.on('connection', (socket) => {
           socket.on('hello', (incomingMessage) => {
-            console.log(message[2]);
             expect(incomingMessage).to.be.eql(message[2]);
             done();
             this.server.close();
@@ -277,7 +276,6 @@ describe('WebSocket Server Should send end receive correct messages', () => {
         this.wss.on('connection', (socket) => {
           // we need timeout while we receive subscribe event
           socket.on('hello', (incoming) => {
-            console.log("got here", incoming);
             expect(incoming).to.be.eql(message[2]);
             socket.send('hello', incoming);
             this.server.close();
@@ -330,14 +328,15 @@ describe('WebSocket Server Should send end receive correct messages', () => {
 
 
 // TODO: Add middleware tests
-
+// TODO: Check another type of outcome
 describe('WebSocket Server Middleware', () => {
-  it("Should intercept user connection if `Middleware.verifyConnection` is enabled", (done) => {
+  it("Should intercept user connection if `Middleware.verifyConnection` and decline if next passed decline", (done) => {
     new ClusterWS({
       ...options,
       worker: function () {
         this.wss.addMiddleware(Middleware.verifyConnection, (info, next) => {
-          setInterval(() => {
+          next(false);
+          setTimeout(() => {
             this.server.close();
             done();
           }, 20);
@@ -353,6 +352,56 @@ describe('WebSocket Server Middleware', () => {
     let socket = new WebSocket(websocketUrl);
     socket.on('open', () => {
       done('should not be called')
+    });
+  });
+
+
+  it("Should intercept and decline subscribe event if `Middleware.onSubscribe` is enabled and passed to decline", (done) => {
+    let subscribeEvent = ['s', 's', 'hello world'];
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.addMiddleware(Middleware.onSubscribe, (socket, channel, next) => {
+          expect(channel).to.be.eql(subscribeEvent[2]);
+          next(false)
+          setTimeout(() => {
+            expect(socket.channels).to.not.contain.keys('hello world');
+            this.server.close();
+            done();
+          }, 10);
+        })
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      socket.send(JSON.stringify(subscribeEvent));
+    });
+  });
+
+
+  it("Should receive unsubscribe event in `Middleware.onUnsubscribe` and still unsubscribe channel", (done) => {
+    let subscribeEvent = ['s', 's', 'hello world'];
+    let unsubscribeEvent = ['s', 'u', 'hello world'];
+
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.addMiddleware(Middleware.onUnsubscribe, (socket, channel) => {
+          expect(channel).to.be.eql(subscribeEvent[2]);
+          setTimeout(() => {
+            expect(socket.channels).to.not.contain.keys('hello world');
+            this.server.close();
+            done();
+          }, 10);
+        })
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      socket.send(JSON.stringify(subscribeEvent));
+      socket.send(JSON.stringify(unsubscribeEvent));
     });
   });
 });

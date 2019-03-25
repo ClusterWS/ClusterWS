@@ -15,6 +15,11 @@ export class WSServer extends EventEmitter {
       // TODO: handle messages for broker
       // console.log(message);
     });
+
+    // TODO: add more control over subscribing new channel
+    // this.pubSub.addListener('channelAdd', (channelName: string) => {
+    //   // this.middleware[middlewareType]
+    // });
   }
 
   // TODO: add middleware

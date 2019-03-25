@@ -37,6 +37,14 @@ class EventEmitter {
     }
 }
 
+!function(e) {
+    e[e.Scale = 0] = "Scale", e[e.SingleProcess = 1] = "SingleProcess";
+}(exports.Mode || (exports.Mode = {})), function(e) {
+    e[e.onSubscribe = 0] = "onSubscribe", e[e.onUnsubscribe = 1] = "onUnsubscribe", 
+    e[e.verifyConnection = 2] = "verifyConnection", e[e.onChannelOpen = 3] = "onChannelOpen", 
+    e[e.onChannelClose = 4] = "onChannelClose";
+}(exports.Middleware || (exports.Middleware = {}));
+
 class Socket {
     constructor(e, s) {
         this.worker = e, this.socket = s, this.id = generateUid(8), this.channels = {}, 
@@ -76,9 +84,13 @@ class Socket {
         this.socket.terminate();
     }
     subscribe(e) {
+        if (this.worker.wss.middleware[exports.Middleware.onSubscribe]) return this.worker.wss.middleware[exports.Middleware.onSubscribe](this, e, s => {
+            s && (this.channels[e] = !0, this.worker.wss.subscribe(this.id, e));
+        });
         this.channels[e] = !0, this.worker.wss.subscribe(this.id, e);
     }
     unsubscribe(e) {
+        this.worker.wss.middleware[exports.Middleware.onUnsubscribe] && this.worker.wss.middleware[exports.Middleware.onUnsubscribe](this, e), 
         delete this.channels[e], this.worker.wss.unsubscribe(this.id, e);
     }
 }
@@ -95,12 +107,12 @@ function encode(e, s, t) {
 }
 
 function decode(e, s) {
-    const [t, r, o] = s;
-    if ("e" === t) return e.emitter.emit(r, o);
-    if ("p" === t) return e.channels[r] && e.worker.wss.publish(r, o, e.id);
+    const [t, r, i] = s;
+    if ("e" === t) return e.emitter.emit(r, i);
+    if ("p" === t) return e.channels[r] && e.worker.wss.publish(r, i, e.id);
     if ("s" === t) {
-        if ("s" === r) return e.subscribe(o);
-        if ("u" === r) return e.unsubscribe(o);
+        if ("s" === r) return e.subscribe(i);
+        if ("u" === r) return e.unsubscribe(i);
     }
 }
 
@@ -148,10 +160,10 @@ class PubSubEngine {
         for (const s in this.batches) if (this.batches[s]) {
             const t = this.channels[s];
             if (t) {
-                const r = this.batches[s], o = r.length;
-                for (let i = 0, n = t.length; i < n; i++) {
-                    const n = t[i], h = [];
-                    for (let e = 0; e < o; e++) r[e].userId !== n && h.push(r[e].message);
+                const r = this.batches[s], i = r.length;
+                for (let o = 0, n = t.length; o < n; o++) {
+                    const n = t[o], h = [];
+                    for (let e = 0; e < i; e++) r[e].userId !== n && h.push(r[e].message);
                     h.length && (e[n] || (e[n] = {}), e[n][s] = h);
                 }
             }
@@ -185,14 +197,6 @@ class WSServer extends EventEmitter {
     }
 }
 
-!function(e) {
-    e[e.Scale = 0] = "Scale", e[e.SingleProcess = 1] = "SingleProcess";
-}(exports.Mode || (exports.Mode = {})), function(e) {
-    e[e.onSubscribe = 0] = "onSubscribe", e[e.onUnsubscribe = 1] = "onUnsubscribe", 
-    e[e.verifyConnection = 2] = "verifyConnection", e[e.onChannelOpen = 3] = "onChannelOpen", 
-    e[e.onChannelClose = 4] = "onChannelClose";
-}(exports.Middleware || (exports.Middleware = {}));
-
 class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
@@ -222,7 +226,7 @@ function runProcesses(e) {
 
 function masterProcess(e) {
     let s;
-    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (h, c, l) => {
+    const t = generateUid(10), r = generateUid(20), i = [], o = [], n = (h, c, l) => {
         const u = cluster.fork();
         u.on("message", t => {
             if (e.logger.debug("Message from child", t), "READY" === t.event) {
@@ -231,10 +235,10 @@ function masterProcess(e) {
                     s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
                     for (let s = 0; s < e.brokers; s++) n(s, "Broker");
                 }
-                if ("Broker" === c && (o[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${t.pid}`, 
-                o.length === e.brokers && !o.includes(void 0))) for (let s = 0; s < e.workers; s++) n(s, "Worker");
-                "Worker" === c && (i[h] = `    Worker: ${h}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
-                s && e.logger.info(s), o.forEach(e.logger.info), i.forEach(e.logger.info)));
+                if ("Broker" === c && (i[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${t.pid}`, 
+                i.length === e.brokers && !i.includes(void 0))) for (let s = 0; s < e.workers; s++) n(s, "Worker");
+                "Worker" === c && (o[h] = `    Worker: ${h}, PID ${t.pid}`, o.length !== e.workers || o.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+                s && e.logger.info(s), i.forEach(e.logger.info), o.forEach(e.logger.info)));
             }
         }), u.on("exit", () => {
             e.logger.error(`${c} ${h} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${c} ${h} is restarting \n`), 

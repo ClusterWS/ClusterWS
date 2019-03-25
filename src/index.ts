@@ -25,7 +25,6 @@ export class ClusterWS {
       tlsOptions: configurations.tlsOptions,
       pingInterval: configurations.pingInterval || 20000,
       brokersPorts: configurations.brokersPorts || [],
-      // encodeDecodeEngine: configurations.encodeDecodeEngine,
       restartWorkerOnFail: configurations.restartWorkerOnFail,
       horizontalScaleOptions: configurations.horizontalScaleOptions
     };
