@@ -84,14 +84,16 @@ class Socket {
         this.socket.terminate();
     }
     subscribe(e) {
-        if (this.worker.wss.middleware[exports.Middleware.onSubscribe]) return this.worker.wss.middleware[exports.Middleware.onSubscribe](this, e, s => {
-            s && (this.channels[e] = !0, this.worker.wss.subscribe(this.id, e));
-        });
-        this.channels[e] = !0, this.worker.wss.subscribe(this.id, e);
+        if (!this.channels[e]) {
+            if (this.worker.wss.middleware[exports.Middleware.onSubscribe]) return this.worker.wss.middleware[exports.Middleware.onSubscribe](this, e, s => {
+                s && (this.channels[e] = !0, this.worker.wss.subscribe(this.id, e));
+            });
+            this.channels[e] = !0, this.worker.wss.subscribe(this.id, e);
+        }
     }
     unsubscribe(e) {
-        this.worker.wss.middleware[exports.Middleware.onUnsubscribe] && this.worker.wss.middleware[exports.Middleware.onUnsubscribe](this, e), 
-        delete this.channels[e], this.worker.wss.unsubscribe(this.id, e);
+        this.channels[e] && (this.worker.wss.middleware[exports.Middleware.onUnsubscribe] && this.worker.wss.middleware[exports.Middleware.onUnsubscribe](this, e), 
+        delete this.channels[e], this.worker.wss.unsubscribe(this.id, e));
     }
 }
 

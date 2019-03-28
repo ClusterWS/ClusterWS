@@ -4,6 +4,7 @@ import { Logger, Level } from './utils/logger';
 import { Options, Configurations, Mode } from './utils/types';
 
 // TODO: handle type for "this" keyword in worker function
+// TODO: Improve positions of debug logs
 // Reexport important things
 export { Mode, Middleware } from './utils/types';
 

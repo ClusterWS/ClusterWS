@@ -8,7 +8,7 @@
   "scripts": {
     "test": "nyc mocha \"./tests/**/*.ts\" --exit",
     "build": "ts-builder -c ./tsbuild.json",
-    "release": "npm run build && cd dist && npm publish --tag alpha && cd .."
+    "release": "npm run build && cd dist && npm publish --tag alpha --access public"
   },
   "license": "MIT",
   "repository": {
