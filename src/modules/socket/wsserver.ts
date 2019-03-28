@@ -7,22 +7,26 @@ export class WSServer extends EventEmitter {
   private pubSub: PubSubEngine;
 
   constructor(private options: Options, securityKey: string) {
+    // we pass "options" instead of "this.options" because "this" it was not initialized yet
     super(options.logger);
-    // TODO: need to fix timer for pubSub engine
     this.pubSub = new PubSubEngine(options.logger, 5);
 
     this.pubSub.register('broker', (message: any) => {
-      // TODO: handle messages for broker
-      // console.log(message);
+      // TODO: handle logic for brokers
     });
 
-    // TODO: add more control over subscribing new channel
-    // this.pubSub.addListener('channelAdd', (channelName: string) => {
-    //   // this.middleware[middlewareType]
-    // });
+    // TODO: add more control for user over subscribing to new channel
+    this.pubSub.addListener('channelAdd', (channelName: string) => {
+      this.middleware[Middleware.onChannelOpen] &&
+        this.middleware[Middleware.onChannelOpen](channelName);
+    });
+
+    this.pubSub.addListener('channelClose', (channelName: string) => {
+      this.middleware[Middleware.onChannelClose] &&
+        this.middleware[Middleware.onChannelClose](channelName);
+    });
   }
 
-  // TODO: add middleware
   public addMiddleware(middlewareType: Middleware, listener: Listener): void {
     this.middleware[middlewareType] = listener;
   }

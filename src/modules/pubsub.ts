@@ -58,8 +58,8 @@ export class PubSubEngine {
     // remove channels object if there is no more users
     if (channelArray && channelArray.length === 1) {
       this.logger.debug(`PubSubEngine`, `'${channel}' has been removed`);
-      if (this.hooks['channelDelete']) {
-        this.hooks['channelDelete'](channel);
+      if (this.hooks['channelClose']) {
+        this.hooks['channelClose'](channel);
       }
       delete this.channels[channel];
     }

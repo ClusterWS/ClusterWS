@@ -3,7 +3,7 @@ import { runProcesses } from './processes';
 import { Logger, Level } from './utils/logger';
 import { Options, Configurations, Mode } from './utils/types';
 
-// TODO: correctly handle this type in worker function
+// TODO: handle type for "this" keyword in worker function
 // Reexport important things
 export { Mode, Middleware } from './utils/types';
 

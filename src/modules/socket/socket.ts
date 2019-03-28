@@ -104,6 +104,7 @@ export class Socket {
 
   // Subscribe socket to specific channel
   public subscribe(channel: string): void {
+    if (this.channels[channel]) { return; }
     if (this.worker.wss.middleware[Middleware.onSubscribe]) {
       // This will allow user to decide if they want to subscribe user to specific channel
       return this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (allow: boolean) => {
@@ -120,6 +121,7 @@ export class Socket {
 
   // unsubscribe socket from specific channel
   public unsubscribe(channel: string): void {
+    if (!this.channels[channel]) { return; }
     if (this.worker.wss.middleware[Middleware.onUnsubscribe]) {
       // This will allow user to see if some one unsubscribes from channel
       // User can not control unsubscribe from happening

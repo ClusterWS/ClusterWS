@@ -23,8 +23,8 @@ class EventEmitter {
         this.events[e] = s;
     }
     emit(e, ...s) {
-        const t = this.events[e];
-        t && t(...s);
+        const r = this.events[e];
+        r && r(...s);
     }
     exist(e) {
         return !!this.events[e];
@@ -71,8 +71,8 @@ class Socket {
     on(e, s) {
         this.emitter.on(e, s);
     }
-    send(e, s, t = "emit") {
-        this.socket.send(encode(e, s, t));
+    send(e, s, r = "emit") {
+        this.socket.send(encode(e, s, r));
     }
     sendRaw(e) {
         this.socket.send(e);
@@ -95,24 +95,24 @@ class Socket {
     }
 }
 
-function encode(e, s, t) {
-    const r = {
+function encode(e, s, r) {
+    const t = {
         emit: [ "e", e, s ],
         publish: [ "p", e, s ],
         system: {
             configuration: [ "s", "c", s ]
         }
     };
-    return JSON.stringify(r[t][e] || r[t]);
+    return JSON.stringify(t[r][e] || t[r]);
 }
 
 function decode(e, s) {
-    const [t, r, i] = s;
-    if ("e" === t) return e.emitter.emit(r, i);
-    if ("p" === t) return e.channels[r] && e.worker.wss.publish(r, i, e.id);
-    if ("s" === t) {
-        if ("s" === r) return e.subscribe(i);
-        if ("u" === r) return e.unsubscribe(i);
+    const [r, t, i] = s;
+    if ("e" === r) return e.emitter.emit(t, i);
+    if ("p" === r) return e.channels[t] && e.worker.wss.publish(t, i, e.id);
+    if ("s" === r) {
+        if ("s" === t) return e.subscribe(i);
+        if ("u" === t) return e.unsubscribe(i);
     }
 }
 
@@ -128,7 +128,7 @@ class PubSubEngine {
         this.users[e] = s;
     }
     unregister(e, s) {
-        for (let t = 0, r = s.length; t < r; t++) this.unsubscribe(s[t], e);
+        for (let r = 0, t = s.length; r < t; r++) this.unsubscribe(s[r], e);
         delete this.users[e];
     }
     subscribe(e, s) {
@@ -136,34 +136,34 @@ class PubSubEngine {
         this.hooks.channelAdd && this.hooks.channelAdd(s), void (this.channels[s] = [ "broker", e ])) : this.logger.warning(`Trying to subscribe not existing user ${e}`);
     }
     unsubscribe(e, s) {
-        const t = this.channels[s];
-        if (t && t.length) {
-            const s = t.indexOf(e);
-            -1 !== s && t.splice(s, 1);
+        const r = this.channels[s];
+        if (r && r.length) {
+            const s = r.indexOf(e);
+            -1 !== s && r.splice(s, 1);
         }
-        t && 1 === t.length && (this.logger.debug("PubSubEngine", `'${s}' has been removed`), 
-        this.hooks.channelDelete && this.hooks.channelDelete(s), delete this.channels[s]);
+        r && 1 === r.length && (this.logger.debug("PubSubEngine", `'${s}' has been removed`), 
+        this.hooks.channelClose && this.hooks.channelClose(s), delete this.channels[s]);
     }
-    publish(e, s, t) {
-        const r = this.batches[e];
-        if (r) return r.push({
-            userId: t,
+    publish(e, s, r) {
+        const t = this.batches[e];
+        if (t) return t.push({
+            userId: r,
             message: s
         });
         this.batches[e] = [ {
-            userId: t,
+            userId: r,
             message: s
         } ];
     }
     flush() {
         const e = {};
         for (const s in this.batches) if (this.batches[s]) {
-            const t = this.channels[s];
-            if (t) {
-                const r = this.batches[s], i = r.length;
-                for (let o = 0, n = t.length; o < n; o++) {
-                    const n = t[o], h = [];
-                    for (let e = 0; e < i; e++) r[e].userId !== n && h.push(r[e].message);
+            const r = this.channels[s];
+            if (r) {
+                const t = this.batches[s], i = t.length;
+                for (let o = 0, n = r.length; o < n; o++) {
+                    const n = r[o], h = [];
+                    for (let e = 0; e < i; e++) t[e].userId !== n && h.push(t[e].message);
                     h.length && (e[n] || (e[n] = {}), e[n][s] = h);
                 }
             }
@@ -181,13 +181,17 @@ class PubSubEngine {
 class WSServer extends EventEmitter {
     constructor(e, s) {
         super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(e.logger, 5), 
-        this.pubSub.register("broker", e => {});
+        this.pubSub.register("broker", e => {}), this.pubSub.addListener("channelAdd", e => {
+            this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
+        }), this.pubSub.addListener("channelClose", e => {
+            this.middleware[exports.Middleware.onChannelClose] && this.middleware[exports.Middleware.onChannelClose](e);
+        });
     }
     addMiddleware(e, s) {
         this.middleware[e] = s;
     }
-    publish(e, s, t) {
-        this.pubSub.publish(e, s, t);
+    publish(e, s, r) {
+        this.pubSub.publish(e, s, r);
     }
     subscribe(e, s) {
         this.pubSub.subscribe(e, s);
@@ -200,14 +204,14 @@ class WSServer extends EventEmitter {
 class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        const t = new cws.WebSocketServer({
+        const r = new cws.WebSocketServer({
             path: this.options.wsPath,
             server: this.server,
             verifyClient: (e, s) => this.wss.middleware[exports.Middleware.verifyConnection] ? this.wss.middleware[exports.Middleware.verifyConnection](e, s) : s(!0)
         });
-        t.on("connection", e => {
+        r.on("connection", e => {
             this.options.logger.debug("Worker", "new websocket connection"), this.wss.emit("connection", new Socket(this, e));
-        }), this.options.autoPing && t.startAutoPing(this.options.pingInterval, !0), this.server.on("error", e => {
+        }), this.options.autoPing && r.startAutoPing(this.options.pingInterval, !0), this.server.on("error", e => {
             this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === exports.Mode.Scale && process.exit();
         }), this.server.listen(this.options.port, this.options.host, () => {
             this.options.worker.call(this), this.options.mode === exports.Mode.Scale && process.send({
@@ -226,18 +230,18 @@ function runProcesses(e) {
 
 function masterProcess(e) {
     let s;
-    const t = generateUid(10), r = generateUid(20), i = [], o = [], n = (h, c, l) => {
+    const r = generateUid(10), t = generateUid(20), i = [], o = [], n = (h, c, l) => {
         const u = cluster.fork();
-        u.on("message", t => {
-            if (e.logger.debug("Message from child", t), "READY" === t.event) {
-                if (l) return e.logger.info(`${c} ${h} PID ${t.pid} has been restarted`);
+        u.on("message", r => {
+            if (e.logger.debug("Message from child", r), "READY" === r.event) {
+                if (l) return e.logger.info(`${c} ${h} PID ${r.pid} has been restarted`);
                 if ("Scaler" === c) {
-                    s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
+                    s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${r.pid}`;
                     for (let s = 0; s < e.brokers; s++) n(s, "Broker");
                 }
-                if ("Broker" === c && (i[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${t.pid}`, 
+                if ("Broker" === c && (i[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${r.pid}`, 
                 i.length === e.brokers && !i.includes(void 0))) for (let s = 0; s < e.workers; s++) n(s, "Worker");
-                "Worker" === c && (o[h] = `    Worker: ${h}, PID ${t.pid}`, o.length !== e.workers || o.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+                "Worker" === c && (o[h] = `    Worker: ${h}, PID ${r.pid}`, o.length !== e.workers || o.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
                 s && e.logger.info(s), i.forEach(e.logger.info), o.forEach(e.logger.info)));
             }
         }), u.on("exit", () => {
@@ -246,8 +250,8 @@ function masterProcess(e) {
         }), u.send({
             id: h,
             name: c,
-            serverId: t,
-            securityKey: r
+            serverId: r,
+            securityKey: t
         });
     };
     for (let s = 0; s < e.brokers; s++) n(s, "Broker");
@@ -281,8 +285,8 @@ class Logger {
     }
     debug(e, s) {
         if (this.level > Level.DEBUG) return;
-        let t = s;
-        "object" == typeof s && (t = JSON.stringify(s)), process.stdout.write(`[36mDebug:[0m ${e} - ${t}\n`);
+        let r = s;
+        "object" == typeof s && (r = JSON.stringify(s)), process.stdout.write(`[36mDebug:[0m ${e} - ${r}\n`);
     }
     info(e) {
         this.level > Level.INFO || process.stdout.write(`[32m✓ ${e}[0m\n`);

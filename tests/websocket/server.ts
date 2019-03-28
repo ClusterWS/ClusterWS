@@ -4,6 +4,7 @@ import { WebSocket } from '@clusterws/cws';
 
 import { ClusterWS, Mode, Middleware } from '../../src/index';
 
+// TODO: Rewrite tests to better alternative
 // This test only in SingleProcess mode
 const port = 3000;
 const websocketUrl = `ws://localhost:${port}`;
@@ -401,6 +402,57 @@ describe('WebSocket Server Middleware', () => {
     let socket = new WebSocket(websocketUrl);
     socket.on('open', () => {
       socket.send(JSON.stringify(subscribeEvent));
+      socket.send(JSON.stringify(unsubscribeEvent));
+    });
+  });
+
+
+  it("Should receive open event in `Middleware.onChannelOpen` with channel name", (done) => {
+    let subscribeEvent = ['s', 's', 'hello world'];
+
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.addMiddleware(Middleware.onChannelOpen, (channel) => {
+          expect(channel).to.be.eql(subscribeEvent[2]);
+          setTimeout(() => {
+            this.server.close();
+            done();
+          }, 10);
+        })
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      socket.send(JSON.stringify(subscribeEvent));
+    });
+  });
+
+
+  it("Should receive close event in `Middleware.onChannelClose` (only if last user is unsubscribed) with channel name", (done) => {
+    let subscribeEvent = ['s', 's', 'hello world'];
+    let unsubscribeEvent = ['s', 'u', 'hello world'];
+
+    new ClusterWS({
+      ...options,
+      worker: function () {
+        this.wss.addMiddleware(Middleware.onChannelClose, (channel) => {
+          expect(channel).to.be.eql(subscribeEvent[2]);
+          setTimeout(() => {
+            this.server.close();
+            done();
+          }, 10);
+        })
+      }
+    });
+
+    let socket = new WebSocket(websocketUrl);
+    socket.on('open', () => {
+      socket.send(JSON.stringify(subscribeEvent));
+      // second one tests if we handle subscribe correctly
+      socket.send(JSON.stringify(subscribeEvent));
+
       socket.send(JSON.stringify(unsubscribeEvent));
     });
   });
