@@ -108,7 +108,7 @@ export class Socket {
     if (this.worker.wss.middleware[Middleware.onSubscribe]) {
       // This will allow user to decide if they want to subscribe user to specific channel
       return this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (error: any) => {
-        // TODO: make sure that it accepts errors and other things
+        // TODO: Handle error correctly
         if (!error) {
           this.channels[channel] = true;
           this.worker.wss.subscribe(this.id, channel);
@@ -132,7 +132,6 @@ export class Socket {
   }
 }
 
-// TODO: check encode performance
 // encode message to ClusterWS protocol
 function encode(event: string, data: Message, eventType: string): string | Buffer {
   const message: { [key: string]: any } = {
@@ -143,7 +142,10 @@ function encode(event: string, data: Message, eventType: string): string | Buffe
     }
   };
 
-  return JSON.stringify(message[eventType][event] || message[eventType]);
+  if (eventType === 'system') {
+    return JSON.stringify(message[eventType][event]);
+  }
+  return JSON.stringify(message[eventType]);
 }
 
 // decode message from ClusterWS protocol

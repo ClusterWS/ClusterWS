@@ -15,7 +15,7 @@ export class WSServer extends EventEmitter {
       // TODO: handle logic for brokers
     });
 
-    // TODO: add more control for user over subscribing to new channel
+    // TODO: add more control for user over subscribing to new channel and channelClose
     this.pubSub.addListener('channelAdd', (channelName: string) => {
       this.middleware[Middleware.onChannelOpen] &&
         this.middleware[Middleware.onChannelOpen](channelName);
