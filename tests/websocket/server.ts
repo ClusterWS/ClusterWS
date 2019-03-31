@@ -364,7 +364,7 @@ describe('WebSocket Server Middleware', () => {
       worker: function () {
         this.wss.addMiddleware(Middleware.onSubscribe, (socket, channel, next) => {
           expect(channel).to.be.eql(subscribeEvent[2]);
-          next(false)
+          next(new Error("Some error"))
           setTimeout(() => {
             expect(socket.channels).to.not.contain.keys('hello world');
             this.server.close();

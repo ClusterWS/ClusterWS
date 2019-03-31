@@ -107,9 +107,9 @@ export class Socket {
     if (this.channels[channel]) { return; }
     if (this.worker.wss.middleware[Middleware.onSubscribe]) {
       // This will allow user to decide if they want to subscribe user to specific channel
-      return this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (allow: boolean) => {
+      return this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (error: any) => {
         // TODO: make sure that it accepts errors and other things
-        if (allow) {
+        if (!error) {
           this.channels[channel] = true;
           this.worker.wss.subscribe(this.id, channel);
         }
