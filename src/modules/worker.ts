@@ -25,7 +25,6 @@ export class Worker {
     });
 
     uServer.on('connection', (socket: WebSocket) => {
-      this.options.logger.debug('Worker', 'new websocket connection');
       this.wss.emit('connection', new Socket(this, socket));
     });
 

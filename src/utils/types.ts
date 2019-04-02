@@ -41,6 +41,7 @@ export type Configurations = {
   workers?: number;
   brokers?: number;
   autoPing?: boolean;
+  logLevel?: LogLevel;
   // useBinary?: boolean;
   tlsOptions?: SecureContextOptions;
   pingInterval?: number;
@@ -67,10 +68,18 @@ export type Options = {
   horizontalScaleOptions: HorizontalScaleOptions | null;
 };
 
+export enum LogLevel {
+  ALL = 0,
+  DEBUG = 1,
+  INFO = 2,
+  WARN = 3,
+  ERROR = 4
+}
+
 export type Logger = {
   [keys: string]: any,
-  info: (data: any) => any;
-  error: (data: any) => any;
-  debug: (prefix: string, data: any) => any;
-  warning: (data: any) => any;
+  info: (...args: any[]) => any;
+  error: (...args: any[]) => any;
+  debug: (...args: any[]) => any;
+  warning: (...args: any[]) => any;
 };

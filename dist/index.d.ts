@@ -75,19 +75,12 @@ export class EventEmitter {
 export function isFunction<T>(fn: T): boolean;
 export function generateUid(length: number): string;
 
-export enum Level {
-    ALL = 0,
-    DEBUG = 1,
-    INFO = 2,
-    WARN = 3,
-    ERROR = 4
-}
 export class Logger {
-    constructor(level: Level);
-    debug(prefix: string, data: any): void;
-    info(data: any): void;
-    error(data: any): void;
-    warning(): void;
+    constructor(level: LogLevel);
+    debug(...args: any[]): void;
+    info(...args: any[]): void;
+    error(...args: any[]): void;
+    warning(...args: any[]): void;
 }
 
 export type Message = any;
@@ -123,6 +116,7 @@ export type Configurations = {
     workers?: number;
     brokers?: number;
     autoPing?: boolean;
+    logLevel?: LogLevel;
     tlsOptions?: SecureContextOptions;
     pingInterval?: number;
     brokersPorts?: number[];
@@ -145,11 +139,18 @@ export type Options = {
     restartWorkerOnFail: boolean;
     horizontalScaleOptions: HorizontalScaleOptions | null;
 };
+export enum LogLevel {
+    ALL = 0,
+    DEBUG = 1,
+    INFO = 2,
+    WARN = 3,
+    ERROR = 4
+}
 export type Logger = {
     [keys: string]: any;
-    info: (data: any) => any;
-    error: (data: any) => any;
-    debug: (prefix: string, data: any) => any;
-    warning: (data: any) => any;
+    info: (...args: any[]) => any;
+    error: (...args: any[]) => any;
+    debug: (...args: any[]) => any;
+    warning: (...args: any[]) => any;
 };
 

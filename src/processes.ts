@@ -28,7 +28,7 @@ function masterProcess(options: Options): void {
     const forkedProcess: cluster.Worker = cluster.fork();
 
     forkedProcess.on('message', (message: Message) => {
-      options.logger.debug('Message from child', message);
+      options.logger.debug(`Message from ${name}:`, message);
 
       // if event is not ready then we dont need to process this
       if (message.event !== 'READY') { return; }
@@ -62,8 +62,8 @@ function masterProcess(options: Options): void {
           if (scalerReady) {
             options.logger.info(scalerReady);
           }
-          readyBrokers.forEach(options.logger.info);
-          readyWorkers.forEach(options.logger.info);
+          readyBrokers.forEach((msg: string) => options.logger.info(msg));
+          readyWorkers.forEach((msg: string) => options.logger.info(msg));
         }
       }
     });
@@ -87,14 +87,14 @@ function masterProcess(options: Options): void {
 
 function childProcess(options: Options): void {
   process.on('message', (message: Message) => {
-    options.logger.debug('Message from master', message);
+    options.logger.debug('Message from Master:', message);
 
     // create specified child instance
     switch (message.name) {
       case 'Worker':
         return new Worker(options, message.securityKey);
       case 'Broker':
-        return new Broker(options, options.brokersPorts[message.processId]);
+        return new Broker(options, options.brokersPorts[message.id]);
       default:
         process.send({ event: 'READY', pid: process.pid });
     }

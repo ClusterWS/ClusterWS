@@ -1,48 +1,44 @@
-// TODO: complete writing logger
-export enum Level {
-  ALL = 0,
-  DEBUG = 1,
-  INFO = 2,
-  WARN = 3,
-  ERROR = 4
-}
+// This is very basic logger without any transport
+// if you need you can use any other correct logger implementation
+// such as winston, pino, etc
+import { LogLevel } from './types';
 
 export class Logger {
-  constructor(private level: Level) { }
+  constructor(private level: LogLevel) { }
 
   // blue color output to console with Debug prefix
-  public debug(prefix: string, data: any): void {
-    if (this.level > Level.DEBUG) {
+  public debug(...args: any[]): void {
+    if (this.level > LogLevel.DEBUG) {
       return;
     }
 
-    let printData: any = data;
-    if (typeof data === 'object') {
-      printData = JSON.stringify(data);
-    }
-    process.stdout.write(`\x1b[36mDebug:\x1b[0m ${prefix} - ${printData}\n`);
+    // transforms object to strings before processing
+    console.log(`\x1b[36mdebug:\x1b[0m`, ...args.map((item: any) => typeof item === 'object' ? JSON.stringify(item) : item));
   }
 
   // Green color output to console
-  public info(data: any): void {
-    if (this.level > Level.INFO) {
+  public info(...args: any[]): void {
+    if (this.level > LogLevel.INFO) {
       return;
     }
-    process.stdout.write(`\x1b[32m\u2713 ${data}\x1b[0m\n`);
+
+    console.log(`\x1b[32minfo:\x1b[0m`, ...args);
   }
 
   // Red color output to console with Error prefix
-  public error(data: any): void {
-    if (this.level > Level.ERROR) {
+  public error(...args: any[]): void {
+    if (this.level > LogLevel.ERROR) {
       return;
     }
-    process.stdout.write(`\x1b[31mError:\x1b[0m ${data}\n`);
+    console.log(`\x1b[31merror:\x1b[0m`, ...args);
   }
 
-  public warning(): void {
-    if (this.level > Level.WARN) {
+  // Yellow color output
+  public warning(...args: any[]): void {
+    if (this.level > LogLevel.WARN) {
       return;
     }
-    // write warning
+
+    console.log(`\x1b[33mwarning:\x1b[0m`, ...args);
   }
 }

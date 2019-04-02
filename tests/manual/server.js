@@ -1,9 +1,10 @@
-const { ClusterWS, Mode, Middleware } = require('../../dist/index');
+const { ClusterWS, Mode, Middleware, LogLevel } = require('../../dist/index');
 
 new ClusterWS({
-  mode: Mode.SingleProcess,
+  mode: Mode.Scale,
   port: 3001,
   worker: Worker,
+  logLevel: LogLevel.DEBUG
 });
 
 function Worker() {

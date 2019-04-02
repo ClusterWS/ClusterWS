@@ -38,7 +38,6 @@ export class PubSubEngine {
       return this.channels[channel].push(userId);
     }
 
-    this.logger.debug(`PubSubEngine`, `'${channel}' has been created`);
     if (this.hooks['channelAdd']) {
       this.hooks['channelAdd'](channel);
     }
@@ -57,7 +56,6 @@ export class PubSubEngine {
 
     // remove channels object if there is no more users
     if (channelArray && channelArray.length === 1) {
-      this.logger.debug(`PubSubEngine`, `'${channel}' has been removed`);
       if (this.hooks['channelClose']) {
         this.hooks['channelClose'](channel);
       }

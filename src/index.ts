@@ -1,12 +1,14 @@
+import * as cluster from 'cluster';
+
+import { Logger } from './utils/logger';
 import { isFunction } from './utils/helpers';
 import { runProcesses } from './processes';
-import { Logger, Level } from './utils/logger';
-import { Options, Configurations, Mode } from './utils/types';
+import { Options, Configurations, Mode, LogLevel } from './utils/types';
 
 // TODO: handle type for "this" keyword in worker function
 // TODO: Improve positions of debug logs
 // Reexport important things
-export { Mode, Middleware } from './utils/types';
+export { Mode, Middleware, LogLevel } from './utils/types';
 
 export class ClusterWS {
   private options: Options;
@@ -16,13 +18,12 @@ export class ClusterWS {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
       mode: configurations.mode || Mode.Scale,
       host: configurations.host,
-      logger: configurations.logger || new Logger(Level.INFO),
+      logger: configurations.logger || new Logger(configurations.logLevel === undefined ? LogLevel.INFO : configurations.logLevel),
       worker: configurations.worker,
       wsPath: configurations.wsPath || null,
       workers: configurations.workers || 1,
       brokers: configurations.brokers || 1,
       autoPing: configurations.autoPing !== false,
-      // useBinary: configurations.useBinary,
       tlsOptions: configurations.tlsOptions,
       pingInterval: configurations.pingInterval || 20000,
       brokersPorts: configurations.brokersPorts || [],
@@ -35,6 +36,11 @@ export class ClusterWS {
       for (let i: number = 0; i < this.options.brokers; i++) {
         this.options.brokersPorts.push(i + 9400);
       }
+    }
+
+    if (cluster.isMaster) {
+      // print initialize options
+      this.options.logger.debug(`Initialized Options:`, this.options);
     }
 
     // Make sure that worker function is provided
