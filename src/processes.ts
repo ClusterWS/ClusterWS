@@ -1,5 +1,6 @@
 import * as cluster from 'cluster';
 
+import { Broker } from './modules/broker/server';
 import { Worker } from './modules/worker';
 import { generateUid } from './utils/helpers';
 import { Options, Mode, Message, Listener } from './utils/types';
@@ -92,6 +93,8 @@ function childProcess(options: Options): void {
     switch (message.name) {
       case 'Worker':
         return new Worker(options, message.securityKey);
+      case 'Broker':
+        return new Broker(options, options.brokersPorts[message.processId]);
       default:
         process.send({ event: 'READY', pid: process.pid });
     }

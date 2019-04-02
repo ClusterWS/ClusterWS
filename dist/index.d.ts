@@ -14,6 +14,12 @@ export class ClusterWS {
     constructor(configurations: Configurations);
 }
 
+
+
+export class Broker {
+    constructor(options: Options, port: number);
+}
+
 export class PubSubEngine {
     constructor(logger: Logger, interval: number);
     addListener(event: string, listener: Listener): void;

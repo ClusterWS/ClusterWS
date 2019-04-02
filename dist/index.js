@@ -86,7 +86,7 @@ class Socket {
     subscribe(e) {
         if (!this.channels[e]) {
             if (this.worker.wss.middleware[exports.Middleware.onSubscribe]) return this.worker.wss.middleware[exports.Middleware.onSubscribe](this, e, s => {
-                s && (this.channels[e] = !0, this.worker.wss.subscribe(this.id, e));
+                s || (this.channels[e] = !0, this.worker.wss.subscribe(this.id, e));
             });
             this.channels[e] = !0, this.worker.wss.subscribe(this.id, e);
         }
@@ -105,7 +105,7 @@ function encode(e, s, r) {
             configuration: [ "s", "c", s ]
         }
     };
-    return JSON.stringify(t[r][e] || t[r]);
+    return "system" === r ? JSON.stringify(t[r][e]) : JSON.stringify(t[r]);
 }
 
 function decode(e, s) {
