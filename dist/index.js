@@ -184,9 +184,9 @@ class PubSubEngine {
             if (t) {
                 const r = this.batches[s], o = r.length;
                 for (let i = 0, n = t.length; i < n; i++) {
-                    const n = t[i], h = [];
-                    for (let e = 0; e < o; e++) r[e].userId !== n && h.push(r[e].message);
-                    h.length && (e[n] || (e[n] = {}), e[n][s] = h);
+                    const n = t[i], c = [];
+                    for (let e = 0; e < o; e++) r[e].userId !== n && c.push(r[e].message);
+                    c.length && (e[n] || (e[n] = {}), e[n][s] = c);
                 }
             }
         }
@@ -202,12 +202,26 @@ class PubSubEngine {
 
 class BrokerConnector {
     constructor(e, s) {
-        this.options = e, this.createConnections();
+        this.options = e, this.publishFunction = s, this.connections = [];
+        for (let e = 0; e < this.options.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.brokersPorts[e]}`);
     }
     publish(e) {}
     subscribe(e) {}
     unsubscribe(e) {}
-    createConnections() {}
+    createConnection(e) {
+        const s = new cws.WebSocket(e);
+        s.on("open", () => {
+            s.id = generateUid(8), this.connections.push(s), this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`);
+        }), s.on("message", e => {
+            this.options.logger.debug(`Broker client ${s.id} received:`, e), e = JSON.parse(e);
+            for (const s in e) this.publishFunction(s, e, "broker");
+        }), s.on("close", (t, r) => {
+            this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${r}`);
+            for (let e = 0, t = this.connections.length; e < t; e++) this.connections[e].id === s.id && this.connections.splice(e, 1);
+        }), s.on("error", e => {
+            this.options.logger.debug(`Broker client ${s.id} got error`, e);
+        });
+    }
 }
 
 class WSServer extends EventEmitter {
@@ -295,26 +309,26 @@ function runProcesses(e) {
 
 function masterProcess(e) {
     let s;
-    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (h, c, l) => {
+    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (c, h, l) => {
         const u = cluster.fork();
         u.on("message", t => {
-            if (e.logger.debug(`Message from ${c}:`, t), "READY" === t.event) {
-                if (l) return e.logger.info(`${c} ${h} PID ${t.pid} has been restarted`);
-                if ("Scaler" === c) {
+            if (e.logger.debug(`Message from ${h}:`, t), "READY" === t.event) {
+                if (l) return e.logger.info(`${h} ${c} PID ${t.pid} has been restarted`);
+                if ("Scaler" === h) {
                     s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
                     for (let s = 0; s < e.brokers; s++) n(s, "Broker");
                 }
-                if ("Broker" === c && (o[h] = ` Broker on: ${e.brokersPorts[h]}, PID ${t.pid}`, 
+                if ("Broker" === h && (o[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${t.pid}`, 
                 o.length === e.brokers && !o.includes(void 0))) for (let s = 0; s < e.workers; s++) n(s, "Worker");
-                "Worker" === c && (i[h] = `    Worker: ${h}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+                "Worker" === h && (i[c] = `    Worker: ${c}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
                 s && e.logger.info(s), o.forEach(s => e.logger.info(s)), i.forEach(s => e.logger.info(s))));
             }
         }), u.on("exit", () => {
-            e.logger.error(`${c} ${h} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${c} ${h} is restarting \n`), 
-            n(h, c, !0));
+            e.logger.error(`${h} ${c} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${h} ${c} is restarting \n`), 
+            n(c, h, !0));
         }), u.send({
-            id: h,
-            name: c,
+            id: c,
+            name: h,
             serverId: t,
             securityKey: r
         });

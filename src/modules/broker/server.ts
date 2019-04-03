@@ -37,6 +37,8 @@ export class BrokerServer {
 
         this.broadcast(socket.id, JSON.parse(message));
       });
+
+      // TODO: disconnect and error handlers are needed !
     });
 
     this.server.startAutoPing(20000);

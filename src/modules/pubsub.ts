@@ -81,6 +81,7 @@ export class PubSubEngine {
     // for each key in batches (key is actual channel name)
     for (const channel in this.batches) {
       if (this.batches[channel]) {
+
         // get all users for that channel
         const users: string[] = this.channels[channel];
 

@@ -18,7 +18,6 @@ export class WSServer extends EventEmitter {
 
     this.pubSub.register('broker', (message: any) => {
       this.brokerConnector.publish(message);
-      // TODO: handle logic for brokers
     });
 
     // TODO: add more control for user over subscribing to new channel and channelClose
