@@ -4,12 +4,13 @@ import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/
 
 // TODO: complete writing broker server
 // TODO: handle fail send
+// TODO: write authorization
 type SocketExtend = {
   id: string,
   channels: { [key: string]: boolean }
 };
 
-export class Broker {
+export class BrokerServer {
   private server: WebSocketServer;
   private sockets: Array<WebSocket & SocketExtend> = [];
 
@@ -22,6 +23,8 @@ export class Broker {
       socket.id = generateUid(8);
       socket.channels = {};
       this.sockets.push(socket);
+
+      this.options.logger.debug(`New connection to broker ${socket.id}`);
 
       socket.on('message', (message: Message) => {
         if (message[0] === 'u') {

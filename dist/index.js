@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
     value: !0
 });
 
-var cluster = require("cluster"), crypto = require("crypto"), cws = require("@clusterws/cws"), HTTP = require("http"), HTTPS = require("https");
+var cluster = require("cluster"), crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https"), cws = require("@clusterws/cws");
 
 !function(e) {
     e[e.Scale = 0] = "Scale", e[e.SingleProcess = 1] = "SingleProcess";
@@ -41,36 +41,6 @@ function isFunction(e) {
 
 function generateUid(e) {
     return crypto.randomBytes(e).toString("hex");
-}
-
-class Broker {
-    constructor(e, s) {
-        this.options = e, this.sockets = [], this.server = new cws.WebSocketServer({
-            port: s
-        }, () => {
-            process.send({
-                event: "READY",
-                pid: process.pid
-            });
-        }), this.server.on("connection", e => {
-            e.id = generateUid(8), e.channels = {}, this.sockets.push(e), e.on("message", s => "u" === s[0] ? delete e.channels[s.substr(1, s.length - 1)] : "s" === s[0] ? e.channels[s.substr(1, s.length - 1)] = !0 : void this.broadcast(e.id, JSON.parse(s)));
-        }), this.server.startAutoPing(2e4);
-    }
-    broadcast(e, s) {
-        const t = Object.keys(s), r = t.length;
-        for (let o = 0, i = this.sockets.length; o < i; o++) {
-            const i = this.sockets[o];
-            if (i.id !== e) {
-                let e = !1;
-                const o = {};
-                for (let n = 0; n < r; n++) {
-                    const r = t[n];
-                    i.channels[r] && (e = !0, o[r] = s[r]);
-                }
-                e && i.send(JSON.stringify(o));
-            }
-        }
-    }
 }
 
 class EventEmitter {
@@ -230,13 +200,25 @@ class PubSubEngine {
     }
 }
 
+class BrokerConnector {
+    constructor(e, s) {
+        this.options = e, this.createConnections();
+    }
+    publish(e) {}
+    subscribe(e) {}
+    unsubscribe(e) {}
+    createConnections() {}
+}
+
 class WSServer extends EventEmitter {
     constructor(e, s) {
         super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(e.logger, 5), 
-        this.pubSub.register("broker", e => {}), this.pubSub.addListener("channelAdd", e => {
-            this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
+        this.brokerConnector = new BrokerConnector(e, this.publish.bind(this)), this.pubSub.register("broker", e => {
+            this.brokerConnector.publish(e);
+        }), this.pubSub.addListener("channelAdd", e => {
+            this.brokerConnector.subscribe(e), this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
         }), this.pubSub.addListener("channelClose", e => {
-            this.middleware[exports.Middleware.onChannelClose] && this.middleware[exports.Middleware.onChannelClose](e);
+            this.brokerConnector.unsubscribe(e), this.middleware[exports.Middleware.onChannelClose] && this.middleware[exports.Middleware.onChannelClose](e);
         });
     }
     addMiddleware(e, s) {
@@ -274,8 +256,39 @@ class Worker {
     }
 }
 
+class BrokerServer {
+    constructor(e, s) {
+        this.options = e, this.sockets = [], this.server = new cws.WebSocketServer({
+            port: s
+        }, () => {
+            process.send({
+                event: "READY",
+                pid: process.pid
+            });
+        }), this.server.on("connection", e => {
+            e.id = generateUid(8), e.channels = {}, this.sockets.push(e), this.options.logger.debug(`New connection to broker ${e.id}`), 
+            e.on("message", s => "u" === s[0] ? delete e.channels[s.substr(1, s.length - 1)] : "s" === s[0] ? e.channels[s.substr(1, s.length - 1)] = !0 : void this.broadcast(e.id, JSON.parse(s)));
+        }), this.server.startAutoPing(2e4);
+    }
+    broadcast(e, s) {
+        const t = Object.keys(s), r = t.length;
+        for (let o = 0, i = this.sockets.length; o < i; o++) {
+            const i = this.sockets[o];
+            if (i.id !== e) {
+                let e = !1;
+                const o = {};
+                for (let n = 0; n < r; n++) {
+                    const r = t[n];
+                    i.channels[r] && (e = !0, o[r] = s[r]);
+                }
+                e && i.send(JSON.stringify(o));
+            }
+        }
+    }
+}
+
 function runProcesses(e) {
-    if (e.mode === exports.Mode.SingleProcess) return e.logger.info(` Running in single process on port: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+    if (e.mode === exports.Mode.SingleProcess) return e.logger.info(` Running on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
     new Worker(e, "");
     cluster.isMaster ? masterProcess(e) : childProcess(e);
 }
@@ -316,7 +329,7 @@ function childProcess(e) {
             return new Worker(e, s.securityKey);
 
           case "Broker":
-            return new Broker(e, e.brokersPorts[s.id]);
+            return new BrokerServer(e, e.brokersPorts[s.id]);
 
           default:
             process.send({

@@ -14,9 +14,18 @@ export class ClusterWS {
     constructor(configurations: Configurations);
 }
 
+export class BrokerClient {
+    constructor(options: Options, url: string);
+}
 
+export class BrokerConnector {
+    constructor(options: Options, publishFunction: Listener);
+    publish(message: Message): void;
+    subscribe(channel: string): void;
+    unsubscribe(channel: string): void;
+}
 
-export class Broker {
+export class BrokerServer {
     constructor(options: Options, port: number);
 }
 

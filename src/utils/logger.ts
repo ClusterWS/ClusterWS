@@ -1,6 +1,7 @@
 // This is very basic logger without any transport
-// if you need you can use any other correct logger implementation
-// such as winston, pino, etc
+// if you need more functionality
+// you can use any other correct logger implementation
+// such as winston, pino, etc.
 import { LogLevel } from './types';
 
 export class Logger {
@@ -11,7 +12,6 @@ export class Logger {
     if (this.level > LogLevel.DEBUG) {
       return;
     }
-
     // transforms object to strings before processing
     console.log(`\x1b[36mdebug:\x1b[0m`, ...args.map((item: any) => typeof item === 'object' ? JSON.stringify(item) : item));
   }
@@ -21,7 +21,6 @@ export class Logger {
     if (this.level > LogLevel.INFO) {
       return;
     }
-
     console.log(`\x1b[32minfo:\x1b[0m`, ...args);
   }
 
@@ -38,7 +37,6 @@ export class Logger {
     if (this.level > LogLevel.WARN) {
       return;
     }
-
     console.log(`\x1b[33mwarning:\x1b[0m`, ...args);
   }
 }

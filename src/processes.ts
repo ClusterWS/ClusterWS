@@ -1,15 +1,15 @@
 import * as cluster from 'cluster';
 
-import { Broker } from './modules/broker/server';
 import { Worker } from './modules/worker';
 import { generateUid } from './utils/helpers';
+import { BrokerServer } from './modules/broker/server';
 import { Options, Mode, Message, Listener } from './utils/types';
 
 // check mode/process type and decide what to execute next
 export function runProcesses(options: Options): any {
   // validate in which mode are we running
   if (options.mode === Mode.SingleProcess) {
-    options.logger.info(` Running in single process on port: ${options.port}, PID ${process.pid} ${options.tlsOptions ? '(secure)' : ''}`);
+    options.logger.info(` Running on: ${options.port}, PID ${process.pid} ${options.tlsOptions ? '(secure)' : ''}`);
     return new Worker(options, '');
   }
 
@@ -94,7 +94,7 @@ function childProcess(options: Options): void {
       case 'Worker':
         return new Worker(options, message.securityKey);
       case 'Broker':
-        return new Broker(options, options.brokersPorts[message.id]);
+        return new BrokerServer(options, options.brokersPorts[message.id]);
       default:
         process.send({ event: 'READY', pid: process.pid });
     }
