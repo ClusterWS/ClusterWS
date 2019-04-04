@@ -24,9 +24,10 @@ export class BrokerServer {
       socket.channels = {};
       this.sockets.push(socket);
 
-      this.options.logger.debug(`New connection to broker ${socket.id}`);
+      this.options.logger.debug(`New connection to broker ${socket.id}`, `(pid: ${process.pid})`);
 
       socket.on('message', (message: Message) => {
+        this.options.logger.debug(`Broker received`, message, `(pid: ${process.pid})`);
         if (message[0] === 'u') {
           return delete socket.channels[message.substr(1, message.length - 1)];
         }

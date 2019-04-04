@@ -7,7 +7,6 @@ import { Message, Listener, Middleware } from '../../utils/types';
 export class Socket {
   private id: string = generateUid(8);
   private emitter: EventEmitter;
-  // channels is actually used in decode() function too
   private channels: { [key: string]: boolean } = {};
 
   constructor(private worker: Worker, private socket: WebSocket) {
@@ -100,7 +99,7 @@ export class Socket {
   }
 
   // TODO: Currently we do not inform front end if we are subscribed or unsubscribed
-  // below functionality is not fully ready
+  // below functionality is not fully ready for user exposure
 
   // Subscribe socket to specific channel
   public subscribe(channel: string): void {

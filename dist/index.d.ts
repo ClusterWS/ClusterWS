@@ -19,7 +19,7 @@ export class BrokerClient {
 }
 
 export class BrokerConnector {
-    constructor(options: Options, publishFunction: Listener);
+    constructor(options: Options, publishFunction: Listener, key: string);
     publish(message: Message): void;
     subscribe(channel: string): void;
     unsubscribe(channel: string): void;
@@ -81,6 +81,7 @@ export class EventEmitter {
     removeEvents(): void;
 }
 
+export function selectRandomBetween(from: number, too: number): number;
 export function isFunction<T>(fn: T): boolean;
 export function generateUid(length: number): string;
 

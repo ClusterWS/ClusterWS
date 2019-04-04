@@ -10,6 +10,7 @@ export function runProcesses(options: Options): any {
   // validate in which mode are we running
   if (options.mode === Mode.SingleProcess) {
     options.logger.info(` Running on: ${options.port}, PID ${process.pid} ${options.tlsOptions ? '(secure)' : ''}`);
+    // we dont need key for single process as it is not going to connect to any broker
     return new Worker(options, '');
   }
 
@@ -28,7 +29,7 @@ function masterProcess(options: Options): void {
     const forkedProcess: cluster.Worker = cluster.fork();
 
     forkedProcess.on('message', (message: Message) => {
-      options.logger.debug(`Message from ${name}:`, message);
+      options.logger.debug(`Message from ${name}:`, message, `(pid: ${process.pid})`);
 
       // if event is not ready then we dont need to process this
       if (message.event !== 'READY') { return; }
@@ -87,7 +88,7 @@ function masterProcess(options: Options): void {
 
 function childProcess(options: Options): void {
   process.on('message', (message: Message) => {
-    options.logger.debug('Message from Master:', message);
+    options.logger.debug('Message from Master:', message, `(pid: ${process.pid})`);
 
     // create specified child instance
     switch (message.name) {

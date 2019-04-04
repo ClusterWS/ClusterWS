@@ -1,6 +1,6 @@
 import { Listener, Message, Logger } from '../utils/types';
 
-// TODO: Fix possibly serious bug with data reference :(
+// TODO: Fix serious bug with data reference (in future)
 export class PubSubEngine {
   private hooks: { [key: string]: Listener } = {};
   private users: { [key: string]: Listener } = {};
@@ -22,8 +22,9 @@ export class PubSubEngine {
 
   // remove user from all subscribed channels (if has) and delete listener
   public unregister(userId: string, channels: string[]): void {
+    this.logger.debug(`Removing ${userId} from`, channels, 'channels', `(pid: ${process.pid})`);
     for (let i: number = 0, len: number = channels.length; i < len; i++) {
-      this.unsubscribe(channels[i], userId);
+      this.unsubscribe(userId, channels[i]);
     }
     delete this.users[userId];
   }
@@ -80,8 +81,7 @@ export class PubSubEngine {
 
     // for each key in batches (key is actual channel name)
     for (const channel in this.batches) {
-      if (this.batches[channel]) {
-
+      if (true) {
         // get all users for that channel
         const users: string[] = this.channels[channel];
 

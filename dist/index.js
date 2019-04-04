@@ -35,6 +35,10 @@ class Logger {
     }
 }
 
+function selectRandomBetween(e, s) {
+    return Math.floor(Math.random() * s) + e;
+}
+
 function isFunction(e) {
     return "[object Function]" === {}.toString.call(e);
 }
@@ -151,7 +155,8 @@ class PubSubEngine {
         this.users[e] = s;
     }
     unregister(e, s) {
-        for (let t = 0, r = s.length; t < r; t++) this.unsubscribe(s[t], e);
+        this.logger.debug(`Removing ${e} from`, s, "channels", `(pid: ${process.pid})`);
+        for (let t = 0, r = s.length; t < r; t++) this.unsubscribe(e, s[t]);
         delete this.users[e];
     }
     subscribe(e, s) {
@@ -179,7 +184,7 @@ class PubSubEngine {
     }
     flush() {
         const e = {};
-        for (const s in this.batches) if (this.batches[s]) {
+        for (const s in this.batches) {
             const t = this.channels[s];
             if (t) {
                 const r = this.batches[s], o = r.length;
@@ -201,38 +206,54 @@ class PubSubEngine {
 }
 
 class BrokerConnector {
-    constructor(e, s) {
-        this.options = e, this.publishFunction = s, this.connections = [];
-        for (let e = 0; e < this.options.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.brokersPorts[e]}`);
+    constructor(e, s, t) {
+        this.options = e, this.publishFunction = s, this.next = 0, this.connections = [], 
+        this.next = selectRandomBetween(0, this.options.brokers - 1);
+        for (let e = 0; e < this.options.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.brokersPorts[e]}?key=${t}`);
     }
-    publish(e) {}
-    subscribe(e) {}
-    unsubscribe(e) {}
+    publish(e) {
+        this.next > this.connections.length && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(e), 
+        this.next++;
+    }
+    subscribe(e) {
+        this.options.logger.debug(`Subscribing broker client to "${e}"`, `(pid: ${process.pid})`);
+        for (let s = 0, t = this.connections.length; s < t; s++) this.connections[s].send(`s${e}`);
+    }
+    unsubscribe(e) {
+        this.options.logger.debug(`Unsubscribing broker client from "${e}"`, `(pid: ${process.pid})`);
+        for (let s = 0, t = this.connections.length; s < t; s++) this.connections[s].send(`u${e}`);
+    }
     createConnection(e) {
         const s = new cws.WebSocket(e);
         s.on("open", () => {
-            s.id = generateUid(8), this.connections.push(s), this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`);
+            s.id = generateUid(8), this.connections.push(s), this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
         }), s.on("message", e => {
-            this.options.logger.debug(`Broker client ${s.id} received:`, e), e = JSON.parse(e);
+            this.options.logger.debug(`Broker client ${s.id} received:`, e), process.pid, e = JSON.parse(e);
             for (const s in e) this.publishFunction(s, e, "broker");
         }), s.on("close", (t, r) => {
-            this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${r}`);
+            this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${r}`, `(pid: ${process.pid})`);
             for (let e = 0, t = this.connections.length; e < t; e++) this.connections[e].id === s.id && this.connections.splice(e, 1);
-        }), s.on("error", e => {
-            this.options.logger.debug(`Broker client ${s.id} got error`, e);
+            if (1e3 === t) return this.options.logger.warning("Broker connection has been closed");
+            setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
+        }), s.on("error", t => {
+            this.options.logger.debug(`Broker client ${s.id} got error`, t, `(pid: ${process.pid})`), 
+            setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
         });
     }
 }
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(e.logger, 5), 
-        this.brokerConnector = new BrokerConnector(e, this.publish.bind(this)), this.pubSub.register("broker", e => {
-            this.brokerConnector.publish(e);
+        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 5), 
+        this.options.mode !== exports.Mode.SingleProcess && (this.brokerConnector = new BrokerConnector(this.options, this.publish.bind(this), s)), 
+        this.pubSub.register("broker", e => {
+            this.options.mode !== exports.Mode.SingleProcess && this.brokerConnector.publish(JSON.stringify(e));
         }), this.pubSub.addListener("channelAdd", e => {
-            this.brokerConnector.subscribe(e), this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
+            this.options.mode !== exports.Mode.SingleProcess && this.brokerConnector.subscribe(e), 
+            this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
         }), this.pubSub.addListener("channelClose", e => {
-            this.brokerConnector.unsubscribe(e), this.middleware[exports.Middleware.onChannelClose] && this.middleware[exports.Middleware.onChannelClose](e);
+            this.options.mode !== exports.Mode.SingleProcess && this.brokerConnector.unsubscribe(e), 
+            this.middleware[exports.Middleware.onChannelClose] && this.middleware[exports.Middleware.onChannelClose](e);
         });
     }
     addMiddleware(e, s) {
@@ -258,6 +279,7 @@ class Worker {
             verifyClient: (e, s) => this.wss.middleware[exports.Middleware.verifyConnection] ? this.wss.middleware[exports.Middleware.verifyConnection](e, s) : s(!0)
         });
         t.on("connection", e => {
+            this.options.logger.debug("New WebSocket client is connected", `(pid: ${process.pid})`), 
             this.wss.emit("connection", new Socket(this, e));
         }), this.options.autoPing && t.startAutoPing(this.options.pingInterval, !0), this.server.on("error", e => {
             this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === exports.Mode.Scale && process.exit();
@@ -280,8 +302,9 @@ class BrokerServer {
                 pid: process.pid
             });
         }), this.server.on("connection", e => {
-            e.id = generateUid(8), e.channels = {}, this.sockets.push(e), this.options.logger.debug(`New connection to broker ${e.id}`), 
-            e.on("message", s => "u" === s[0] ? delete e.channels[s.substr(1, s.length - 1)] : "s" === s[0] ? e.channels[s.substr(1, s.length - 1)] = !0 : void this.broadcast(e.id, JSON.parse(s)));
+            e.id = generateUid(8), e.channels = {}, this.sockets.push(e), this.options.logger.debug(`New connection to broker ${e.id}`, `(pid: ${process.pid})`), 
+            e.on("message", s => (this.options.logger.debug("Broker received", s, `(pid: ${process.pid})`), 
+            "u" === s[0] ? delete e.channels[s.substr(1, s.length - 1)] : "s" === s[0] ? e.channels[s.substr(1, s.length - 1)] = !0 : void this.broadcast(e.id, JSON.parse(s))));
         }), this.server.startAutoPing(2e4);
     }
     broadcast(e, s) {
@@ -310,9 +333,9 @@ function runProcesses(e) {
 function masterProcess(e) {
     let s;
     const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (c, h, l) => {
-        const u = cluster.fork();
-        u.on("message", t => {
-            if (e.logger.debug(`Message from ${h}:`, t), "READY" === t.event) {
+        const d = cluster.fork();
+        d.on("message", t => {
+            if (e.logger.debug(`Message from ${h}:`, t, `(pid: ${process.pid})`), "READY" === t.event) {
                 if (l) return e.logger.info(`${h} ${c} PID ${t.pid} has been restarted`);
                 if ("Scaler" === h) {
                     s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
@@ -323,10 +346,10 @@ function masterProcess(e) {
                 "Worker" === h && (i[c] = `    Worker: ${c}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
                 s && e.logger.info(s), o.forEach(s => e.logger.info(s)), i.forEach(s => e.logger.info(s))));
             }
-        }), u.on("exit", () => {
+        }), d.on("exit", () => {
             e.logger.error(`${h} ${c} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${h} ${c} is restarting \n`), 
             n(c, h, !0));
-        }), u.send({
+        }), d.send({
             id: c,
             name: h,
             serverId: t,
@@ -338,7 +361,7 @@ function masterProcess(e) {
 
 function childProcess(e) {
     process.on("message", s => {
-        switch (e.logger.debug("Message from Master:", s), s.name) {
+        switch (e.logger.debug("Message from Master:", s, `(pid: ${process.pid})`), s.name) {
           case "Worker":
             return new Worker(e, s.securityKey);
 
@@ -374,7 +397,7 @@ class ClusterWS {
             restartWorkerOnFail: e.restartWorkerOnFail,
             horizontalScaleOptions: e.horizontalScaleOptions
         }, !this.options.brokersPorts.length) for (let e = 0; e < this.options.brokers; e++) this.options.brokersPorts.push(e + 9400);
-        return cluster.isMaster && this.options.logger.debug("Initialized Options:", this.options), 
+        return cluster.isMaster && this.options.logger.debug("Initialized Options:", this.options, `(pid: ${process.pid})`), 
         isFunction(this.options.worker) ? this.options.brokers !== this.options.brokersPorts.length ? this.options.logger.error("Number of broker ports in not the same as number of brokers") : void runProcesses(this.options) : this.options.logger.error("Worker is not provided or is not a function");
     }
 }

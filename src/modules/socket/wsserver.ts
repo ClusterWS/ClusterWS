@@ -1,7 +1,7 @@
 import { PubSubEngine } from '../pubsub';
 import { EventEmitter } from '../../utils/emitter';
 import { BrokerConnector } from '../broker/connector';
-import { Options, Message, Middleware, Listener } from '../../utils/types';
+import { Mode, Options, Message, Middleware, Listener } from '../../utils/types';
 
 // TODO: handle single process mode
 export class WSServer extends EventEmitter {
@@ -11,24 +11,32 @@ export class WSServer extends EventEmitter {
   private brokerConnector: BrokerConnector;
 
   constructor(private options: Options, securityKey: string) {
-    // we pass "options" instead of "this.options" because "this" it was not initialized yet
+    // we pass "options" instead of "this.options" because "this" it was not yet initialized
     super(options.logger);
-    this.pubSub = new PubSubEngine(options.logger, 5);
-    this.brokerConnector = new BrokerConnector(options, this.publish.bind(this));
+    this.pubSub = new PubSubEngine(this.options.logger, 5);
+    if (this.options.mode !== Mode.SingleProcess) {
+      this.brokerConnector = new BrokerConnector(this.options, this.publish.bind(this), securityKey);
+    }
 
-    this.pubSub.register('broker', (message: any) => {
-      this.brokerConnector.publish(message);
+    this.pubSub.register('broker', (message: Message) => {
+      if (this.options.mode !== Mode.SingleProcess) {
+        this.brokerConnector.publish(JSON.stringify(message));
+      }
     });
 
     // TODO: add more control for user over subscribing to new channel and channelClose
     this.pubSub.addListener('channelAdd', (channelName: string) => {
-      this.brokerConnector.subscribe(channelName);
+      if (this.options.mode !== Mode.SingleProcess) {
+        this.brokerConnector.subscribe(channelName);
+      }
       this.middleware[Middleware.onChannelOpen] &&
         this.middleware[Middleware.onChannelOpen](channelName);
     });
 
     this.pubSub.addListener('channelClose', (channelName: string) => {
-      this.brokerConnector.unsubscribe(channelName);
+      if (this.options.mode !== Mode.SingleProcess) {
+        this.brokerConnector.unsubscribe(channelName);
+      }
       this.middleware[Middleware.onChannelClose] &&
         this.middleware[Middleware.onChannelClose](channelName);
     });

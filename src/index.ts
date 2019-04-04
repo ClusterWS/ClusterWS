@@ -40,7 +40,7 @@ export class ClusterWS {
 
     if (cluster.isMaster) {
       // print initialize options
-      this.options.logger.debug(`Initialized Options:`, this.options);
+      this.options.logger.debug(`Initialized Options:`, this.options, `(pid: ${process.pid})`);
     }
 
     // Make sure that worker function is provided
