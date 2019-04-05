@@ -12,11 +12,13 @@ const websocketUrl = `ws://localhost:${port}`;
 const options = {
   mode: Mode.Single,
   port: port,
-  logger: {
-    info: () => { },
-    warning: () => { },
-    error: () => { },
-    debug: () => { }
+  loggerOptions: {
+    logger: {
+      info: () => { },
+      warning: () => { },
+      error: () => { },
+      debug: () => { }
+    }
   }
 }
 

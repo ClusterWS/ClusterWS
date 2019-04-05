@@ -9,6 +9,7 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
 // TODO: Improve positions of debug logs
 // TODO: Add restartWorkerOnFail option (later)
 // TODO: Add more options validations
+// TODO: test that all options passed correctly
 // Reexport important things
 export { Mode, Middleware, LogLevel, Scaler } from './utils/types';
 
@@ -22,7 +23,7 @@ export class ClusterWS {
       host: configurations.host,
       logger: configurations.loggerOptions && configurations.loggerOptions.logger ?
         configurations.loggerOptions.logger : new Logger(
-          configurations.loggerOptions && configurations.loggerOptions.logLevel === undefined ?
+          !configurations.loggerOptions || configurations.loggerOptions.logLevel === undefined ?
             LogLevel.INFO : configurations.loggerOptions.logLevel),
       worker: configurations.worker,
       tlsOptions: configurations.tlsOptions,
