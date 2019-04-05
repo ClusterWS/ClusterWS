@@ -15,7 +15,13 @@ export class WSServer extends EventEmitter {
     super(options.logger);
     this.pubSub = new PubSubEngine(this.options.logger, 5);
     if (this.options.mode !== Mode.SingleProcess) {
-      this.brokerConnector = new BrokerConnector(this.options, this.publish.bind(this), securityKey);
+      // TODO: refactor this part (in future)
+      this.brokerConnector = new BrokerConnector(
+        this.options,
+        this.publish.bind(this),
+        this.pubSub.getChannels.bind(this.pubSub),
+        securityKey
+      );
     }
 
     this.pubSub.register('broker', (message: Message) => {
@@ -24,7 +30,7 @@ export class WSServer extends EventEmitter {
       }
     });
 
-    // TODO: add more control for user over subscribing to new channel and channelClose
+    // TODO: add more control for user over subscribing to new channel and channelClose (in future)
     this.pubSub.addListener('channelAdd', (channelName: string) => {
       if (this.options.mode !== Mode.SingleProcess) {
         this.brokerConnector.subscribe(channelName);

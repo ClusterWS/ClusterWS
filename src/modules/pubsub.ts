@@ -11,6 +11,11 @@ export class PubSubEngine {
     this.run();
   }
 
+  // get all channels which this server is subscribed to
+  public getChannels(): string[] {
+    return Object.keys(this.channels);
+  }
+
   public addListener(event: string, listener: Listener): void {
     this.hooks[event] = listener;
   }

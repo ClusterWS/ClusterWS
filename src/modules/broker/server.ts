@@ -29,14 +29,18 @@ export class BrokerServer {
       socket.on('message', (message: Message) => {
         this.options.logger.debug(`Broker received`, message, `(pid: ${process.pid})`);
         if (message[0] === 'u') {
-          return delete socket.channels[message.substr(1, message.length - 1)];
+          const channels: string[] = message.substr(1, message.length - 1).split(',');
+          for (let i: number = 0, len: number = channels.length; i < len; i++) {
+            delete socket.channels[channels[i]];
+          }
+        } else if (message[0] === 's') {
+          const channels: string[] = message.substr(1, message.length - 1).split(',');
+          for (let i: number = 0, len: number = channels.length; i < len; i++) {
+            socket.channels[channels[i]] = true;
+          }
+        } else {
+          this.broadcast(socket.id, JSON.parse(message));
         }
-
-        if (message[0] === 's') {
-          return socket.channels[message.substr(1, message.length - 1)] = true;
-        }
-
-        this.broadcast(socket.id, JSON.parse(message));
       });
 
       // TODO: disconnect and error handlers are needed !
