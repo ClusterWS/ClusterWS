@@ -1,3 +1,4 @@
+import { Worker } from '../modules/worker';
 import { SecureContextOptions } from 'tls';
 
 // TODO: get rid of some options which wont be included in 4.0.0
@@ -6,11 +7,16 @@ import { SecureContextOptions } from 'tls';
 // for SocketMessage use string | Buffer
 export type Message = any;
 export type Listener = (...args: any[]) => void;
-export type WorkerFunction = () => void;
+export type WorkerFunction = (this: Worker) => void;
 
 export enum Mode {
   Scale,
-  SingleProcess
+  Single
+}
+
+export enum Scaler {
+  Default,
+  Redis
 }
 
 export enum Middleware {
@@ -19,6 +25,14 @@ export enum Middleware {
   verifyConnection,
   onChannelOpen,
   onChannelClose
+}
+
+export enum LogLevel {
+  ALL = 0,
+  DEBUG = 1,
+  INFO = 2,
+  WARN = 3,
+  ERROR = 4
 }
 
 export type HorizontalScaleOptions = {
@@ -33,48 +47,60 @@ export type HorizontalScaleOptions = {
 
 export type Configurations = {
   worker: WorkerFunction;
-  mode?: Mode,
+  mode?: Mode;
   port?: number;
   host?: string;
-  logger?: Logger
-  wsPath?: string;
-  workers?: number;
-  brokers?: number;
-  autoPing?: boolean;
-  logLevel?: LogLevel;
-  // useBinary?: boolean;
-  tlsOptions?: SecureContextOptions;
-  pingInterval?: number;
-  brokersPorts?: number[];
-  restartWorkerOnFail?: boolean;
-  horizontalScaleOptions?: HorizontalScaleOptions;
+  tlsOptions?: SecureContextOptions | null;
+  loggerOptions?: {
+    logger?: Logger;
+    logLevel?: LogLevel;
+  }
+  websocketOptions?: {
+    wsPath?: string;
+    autoPing?: boolean;
+    pingInterval?: number;
+  },
+  scaleOptions?: {
+    scaler?: Scaler;
+    workers?: number;
+    redis?: {
+      // TODO: allow to pass different redis instances
+      // write options for redis connection
+    } | null;
+    default?: {
+      brokers?: number;
+      brokersPorts?: number[];
+      horizontalScaleOptions?: HorizontalScaleOptions
+    }
+  }
 };
 
 export type Options = {
-  worker: WorkerFunction;
-  mode: Mode,
+  mode: Mode;
   port: number;
   host: string | null;
-  logger: Logger
-  wsPath: string;
-  workers: number;
-  brokers: number;
-  autoPing: boolean;
-  // useBinary: boolean;
-  brokersPorts: number[];
+  logger: Logger;
+  worker: WorkerFunction;
   tlsOptions: SecureContextOptions | null;
-  pingInterval: number;
-  restartWorkerOnFail: boolean;
-  horizontalScaleOptions: HorizontalScaleOptions | null;
+  websocketOptions: {
+    wsPath: string;
+    autoPing: boolean;
+    pingInterval: number;
+  },
+  scaleOptions: {
+    scaler: Scaler;
+    workers: number;
+    redis: {
+      // TODO: allow to pass different redis instances
+      // write options for redis connection
+    } | null;
+    default: {
+      brokers: number; // number of brokers
+      brokersPorts: number[];
+      horizontalScaleOptions: HorizontalScaleOptions | null;
+    }
+  }
 };
-
-export enum LogLevel {
-  ALL = 0,
-  DEBUG = 1,
-  INFO = 2,
-  WARN = 3,
-  ERROR = 4
-}
 
 export type Logger = {
   [keys: string]: any,

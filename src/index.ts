@@ -3,12 +3,14 @@ import * as cluster from 'cluster';
 import { Logger } from './utils/logger';
 import { isFunction } from './utils/helpers';
 import { runProcesses } from './processes';
-import { Options, Configurations, Mode, LogLevel } from './utils/types';
+import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
 
 // TODO: handle type for "this" keyword in worker function
 // TODO: Improve positions of debug logs
+// TODO: Add restartWorkerOnFail option (later)
+// TODO: Add more options validations
 // Reexport important things
-export { Mode, Middleware, LogLevel } from './utils/types';
+export { Mode, Middleware, LogLevel, Scaler } from './utils/types';
 
 export class ClusterWS {
   private options: Options;
@@ -18,23 +20,41 @@ export class ClusterWS {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
       mode: configurations.mode || Mode.Scale,
       host: configurations.host,
-      logger: configurations.logger || new Logger(configurations.logLevel === undefined ? LogLevel.INFO : configurations.logLevel),
+      logger: configurations.loggerOptions && configurations.loggerOptions.logger ?
+        configurations.loggerOptions.logger : new Logger(
+          configurations.loggerOptions && configurations.loggerOptions.logLevel === undefined ?
+            LogLevel.INFO : configurations.loggerOptions.logLevel),
       worker: configurations.worker,
-      wsPath: configurations.wsPath || null,
-      workers: configurations.workers || 1,
-      brokers: configurations.brokers || 1,
-      autoPing: configurations.autoPing !== false,
       tlsOptions: configurations.tlsOptions,
-      pingInterval: configurations.pingInterval || 20000,
-      brokersPorts: configurations.brokersPorts || [],
-      restartWorkerOnFail: configurations.restartWorkerOnFail,
-      horizontalScaleOptions: configurations.horizontalScaleOptions
+      websocketOptions: {
+        wsPath: configurations.websocketOptions ?
+          configurations.websocketOptions.wsPath : null,
+        autoPing: configurations.websocketOptions ?
+          configurations.websocketOptions.autoPing !== false : true,
+        pingInterval: configurations.websocketOptions && configurations.websocketOptions.pingInterval ?
+          configurations.websocketOptions.pingInterval : 20000
+      },
+      scaleOptions: {
+        scaler: configurations.scaleOptions && configurations.scaleOptions.scaler ?
+          configurations.scaleOptions.scaler : Scaler.Default,
+        workers: configurations.scaleOptions && configurations.scaleOptions.workers ?
+          configurations.scaleOptions.workers : 1,
+        redis: {},
+        default: {
+          brokers: configurations.scaleOptions && configurations.scaleOptions.default && configurations.scaleOptions.default.brokers ?
+            configurations.scaleOptions.default.brokers : 1,
+          brokersPorts: configurations.scaleOptions && configurations.scaleOptions.default && configurations.scaleOptions.default.brokersPorts ?
+            configurations.scaleOptions.default.brokersPorts : [],
+          // TODO: add horizontal Scale options
+          horizontalScaleOptions: null
+        }
+      }
     };
 
     // populate broke ports
-    if (!this.options.brokersPorts.length) {
-      for (let i: number = 0; i < this.options.brokers; i++) {
-        this.options.brokersPorts.push(i + 9400);
+    if (!this.options.scaleOptions.default.brokersPorts.length) {
+      for (let i: number = 0; i < this.options.scaleOptions.default.brokers; i++) {
+        this.options.scaleOptions.default.brokersPorts.push(i + 9400);
       }
     }
 
@@ -49,7 +69,7 @@ export class ClusterWS {
     }
 
     // Make sure that brokersPorts are provided properly
-    if (this.options.brokers !== this.options.brokersPorts.length) {
+    if (this.options.scaleOptions.default.brokers !== this.options.scaleOptions.default.brokersPorts.length) {
       return this.options.logger.error('Number of broker ports in not the same as number of brokers');
     }
 

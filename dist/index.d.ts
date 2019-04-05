@@ -29,8 +29,23 @@ export class BrokerServer {
     constructor(options: Options, port: number);
 }
 
+export class BrokerConnector {
+    constructor(options: Options, publishFunction: Listener, getChannels: any, key: string);
+    publish(message: Message): void;
+    subscribe(channel: string | string[]): void;
+    unsubscribe(channel: string | string[]): void;
+}
+
+export class RedisConnector {
+    constructor(options: Options, publishFunction: Listener, getChannels: any, key: string);
+    publish(message: Message): void;
+    subscribe(channel: string | string[]): void;
+    unsubscribe(channel: string | string[]): void;
+}
+
 export class PubSubEngine {
     constructor(logger: Logger, interval: number);
+    getChannels(): string[];
     addListener(event: string, listener: Listener): void;
     register(userId: string, listener: Listener): void;
     unregister(userId: string, channels: string[]): void;
@@ -95,10 +110,14 @@ export class Logger {
 
 export type Message = any;
 export type Listener = (...args: any[]) => void;
-export type WorkerFunction = () => void;
+export type WorkerFunction = (this: Worker) => void;
 export enum Mode {
     Scale = 0,
-    SingleProcess = 1
+    Single = 1
+}
+export enum Scaler {
+    Default = 0,
+    Redis = 1
 }
 export enum Middleware {
     onSubscribe = 0,
@@ -106,6 +125,13 @@ export enum Middleware {
     verifyConnection = 2,
     onChannelOpen = 3,
     onChannelClose = 4
+}
+export enum LogLevel {
+    ALL = 0,
+    DEBUG = 1,
+    INFO = 2,
+    WARN = 3,
+    ERROR = 4
 }
 export type HorizontalScaleOptions = {
     key?: string;
@@ -121,41 +147,50 @@ export type Configurations = {
     mode?: Mode;
     port?: number;
     host?: string;
-    logger?: Logger;
-    wsPath?: string;
-    workers?: number;
-    brokers?: number;
-    autoPing?: boolean;
-    logLevel?: LogLevel;
-    tlsOptions?: SecureContextOptions;
-    pingInterval?: number;
-    brokersPorts?: number[];
-    restartWorkerOnFail?: boolean;
-    horizontalScaleOptions?: HorizontalScaleOptions;
+    tlsOptions?: SecureContextOptions | null;
+    loggerOptions?: {
+        logger?: Logger;
+        logLevel?: LogLevel;
+    };
+    websocketOptions?: {
+        wsPath?: string;
+        autoPing?: boolean;
+        pingInterval?: number;
+    };
+    scaleOptions?: {
+        scaler?: Scaler;
+        workers?: number;
+        redis?: {} | null;
+        default?: {
+            brokers?: number;
+            brokersPorts?: number[];
+            horizontalScaleOptions?: HorizontalScaleOptions;
+        };
+    };
 };
 export type Options = {
-    worker: WorkerFunction;
     mode: Mode;
     port: number;
     host: string | null;
     logger: Logger;
-    wsPath: string;
-    workers: number;
-    brokers: number;
-    autoPing: boolean;
-    brokersPorts: number[];
+    worker: WorkerFunction;
     tlsOptions: SecureContextOptions | null;
-    pingInterval: number;
-    restartWorkerOnFail: boolean;
-    horizontalScaleOptions: HorizontalScaleOptions | null;
+    websocketOptions: {
+        wsPath: string;
+        autoPing: boolean;
+        pingInterval: number;
+    };
+    scaleOptions: {
+        scaler: Scaler;
+        workers: number;
+        redis: {} | null;
+        default: {
+            brokers: number;
+            brokersPorts: number[];
+            horizontalScaleOptions: HorizontalScaleOptions | null;
+        };
+    };
 };
-export enum LogLevel {
-    ALL = 0,
-    DEBUG = 1,
-    INFO = 2,
-    WARN = 3,
-    ERROR = 4
-}
 export type Logger = {
     [keys: string]: any;
     info: (...args: any[]) => any;

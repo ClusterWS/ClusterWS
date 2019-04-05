@@ -10,7 +10,7 @@ const port = 3000;
 const websocketUrl = `ws://localhost:${port}`;
 
 const options = {
-  mode: Mode.SingleProcess,
+  mode: Mode.Single,
   port: port,
   logger: {
     info: () => { },
@@ -177,8 +177,8 @@ describe('WebSocket Server Should parse (received message) ClusterWS protocol co
         this.wss.on('connection', (socket) => {
           // we need timeout while we receive subscribe event
           setTimeout(() => {
-            expect(socket.channels).to.contain.keys('hello world');
-            expect(socket.worker.wss.pubSub.channels['hello world']).have.members(['broker', socket.id]);
+            expect((socket as any).channels).to.contain.keys('hello world');
+            expect((socket as any).worker.wss.pubSub.channels['hello world']).have.members(['broker', (socket as any).id]);
             done();
             this.server.close();
           }, 10);
@@ -202,11 +202,11 @@ describe('WebSocket Server Should parse (received message) ClusterWS protocol co
         this.wss.on('connection', (socket) => {
           // we need timeout while we receive subscribe event
           setTimeout(() => {
-            expect(socket.channels).to.contain.keys('hello world');
-            expect(socket.worker.wss.pubSub.channels['hello world']).have.members(['broker', socket.id]);
+            expect((socket as any).channels).to.contain.keys('hello world');
+            expect((socket as any).worker.wss.pubSub.channels['hello world']).have.members(['broker', (socket as any).id]);
             setTimeout(() => {
-              expect(socket.channels).to.not.contain.keys('hello world');
-              expect(socket.worker.wss.pubSub.channels['hello world']).to.be.undefined;
+              expect((socket as any).channels).to.not.contain.keys('hello world');
+              expect((socket as any).worker.wss.pubSub.channels['hello world']).to.be.undefined;
               done();
               this.server.close();
             }, 10)

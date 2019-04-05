@@ -12,11 +12,11 @@ export class BrokerConnector {
   private connections: Array<WebSocket & SocketExtension> = [];
 
   constructor(private options: Options, private publishFunction: Listener, private getChannels: any, key: string) {
-    this.next = selectRandomBetween(0, this.options.brokers - 1);
+    this.next = selectRandomBetween(0, this.options.scaleOptions.default.brokers - 1);
     // this should automatically create as many connections to broker as needed
-    for (let i: number = 0; i < this.options.brokers; i++) {
+    for (let i: number = 0; i < this.options.scaleOptions.default.brokers; i++) {
       // create connection to each broker
-      this.createConnection(`ws://127.0.0.1:${this.options.brokersPorts[i]}?key=${key}`);
+      this.createConnection(`ws://127.0.0.1:${this.options.scaleOptions.default.brokersPorts[i]}?key=${key}`);
     }
   }
 
@@ -33,16 +33,20 @@ export class BrokerConnector {
   }
 
   public subscribe(channel: string | string[]): void {
-    this.options.logger.debug(`Subscribing broker client to "${channel}"`, `(pid: ${process.pid})`);
-    for (let i: number = 0, len: number = this.connections.length; i < len; i++) {
-      this.connections[i].send(`s${typeof channel === 'string' ? channel : channel.join(',')}`);
+    if (channel && channel.length) {
+      this.options.logger.debug(`Subscribing broker client to "${channel}"`, `(pid: ${process.pid})`);
+      for (let i: number = 0, len: number = this.connections.length; i < len; i++) {
+        this.connections[i].send(`s${typeof channel === 'string' ? channel : channel.join(',')}`);
+      }
     }
   }
 
   public unsubscribe(channel: string | string[]): void {
-    this.options.logger.debug(`Unsubscribing broker client from "${channel}"`, `(pid: ${process.pid})`);
-    for (let i: number = 0, len: number = this.connections.length; i < len; i++) {
-      this.connections[i].send(`u${typeof channel === 'string' ? channel : channel.join(',')}`);
+    if (channel && channel.length) {
+      this.options.logger.debug(`Unsubscribing broker client from "${channel}"`, `(pid: ${process.pid})`);
+      for (let i: number = 0, len: number = this.connections.length; i < len; i++) {
+        this.connections[i].send(`u${typeof channel === 'string' ? channel : channel.join(',')}`);
+      }
     }
   }
 

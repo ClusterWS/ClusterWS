@@ -1,11 +1,23 @@
-const { ClusterWS, Mode, Middleware, LogLevel } = require('../../dist/index');
+const { ClusterWS, Mode, Middleware, LogLevel, Scaler } = require('../../dist/index');
 
 new ClusterWS({
   mode: Mode.Scale,
   port: 3001,
   worker: Worker,
-  workers: 2,
-  logLevel: LogLevel.DEBUG
+  websocketOptions: {
+    wsPath: "/"
+  },
+  loggerOptions: {
+    logLevel: LogLevel.DEBUG
+  },
+  scaleOptions: {
+    scaler: Scaler.Default,
+    workers: 2,
+    redis: {},
+    default: {
+      brokers: 3
+    }
+  }
 });
 
 function Worker() {

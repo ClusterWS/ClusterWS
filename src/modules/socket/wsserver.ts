@@ -1,22 +1,24 @@
 import { PubSubEngine } from '../pubsub';
 import { EventEmitter } from '../../utils/emitter';
-import { BrokerConnector } from '../broker/connector';
-import { Mode, Options, Message, Middleware, Listener } from '../../utils/types';
+import { RedisConnector } from '../connectors/redis';
+import { BrokerConnector } from '../connectors/broker';
+import { Mode, Options, Message, Middleware, Listener, Scaler } from '../../utils/types';
 
+// TODO: select correct connector based on passed scale option
 // TODO: handle single process mode
 export class WSServer extends EventEmitter {
   public middleware: { [s: number]: Listener } = {};
 
   private pubSub: PubSubEngine;
-  private brokerConnector: BrokerConnector;
+  private connector: BrokerConnector | RedisConnector;
 
   constructor(private options: Options, securityKey: string) {
     // we pass "options" instead of "this.options" because "this" it was not yet initialized
     super(options.logger);
     this.pubSub = new PubSubEngine(this.options.logger, 5);
-    if (this.options.mode !== Mode.SingleProcess) {
+    if (this.options.mode !== Mode.Single) {
       // TODO: refactor this part (in future)
-      this.brokerConnector = new BrokerConnector(
+      this.connector = new (this.options.scaleOptions.scaler === Scaler.Default ? BrokerConnector : RedisConnector)(
         this.options,
         this.publish.bind(this),
         this.pubSub.getChannels.bind(this.pubSub),
@@ -25,23 +27,23 @@ export class WSServer extends EventEmitter {
     }
 
     this.pubSub.register('broker', (message: Message) => {
-      if (this.options.mode !== Mode.SingleProcess) {
-        this.brokerConnector.publish(JSON.stringify(message));
+      if (this.options.mode !== Mode.Single) {
+        this.connector.publish(JSON.stringify(message));
       }
     });
 
     // TODO: add more control for user over subscribing to new channel and channelClose (in future)
     this.pubSub.addListener('channelAdd', (channelName: string) => {
-      if (this.options.mode !== Mode.SingleProcess) {
-        this.brokerConnector.subscribe(channelName);
+      if (this.options.mode !== Mode.Single) {
+        this.connector.subscribe(channelName);
       }
       this.middleware[Middleware.onChannelOpen] &&
         this.middleware[Middleware.onChannelOpen](channelName);
     });
 
     this.pubSub.addListener('channelClose', (channelName: string) => {
-      if (this.options.mode !== Mode.SingleProcess) {
-        this.brokerConnector.unsubscribe(channelName);
+      if (this.options.mode !== Mode.Single) {
+        this.connector.unsubscribe(channelName);
       }
       this.middleware[Middleware.onChannelClose] &&
         this.middleware[Middleware.onChannelClose](channelName);

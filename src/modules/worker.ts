@@ -15,7 +15,7 @@ export class Worker {
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 
     const uServer: WebSocketServer = new WebSocketServer({
-      path: this.options.wsPath,
+      path: this.options.websocketOptions.wsPath,
       server: this.server,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
         return this.wss.middleware[Middleware.verifyConnection] ?
@@ -29,8 +29,8 @@ export class Worker {
       this.wss.emit('connection', new Socket(this, socket));
     });
 
-    if (this.options.autoPing) {
-      uServer.startAutoPing(this.options.pingInterval, true);
+    if (this.options.websocketOptions.autoPing) {
+      uServer.startAutoPing(this.options.websocketOptions.pingInterval, true);
     }
 
     this.server.on('error', (error: Error) => {
@@ -39,7 +39,7 @@ export class Worker {
     });
 
     this.server.listen(this.options.port, this.options.host, (): void => {
-      this.options.worker.call(this);
+      this.options.worker.call(this as Worker);
       this.options.mode === Mode.Scale && process.send({ event: 'READY', pid: process.pid });
     });
   }

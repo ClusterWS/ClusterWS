@@ -7,8 +7,10 @@ Object.defineProperty(exports, "__esModule", {
 var cluster = require("cluster"), crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https"), cws = require("@clusterws/cws");
 
 !function(e) {
-    e[e.Scale = 0] = "Scale", e[e.SingleProcess = 1] = "SingleProcess";
+    e[e.Scale = 0] = "Scale", e[e.Single = 1] = "Single";
 }(exports.Mode || (exports.Mode = {})), function(e) {
+    e[e.Default = 0] = "Default", e[e.Redis = 1] = "Redis";
+}(exports.Scaler || (exports.Scaler = {})), function(e) {
     e[e.onSubscribe = 0] = "onSubscribe", e[e.onUnsubscribe = 1] = "onUnsubscribe", 
     e[e.verifyConnection = 2] = "verifyConnection", e[e.onChannelOpen = 3] = "onChannelOpen", 
     e[e.onChannelClose = 4] = "onChannelClose";
@@ -123,23 +125,23 @@ class Socket {
 }
 
 function encode(e, s, t) {
-    const r = {
+    const o = {
         emit: [ "e", e, s ],
         publish: [ "p", e, s ],
         system: {
             configuration: [ "s", "c", s ]
         }
     };
-    return "system" === t ? JSON.stringify(r[t][e]) : JSON.stringify(r[t]);
+    return "system" === t ? JSON.stringify(o[t][e]) : JSON.stringify(o[t]);
 }
 
 function decode(e, s) {
-    const [t, r, o] = s;
-    if ("e" === t) return e.emitter.emit(r, o);
-    if ("p" === t) return e.channels[r] && e.worker.wss.publish(r, o, e.id);
+    const [t, o, i] = s;
+    if ("e" === t) return e.emitter.emit(o, i);
+    if ("p" === t) return e.channels[o] && e.worker.wss.publish(o, i, e.id);
     if ("s" === t) {
-        if ("s" === r) return e.subscribe(o);
-        if ("u" === r) return e.unsubscribe(o);
+        if ("s" === o) return e.subscribe(i);
+        if ("u" === o) return e.unsubscribe(i);
     }
 }
 
@@ -147,6 +149,9 @@ class PubSubEngine {
     constructor(e, s) {
         this.logger = e, this.interval = s, this.hooks = {}, this.users = {}, this.batches = {}, 
         this.channels = {}, this.run();
+    }
+    getChannels() {
+        return Object.keys(this.channels);
     }
     addListener(e, s) {
         this.hooks[e] = s;
@@ -156,7 +161,7 @@ class PubSubEngine {
     }
     unregister(e, s) {
         this.logger.debug(`Removing ${e} from`, s, "channels", `(pid: ${process.pid})`);
-        for (let t = 0, r = s.length; t < r; t++) this.unsubscribe(e, s[t]);
+        for (let t = 0, o = s.length; t < o; t++) this.unsubscribe(e, s[t]);
         delete this.users[e];
     }
     subscribe(e, s) {
@@ -172,8 +177,8 @@ class PubSubEngine {
         t && 1 === t.length && (this.hooks.channelClose && this.hooks.channelClose(s), delete this.channels[s]);
     }
     publish(e, s, t) {
-        const r = this.batches[e];
-        if (r) return r.push({
+        const o = this.batches[e];
+        if (o) return o.push({
             userId: t,
             message: s
         });
@@ -187,10 +192,10 @@ class PubSubEngine {
         for (const s in this.batches) {
             const t = this.channels[s];
             if (t) {
-                const r = this.batches[s], o = r.length;
-                for (let i = 0, n = t.length; i < n; i++) {
-                    const n = t[i], c = [];
-                    for (let e = 0; e < o; e++) r[e].userId !== n && c.push(r[e].message);
+                const o = this.batches[s], i = o.length;
+                for (let r = 0, n = t.length; r < n; r++) {
+                    const n = t[r], c = [];
+                    for (let e = 0; e < i; e++) o[e].userId !== n && c.push(o[e].message);
                     c.length && (e[n] || (e[n] = {}), e[n][s] = c);
                 }
             }
@@ -205,33 +210,47 @@ class PubSubEngine {
     }
 }
 
+class RedisConnector {
+    constructor(e, s, t, o) {
+        this.options = e, this.publishFunction = s, this.getChannels = t;
+    }
+    publish(e) {}
+    subscribe(e) {}
+    unsubscribe(e) {}
+}
+
 class BrokerConnector {
-    constructor(e, s, t) {
-        this.options = e, this.publishFunction = s, this.next = 0, this.connections = [], 
-        this.next = selectRandomBetween(0, this.options.brokers - 1);
-        for (let e = 0; e < this.options.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.brokersPorts[e]}?key=${t}`);
+    constructor(e, s, t, o) {
+        this.options = e, this.publishFunction = s, this.getChannels = t, this.next = 0, 
+        this.connections = [], this.next = selectRandomBetween(0, this.options.scaleOptions.default.brokers - 1);
+        for (let e = 0; e < this.options.scaleOptions.default.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.scaleOptions.default.brokersPorts[e]}?key=${o}`);
     }
     publish(e) {
         this.next > this.connections.length && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(e), 
         this.next++;
     }
     subscribe(e) {
-        this.options.logger.debug(`Subscribing broker client to "${e}"`, `(pid: ${process.pid})`);
-        for (let s = 0, t = this.connections.length; s < t; s++) this.connections[s].send(`s${e}`);
+        if (e && e.length) {
+            this.options.logger.debug(`Subscribing broker client to "${e}"`, `(pid: ${process.pid})`);
+            for (let s = 0, t = this.connections.length; s < t; s++) this.connections[s].send(`s${"string" == typeof e ? e : e.join(",")}`);
+        }
     }
     unsubscribe(e) {
-        this.options.logger.debug(`Unsubscribing broker client from "${e}"`, `(pid: ${process.pid})`);
-        for (let s = 0, t = this.connections.length; s < t; s++) this.connections[s].send(`u${e}`);
+        if (e && e.length) {
+            this.options.logger.debug(`Unsubscribing broker client from "${e}"`, `(pid: ${process.pid})`);
+            for (let s = 0, t = this.connections.length; s < t; s++) this.connections[s].send(`u${"string" == typeof e ? e : e.join(",")}`);
+        }
     }
     createConnection(e) {
         const s = new cws.WebSocket(e);
         s.on("open", () => {
-            s.id = generateUid(8), this.connections.push(s), this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
+            s.id = generateUid(8), this.connections.push(s), this.subscribe(this.getChannels()), 
+            this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
         }), s.on("message", e => {
             this.options.logger.debug(`Broker client ${s.id} received:`, e), process.pid, e = JSON.parse(e);
             for (const s in e) this.publishFunction(s, e, "broker");
-        }), s.on("close", (t, r) => {
-            this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${r}`, `(pid: ${process.pid})`);
+        }), s.on("close", (t, o) => {
+            this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${o}`, `(pid: ${process.pid})`);
             for (let e = 0, t = this.connections.length; e < t; e++) this.connections[e].id === s.id && this.connections.splice(e, 1);
             if (1e3 === t) return this.options.logger.warning("Broker connection has been closed");
             setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
@@ -245,15 +264,13 @@ class BrokerConnector {
 class WSServer extends EventEmitter {
     constructor(e, s) {
         super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 5), 
-        this.options.mode !== exports.Mode.SingleProcess && (this.brokerConnector = new BrokerConnector(this.options, this.publish.bind(this), s)), 
+        this.options.mode !== exports.Mode.Single && (this.connector = new (this.options.scaleOptions.scaler === exports.Scaler.Default ? BrokerConnector : RedisConnector)(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s)), 
         this.pubSub.register("broker", e => {
-            this.options.mode !== exports.Mode.SingleProcess && this.brokerConnector.publish(JSON.stringify(e));
+            this.options.mode !== exports.Mode.Single && this.connector.publish(JSON.stringify(e));
         }), this.pubSub.addListener("channelAdd", e => {
-            this.options.mode !== exports.Mode.SingleProcess && this.brokerConnector.subscribe(e), 
-            this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
+            this.options.mode !== exports.Mode.Single && this.connector.subscribe(e), this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
         }), this.pubSub.addListener("channelClose", e => {
-            this.options.mode !== exports.Mode.SingleProcess && this.brokerConnector.unsubscribe(e), 
-            this.middleware[exports.Middleware.onChannelClose] && this.middleware[exports.Middleware.onChannelClose](e);
+            this.options.mode !== exports.Mode.Single && this.connector.unsubscribe(e), this.middleware[exports.Middleware.onChannelClose] && this.middleware[exports.Middleware.onChannelClose](e);
         });
     }
     addMiddleware(e, s) {
@@ -274,14 +291,15 @@ class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
         const t = new cws.WebSocketServer({
-            path: this.options.wsPath,
+            path: this.options.websocketOptions.wsPath,
             server: this.server,
             verifyClient: (e, s) => this.wss.middleware[exports.Middleware.verifyConnection] ? this.wss.middleware[exports.Middleware.verifyConnection](e, s) : s(!0)
         });
         t.on("connection", e => {
             this.options.logger.debug("New WebSocket client is connected", `(pid: ${process.pid})`), 
             this.wss.emit("connection", new Socket(this, e));
-        }), this.options.autoPing && t.startAutoPing(this.options.pingInterval, !0), this.server.on("error", e => {
+        }), this.options.websocketOptions.autoPing && t.startAutoPing(this.options.websocketOptions.pingInterval, !0), 
+        this.server.on("error", e => {
             this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === exports.Mode.Scale && process.exit();
         }), this.server.listen(this.options.port, this.options.host, () => {
             this.options.worker.call(this), this.options.mode === exports.Mode.Scale && process.send({
@@ -303,60 +321,67 @@ class BrokerServer {
             });
         }), this.server.on("connection", e => {
             e.id = generateUid(8), e.channels = {}, this.sockets.push(e), this.options.logger.debug(`New connection to broker ${e.id}`, `(pid: ${process.pid})`), 
-            e.on("message", s => (this.options.logger.debug("Broker received", s, `(pid: ${process.pid})`), 
-            "u" === s[0] ? delete e.channels[s.substr(1, s.length - 1)] : "s" === s[0] ? e.channels[s.substr(1, s.length - 1)] = !0 : void this.broadcast(e.id, JSON.parse(s))));
+            e.on("message", s => {
+                if (this.options.logger.debug("Broker received", s, `(pid: ${process.pid})`), "u" === s[0]) {
+                    const t = s.substr(1, s.length - 1).split(",");
+                    for (let s = 0, o = t.length; s < o; s++) delete e.channels[t[s]];
+                } else if ("s" === s[0]) {
+                    const t = s.substr(1, s.length - 1).split(",");
+                    for (let s = 0, o = t.length; s < o; s++) e.channels[t[s]] = !0;
+                } else this.broadcast(e.id, JSON.parse(s));
+            });
         }), this.server.startAutoPing(2e4);
     }
     broadcast(e, s) {
-        const t = Object.keys(s), r = t.length;
-        for (let o = 0, i = this.sockets.length; o < i; o++) {
-            const i = this.sockets[o];
-            if (i.id !== e) {
+        const t = Object.keys(s), o = t.length;
+        for (let i = 0, r = this.sockets.length; i < r; i++) {
+            const r = this.sockets[i];
+            if (r.id !== e) {
                 let e = !1;
-                const o = {};
-                for (let n = 0; n < r; n++) {
-                    const r = t[n];
-                    i.channels[r] && (e = !0, o[r] = s[r]);
+                const i = {};
+                for (let n = 0; n < o; n++) {
+                    const o = t[n];
+                    r.channels[o] && (e = !0, i[o] = s[o]);
                 }
-                e && i.send(JSON.stringify(o));
+                e && r.send(JSON.stringify(i));
             }
         }
     }
 }
 
 function runProcesses(e) {
-    if (e.mode === exports.Mode.SingleProcess) return e.logger.info(` Running on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+    if (e.mode === exports.Mode.Single) return e.logger.info(` Running on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
     new Worker(e, "");
     cluster.isMaster ? masterProcess(e) : childProcess(e);
 }
 
 function masterProcess(e) {
     let s;
-    const t = generateUid(10), r = generateUid(20), o = [], i = [], n = (c, h, l) => {
-        const d = cluster.fork();
-        d.on("message", t => {
-            if (e.logger.debug(`Message from ${h}:`, t, `(pid: ${process.pid})`), "READY" === t.event) {
-                if (l) return e.logger.info(`${h} ${c} PID ${t.pid} has been restarted`);
-                if ("Scaler" === h) {
-                    s = ` Scaler on: ${e.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
-                    for (let s = 0; s < e.brokers; s++) n(s, "Broker");
+    const t = generateUid(10), o = generateUid(20), i = [], r = [], n = (c, l, h) => {
+        const p = cluster.fork();
+        p.on("message", t => {
+            if (e.logger.debug(`Message from ${l}:`, t, `(pid: ${process.pid})`), "READY" === t.event) {
+                if (h) return e.logger.info(`${l} ${c} PID ${t.pid} has been restarted`);
+                if ("Scaler" === l) {
+                    s = ` Scaler on: ${e.scaleOptions.default.horizontalScaleOptions.masterOptions.port}, PID ${t.pid}`;
+                    for (let s = 0; s < e.scaleOptions.default.brokers; s++) n(s, "Broker");
                 }
-                if ("Broker" === h && (o[c] = ` Broker on: ${e.brokersPorts[c]}, PID ${t.pid}`, 
-                o.length === e.brokers && !o.includes(void 0))) for (let s = 0; s < e.workers; s++) n(s, "Worker");
-                "Worker" === h && (i[c] = `    Worker: ${c}, PID ${t.pid}`, i.length !== e.workers || i.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
-                s && e.logger.info(s), o.forEach(s => e.logger.info(s)), i.forEach(s => e.logger.info(s))));
+                if ("Broker" === l && (i[c] = ` Broker on: ${e.scaleOptions.default.brokersPorts[c]}, PID ${t.pid}`, 
+                i.length === e.scaleOptions.default.brokers && !i.includes(void 0))) for (let s = 0; s < e.scaleOptions.workers; s++) n(s, "Worker");
+                "Worker" === l && (r[c] = `    Worker: ${c}, PID ${t.pid}`, r.length !== e.scaleOptions.workers || r.includes(void 0) || (e.logger.info(` Master on: ${e.port}, PID ${process.pid} ${e.tlsOptions ? "(secure)" : ""}`), 
+                s && e.logger.info(s), e.scaleOptions.scaler === exports.Scaler.Default && i.forEach(s => e.logger.info(s)), 
+                r.forEach(s => e.logger.info(s))));
             }
-        }), d.on("exit", () => {
-            e.logger.error(`${h} ${c} has exited`), e.restartWorkerOnFail && (e.logger.warning(`${h} ${c} is restarting \n`), 
-            n(c, h, !0));
-        }), d.send({
+        }), p.on("exit", () => {
+            e.logger.error(`${l} ${c} has exited`);
+        }), p.send({
             id: c,
-            name: h,
+            name: l,
             serverId: t,
-            securityKey: r
+            securityKey: o
         });
     };
-    for (let s = 0; s < e.brokers; s++) n(s, "Broker");
+    if (e.scaleOptions.scaler === exports.Scaler.Default) for (let s = 0; s < e.scaleOptions.default.brokers; s++) n(s, "Broker"); else for (let s = 0; s < e.scaleOptions.workers; s++) n(s, "Worker");
 }
 
 function childProcess(e) {
@@ -366,7 +391,7 @@ function childProcess(e) {
             return new Worker(e, s.securityKey);
 
           case "Broker":
-            return new BrokerServer(e, e.brokersPorts[s.id]);
+            return new BrokerServer(e, e.scaleOptions.default.brokersPorts[s.id]);
 
           default:
             process.send({
@@ -385,20 +410,27 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             mode: e.mode || exports.Mode.Scale,
             host: e.host,
-            logger: e.logger || new Logger(void 0 === e.logLevel ? exports.LogLevel.INFO : e.logLevel),
+            logger: e.loggerOptions && e.loggerOptions.logger ? e.loggerOptions.logger : new Logger(e.loggerOptions && void 0 === e.loggerOptions.logLevel ? exports.LogLevel.INFO : e.loggerOptions.logLevel),
             worker: e.worker,
-            wsPath: e.wsPath || null,
-            workers: e.workers || 1,
-            brokers: e.brokers || 1,
-            autoPing: !1 !== e.autoPing,
             tlsOptions: e.tlsOptions,
-            pingInterval: e.pingInterval || 2e4,
-            brokersPorts: e.brokersPorts || [],
-            restartWorkerOnFail: e.restartWorkerOnFail,
-            horizontalScaleOptions: e.horizontalScaleOptions
-        }, !this.options.brokersPorts.length) for (let e = 0; e < this.options.brokers; e++) this.options.brokersPorts.push(e + 9400);
+            websocketOptions: {
+                wsPath: e.websocketOptions ? e.websocketOptions.wsPath : null,
+                autoPing: !e.websocketOptions || !1 !== e.websocketOptions.autoPing,
+                pingInterval: e.websocketOptions && e.websocketOptions.pingInterval ? e.websocketOptions.pingInterval : 2e4
+            },
+            scaleOptions: {
+                scaler: e.scaleOptions && e.scaleOptions.scaler ? e.scaleOptions.scaler : exports.Scaler.Default,
+                workers: e.scaleOptions && e.scaleOptions.workers ? e.scaleOptions.workers : 1,
+                redis: {},
+                default: {
+                    brokers: e.scaleOptions && e.scaleOptions.default && e.scaleOptions.default.brokers ? e.scaleOptions.default.brokers : 1,
+                    brokersPorts: e.scaleOptions && e.scaleOptions.default && e.scaleOptions.default.brokersPorts ? e.scaleOptions.default.brokersPorts : [],
+                    horizontalScaleOptions: null
+                }
+            }
+        }, !this.options.scaleOptions.default.brokersPorts.length) for (let e = 0; e < this.options.scaleOptions.default.brokers; e++) this.options.scaleOptions.default.brokersPorts.push(e + 9400);
         return cluster.isMaster && this.options.logger.debug("Initialized Options:", this.options, `(pid: ${process.pid})`), 
-        isFunction(this.options.worker) ? this.options.brokers !== this.options.brokersPorts.length ? this.options.logger.error("Number of broker ports in not the same as number of brokers") : void runProcesses(this.options) : this.options.logger.error("Worker is not provided or is not a function");
+        isFunction(this.options.worker) ? this.options.scaleOptions.default.brokers !== this.options.scaleOptions.default.brokersPorts.length ? this.options.logger.error("Number of broker ports in not the same as number of brokers") : void runProcesses(this.options) : this.options.logger.error("Worker is not provided or is not a function");
     }
 }
 
