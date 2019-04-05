@@ -1,7 +1,6 @@
 const { WebSocket } = require('@clusterws/cws');
 
 const websocketUrl = `ws://localhost:3001`;
-
 let socket = new WebSocket(websocketUrl);
 
 socket.on('open', () => {

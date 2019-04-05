@@ -4,8 +4,6 @@ import { RedisConnector } from '../connectors/redis';
 import { BrokerConnector } from '../connectors/broker';
 import { Mode, Options, Message, Middleware, Listener, Scaler } from '../../utils/types';
 
-// TODO: select correct connector based on passed scale option
-// TODO: handle single process mode
 export class WSServer extends EventEmitter {
   public middleware: { [s: number]: Listener } = {};
 
@@ -28,7 +26,7 @@ export class WSServer extends EventEmitter {
 
     this.pubSub.register('broker', (message: Message) => {
       if (this.options.mode !== Mode.Single) {
-        this.connector.publish(JSON.stringify(message));
+        this.connector.publish(message);
       }
     });
 

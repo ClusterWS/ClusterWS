@@ -27,7 +27,7 @@ export class BrokerConnector {
     }
 
     if (this.connections[this.next]) {
-      this.connections[this.next].send(message);
+      this.connections[this.next].send(JSON.stringify(message));
     }
     this.next++;
   }

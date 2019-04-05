@@ -12,7 +12,7 @@ export class Socket {
   constructor(private worker: Worker, private socket: WebSocket) {
     this.emitter = new EventEmitter(this.worker.options.logger);
 
-    // any type is to overcome private type
+    // "any" type is used to overcome private params
     (this.worker.wss as any).pubSub.register(this.id, (message: Message) => {
       // we dont have to pass event as publish messages is large object with structure { channel: [data] }
       this.send(null, message, 'publish');
