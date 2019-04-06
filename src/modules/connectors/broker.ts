@@ -7,6 +7,8 @@ type SocketExtension = {
   id: string
 };
 
+// TODO: implement await for connections before allowing to next step
+
 export class BrokerConnector {
   private next: number = 0;
   private connections: Array<WebSocket & SocketExtension> = [];

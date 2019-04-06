@@ -12,9 +12,12 @@ new ClusterWS({
     logLevel: LogLevel.DEBUG
   },
   scaleOptions: {
-    scaler: Scaler.Default,
+    scaler: Scaler.Redis,
     workers: 1,
-    redis: {},
+    redis: {
+      host: 'localhost',
+      port: 6379
+    },
     default: {
       brokers: 1
     }

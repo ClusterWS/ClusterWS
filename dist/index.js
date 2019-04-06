@@ -212,12 +212,8 @@ class PubSubEngine {
 
 class RedisConnector {
     constructor(e, s, t, o) {
-        this.options = e, this.publishFunction = s, this.getChannels = t, this.publisherId = generateUid(8);
-        const i = require("redis");
-        this.publisher = i.createClient(), this.subscriber = i.createClient(), this.subscriber.on("message", (e, s) => {
-            const t = JSON.parse(s);
-            t.publisherId !== this.publisherId && this.publishFunction(e, t.message, "broker");
-        });
+        this.options = e, this.publishFunction = s, this.getChannels = t, this.publisherId = generateUid(8), 
+        this.createConnection();
     }
     publish(e) {
         for (const s in e) this.publisher.publish(s, JSON.stringify({
@@ -231,6 +227,22 @@ class RedisConnector {
     unsubscribe(e) {
         e && e.length && (this.options.logger.debug(`Unsubscribing redis client from "${e}"`, `(pid: ${process.pid})`), 
         this.subscriber.unsubscribe(e));
+    }
+    createConnection() {
+        const e = require("redis");
+        this.publisher = e.createClient(this.options.scaleOptions.redis), this.subscriber = e.createClient(this.options.scaleOptions.redis), 
+        this.publisher.on("ready", () => {
+            this.options.logger.debug("Redis Publisher is connected", `(pid: ${process.pid})`);
+        }), this.publisher.on("error", e => {
+            this.options.logger.error("Redis Publisher error", e.message, `(pid: ${process.pid})`);
+        }), this.subscriber.on("error", e => {
+            this.options.logger.error("Redis Subscriber error", e.message, `(pid: ${process.pid})`);
+        }), this.subscriber.on("ready", () => {
+            this.options.logger.debug("Redis Subscriber is connected", `(pid: ${process.pid})`);
+        }), this.subscriber.on("message", (e, s) => {
+            const t = JSON.parse(s);
+            t.publisherId !== this.publisherId && this.publishFunction(e, t.message, "broker");
+        });
     }
 }
 
@@ -437,7 +449,7 @@ class ClusterWS {
             scaleOptions: {
                 scaler: e.scaleOptions && e.scaleOptions.scaler ? e.scaleOptions.scaler : exports.Scaler.Default,
                 workers: e.scaleOptions && e.scaleOptions.workers ? e.scaleOptions.workers : 1,
-                redis: {},
+                redis: e.scaleOptions && e.scaleOptions.redis ? e.scaleOptions.redis : null,
                 default: {
                     brokers: e.scaleOptions && e.scaleOptions.default && e.scaleOptions.default.brokers ? e.scaleOptions.default.brokers : 1,
                     brokersPorts: e.scaleOptions && e.scaleOptions.default && e.scaleOptions.default.brokersPorts ? e.scaleOptions.default.brokersPorts : [],

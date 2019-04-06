@@ -3,23 +3,14 @@ import { Options, Message, Listener } from '../../utils/types';
 
 // TODO: improve redis connector
 // TODO: enable redis import only if everything is ready
+// TODO: implement reconnect system
 export class RedisConnector {
   private publisher: any;
   private subscriber: any;
   private publisherId: string = generateUid(8);
 
   constructor(private options: Options, private publishFunction: Listener, private getChannels: any, key: string) {
-    // we import redis only if it is needed
-    const redis: any = require('redis');
-
-    this.publisher = redis.createClient();
-    this.subscriber = redis.createClient();
-    this.subscriber.on('message', (channel: any, message: any) => {
-      const parsedMessage: any = JSON.parse(message);
-      if (parsedMessage.publisherId !== this.publisherId) {
-        this.publishFunction(channel, parsedMessage.message, 'broker');
-      }
-    });
+    this.createConnection();
   }
 
   public publish(message: Message): void {
@@ -41,5 +32,36 @@ export class RedisConnector {
       this.options.logger.debug(`Unsubscribing redis client from "${channel}"`, `(pid: ${process.pid})`);
       this.subscriber.unsubscribe(channel);
     }
+  }
+
+  private createConnection(): void {
+    // we import redis only if it is needed
+    const redis: any = require('redis');
+
+    this.publisher = redis.createClient(this.options.scaleOptions.redis);
+    this.subscriber = redis.createClient(this.options.scaleOptions.redis);
+
+    this.publisher.on('ready', () => {
+      this.options.logger.debug(`Redis Publisher is connected`, `(pid: ${process.pid})`);
+    });
+
+    this.publisher.on('error', (err: any) => {
+      this.options.logger.error(`Redis Publisher error`, err.message, `(pid: ${process.pid})`);
+    });
+
+    this.subscriber.on('error', (err: any) => {
+      this.options.logger.error(`Redis Subscriber error`, err.message, `(pid: ${process.pid})`);
+    });
+
+    this.subscriber.on('ready', () => {
+      this.options.logger.debug(`Redis Subscriber is connected`, `(pid: ${process.pid})`);
+    });
+
+    this.subscriber.on('message', (channel: any, message: any) => {
+      const parsedMessage: any = JSON.parse(message);
+      if (parsedMessage.publisherId !== this.publisherId) {
+        this.publishFunction(channel, parsedMessage.message, 'broker');
+      }
+    });
   }
 }

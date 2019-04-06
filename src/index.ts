@@ -40,7 +40,7 @@ export class ClusterWS {
           configurations.scaleOptions.scaler : Scaler.Default,
         workers: configurations.scaleOptions && configurations.scaleOptions.workers ?
           configurations.scaleOptions.workers : 1,
-        redis: {},
+        redis: configurations.scaleOptions && configurations.scaleOptions.redis ? configurations.scaleOptions.redis : null,
         default: {
           brokers: configurations.scaleOptions && configurations.scaleOptions.default && configurations.scaleOptions.default.brokers ?
             configurations.scaleOptions.default.brokers : 1,
