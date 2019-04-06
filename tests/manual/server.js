@@ -5,17 +5,18 @@ new ClusterWS({
   port: 3001,
   worker: Worker,
   websocketOptions: {
-    wsPath: "/"
+    wsPath: "/",
+    autoPing: false
   },
   loggerOptions: {
     logLevel: LogLevel.DEBUG
   },
   scaleOptions: {
-    scaler: Scaler.Default,
-    workers: 2,
+    scaler: Scaler.Redis,
+    workers: 1,
     redis: {},
     default: {
-      brokers: 3
+      brokers: 1
     }
   }
 });

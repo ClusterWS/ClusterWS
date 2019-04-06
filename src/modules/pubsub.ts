@@ -1,6 +1,7 @@
 import { Listener, Message, Logger } from '../utils/types';
 
 // TODO: Fix serious bug with data reference (in future)
+// TODO: even if channel does not exist in this server we should still publish message to other servers by default
 export class PubSubEngine {
   private hooks: { [key: string]: Listener } = {};
   private users: { [key: string]: Listener } = {};
@@ -72,13 +73,19 @@ export class PubSubEngine {
   // publish message to specific channel (if user id is not proved them publish as anonym)
   public publish(channel: string, message: Message, userId?: string): any {
     // check if we have batch available for this channel already
-    const batch: Message[] = this.batches[channel];
-    if (batch) {
-      return batch.push({ userId, message });
+    let batch: Message[] = this.batches[channel];
+
+    if (!batch) {
+      this.batches[channel] = batch = [];
     }
 
-    // if not then create one
-    this.batches[channel] = [{ userId, message }];
+    if (message instanceof Array) {
+      for (let i: number = 0, len: number = message.length; i < len; i++) {
+        batch.push({ userId, message: message[i] });
+      }
+    } else {
+      batch.push({ userId, message });
+    }
   }
 
   private flush(): void {

@@ -95,7 +95,7 @@ export type Options = {
       // write options for redis connection
     } | null;
     default: {
-      brokers: number; // number of brokers
+      brokers: number;
       brokersPorts: number[];
       horizontalScaleOptions: HorizontalScaleOptions | null;
     }

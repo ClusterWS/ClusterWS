@@ -7,9 +7,9 @@ socket.on('open', () => {
   console.log("Connected");
   socket.send(JSON.stringify(['s', 's', 'hello']));
 
-  setInterval(() => {
-    socket.send(JSON.stringify(['p', 'hello', 'world']));
-  }, 1000);
+  // setInterval(() => {
+  //   socket.send(JSON.stringify(['p', 'hello', 'world']));
+  // }, 100);
 })
 
 socket.on('message', (message) => {

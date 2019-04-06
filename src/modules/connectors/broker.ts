@@ -90,8 +90,8 @@ export class BrokerConnector {
     });
 
     socket.on('error', (err: any) => {
-      this.options.logger.debug(`Broker client ${socket.id} got error`, err, `(pid: ${process.pid})`);
-      // TODO: CHECK IF IT ACTUALLY not CALLS CLOSE if it does not we can do force close
+      // print error message to user if there are any
+      this.options.logger.error(`Broker client ${socket.id} got error`, err, `(pid: ${process.pid})`);
       setTimeout(() => this.createConnection(url), selectRandomBetween(100, 1000));
     });
   }

@@ -13,15 +13,25 @@ export class WSServer extends EventEmitter {
   constructor(private options: Options, securityKey: string) {
     // we pass "options" instead of "this.options" because "this" it was not yet initialized
     super(options.logger);
-    this.pubSub = new PubSubEngine(this.options.logger, 5);
+    this.pubSub = new PubSubEngine(this.options.logger, 1000);
     if (this.options.mode !== Mode.Single) {
-      // TODO: refactor this part (in future)
-      this.connector = new (this.options.scaleOptions.scaler === Scaler.Default ? BrokerConnector : RedisConnector)(
-        this.options,
-        this.publish.bind(this),
-        this.pubSub.getChannels.bind(this.pubSub),
-        securityKey
-      );
+      if (this.options.scaleOptions.scaler === Scaler.Default) {
+        this.connector = new BrokerConnector(
+          this.options,
+          this.publish.bind(this),
+          this.pubSub.getChannels.bind(this.pubSub),
+          securityKey
+        );
+      }
+
+      if (this.options.scaleOptions.scaler === Scaler.Redis) {
+        this.connector = new RedisConnector(
+          this.options,
+          this.publish.bind(this),
+          this.pubSub.getChannels.bind(this.pubSub),
+          securityKey
+        );
+      }
     }
 
     this.pubSub.register('broker', (message: Message) => {

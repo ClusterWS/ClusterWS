@@ -177,15 +177,14 @@ class PubSubEngine {
         t && 1 === t.length && (this.hooks.channelClose && this.hooks.channelClose(s), delete this.channels[s]);
     }
     publish(e, s, t) {
-        const o = this.batches[e];
-        if (o) return o.push({
+        let o = this.batches[e];
+        if (o || (this.batches[e] = o = []), s instanceof Array) for (let e = 0, i = s.length; e < i; e++) o.push({
+            userId: t,
+            message: s[e]
+        }); else o.push({
             userId: t,
             message: s
         });
-        this.batches[e] = [ {
-            userId: t,
-            message: s
-        } ];
     }
     flush() {
         const e = {};
@@ -212,11 +211,26 @@ class PubSubEngine {
 
 class RedisConnector {
     constructor(e, s, t, o) {
-        this.options = e, this.publishFunction = s, this.getChannels = t;
+        this.options = e, this.publishFunction = s, this.getChannels = t, this.publisherId = generateUid(8);
+        const i = require("redis");
+        this.publisher = i.createClient(), this.subscriber = i.createClient(), this.subscriber.on("message", (e, s) => {
+            const t = JSON.parse(s);
+            t.publisherId !== this.publisherId && this.publishFunction(e, t.message, "broker");
+        });
     }
-    publish(e) {}
-    subscribe(e) {}
-    unsubscribe(e) {}
+    publish(e) {
+        for (const s in e) this.publisher.publish(s, JSON.stringify({
+            publisherId: this.publisherId,
+            message: e[s]
+        }));
+    }
+    subscribe(e) {
+        e && e.length && this.subscriber.subscribe(e);
+    }
+    unsubscribe(e) {
+        e && e.length && (this.options.logger.debug(`Unsubscribing redis client from "${e}"`, `(pid: ${process.pid})`), 
+        this.subscriber.unsubscribe(e));
+    }
 }
 
 class BrokerConnector {
@@ -226,7 +240,7 @@ class BrokerConnector {
         for (let e = 0; e < this.options.scaleOptions.default.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.scaleOptions.default.brokersPorts[e]}?key=${o}`);
     }
     publish(e) {
-        this.next > this.connections.length && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(e), 
+        this.next > this.connections.length && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(JSON.stringify(e)), 
         this.next++;
     }
     subscribe(e) {
@@ -255,7 +269,7 @@ class BrokerConnector {
             if (1e3 === t) return this.options.logger.warning("Broker connection has been closed");
             setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
         }), s.on("error", t => {
-            this.options.logger.debug(`Broker client ${s.id} got error`, t, `(pid: ${process.pid})`), 
+            this.options.logger.error(`Broker client ${s.id} got error`, t, `(pid: ${process.pid})`), 
             setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
         });
     }
@@ -263,10 +277,11 @@ class BrokerConnector {
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 5), 
-        this.options.mode !== exports.Mode.Single && (this.connector = new (this.options.scaleOptions.scaler === exports.Scaler.Default ? BrokerConnector : RedisConnector)(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s)), 
+        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 1e3), 
+        this.options.mode !== exports.Mode.Single && (this.options.scaleOptions.scaler === exports.Scaler.Default && (this.connector = new BrokerConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s)), 
+        this.options.scaleOptions.scaler === exports.Scaler.Redis && (this.connector = new RedisConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s))), 
         this.pubSub.register("broker", e => {
-            this.options.mode !== exports.Mode.Single && this.connector.publish(JSON.stringify(e));
+            this.options.mode !== exports.Mode.Single && this.connector.publish(e);
         }), this.pubSub.addListener("channelAdd", e => {
             this.options.mode !== exports.Mode.Single && this.connector.subscribe(e), this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
         }), this.pubSub.addListener("channelClose", e => {
@@ -410,7 +425,7 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             mode: e.mode || exports.Mode.Scale,
             host: e.host,
-            logger: e.loggerOptions && e.loggerOptions.logger ? e.loggerOptions.logger : new Logger(e.loggerOptions && void 0 === e.loggerOptions.logLevel ? exports.LogLevel.INFO : e.loggerOptions.logLevel),
+            logger: e.loggerOptions && e.loggerOptions.logger ? e.loggerOptions.logger : new Logger(e.loggerOptions && void 0 !== e.loggerOptions.logLevel ? e.loggerOptions.logLevel : exports.LogLevel.INFO),
             worker: e.worker,
             tlsOptions: e.tlsOptions,
             websocketOptions: {
