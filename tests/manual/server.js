@@ -12,7 +12,7 @@ new ClusterWS({
     logLevel: LogLevel.DEBUG
   },
   scaleOptions: {
-    scaler: Scaler.Redis,
+    scaler: Scaler.Default,
     workers: 1,
     redis: {},
     default: {

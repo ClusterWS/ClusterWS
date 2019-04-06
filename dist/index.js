@@ -189,14 +189,15 @@ class PubSubEngine {
     flush() {
         const e = {};
         for (const s in this.batches) {
-            const t = this.channels[s];
-            if (t) {
-                const o = this.batches[s], i = o.length;
-                for (let r = 0, n = t.length; r < n; r++) {
-                    const n = t[r], c = [];
-                    for (let e = 0; e < i; e++) o[e].userId !== n && c.push(o[e].message);
-                    c.length && (e[n] || (e[n] = {}), e[n][s] = c);
-                }
+            const t = this.channels[s], o = this.batches[s], i = o.length;
+            if (t) for (let r = 0, n = t.length; r < n; r++) {
+                const n = t[r], c = [];
+                for (let e = 0; e < i; e++) o[e].userId !== n && c.push(o[e].message);
+                c.length && (e[n] || (e[n] = {}), e[n][s] = c);
+            } else {
+                const t = [];
+                for (let e = 0; e < i; e++) t.push(o[e].message);
+                e.broker || (e.broker = {}), e.broker[s] = t;
             }
         }
         this.batches = {};

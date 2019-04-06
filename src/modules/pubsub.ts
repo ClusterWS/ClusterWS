@@ -1,7 +1,6 @@
 import { Listener, Message, Logger } from '../utils/types';
 
 // TODO: Fix serious bug with data reference (in future)
-// TODO: even if channel does not exist in this server we should still publish message to other servers by default
 export class PubSubEngine {
   private hooks: { [key: string]: Listener } = {};
   private users: { [key: string]: Listener } = {};
@@ -97,12 +96,11 @@ export class PubSubEngine {
         // get all users for that channel
         const users: string[] = this.channels[channel];
 
+        // get actual messages which were send from last iteration
+        const batch: Message[] = this.batches[channel];
+        const batchLen: number = batch.length;
         // make sure we actually have users for that channel
         if (users) {
-          // get actual messages which were send from last iteration
-          const batch: Message[] = this.batches[channel];
-          const batchLen: number = batch.length;
-
           // for each user we need to create separate messages array
           for (let j: number = 0, userLen: number = users.length; j < userLen; j++) {
             const userId: string = users[j];
@@ -123,6 +121,19 @@ export class PubSubEngine {
               preparedMessages[userId][channel] = userSpecificMessages;
             }
           }
+        } else {
+          // TODO: test this logic
+          // this scenario only if we trying to send message to the channel
+          // which does not exist in current server but may exist in some other
+          const brokerMessage: any[] = [];
+          for (let i: number = 0; i < batchLen; i++) {
+            brokerMessage.push(batch[i].message);
+          }
+          // check if broker actually exists in prepared messages
+          if (!preparedMessages['broker']) {
+            preparedMessages['broker'] = {};
+          }
+          preparedMessages['broker'][channel] = brokerMessage;
         }
       }
     }
