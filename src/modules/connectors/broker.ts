@@ -97,5 +97,4 @@ export class BrokerConnector {
       setTimeout(() => this.createConnection(url), selectRandomBetween(100, 1000));
     });
   }
-
 }

@@ -13,7 +13,7 @@ new ClusterWS({
   },
   scaleOptions: {
     scaler: Scaler.Redis,
-    workers: 1,
+    workers: 2,
     redis: {
       host: 'localhost',
       port: 6379

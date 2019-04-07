@@ -290,7 +290,7 @@ class BrokerConnector {
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 1e3), 
+        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 1), 
         this.options.mode !== exports.Mode.Single && (this.options.scaleOptions.scaler === exports.Scaler.Default && (this.connector = new BrokerConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s)), 
         this.options.scaleOptions.scaler === exports.Scaler.Redis && (this.connector = new RedisConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s))), 
         this.pubSub.register("broker", e => {

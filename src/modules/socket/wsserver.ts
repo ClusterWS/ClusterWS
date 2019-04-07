@@ -13,7 +13,7 @@ export class WSServer extends EventEmitter {
   constructor(private options: Options, securityKey: string) {
     // we pass "options" instead of "this.options" because "this" it was not yet initialized
     super(options.logger);
-    this.pubSub = new PubSubEngine(this.options.logger, 1000);
+    this.pubSub = new PubSubEngine(this.options.logger, 5);
     if (this.options.mode !== Mode.Single) {
       if (this.options.scaleOptions.scaler === Scaler.Default) {
         this.connector = new BrokerConnector(
