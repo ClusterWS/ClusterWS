@@ -1,7 +1,7 @@
 const { ClusterWS, Mode, Middleware, LogLevel, Scaler } = require('../../dist/index');
 
 new ClusterWS({
-  mode: Mode.Scale,
+  mode: Mode.Single,
   port: 3001,
   worker: Worker,
   websocketOptions: {
@@ -24,7 +24,7 @@ new ClusterWS({
   }
 });
 
-function Worker() {
+async function Worker() {
   let wss = this.wss;
   // console.log(Buffer.from(JSON.stringify(['e', 'hello', 'world'])).toJSON())
 

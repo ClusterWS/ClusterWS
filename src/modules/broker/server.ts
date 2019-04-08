@@ -19,6 +19,11 @@ export class BrokerServer {
       process.send({ event: 'READY', pid: process.pid });
     });
 
+    this.server.on('error', (error: any) => {
+      this.options.logger.error(`Broker Server exited`, error.stack || error);
+      process.exit();
+    });
+
     this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
       socket.id = generateUid(8);
       socket.channels = {};
@@ -28,6 +33,7 @@ export class BrokerServer {
 
       socket.on('message', (message: Message) => {
         this.options.logger.debug(`Broker received`, message, `(pid: ${process.pid})`);
+
         if (message[0] === 'u') {
           const channels: string[] = message.substr(1, message.length - 1).split(',');
           for (let i: number = 0, len: number = channels.length; i < len; i++) {
@@ -43,10 +49,27 @@ export class BrokerServer {
         }
       });
 
-      // TODO: disconnect and error handlers are needed !
+      socket.on('close', (code: number, reason: string): void => {
+        socket.channels = {};
+        this.removeSocketById(socket.id);
+      });
+
+      socket.on('error', (err: any): void => {
+        socket.channels = {};
+        this.removeSocketById(socket.id);
+      });
     });
 
     this.server.startAutoPing(20000);
+  }
+
+  private removeSocketById(socketId: string): any {
+    for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
+      if (this.sockets[i].id === socketId) {
+        this.sockets.splice(i, 1);
+        break;
+      }
+    }
   }
 
   private broadcast(id: string, message: any): void {

@@ -42,7 +42,8 @@ function selectRandomBetween(e, s) {
 }
 
 function isFunction(e) {
-    return "[object Function]" === {}.toString.call(e);
+    const s = {}.toString.call(e);
+    return "[object Function]" === s || "[object AsyncFunction]" === s;
 }
 
 function generateUid(e) {
@@ -233,12 +234,12 @@ class RedisConnector {
         this.publisher = e.createClient(this.options.scaleOptions.redis), this.subscriber = e.createClient(this.options.scaleOptions.redis), 
         this.publisher.on("ready", () => {
             this.options.logger.debug("Redis Publisher is connected", `(pid: ${process.pid})`);
+        }), this.subscriber.on("ready", () => {
+            this.options.logger.debug("Redis Subscriber is connected", `(pid: ${process.pid})`);
         }), this.publisher.on("error", e => {
             this.options.logger.error("Redis Publisher error", e.message, `(pid: ${process.pid})`);
         }), this.subscriber.on("error", e => {
             this.options.logger.error("Redis Subscriber error", e.message, `(pid: ${process.pid})`);
-        }), this.subscriber.on("ready", () => {
-            this.options.logger.debug("Redis Subscriber is connected", `(pid: ${process.pid})`);
         }), this.subscriber.on("message", (e, s) => {
             const t = JSON.parse(s);
             t.publisherId !== this.publisherId && this.publishFunction(e, t.message, "broker");
@@ -277,20 +278,25 @@ class BrokerConnector {
             this.options.logger.debug(`Broker client ${s.id} received:`, e), process.pid, e = JSON.parse(e);
             for (const s in e) this.publishFunction(s, e, "broker");
         }), s.on("close", (t, o) => {
-            this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${o}`, `(pid: ${process.pid})`);
-            for (let e = 0, t = this.connections.length; e < t; e++) this.connections[e].id === s.id && this.connections.splice(e, 1);
-            if (1e3 === t) return this.options.logger.warning("Broker connection has been closed");
+            if (this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${o}`, `(pid: ${process.pid})`), 
+            this.removeSocketById(s.id), 1e3 === t) return this.options.logger.warning("Broker connection has been closed");
             setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
         }), s.on("error", t => {
             this.options.logger.error(`Broker client ${s.id} got error`, t, `(pid: ${process.pid})`), 
-            setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
+            this.removeSocketById(s.id), setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
         });
+    }
+    removeSocketById(e) {
+        for (let s = 0, t = this.connections.length; s < t; s++) if (this.connections[s].id === e) {
+            this.connections.splice(s, 1);
+            break;
+        }
     }
 }
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 1), 
+        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 5), 
         this.options.mode !== exports.Mode.Single && (this.options.scaleOptions.scaler === exports.Scaler.Default && (this.connector = new BrokerConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s)), 
         this.options.scaleOptions.scaler === exports.Scaler.Redis && (this.connector = new RedisConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s))), 
         this.pubSub.register("broker", e => {
@@ -347,6 +353,8 @@ class BrokerServer {
                 event: "READY",
                 pid: process.pid
             });
+        }), this.server.on("error", e => {
+            this.options.logger.error("Broker Server exited", e.stack || e), process.exit();
         }), this.server.on("connection", e => {
             e.id = generateUid(8), e.channels = {}, this.sockets.push(e), this.options.logger.debug(`New connection to broker ${e.id}`, `(pid: ${process.pid})`), 
             e.on("message", s => {
@@ -357,8 +365,18 @@ class BrokerServer {
                     const t = s.substr(1, s.length - 1).split(",");
                     for (let s = 0, o = t.length; s < o; s++) e.channels[t[s]] = !0;
                 } else this.broadcast(e.id, JSON.parse(s));
+            }), e.on("close", (s, t) => {
+                e.channels = {}, this.removeSocketById(e.id);
+            }), e.on("error", s => {
+                e.channels = {}, this.removeSocketById(e.id);
             });
         }), this.server.startAutoPing(2e4);
+    }
+    removeSocketById(e) {
+        for (let s = 0, t = this.sockets.length; s < t; s++) if (this.sockets[s].id === e) {
+            this.sockets.splice(s, 1);
+            break;
+        }
     }
     broadcast(e, s) {
         const t = Object.keys(s), o = t.length;

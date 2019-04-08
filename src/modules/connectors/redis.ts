@@ -45,16 +45,16 @@ export class RedisConnector {
       this.options.logger.debug(`Redis Publisher is connected`, `(pid: ${process.pid})`);
     });
 
+    this.subscriber.on('ready', () => {
+      this.options.logger.debug(`Redis Subscriber is connected`, `(pid: ${process.pid})`);
+    });
+
     this.publisher.on('error', (err: any) => {
       this.options.logger.error(`Redis Publisher error`, err.message, `(pid: ${process.pid})`);
     });
 
     this.subscriber.on('error', (err: any) => {
       this.options.logger.error(`Redis Subscriber error`, err.message, `(pid: ${process.pid})`);
-    });
-
-    this.subscriber.on('ready', () => {
-      this.options.logger.debug(`Redis Subscriber is connected`, `(pid: ${process.pid})`);
     });
 
     this.subscriber.on('message', (channel: any, message: any) => {

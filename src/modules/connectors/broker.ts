@@ -8,7 +8,6 @@ type SocketExtension = {
 };
 
 // TODO: implement await for connections before allowing to next step
-
 export class BrokerConnector {
   private next: number = 0;
   private connections: Array<WebSocket & SocketExtension> = [];
@@ -77,15 +76,11 @@ export class BrokerConnector {
       this.options.logger.debug(`Broker client ${socket.id} is disconnected from ${url} code ${code}, reason ${reason}`, `(pid: ${process.pid})`);
 
       // this will remove connection from iteration loop
-      for (let i: number = 0, len: number = this.connections.length; i < len; i++) {
-        if (this.connections[i].id === socket.id) {
-          this.connections.splice(i, 1);
-        }
-      }
+      this.removeSocketById(socket.id);
 
       if (code === 1000) {
         // this socket has been closed clean
-        return this.options.logger.warning('Broker connection has been closed');
+        return this.options.logger.warning(`Broker connection has been closed`);
       }
 
       setTimeout(() => this.createConnection(url), selectRandomBetween(100, 1000));
@@ -94,7 +89,19 @@ export class BrokerConnector {
     socket.on('error', (err: any) => {
       // print error message to user if there are any
       this.options.logger.error(`Broker client ${socket.id} got error`, err, `(pid: ${process.pid})`);
+
+      // this will remove connection from iteration loop
+      this.removeSocketById(socket.id);
       setTimeout(() => this.createConnection(url), selectRandomBetween(100, 1000));
     });
+  }
+
+  private removeSocketById(socketId: string): any {
+    for (let i: number = 0, len: number = this.connections.length; i < len; i++) {
+      if (this.connections[i].id === socketId) {
+        this.connections.splice(i, 1);
+        break;
+      }
+    }
   }
 }
