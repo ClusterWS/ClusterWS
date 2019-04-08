@@ -20,7 +20,7 @@ export class BrokerServer {
     });
 
     this.server.on('error', (error: any) => {
-      this.options.logger.error(`Broker Server exited`, error.stack || error);
+      this.options.logger.error(`Broker Server got an error`, error.stack || error);
       process.exit();
     });
 

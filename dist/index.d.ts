@@ -96,7 +96,7 @@ export class EventEmitter {
     removeEvents(): void;
 }
 
-export function selectRandomBetween(from: number, too: number): number;
+export function selectRandomBetween(from: number, to: number): number;
 export function isFunction<T>(fn: T): boolean;
 export function generateUid(length: number): string;
 

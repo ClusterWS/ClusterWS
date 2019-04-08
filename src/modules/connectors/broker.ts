@@ -80,15 +80,16 @@ export class BrokerConnector {
 
       if (code === 1000) {
         // this socket has been closed clean
-        return this.options.logger.warning(`Broker connection has been closed`);
+        return this.options.logger.warning(`Broker client ${socket.id} has been closed clean`);
       }
 
+      this.options.logger.warning(`Broker client ${socket.id} has been closed, now is reconnecting`);
       setTimeout(() => this.createConnection(url), selectRandomBetween(100, 1000));
     });
 
     socket.on('error', (err: any) => {
       // print error message to user if there are any
-      this.options.logger.error(`Broker client ${socket.id} got error`, err, `(pid: ${process.pid})`);
+      this.options.logger.error(`Broker client ${socket.id} got error`, err, 'now is reconnecting', `(pid: ${process.pid})`);
 
       // this will remove connection from iteration loop
       this.removeSocketById(socket.id);

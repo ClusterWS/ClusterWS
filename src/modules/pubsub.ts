@@ -122,7 +122,6 @@ export class PubSubEngine {
             }
           }
         } else {
-          // TODO: test this logic
           // this scenario only if we trying to send message to the channel
           // which does not exist in current server but may exist in some other
           const brokerMessage: any[] = [];

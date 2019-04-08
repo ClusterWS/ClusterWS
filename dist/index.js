@@ -279,10 +279,11 @@ class BrokerConnector {
             for (const s in e) this.publishFunction(s, e, "broker");
         }), s.on("close", (t, o) => {
             if (this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${o}`, `(pid: ${process.pid})`), 
-            this.removeSocketById(s.id), 1e3 === t) return this.options.logger.warning("Broker connection has been closed");
+            this.removeSocketById(s.id), 1e3 === t) return this.options.logger.warning(`Broker client ${s.id} has been closed clean`);
+            this.options.logger.warning(`Broker client ${s.id} has been closed, now is reconnecting`), 
             setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
         }), s.on("error", t => {
-            this.options.logger.error(`Broker client ${s.id} got error`, t, `(pid: ${process.pid})`), 
+            this.options.logger.error(`Broker client ${s.id} got error`, t, "now is reconnecting", `(pid: ${process.pid})`), 
             this.removeSocketById(s.id), setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
         });
     }
@@ -354,7 +355,7 @@ class BrokerServer {
                 pid: process.pid
             });
         }), this.server.on("error", e => {
-            this.options.logger.error("Broker Server exited", e.stack || e), process.exit();
+            this.options.logger.error("Broker Server got an error", e.stack || e), process.exit();
         }), this.server.on("connection", e => {
             e.id = generateUid(8), e.channels = {}, this.sockets.push(e), this.options.logger.debug(`New connection to broker ${e.id}`, `(pid: ${process.pid})`), 
             e.on("message", s => {

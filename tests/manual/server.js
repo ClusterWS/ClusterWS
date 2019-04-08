@@ -1,7 +1,7 @@
 const { ClusterWS, Mode, Middleware, LogLevel, Scaler } = require('../../dist/index');
 
 new ClusterWS({
-  mode: Mode.Single,
+  mode: Mode.Scale,
   port: 3001,
   worker: Worker,
   websocketOptions: {
@@ -12,7 +12,7 @@ new ClusterWS({
     logLevel: LogLevel.DEBUG
   },
   scaleOptions: {
-    scaler: Scaler.Redis,
+    scaler: Scaler.Default,
     workers: 2,
     redis: {
       host: 'localhost',
@@ -36,9 +36,12 @@ async function Worker() {
   //   console.log('Some cool thing 2');
   // })
 
+
   wss.on('connection', (socket) => {
     socket.on('hello', (msg) => {
-      socket.sendRaw(msg);
+      // socket.sendRaw(msg);
+      console.log('Received hello', process.pid);
+      wss.publish('hello', 'my super message which should be published to another channel');
     })
   });
 }
