@@ -105,7 +105,7 @@ function childProcess(options: Options): void {
       case 'Worker':
         return new Worker(options, message.securityKey);
       case 'Broker':
-        return new BrokerServer(options, options.scaleOptions.default.brokersPorts[message.id]);
+        return new BrokerServer(options, options.scaleOptions.default.brokersPorts[message.id], message.securityKey);
       default:
         process.send({ event: 'READY', pid: process.pid });
     }

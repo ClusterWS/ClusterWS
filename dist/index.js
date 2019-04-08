@@ -42,8 +42,7 @@ function selectRandomBetween(e, s) {
 }
 
 function isFunction(e) {
-    const s = {}.toString.call(e);
-    return "[object Function]" === s || "[object AsyncFunction]" === s;
+    return "function" == typeof e;
 }
 
 function generateUid(e) {
@@ -251,7 +250,7 @@ class BrokerConnector {
     constructor(e, s, t, o) {
         this.options = e, this.publishFunction = s, this.getChannels = t, this.next = 0, 
         this.connections = [], this.next = selectRandomBetween(0, this.options.scaleOptions.default.brokers - 1);
-        for (let e = 0; e < this.options.scaleOptions.default.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.scaleOptions.default.brokersPorts[e]}?key=${o}`);
+        for (let e = 0; e < this.options.scaleOptions.default.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.scaleOptions.default.brokersPorts[e]}/?key=${o}`);
     }
     publish(e) {
         this.next > this.connections.length && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(JSON.stringify(e)), 
@@ -346,9 +345,10 @@ class Worker {
 }
 
 class BrokerServer {
-    constructor(e, s) {
+    constructor(e, s, t) {
         this.options = e, this.sockets = [], this.server = new cws.WebSocketServer({
-            port: s
+            port: s,
+            verifyClient: (e, s) => s(e.req.url === `/?key=${t}`)
         }, () => {
             process.send({
                 event: "READY",
@@ -438,7 +438,7 @@ function childProcess(e) {
             return new Worker(e, s.securityKey);
 
           case "Broker":
-            return new BrokerServer(e, e.scaleOptions.default.brokersPorts[s.id]);
+            return new BrokerServer(e, e.scaleOptions.default.brokersPorts[s.id], s.securityKey);
 
           default:
             process.send({

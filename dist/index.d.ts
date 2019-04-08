@@ -26,7 +26,7 @@ export class BrokerConnector {
 }
 
 export class BrokerServer {
-    constructor(options: Options, port: number);
+    constructor(options: Options, port: number, key: string);
 }
 
 export class BrokerConnector {

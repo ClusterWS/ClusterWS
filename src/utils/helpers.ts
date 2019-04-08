@@ -5,8 +5,7 @@ export function selectRandomBetween(from: number, to: number): number {
 }
 
 export function isFunction<T>(fn: T): boolean {
-  const functionType: string = {}.toString.call(fn);
-  return functionType === '[object Function]' || functionType === '[object AsyncFunction]';
+  return typeof fn === 'function';
 }
 
 export function generateUid(length: number): string {

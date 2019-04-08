@@ -4,7 +4,6 @@ import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/
 
 // TODO: complete writing broker server
 // TODO: handle fail send
-// TODO: write authorization
 type SocketExtend = {
   id: string,
   channels: { [key: string]: boolean }
@@ -14,8 +13,13 @@ export class BrokerServer {
   private server: WebSocketServer;
   private sockets: Array<WebSocket & SocketExtend> = [];
 
-  constructor(private options: Options, port: number) {
-    this.server = new WebSocketServer({ port }, (): void => {
+  constructor(private options: Options, port: number, key: string) {
+    this.server = new WebSocketServer({
+      port,
+      verifyClient: (info: ConnectionInfo, next: Listener): void => {
+        return next(info.req.url === `/?key=${key}`);
+      }
+    }, (): void => {
       process.send({ event: 'READY', pid: process.pid });
     });
 

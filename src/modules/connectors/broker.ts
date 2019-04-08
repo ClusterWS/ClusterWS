@@ -17,7 +17,7 @@ export class BrokerConnector {
     // this should automatically create as many connections to broker as needed
     for (let i: number = 0; i < this.options.scaleOptions.default.brokers; i++) {
       // create connection to each broker
-      this.createConnection(`ws://127.0.0.1:${this.options.scaleOptions.default.brokersPorts[i]}?key=${key}`);
+      this.createConnection(`ws://127.0.0.1:${this.options.scaleOptions.default.brokersPorts[i]}/?key=${key}`);
     }
   }
 
