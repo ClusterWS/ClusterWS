@@ -1,7 +1,7 @@
 const { ClusterWS, Mode, Middleware, LogLevel, Scaler } = require('../../dist/index');
 
 new ClusterWS({
-  mode: Mode.Scale,
+  mode: Mode.Single,
   port: 3001,
   worker: Worker,
   websocketOptions: {

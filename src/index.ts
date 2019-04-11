@@ -7,9 +7,9 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
 
 // TODO: handle type for "this" keyword in worker function
 // TODO: Improve positions of debug logs
-// TODO: Add restartWorkerOnFail option (later)
-// TODO: Add more options validation
-// TODO: test that all options passed correctly
+// TODO: Add restartWorkerOnFail option
+// TODO: Add more options validation and test that all options passed correctly
+// TODO: Add more test
 // Reexport important things
 export { Mode, Middleware, LogLevel, Scaler } from './utils/types';
 
