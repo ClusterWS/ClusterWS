@@ -2,7 +2,7 @@ import { generateUid } from '../../utils/helpers';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/cws';
 import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
-// TODO: complete writing broker server
+// TODO: hookup scaler and broker server
 // TODO: handle fail send
 type SocketExtend = {
   id: string,

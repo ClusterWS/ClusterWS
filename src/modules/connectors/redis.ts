@@ -3,7 +3,8 @@ import { Options, Message, Listener } from '../../utils/types';
 
 // TODO: improve redis connector
 // TODO: enable redis import only if everything is ready
-// TODO: implement reconnect system
+// TODO: implement reconnect system (this logic already exists on redis)
+// TODO: implement resubscribe to channels
 export class RedisConnector {
   private publisher: any;
   private subscriber: any;
@@ -35,7 +36,7 @@ export class RedisConnector {
   }
 
   private createConnection(): void {
-    // we import redis only if it is needed
+    // we import redis only if it is needed and installed
     const redis: any = require('redis');
 
     this.publisher = redis.createClient(this.options.scaleOptions.redis);

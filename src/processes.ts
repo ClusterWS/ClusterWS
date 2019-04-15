@@ -3,6 +3,7 @@ import * as cluster from 'cluster';
 import { Worker } from './modules/worker';
 import { generateUid } from './utils/helpers';
 import { BrokerServer } from './modules/broker/server';
+import { ScalerServer } from './modules/broker/scaler';
 import { Options, Mode, Message, Listener, Scaler } from './utils/types';
 
 // check mode/process type and decide what to execute next
@@ -84,10 +85,13 @@ function masterProcess(options: Options): void {
     forkedProcess.send({ id, name, serverId, securityKey });
   };
 
-  // TODO: implement scaler boot
   if (options.scaleOptions.scaler === Scaler.Default) {
-    for (let i: number = 0; i < options.scaleOptions.default.brokers; i++) {
-      forkNewProcess(i, 'Broker');
+    if (options.scaleOptions.default.horizontalScaleOptions && options.scaleOptions.default.horizontalScaleOptions.masterOptions) {
+      forkNewProcess(-1, 'Scaler');
+    } else {
+      for (let i: number = 0; i < options.scaleOptions.default.brokers; i++) {
+        forkNewProcess(i, 'Broker');
+      }
     }
   } else {
     for (let i: number = 0; i < options.scaleOptions.workers; i++) {
@@ -106,6 +110,8 @@ function childProcess(options: Options): void {
         return new Worker(options, message.securityKey);
       case 'Broker':
         return new BrokerServer(options, options.scaleOptions.default.brokersPorts[message.id], message.securityKey);
+      case 'Scaler':
+        return new ScalerServer(options);
       default:
         process.send({ event: 'READY', pid: process.pid });
     }

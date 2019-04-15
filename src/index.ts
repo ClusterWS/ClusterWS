@@ -7,7 +7,7 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
 
 // TODO: handle type for "this" keyword in worker function
 // TODO: Improve positions of debug logs
-// TODO: Add restartWorkerOnFail option
+// TODO: Add restartWorkerOnFail option or alternative to this option
 // TODO: Add more options validation and test that all options passed correctly
 // TODO: Add more test
 // Reexport important things
@@ -46,8 +46,8 @@ export class ClusterWS {
             configurations.scaleOptions.default.brokers : 1,
           brokersPorts: configurations.scaleOptions && configurations.scaleOptions.default && configurations.scaleOptions.default.brokersPorts ?
             configurations.scaleOptions.default.brokersPorts : [],
-          // TODO: add horizontal Scale options properly
-          horizontalScaleOptions: null
+          horizontalScaleOptions: configurations.scaleOptions && configurations.scaleOptions.default ?
+            configurations.scaleOptions.default.horizontalScaleOptions : null
         }
       }
     };

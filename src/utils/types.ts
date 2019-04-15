@@ -104,8 +104,10 @@ export type Options = {
 
 export type Logger = {
   [keys: string]: any,
-  info: (...args: any[]) => any;
-  error: (...args: any[]) => any;
-  debug: (...args: any[]) => any;
-  warning: (...args: any[]) => any;
+  info?: (...args: any[]) => any;
+  error?: (...args: any[]) => any;
+  debug?: (...args: any[]) => any;
+  warning?: (...args: any[]) => any;
+  // allow to use `warn` and `warning` functions to print
+  warn?: (...args: any[]) => any;
 };

@@ -21,6 +21,7 @@ export class Socket {
     this.socket.on('message', (message: string | Buffer): void => {
       // if user listens on 'message' event then we will not parse any messages
       // and just emit default websocket on message event
+      // TODO: enable next for messaging system so user can process with parsing if needed
       if (this.emitter.exist('message')) {
         return this.emitter.emit('message', message);
       }
@@ -107,7 +108,7 @@ export class Socket {
     if (this.worker.wss.middleware[Middleware.onSubscribe]) {
       // This will allow user to decide if they want to subscribe user to specific channel
       return this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (error: any) => {
-        // TODO: Handle error correctly or roll back to use next with bol inside
+        // TODO: Handle error correctly or roll back to use next with bool inside
         if (!error) {
           this.channels[channel] = true;
           this.worker.wss.subscribe(this.id, channel);
