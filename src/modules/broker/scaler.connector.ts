@@ -42,7 +42,8 @@ export class ScalerConnector {
 
         socket.on('open', () => {
             socket.id = generateUid(8);
-            socket.send(this.serverId);
+            // We attache 'i' for server to identify that it is init server id
+            socket.send('i' + this.serverId);
             this.connections.push(socket);
             this.options.logger.debug(`Scaler client ${socket.id} is connected to ${url}`, `(pid: ${process.pid})`);
         });
