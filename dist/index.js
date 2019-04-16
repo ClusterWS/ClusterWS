@@ -358,7 +358,7 @@ class ScalerConnector {
     createConnection(e) {
         const s = new cws.WebSocket(e);
         s.on("open", () => {
-            s.id = generateUid(8), s.send(this.serverId), this.connections.push(s), this.options.logger.debug(`Scaler client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
+            s.id = generateUid(8), s.send("i" + this.serverId), this.connections.push(s), this.options.logger.debug(`Scaler client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
         }), s.on("message", e => {
             this.options.logger.debug(`Scaler client ${s.id} received:`, e), process.pid, this.publishFunction(e);
         }), s.on("close", (t, o) => {
@@ -453,7 +453,7 @@ class ScalerServer {
             this.options.logger.error(`Scaler error ${e.stack || e}`), process.exit();
         }), this.wsServer.on("connection", e => {
             e.id = generateUid(8), this.sockets.push(e), e.on("message", s => {
-                if ("{" !== s[0]) e.serverId = s; else if (e.serverId) for (let t = 0, o = this.sockets.length; t < o; t++) {
+                if ("i" === s[0]) e.serverId = s; else if (e.serverId) for (let t = 0, o = this.sockets.length; t < o; t++) {
                     const o = this.sockets[t];
                     o.serverId && e.serverId !== o.serverId && o.send(s);
                 }

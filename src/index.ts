@@ -11,6 +11,7 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
  * - Add restartWorkerOnFail option or alternative to this option
  * - Handle type for "this" keyword in worker function
  * - Rename Horizontal options from broker to scaler
+ * - Run benchmarks
  *
  *
  * TODO: Future Plans
