@@ -5,11 +5,22 @@ import { isFunction } from './utils/helpers';
 import { runProcesses } from './processes';
 import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
 
-// TODO: handle type for "this" keyword in worker function
-// TODO: Improve positions of debug logs
-// TODO: Add restartWorkerOnFail option or alternative to this option
-// TODO: Add more options validation and test that all options passed correctly
-// TODO: Add more test
+/**
+ * TODO: Pre release planes
+ *
+ * - Add restartWorkerOnFail option or alternative to this option
+ * - Handle type for "this" keyword in worker function
+ *
+ *
+ * TODO: Future Planes
+ *
+ * - Improve positions of debug logs
+ * - Split logic more nicely to make it easier to understand code
+ * - Add more test
+ * - Add more options validation and test that all options passed correctly
+ *
+ */
+
 // Reexport important things
 export { Mode, Middleware, LogLevel, Scaler } from './utils/types';
 

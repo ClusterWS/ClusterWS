@@ -24,7 +24,7 @@ export class BrokerConnector {
 
   public publish(message: Message): void {
     // TODO: implement retry logic (in future)
-    if (this.next > this.connections.length) {
+    if (this.next > this.connections.length - 1) {
       this.next = 0;
     }
 

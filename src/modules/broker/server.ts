@@ -1,4 +1,5 @@
 import { generateUid } from '../../utils/helpers';
+import { ScalerConnector } from './scaler.connector';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/cws';
 import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
@@ -12,8 +13,10 @@ type SocketExtend = {
 export class BrokerServer {
   private server: WebSocketServer;
   private sockets: Array<WebSocket & SocketExtend> = [];
+  private streamToScaler: boolean = false;
+  private scaler: ScalerConnector;
 
-  constructor(private options: Options, port: number, key: string) {
+  constructor(private options: Options, port: number, key: string, serverId: string) {
     this.server = new WebSocketServer({
       port,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
@@ -22,6 +25,13 @@ export class BrokerServer {
     }, (): void => {
       process.send({ event: 'READY', pid: process.pid });
     });
+
+    if (this.options.scaleOptions.default.horizontalScaleOptions) {
+      this.streamToScaler = true;
+      this.scaler = new ScalerConnector(this.options, (message: Message): void => {
+        this.broadcast(null, JSON.parse(message));
+      }, serverId);
+    }
 
     this.server.on('error', (error: any) => {
       this.options.logger.error(`Broker Server got an error`, error.stack || error);
@@ -50,6 +60,10 @@ export class BrokerServer {
           }
         } else {
           this.broadcast(socket.id, JSON.parse(message));
+          if (this.streamToScaler) {
+            this.options.logger.debug('Sending message to Scaler');
+            this.scaler.publish(message);
+          }
         }
       });
 

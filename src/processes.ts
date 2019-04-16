@@ -109,7 +109,7 @@ function childProcess(options: Options): void {
       case 'Worker':
         return new Worker(options, message.securityKey);
       case 'Broker':
-        return new BrokerServer(options, options.scaleOptions.default.brokersPorts[message.id], message.securityKey);
+        return new BrokerServer(options, options.scaleOptions.default.brokersPorts[message.id], message.securityKey, message.serverId);
       case 'Scaler':
         return new ScalerServer(options);
       default:

@@ -25,8 +25,17 @@ export class BrokerConnector {
     unsubscribe(channel: string): void;
 }
 
+export class ScalerConnector {
+    constructor(options: Options, publishFunction: Listener, serverId: string);
+    publish(message: Message): void;
+}
+
+export class ScalerServer {
+    constructor(options: Options);
+}
+
 export class BrokerServer {
-    constructor(options: Options, port: number, key: string);
+    constructor(options: Options, port: number, key: string, serverId: string);
 }
 
 export class BrokerConnector {
@@ -193,9 +202,10 @@ export type Options = {
 };
 export type Logger = {
     [keys: string]: any;
-    info: (...args: any[]) => any;
-    error: (...args: any[]) => any;
-    debug: (...args: any[]) => any;
-    warning: (...args: any[]) => any;
+    info?: (...args: any[]) => any;
+    error?: (...args: any[]) => any;
+    debug?: (...args: any[]) => any;
+    warning?: (...args: any[]) => any;
+    warn?: (...args: any[]) => any;
 };
 

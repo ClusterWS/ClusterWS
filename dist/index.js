@@ -253,7 +253,7 @@ class BrokerConnector {
         for (let e = 0; e < this.options.scaleOptions.default.brokers; e++) this.createConnection(`ws://127.0.0.1:${this.options.scaleOptions.default.brokersPorts[e]}/?key=${o}`);
     }
     publish(e) {
-        this.next > this.connections.length && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(JSON.stringify(e)), 
+        this.next > this.connections.length - 1 && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(JSON.stringify(e)), 
         this.next++;
     }
     subscribe(e) {
@@ -344,9 +344,44 @@ class Worker {
     }
 }
 
-class BrokerServer {
+class ScalerConnector {
     constructor(e, s, t) {
-        this.options = e, this.sockets = [], this.server = new cws.WebSocketServer({
+        this.options = e, this.publishFunction = s, this.serverId = t, this.next = 0, this.connections = [];
+        const o = this.options.scaleOptions.default.horizontalScaleOptions;
+        if (o.masterOptions && this.createConnection(`ws://127.0.0.1:${o.masterOptions.port}/?key=${o.key || ""}`), 
+        o.brokersUrls) for (let e = 0, s = o.brokersUrls.length; e < s; e++) this.createConnection(`${o.brokersUrls[e]}/?key=${o.key || ""}`);
+    }
+    publish(e) {
+        this.next > this.connections.length - 1 && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(e), 
+        this.next++;
+    }
+    createConnection(e) {
+        const s = new cws.WebSocket(e);
+        s.on("open", () => {
+            s.id = generateUid(8), s.send(this.serverId), this.connections.push(s), this.options.logger.debug(`Scaler client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
+        }), s.on("message", e => {
+            this.options.logger.debug(`Scaler client ${s.id} received:`, e), process.pid, this.publishFunction(e);
+        }), s.on("close", (t, o) => {
+            if (this.options.logger.debug(`Scaler client ${s.id} is disconnected from ${e} code ${t}, reason ${o}`, `(pid: ${process.pid})`), 
+            this.removeSocketById(s.id), 1e3 === t) return this.options.logger.warning(`Scaler client ${s.id} has been closed clean`);
+            this.options.logger.warning(`Scaler client ${s.id} has been closed, now is reconnecting`), 
+            setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
+        }), s.on("error", t => {
+            this.options.logger.error(`Scaler client ${s.id} got error`, t, "now is reconnecting", `(pid: ${process.pid})`), 
+            this.removeSocketById(s.id), setTimeout(() => this.createConnection(e), selectRandomBetween(100, 1e3));
+        });
+    }
+    removeSocketById(e) {
+        for (let s = 0, t = this.connections.length; s < t; s++) if (this.connections[s].id === e) {
+            this.connections.splice(s, 1);
+            break;
+        }
+    }
+}
+
+class BrokerServer {
+    constructor(e, s, t, o) {
+        this.options = e, this.sockets = [], this.streamToScaler = !1, this.server = new cws.WebSocketServer({
             port: s,
             verifyClient: (e, s) => s(e.req.url === `/?key=${t}`)
         }, () => {
@@ -354,7 +389,10 @@ class BrokerServer {
                 event: "READY",
                 pid: process.pid
             });
-        }), this.server.on("error", e => {
+        }), this.options.scaleOptions.default.horizontalScaleOptions && (this.streamToScaler = !0, 
+        this.scaler = new ScalerConnector(this.options, e => {
+            this.broadcast(null, JSON.parse(e));
+        }, o)), this.server.on("error", e => {
             this.options.logger.error("Broker Server got an error", e.stack || e), process.exit();
         }), this.server.on("connection", e => {
             e.id = generateUid(8), e.channels = {}, this.sockets.push(e), this.options.logger.debug(`New connection to broker ${e.id}`, `(pid: ${process.pid})`), 
@@ -365,7 +403,8 @@ class BrokerServer {
                 } else if ("s" === s[0]) {
                     const t = s.substr(1, s.length - 1).split(",");
                     for (let s = 0, o = t.length; s < o; s++) e.channels[t[s]] = !0;
-                } else this.broadcast(e.id, JSON.parse(s));
+                } else this.broadcast(e.id, JSON.parse(s)), this.streamToScaler && (this.options.logger.debug("Sending message to Scaler"), 
+                this.scaler.publish(s));
             }), e.on("close", (s, t) => {
                 e.channels = {}, this.removeSocketById(e.id);
             }), e.on("error", s => {
@@ -392,6 +431,43 @@ class BrokerServer {
                 }
                 e && r.send(JSON.stringify(i));
             }
+        }
+    }
+}
+
+class ScalerServer {
+    constructor(e) {
+        this.options = e, this.sockets = [];
+        const s = this.options.scaleOptions.default.horizontalScaleOptions, t = s.masterOptions.tlsOptions ? HTTPS.createServer(s.masterOptions.tlsOptions) : HTTP.createServer();
+        this.wsServer = new cws.WebSocketServer({
+            server: t,
+            verifyClient: (e, t) => {
+                t(e.req.url === `/?key=${s.key || ""}`);
+            }
+        }), t.listen(s.masterOptions.port, () => {
+            process.send({
+                event: "READY",
+                pid: process.pid
+            });
+        }), this.wsServer.on("error", e => {
+            this.options.logger.error(`Scaler error ${e.stack || e}`), process.exit();
+        }), this.wsServer.on("connection", e => {
+            e.id = generateUid(8), this.sockets.push(e), e.on("message", s => {
+                if ("{" !== s[0]) e.serverId = s; else if (e.serverId) for (let t = 0, o = this.sockets.length; t < o; t++) {
+                    const o = this.sockets[t];
+                    o.serverId && e.serverId !== o.serverId && o.send(s);
+                }
+            }), e.on("close", (s, t) => {
+                this.removeSocketById(e.id);
+            }), e.on("error", s => {
+                this.removeSocketById(e.id);
+            });
+        }), this.wsServer.startAutoPing(2e4);
+    }
+    removeSocketById(e) {
+        for (let s = 0, t = this.sockets.length; s < t; s++) if (this.sockets[s].id === e) {
+            this.sockets.splice(s, 1);
+            break;
         }
     }
 }
@@ -428,7 +504,7 @@ function masterProcess(e) {
             securityKey: o
         });
     };
-    if (e.scaleOptions.scaler === exports.Scaler.Default) for (let s = 0; s < e.scaleOptions.default.brokers; s++) n(s, "Broker"); else for (let s = 0; s < e.scaleOptions.workers; s++) n(s, "Worker");
+    if (e.scaleOptions.scaler === exports.Scaler.Default) if (e.scaleOptions.default.horizontalScaleOptions && e.scaleOptions.default.horizontalScaleOptions.masterOptions) n(-1, "Scaler"); else for (let s = 0; s < e.scaleOptions.default.brokers; s++) n(s, "Broker"); else for (let s = 0; s < e.scaleOptions.workers; s++) n(s, "Worker");
 }
 
 function childProcess(e) {
@@ -438,7 +514,10 @@ function childProcess(e) {
             return new Worker(e, s.securityKey);
 
           case "Broker":
-            return new BrokerServer(e, e.scaleOptions.default.brokersPorts[s.id], s.securityKey);
+            return new BrokerServer(e, e.scaleOptions.default.brokersPorts[s.id], s.securityKey, s.serverId);
+
+          case "Scaler":
+            return new ScalerServer(e);
 
           default:
             process.send({
@@ -472,7 +551,7 @@ class ClusterWS {
                 default: {
                     brokers: e.scaleOptions && e.scaleOptions.default && e.scaleOptions.default.brokers ? e.scaleOptions.default.brokers : 1,
                     brokersPorts: e.scaleOptions && e.scaleOptions.default && e.scaleOptions.default.brokersPorts ? e.scaleOptions.default.brokersPorts : [],
-                    horizontalScaleOptions: null
+                    horizontalScaleOptions: e.scaleOptions && e.scaleOptions.default ? e.scaleOptions.default.horizontalScaleOptions : null
                 }
             }
         }, !this.options.scaleOptions.default.brokersPorts.length) for (let e = 0; e < this.options.scaleOptions.default.brokers; e++) this.options.scaleOptions.default.brokersPorts.push(e + 9400);

@@ -41,8 +41,9 @@ export class ScalerServer {
             this.sockets.push(socket);
 
             socket.on('message', (message: string | Buffer): void | boolean => {
-                if (typeof message === 'string') {
-                    socket.serverId = message;
+                // TODO: that is very bad parsing (need to optimize this one)
+                if (message[0] !== '{') {
+                    socket.serverId = message as string;
                 } else if (socket.serverId) {
                     for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
                         const client: WebSocket & SocketExtend = this.sockets[i];
