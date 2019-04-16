@@ -6,13 +6,14 @@ import { runProcesses } from './processes';
 import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
 
 /**
- * TODO: Pre release planes
+ * TODO: Pre release plans
  *
  * - Add restartWorkerOnFail option or alternative to this option
  * - Handle type for "this" keyword in worker function
+ * - Rename Horizontal options from broker to scaler
  *
  *
- * TODO: Future Planes
+ * TODO: Future Plans
  *
  * - Improve positions of debug logs
  * - Split logic more nicely to make it easier to understand code
