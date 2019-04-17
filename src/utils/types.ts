@@ -1,4 +1,5 @@
 import { Worker } from '../modules/worker';
+import { ClientOpts } from 'redis';
 import { SecureContextOptions } from 'tls';
 
 // TODO: get rid of some options which wont be included in 4.0.0
@@ -37,8 +38,7 @@ export enum LogLevel {
 
 export type HorizontalScaleOptions = {
   key?: string;
-  serverId?: string;
-  brokersUrls?: string[];
+  scalersUrls?: string[];
   masterOptions?: {
     port: number;
     tlsOptions?: SecureContextOptions;
@@ -50,7 +50,7 @@ export type Configurations = {
   mode?: Mode;
   port?: number;
   host?: string;
-  tlsOptions?: SecureContextOptions | null;
+  tlsOptions?: SecureContextOptions;
   loggerOptions?: {
     logger?: Logger;
     logLevel?: LogLevel;
@@ -61,12 +61,10 @@ export type Configurations = {
     pingInterval?: number;
   },
   scaleOptions?: {
+    redis?: ClientOpts;
     scaler?: Scaler;
     workers?: number;
-    redis?: {
-      // TODO: allow to pass different redis instances
-      // write options for redis connection
-    } | null;
+    restartOnFail?: boolean;
     default?: {
       brokers?: number;
       brokersPorts?: number[];
@@ -88,12 +86,10 @@ export type Options = {
     pingInterval: number;
   },
   scaleOptions: {
+    redis: ClientOpts | null;
     scaler: Scaler;
     workers: number;
-    redis: {
-      // TODO: allow to pass different redis instances
-      // write options for redis connection
-    } | null;
+    restartOnFail: boolean;
     default: {
       brokers: number;
       brokersPorts: number[];

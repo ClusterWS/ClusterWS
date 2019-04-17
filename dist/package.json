@@ -1,5 +1,5 @@
 {
-	"name": "@clusterws/server",
+	"name": "clusterws",
 	"version": "4.0.0-alpha.2",
 	"description": "ClusterWS - lightweight, fast and powerful framework for building scalable WebSocket applications in Node.js.",
 	"main": "index.js",
@@ -22,7 +22,8 @@
 		"javascript"
 	],
 	"dependencies": {
-		"@clusterws/cws": "^0.12.0"
+		"@clusterws/cws": "^0.12.1",
+		"@types/redis": "^2.8.12"
 	},
 	"nyc": {
 		"temp-directory": "./node_modules/.cache/nyc_output",

@@ -275,7 +275,7 @@ class BrokerConnector {
             this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
         }), s.on("message", e => {
             this.options.logger.debug(`Broker client ${s.id} received:`, e), process.pid, e = JSON.parse(e);
-            for (const s in e) this.publishFunction(s, e, "broker");
+            for (const s in e) this.publishFunction(s, e[s], "broker");
         }), s.on("close", (t, o) => {
             if (this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${o}`, `(pid: ${process.pid})`), 
             this.removeSocketById(s.id), 1e3 === t) return this.options.logger.warning(`Broker client ${s.id} has been closed clean`);
@@ -348,8 +348,11 @@ class ScalerConnector {
     constructor(e, s, t) {
         this.options = e, this.publishFunction = s, this.serverId = t, this.next = 0, this.connections = [];
         const o = this.options.scaleOptions.default.horizontalScaleOptions;
-        if (o.masterOptions && this.createConnection(`ws://127.0.0.1:${o.masterOptions.port}/?key=${o.key || ""}`), 
-        o.brokersUrls) for (let e = 0, s = o.brokersUrls.length; e < s; e++) this.createConnection(`${o.brokersUrls[e]}/?key=${o.key || ""}`);
+        if (o.masterOptions) {
+            const e = o.masterOptions.tlsOptions ? "wss" : "ws";
+            this.createConnection(`${e}://127.0.0.1:${o.masterOptions.port}/?key=${o.key || ""}`);
+        }
+        if (o.scalersUrls) for (let e = 0, s = o.scalersUrls.length; e < s; e++) this.createConnection(`${o.scalersUrls[e]}/?key=${o.key || ""}`);
     }
     publish(e) {
         this.next > this.connections.length - 1 && (this.next = 0), this.connections[this.next] && this.connections[this.next].send(e), 
@@ -496,7 +499,8 @@ function masterProcess(e) {
                 r.forEach(s => e.logger.info(s))));
             }
         }), p.on("exit", () => {
-            e.logger.error(`${l} ${c} has exited`);
+            e.logger.error(`${l} ${c} has exited`), e.scaleOptions.restartOnFail && (e.logger.warning(`${l} ${c} is restarting \n`), 
+            n(c, l, !0));
         }), p.send({
             id: c,
             name: l,
@@ -545,6 +549,7 @@ class ClusterWS {
                 pingInterval: e.websocketOptions && e.websocketOptions.pingInterval ? e.websocketOptions.pingInterval : 2e4
             },
             scaleOptions: {
+                restartOnFail: !!e.scaleOptions && e.scaleOptions.restartOnFail,
                 scaler: e.scaleOptions && e.scaleOptions.scaler ? e.scaleOptions.scaler : exports.Scaler.Default,
                 workers: e.scaleOptions && e.scaleOptions.workers ? e.scaleOptions.workers : 1,
                 redis: e.scaleOptions && e.scaleOptions.redis ? e.scaleOptions.redis : null,

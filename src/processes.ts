@@ -75,10 +75,10 @@ function masterProcess(options: Options): void {
 
     forkedProcess.on('exit', () => {
       options.logger.error(`${name} ${id} has exited`);
-      // if (options.restartWorkerOnFail) {
-      //   options.logger.warning(`${name} ${id} is restarting \n`);
-      //   forkNewProcess(id, name, true);
-      // }
+      if (options.scaleOptions.restartOnFail) {
+        options.logger.warning(`${name} ${id} is restarting \n`);
+        forkNewProcess(id, name, true);
+      }
     });
 
     // inform created chile about who he is

@@ -41,7 +41,6 @@ export class ScalerServer {
             this.sockets.push(socket);
 
             socket.on('message', (message: string | Buffer): void | boolean => {
-                // TODO: that is very bad parsing (need to optimize this one)
                 if (message[0] === 'i') {
                     socket.serverId = message as string;
                 } else if (socket.serverId) {

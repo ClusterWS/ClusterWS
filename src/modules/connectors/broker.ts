@@ -68,7 +68,7 @@ export class BrokerConnector {
       message = JSON.parse(message);
       for (const key in message) {
         if (true) { // overcome typescript
-          this.publishFunction(key, message, 'broker');
+          this.publishFunction(key, message[key], 'broker');
         }
       }
     });

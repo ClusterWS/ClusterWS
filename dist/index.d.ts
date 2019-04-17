@@ -3,11 +3,13 @@
 //   ../../../@clusterws/cws
 //   ../../../http
 //   ../../../https
+//   ../../../redis
 //   ../../../tls
 
 import { WebSocket } from '@clusterws/cws';
 import * as HTTP from 'http';
 import * as HTTPS from 'https';
+import { ClientOpts } from 'redis';
 import { SecureContextOptions } from 'tls';
 
 export class ClusterWS {
@@ -144,8 +146,7 @@ export enum LogLevel {
 }
 export type HorizontalScaleOptions = {
     key?: string;
-    serverId?: string;
-    brokersUrls?: string[];
+    scalersUrls?: string[];
     masterOptions?: {
         port: number;
         tlsOptions?: SecureContextOptions;
@@ -156,7 +157,7 @@ export type Configurations = {
     mode?: Mode;
     port?: number;
     host?: string;
-    tlsOptions?: SecureContextOptions | null;
+    tlsOptions?: SecureContextOptions;
     loggerOptions?: {
         logger?: Logger;
         logLevel?: LogLevel;
@@ -167,9 +168,10 @@ export type Configurations = {
         pingInterval?: number;
     };
     scaleOptions?: {
+        redis?: ClientOpts;
         scaler?: Scaler;
         workers?: number;
-        redis?: {} | null;
+        restartOnFail?: boolean;
         default?: {
             brokers?: number;
             brokersPorts?: number[];
@@ -190,9 +192,10 @@ export type Options = {
         pingInterval: number;
     };
     scaleOptions: {
+        redis: ClientOpts | null;
         scaler: Scaler;
         workers: number;
-        redis: {} | null;
+        restartOnFail: boolean;
         default: {
             brokers: number;
             brokersPorts: number[];

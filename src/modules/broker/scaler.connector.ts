@@ -14,13 +14,13 @@ export class ScalerConnector {
     constructor(private options: Options, private publishFunction: Listener, private serverId: string) {
         const horizontalScaleOptions: HorizontalScaleOptions = this.options.scaleOptions.default.horizontalScaleOptions;
         if (horizontalScaleOptions.masterOptions) {
-            // TODO: add ssl connection if available
-            this.createConnection(`ws://127.0.0.1:${horizontalScaleOptions.masterOptions.port}/?key=${horizontalScaleOptions.key || ''}`);
+            const prefix: string = horizontalScaleOptions.masterOptions.tlsOptions ? 'wss' : 'ws';
+            this.createConnection(`${prefix}://127.0.0.1:${horizontalScaleOptions.masterOptions.port}/?key=${horizontalScaleOptions.key || ''}`);
         }
 
-        if (horizontalScaleOptions.brokersUrls) {
-            for (let i: number = 0, len: number = horizontalScaleOptions.brokersUrls.length; i < len; i++) {
-                this.createConnection(`${horizontalScaleOptions.brokersUrls[i]}/?key=${horizontalScaleOptions.key || ''}`);
+        if (horizontalScaleOptions.scalersUrls) {
+            for (let i: number = 0, len: number = horizontalScaleOptions.scalersUrls.length; i < len; i++) {
+                this.createConnection(`${horizontalScaleOptions.scalersUrls[i]}/?key=${horizontalScaleOptions.key || ''}`);
             }
         }
     }

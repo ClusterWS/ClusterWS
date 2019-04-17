@@ -8,10 +8,9 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
 /**
  * TODO: Pre release plans
  *
- * - Add restartWorkerOnFail option or alternative to this option
  * - Handle type for "this" keyword in worker function
- * - Rename Horizontal options from broker to scaler
  * - Run benchmarks
+ * - Add all middleware
  *
  *
  * TODO: Future Plans
@@ -20,6 +19,8 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
  * - Split logic more nicely to make it easier to understand code
  * - Add more test
  * - Add more options validation and test that all options passed correctly
+ * - Implement retry logic in connectors
+ * - Better async await support
  *
  */
 
@@ -49,6 +50,7 @@ export class ClusterWS {
           configurations.websocketOptions.pingInterval : 20000
       },
       scaleOptions: {
+        restartOnFail: configurations.scaleOptions ? configurations.scaleOptions.restartOnFail : false,
         scaler: configurations.scaleOptions && configurations.scaleOptions.scaler ?
           configurations.scaleOptions.scaler : Scaler.Default,
         workers: configurations.scaleOptions && configurations.scaleOptions.workers ?

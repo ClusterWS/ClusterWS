@@ -3,7 +3,6 @@ import { ScalerConnector } from './scaler.connector';
 import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/cws';
 import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
-// TODO: hookup scaler and broker server
 // TODO: handle fail send
 type SocketExtend = {
   id: string,

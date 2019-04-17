@@ -40,7 +40,8 @@
     "javascript"
   ],
   "dependencies": {
-    "@clusterws/cws": "^0.12.0"
+    "@clusterws/cws": "^0.12.1",
+    "@types/redis": "^2.8.12"
   },
   "nyc": {
     "temp-directory": "./node_modules/.cache/nyc_output",
