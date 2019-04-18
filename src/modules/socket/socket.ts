@@ -12,6 +12,15 @@ export class Socket {
   constructor(private worker: Worker, private socket: WebSocket) {
     this.emitter = new EventEmitter(this.worker.options.logger);
 
+    if (this.worker.options.websocketOptions.sendConfigurationMessage) {
+      // Initialize client socket configs
+      const initMessage: Message = {
+        autoPing: this.worker.options.websocketOptions.autoPing,
+        ping: this.worker.options.websocketOptions.pingInterval
+      };
+      this.send('configuration', initMessage, 'system');
+    }
+
     // "any" type is used to overcome private params
     (this.worker.wss as any).pubSub.register(this.id, (message: Message) => {
       // we dont have to pass event as publish messages is large object with structure { channel: [data] }
@@ -26,42 +35,14 @@ export class Socket {
         return this.emitter.emit('message', message);
       }
 
-      // Try catch is very slow when we throw error therefore we need to try and handle as much as possible error in try method
-      try {
-        // if message is not string then we need to get buffer
-        if (typeof message !== 'string') {
-          message = Buffer.from(message);
-        }
-        // make sure that incoming message is at least looking like correct structure
-        if (message[0] !== 91 && message[0] !== '[') {
-          // if it is not starting with "[" we can 100% that it is wrong structure
-          if (this.emitter.exist('error')) {
-            return this.emitter.emit('error', new Error('Received message is not correct structure'));
-          }
-
-          this.worker.options.logger.error('Received message is not correct structure');
-          return this.terminate();
-        }
-
-        // we can try and decode message
-        // JSON.parse() is actually another slow part :(
-        // unfortunately we can not do anything about that
-        decode(this as any, JSON.parse(message.toString() as any));
-      } catch (err) {
-        // we have caught some error trying to parse message try and send message to standard websocket output
-        // for user to process or to error output
-        if (this.emitter.exist('error')) {
-          return this.emitter.emit('error', err);
-        }
-        this.worker.options.logger.error(err);
-        this.terminate();
-      }
+      this.processMessage(message);
     });
 
     this.socket.on('close', (code?: number, reason?: string): void => {
       (this.worker.wss as any).pubSub.unregister(this.id, Object.keys(this.channels));
       this.emitter.emit('disconnect', code, reason);
       this.emitter.removeEvents();
+      this.channels = {};
     });
 
     this.socket.on('error', (err: Error): void => {
@@ -129,6 +110,43 @@ export class Socket {
     }
     delete this.channels[channel];
     this.worker.wss.unsubscribe(this.id, channel);
+  }
+
+  public processMessage(message: Message): void {
+    // Try catch is very slow when we throw error therefore we need to try and handle as much as possible error in try method
+    try {
+      // If message is array already we can process it
+      if (message instanceof Array) {
+        return decode(this as any, message);
+      }
+      // if message is not string then we need to get buffer
+      if (typeof message !== 'string') {
+        message = Buffer.from(message);
+      }
+      // make sure that incoming message is at least looking like correct structure
+      if (message[0] !== 91 && message[0] !== '[') {
+        // if it is not starting with "[" we can 100% that it is wrong structure
+        if (this.emitter.exist('error')) {
+          return this.emitter.emit('error', new Error('Received message is not correct structure'));
+        }
+
+        this.worker.options.logger.error('Received message is not correct structure');
+        return this.terminate();
+      }
+
+      // we can try and decode message
+      // JSON.parse() is actually another slow part :(
+      // unfortunately we can not do anything about that
+      decode(this as any, JSON.parse(message.toString() as any));
+    } catch (err) {
+      // we have caught some error trying to parse message try and send message to standard websocket output
+      // for user to process or to error output
+      if (this.emitter.exist('error')) {
+        return this.emitter.emit('error', err);
+      }
+      this.worker.options.logger.error(err);
+      this.terminate();
+    }
   }
 }
 

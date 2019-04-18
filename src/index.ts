@@ -47,7 +47,10 @@ export class ClusterWS {
         autoPing: configurations.websocketOptions ?
           configurations.websocketOptions.autoPing !== false : true,
         pingInterval: configurations.websocketOptions && configurations.websocketOptions.pingInterval ?
-          configurations.websocketOptions.pingInterval : 20000
+          configurations.websocketOptions.pingInterval : 20000,
+        sendConfigurationMessage: configurations.websocketOptions &&
+          configurations.websocketOptions.sendConfigurationMessage === false ?
+          configurations.websocketOptions.sendConfigurationMessage : true
       },
       scaleOptions: {
         restartOnFail: configurations.scaleOptions ? configurations.scaleOptions.restartOnFail : false,

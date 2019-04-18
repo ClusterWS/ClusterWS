@@ -59,6 +59,7 @@ export type Configurations = {
     wsPath?: string;
     autoPing?: boolean;
     pingInterval?: number;
+    sendConfigurationMessage?: boolean;
   },
   scaleOptions?: {
     redis?: ClientOpts;
@@ -84,6 +85,7 @@ export type Options = {
     wsPath: string;
     autoPing: boolean;
     pingInterval: number;
+    sendConfigurationMessage: boolean;
   },
   scaleOptions: {
     redis: ClientOpts | null;
