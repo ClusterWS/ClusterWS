@@ -22,7 +22,7 @@
 		"javascript"
 	],
 	"dependencies": {
-		"@clusterws/cws": "^0.12.1",
+		"@clusterws/cws": "^0.12.2",
 		"@types/redis": "^2.8.12"
 	},
 	"nyc": {

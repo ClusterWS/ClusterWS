@@ -74,22 +74,22 @@ class EventEmitter {
 
 class Socket {
     constructor(e, s) {
-        this.worker = e, this.socket = s, this.id = generateUid(8), this.channels = {}, 
-        this.emitter = new EventEmitter(this.worker.options.logger), this.worker.wss.pubSub.register(this.id, e => {
+        if (this.worker = e, this.socket = s, this.id = generateUid(8), this.channels = {}, 
+        this.emitter = new EventEmitter(this.worker.options.logger), this.worker.options.websocketOptions.sendConfigurationMessage) {
+            const e = {
+                autoPing: this.worker.options.websocketOptions.autoPing,
+                ping: this.worker.options.websocketOptions.pingInterval
+            };
+            this.send("configuration", e, "system");
+        }
+        this.worker.wss.pubSub.register(this.id, e => {
             this.send(null, e, "publish");
         }), this.socket.on("message", e => {
             if (this.emitter.exist("message")) return this.emitter.emit("message", e);
-            try {
-                if ("string" != typeof e && (e = Buffer.from(e)), 91 !== e[0] && "[" !== e[0]) return this.emitter.exist("error") ? this.emitter.emit("error", new Error("Received message is not correct structure")) : (this.worker.options.logger.error("Received message is not correct structure"), 
-                this.terminate());
-                decode(this, JSON.parse(e.toString()));
-            } catch (e) {
-                if (this.emitter.exist("error")) return this.emitter.emit("error", e);
-                this.worker.options.logger.error(e), this.terminate();
-            }
+            this.processMessage(e);
         }), this.socket.on("close", (e, s) => {
             this.worker.wss.pubSub.unregister(this.id, Object.keys(this.channels)), this.emitter.emit("disconnect", e, s), 
-            this.emitter.removeEvents();
+            this.emitter.removeEvents(), this.channels = {};
         }), this.socket.on("error", e => {
             if (this.emitter.exist("error")) return this.emitter.emit("error", e);
             this.worker.options.logger.error(e), this.socket.terminate();
@@ -113,7 +113,7 @@ class Socket {
     subscribe(e) {
         if (!this.channels[e]) {
             if (this.worker.wss.middleware[exports.Middleware.onSubscribe]) return this.worker.wss.middleware[exports.Middleware.onSubscribe](this, e, s => {
-                s || (this.channels[e] = !0, this.worker.wss.subscribe(this.id, e));
+                s && (this.channels[e] = !0, this.worker.wss.subscribe(this.id, e));
             });
             this.channels[e] = !0, this.worker.wss.subscribe(this.id, e);
         }
@@ -121,6 +121,17 @@ class Socket {
     unsubscribe(e) {
         this.channels[e] && (this.worker.wss.middleware[exports.Middleware.onUnsubscribe] && this.worker.wss.middleware[exports.Middleware.onUnsubscribe](this, e), 
         delete this.channels[e], this.worker.wss.unsubscribe(this.id, e));
+    }
+    processMessage(e) {
+        try {
+            if (e instanceof Array) return decode(this, e);
+            if ("string" != typeof e && (e = Buffer.from(e)), 91 !== e[0] && "[" !== e[0]) return this.emitter.exist("error") ? this.emitter.emit("error", new Error("Received message is not correct structure")) : (this.worker.options.logger.error("Received message is not correct structure"), 
+            this.terminate());
+            decode(this, JSON.parse(e.toString()));
+        } catch (e) {
+            if (this.emitter.exist("error")) return this.emitter.emit("error", e);
+            this.worker.options.logger.error(e), this.terminate();
+        }
     }
 }
 
@@ -546,7 +557,8 @@ class ClusterWS {
             websocketOptions: {
                 wsPath: e.websocketOptions ? e.websocketOptions.wsPath : null,
                 autoPing: !e.websocketOptions || !1 !== e.websocketOptions.autoPing,
-                pingInterval: e.websocketOptions && e.websocketOptions.pingInterval ? e.websocketOptions.pingInterval : 2e4
+                pingInterval: e.websocketOptions && e.websocketOptions.pingInterval ? e.websocketOptions.pingInterval : 2e4,
+                sendConfigurationMessage: !e.websocketOptions || !1 !== e.websocketOptions.sendConfigurationMessage || e.websocketOptions.sendConfigurationMessage
             },
             scaleOptions: {
                 restartOnFail: !!e.scaleOptions && e.scaleOptions.restartOnFail,
