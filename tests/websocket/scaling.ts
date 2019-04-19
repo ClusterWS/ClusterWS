@@ -1,3 +1,4 @@
+// TODO: find out how to test scaling logic
 // /* tslint:disable */
 // import { expect } from 'chai';
 // import { WebSocket } from '@clusterws/cws';

@@ -314,10 +314,6 @@ describe('Pub Sub Communication', () => {
     createWebsocketClient(client2);
     createWebsocketClient(client1);
   });
-
-  // it('Server should emit events to all client which listen to that channel', (done) => {
-
-  // });
 });
 
 
@@ -415,6 +411,153 @@ describe('Raw Websocket methods', () => {
     createClusterWSServer(serverOptions);
     createWebsocketClient(clientOptions);
   });
+});
+
+
+describe("ClusterWS Middleware", () => {
+  it('Should not allow to connect to the websocket server if "verifyConnection" decline connection', (done) => {
+    let server;
+    const serverOptions = {
+      worker: function () {
+        server = this.server;
+        this.wss.addMiddleware(Middleware.verifyConnection, (info, next) => {
+          // TODO: probably need to change this logic to call just next to process message
+          next(false);
+        });
+
+        this.wss.on('connection', () => {
+          done('On "connection" event should not be called')
+        });
+      }
+    }
+
+    const clientOptions = {
+      open: function () {
+        done('On "open" event should not be called');
+      },
+      error: function (err) {
+        server.close();
+        done();
+      }
+    }
+    createClusterWSServer(serverOptions);
+    createWebsocketClient(clientOptions);
+  });
+
+  it('Should allow to connect to the websocket server if "verifyConnection" accepts connection', (done) => {
+    const serverOptions = {
+      worker: function () {
+        this.wss.addMiddleware(Middleware.verifyConnection, (info, next) => {
+          // TODO: probably need to change this logic to call just next to process message
+          next(true);
+        });
+
+        this.wss.on('connection', () => {
+          this.server.close();
+          done()
+        });
+      }
+    }
+
+    const clientOptions = {
+      error: function (err) {
+        done('Error should not be called');
+      }
+    }
+    createClusterWSServer(serverOptions);
+    createWebsocketClient(clientOptions);
+  });
+
+  it('Should not subscribe to the channel if "onSubscribe" middleware declined subscription', (done) => {
+    const subscribeEvent = ['s', 's', 'hello world'];
+    const serverOptions = {
+      worker: function () {
+        this.wss.addMiddleware(Middleware.onSubscribe, (socket, channel, next) => {
+          expect(channel).to.be.eql(subscribeEvent[2]);
+          next(false);
+          setTimeout(() => {
+            // check if channel exists
+            expect((socket as any).channels).to.not.contain.keys('hello world');
+            expect((socket as any).worker.wss.pubSub.channels['hello world']).to.be.undefined;
+            this.server.close();
+            done();
+          }, 10);
+        });
+
+        this.wss.on('connection', () => { });
+      }
+    }
+
+    const clientOptions = {
+      open: function () {
+        this.send(JSON.stringify(subscribeEvent));
+      }
+    }
+
+    createClusterWSServer(serverOptions);
+    createWebsocketClient(clientOptions);
+  });
+
+  it('Should subscribe to the channel if "onSubscribe" middleware accepts subscription', (done) => {
+    const subscribeEvent = ['s', 's', 'hello world'];
+    const serverOptions = {
+      worker: function () {
+        this.wss.addMiddleware(Middleware.onSubscribe, (socket, channel, next) => {
+          expect(channel).to.be.eql(subscribeEvent[2]);
+          next(true);
+          setTimeout(() => {
+            // check if channel exists
+            expect((socket as any).channels).to.contain.keys('hello world');
+            expect((socket as any).worker.wss.pubSub.channels['hello world']).have.members(['broker', (socket as any).id]);
+            this.server.close();
+            done();
+          }, 10);
+        });
+
+        this.wss.on('connection', () => { });
+      }
+    }
+
+    const clientOptions = {
+      open: function () {
+        this.send(JSON.stringify(subscribeEvent));
+      }
+    }
+
+    createClusterWSServer(serverOptions);
+    createWebsocketClient(clientOptions);
+  });
+
+  it('Should call unsubscribe middleware if "onUnsubscribe" provided', (done) => {
+    const subscribeEvent = ['s', 's', 'hello world'];
+    const unsubscribeEvent = ['s', 'u', 'hello world'];
+
+    const serverOptions = {
+      worker: function () {
+        this.wss.addMiddleware(Middleware.onUnsubscribe, (socket, channel) => {
+          expect(channel).to.be.eql(subscribeEvent[2]);
+          this.server.close();
+          done();
+        });
+
+        this.wss.on('connection', () => { });
+      }
+    }
+
+    const clientOptions = {
+      open: function () {
+        this.send(JSON.stringify(subscribeEvent));
+        setTimeout(() => {
+          this.send(JSON.stringify(unsubscribeEvent));
+        }, 10);
+      }
+    }
+
+    createClusterWSServer(serverOptions);
+    createWebsocketClient(clientOptions);
+  });
+
+  // TODO: Add on channel close and on channel open tests
 });
 
 

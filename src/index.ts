@@ -21,6 +21,7 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
  * - Add more options validation and test that all options passed correctly
  * - Implement retry logic in connectors
  * - Better async await support
+ * - Add ack event on subscribe and unsubscribe
  *
  */
 
