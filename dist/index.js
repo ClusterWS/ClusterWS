@@ -245,7 +245,8 @@ class RedisConnector {
         this.publisher.on("ready", () => {
             this.options.logger.debug("Redis Publisher is connected", `(pid: ${process.pid})`);
         }), this.subscriber.on("ready", () => {
-            this.options.logger.debug("Redis Subscriber is connected", `(pid: ${process.pid})`);
+            this.options.logger.debug("Redis Subscriber is connected", `(pid: ${process.pid})`), 
+            this.subscribe(this.getChannels());
         }), this.publisher.on("error", e => {
             this.options.logger.error("Redis Publisher error", e.message, `(pid: ${process.pid})`);
         }), this.subscriber.on("error", e => {

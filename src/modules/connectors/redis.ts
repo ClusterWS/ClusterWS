@@ -4,7 +4,7 @@ import { Options, Message, Listener } from '../../utils/types';
 // TODO: improve redis connector
 // TODO: enable redis import only if everything is ready
 // TODO: implement reconnect system (this logic already exists on redis)
-// TODO: implement resubscribe to channels
+
 export class RedisConnector {
   private publisher: any;
   private subscriber: any;
@@ -48,6 +48,7 @@ export class RedisConnector {
 
     this.subscriber.on('ready', () => {
       this.options.logger.debug(`Redis Subscriber is connected`, `(pid: ${process.pid})`);
+      this.subscribe(this.getChannels());
     });
 
     this.publisher.on('error', (err: any) => {
