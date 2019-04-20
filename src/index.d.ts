@@ -26,6 +26,7 @@ export class WSServer extends EventEmitter {
         [s: number]: Listener;
     };
     constructor(options: Options, securityKey: string);
+    publishToWorkers(message: Message): void;
     addMiddleware(middlewareType: Middleware, listener: Listener): void;
     publish(channelName: string, message: Message, id?: string): void;
     subscribe(id: string, channelName: string): void;
