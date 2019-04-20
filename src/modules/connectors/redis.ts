@@ -61,7 +61,7 @@ export class RedisConnector {
     this.subscriber.on('message', (channel: any, message: any) => {
       const parsedMessage: any = JSON.parse(message);
       if (parsedMessage.publisherId !== this.publisherId) {
-        this.publishFunction(channel, parsedMessage.message, 'broker');
+        this.publishFunction(channel, parsedMessage.message, '#broker');
       }
     });
   }

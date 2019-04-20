@@ -7,17 +7,18 @@ export class PubSubEngine {
   private batches: { [key: string]: Message[] } = {};
   private channels: { [key: string]: string[] } = {};
 
-  constructor(private logger: Logger, private interval: number) {
+  constructor(private logger: Logger, private interval: number, predefinedChannels: any = {}) {
     this.run();
+    this.channels = predefinedChannels;
+  }
+
+  public addListener(event: string, listener: Listener): void {
+    this.hooks[event] = listener;
   }
 
   // get all channels which this server is subscribed to
   public getChannels(): string[] {
     return Object.keys(this.channels);
-  }
-
-  public addListener(event: string, listener: Listener): void {
-    this.hooks[event] = listener;
   }
 
   // register particular user with listener in pubSub system
@@ -47,7 +48,7 @@ export class PubSubEngine {
     if (this.hooks['channelAdd']) {
       this.hooks['channelAdd'](channel);
     }
-    this.channels[channel] = ['broker', userId];
+    this.channels[channel] = ['#broker', userId];
   }
 
   // remove unsubscribe user from specific channel
@@ -129,10 +130,10 @@ export class PubSubEngine {
             brokerMessage.push(batch[i].message);
           }
           // check if broker actually exists in prepared messages
-          if (!preparedMessages['broker']) {
-            preparedMessages['broker'] = {};
+          if (!preparedMessages['#broker']) {
+            preparedMessages['#broker'] = {};
           }
-          preparedMessages['broker'][channel] = brokerMessage;
+          preparedMessages['#broker'][channel] = brokerMessage;
         }
       }
     }

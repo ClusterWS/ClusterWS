@@ -13,7 +13,7 @@ var cluster = require("cluster"), crypto = require("crypto"), HTTP = require("ht
 }(exports.Scaler || (exports.Scaler = {})), function(e) {
     e[e.onSubscribe = 0] = "onSubscribe", e[e.onUnsubscribe = 1] = "onUnsubscribe", 
     e[e.verifyConnection = 2] = "verifyConnection", e[e.onChannelOpen = 3] = "onChannelOpen", 
-    e[e.onChannelClose = 4] = "onChannelClose";
+    e[e.onChannelClose = 4] = "onChannelClose", e[e.onMessageFromWorker = 5] = "onMessageFromWorker";
 }(exports.Middleware || (exports.Middleware = {})), function(e) {
     e[e.ALL = 0] = "ALL", e[e.DEBUG = 1] = "DEBUG", e[e.INFO = 2] = "INFO", e[e.WARN = 3] = "WARN", 
     e[e.ERROR = 4] = "ERROR";
@@ -157,15 +157,15 @@ function decode(e, s) {
 }
 
 class PubSubEngine {
-    constructor(e, s) {
+    constructor(e, s, t = {}) {
         this.logger = e, this.interval = s, this.hooks = {}, this.users = {}, this.batches = {}, 
-        this.channels = {}, this.run();
-    }
-    getChannels() {
-        return Object.keys(this.channels);
+        this.channels = {}, this.run(), this.channels = t;
     }
     addListener(e, s) {
         this.hooks[e] = s;
+    }
+    getChannels() {
+        return Object.keys(this.channels);
     }
     register(e, s) {
         this.users[e] = s;
@@ -177,7 +177,7 @@ class PubSubEngine {
     }
     subscribe(e, s) {
         return this.users[e] ? this.channels[s] ? this.channels[s].push(e) : (this.hooks.channelAdd && this.hooks.channelAdd(s), 
-        void (this.channels[s] = [ "broker", e ])) : this.logger.warning(`Trying to subscribe not existing user ${e}`);
+        void (this.channels[s] = [ "#broker", e ])) : this.logger.warning(`Trying to subscribe not existing user ${e}`);
     }
     unsubscribe(e, s) {
         const t = this.channels[s];
@@ -208,7 +208,7 @@ class PubSubEngine {
             } else {
                 const t = [];
                 for (let e = 0; e < i; e++) t.push(o[e].message);
-                e.broker || (e.broker = {}), e.broker[s] = t;
+                e["#broker"] || (e["#broker"] = {}), e["#broker"][s] = t;
             }
         }
         this.batches = {};
@@ -252,7 +252,7 @@ class RedisConnector {
             this.options.logger.error("Redis Subscriber error", e.message, `(pid: ${process.pid})`);
         }), this.subscriber.on("message", (e, s) => {
             const t = JSON.parse(s);
-            t.publisherId !== this.publisherId && this.publishFunction(e, t.message, "broker");
+            t.publisherId !== this.publisherId && this.publishFunction(e, t.message, "#broker");
         });
     }
 }
@@ -286,7 +286,7 @@ class BrokerConnector {
             this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
         }), s.on("message", e => {
             this.options.logger.debug(`Broker client ${s.id} received:`, e), process.pid, e = JSON.parse(e);
-            for (const s in e) this.publishFunction(s, e[s], "broker");
+            for (const s in e) this.publishFunction(s, e[s], "#broker");
         }), s.on("close", (t, o) => {
             if (this.options.logger.debug(`Broker client ${s.id} is disconnected from ${e} code ${t}, reason ${o}`, `(pid: ${process.pid})`), 
             this.removeSocketById(s.id), 1e3 === t) return this.options.logger.warning(`Broker client ${s.id} has been closed clean`);
@@ -307,16 +307,25 @@ class BrokerConnector {
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 5), 
-        this.options.mode !== exports.Mode.Single && (this.options.scaleOptions.scaler === exports.Scaler.Default && (this.connector = new BrokerConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s)), 
+        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 5, {
+            "#workersLine": [ "#broker", "#worker" ]
+        }), this.options.mode !== exports.Mode.Single && (this.options.scaleOptions.scaler === exports.Scaler.Default && (this.connector = new BrokerConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s)), 
         this.options.scaleOptions.scaler === exports.Scaler.Redis && (this.connector = new RedisConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s))), 
-        this.pubSub.register("broker", e => {
+        this.pubSub.register("#worker", e => {
+            if (this.middleware[exports.Middleware.onMessageFromWorker]) {
+                const s = e["#workersLine"];
+                for (let e = 0, t = s.length; e < t; e++) this.middleware[exports.Middleware.onMessageFromWorker](s[e]);
+            }
+        }), this.pubSub.register("#broker", e => {
             this.options.mode !== exports.Mode.Single && this.connector.publish(e);
         }), this.pubSub.addListener("channelAdd", e => {
             this.options.mode !== exports.Mode.Single && this.connector.subscribe(e), this.middleware[exports.Middleware.onChannelOpen] && this.middleware[exports.Middleware.onChannelOpen](e);
         }), this.pubSub.addListener("channelClose", e => {
             this.options.mode !== exports.Mode.Single && this.connector.unsubscribe(e), this.middleware[exports.Middleware.onChannelClose] && this.middleware[exports.Middleware.onChannelClose](e);
         });
+    }
+    publishToWorkers(e) {
+        this.publish("#workersLine", e, "#worker");
     }
     addMiddleware(e, s) {
         this.middleware[e] = s;
@@ -495,8 +504,8 @@ function runProcesses(e) {
 function masterProcess(e) {
     let s;
     const t = generateUid(10), o = generateUid(20), i = [], r = [], n = (c, l, h) => {
-        const p = cluster.fork();
-        p.on("message", t => {
+        const a = cluster.fork();
+        a.on("message", t => {
             if (e.logger.debug(`Message from ${l}:`, t, `(pid: ${process.pid})`), "READY" === t.event) {
                 if (h) return e.logger.info(`${l} ${c} PID ${t.pid} has been restarted`);
                 if ("Scaler" === l) {
@@ -509,10 +518,10 @@ function masterProcess(e) {
                 s && e.logger.info(s), e.scaleOptions.scaler === exports.Scaler.Default && i.forEach(s => e.logger.info(s)), 
                 r.forEach(s => e.logger.info(s))));
             }
-        }), p.on("exit", () => {
+        }), a.on("exit", () => {
             e.logger.error(`${l} ${c} has exited`), e.scaleOptions.restartOnFail && (e.logger.warning(`${l} ${c} is restarting \n`), 
             n(c, l, !0));
-        }), p.send({
+        }), a.send({
             id: c,
             name: l,
             serverId: t,

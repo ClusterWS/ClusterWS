@@ -25,7 +25,8 @@ export enum Middleware {
   onUnsubscribe,
   verifyConnection,
   onChannelOpen,
-  onChannelClose
+  onChannelClose,
+  onMessageFromWorker
 }
 
 export enum LogLevel {

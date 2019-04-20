@@ -218,7 +218,7 @@ describe('Pub Sub Communication', () => {
         this.wss.on('connection', (socket) => {
           setTimeout(() => {
             expect((socket as any).channels).to.contain.keys('hello world');
-            expect((socket as any).worker.wss.pubSub.channels['hello world']).have.members(['broker', (socket as any).id]);
+            expect((socket as any).worker.wss.pubSub.channels['hello world']).have.members(['#broker', (socket as any).id]);
             socket.disconnect();
           }, 10);
           socket.on('disconnect', () => {
@@ -508,7 +508,7 @@ describe("ClusterWS Middleware", () => {
           setTimeout(() => {
             // check if channel exists
             expect((socket as any).channels).to.contain.keys('hello world');
-            expect((socket as any).worker.wss.pubSub.channels['hello world']).have.members(['broker', (socket as any).id]);
+            expect((socket as any).worker.wss.pubSub.channels['hello world']).have.members(['#broker', (socket as any).id]);
             this.server.close();
             done();
           }, 10);
@@ -562,7 +562,6 @@ describe("ClusterWS Middleware", () => {
     const serverOptions = {
       worker: function () {
         this.wss.addMiddleware(Middleware.onChannelOpen, (channel) => {
-          console.log(channel);
           expect(channel).to.be.eql(subscribeEvent[2]);
           this.server.close();
           done();
@@ -587,7 +586,6 @@ describe("ClusterWS Middleware", () => {
     const serverOptions = {
       worker: function () {
         this.wss.addMiddleware(Middleware.onChannelClose, (channel) => {
-          console.log(channel);
           expect(channel).to.be.eql(subscribeEvent[2]);
           this.server.close();
           done();

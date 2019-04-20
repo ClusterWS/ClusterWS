@@ -1,5 +1,4 @@
 /* tslint:disable */
-
 import * as HTTP from 'http';
 import * as HTTPS from 'https';
 
@@ -72,7 +71,8 @@ export enum Middleware {
     onUnsubscribe = 1,
     verifyConnection = 2,
     onChannelOpen = 3,
-    onChannelClose = 4
+    onChannelClose = 4,
+    onMessageFromWorker = 5
 }
 
 export enum LogLevel {

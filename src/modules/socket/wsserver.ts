@@ -13,7 +13,10 @@ export class WSServer extends EventEmitter {
   constructor(private options: Options, securityKey: string) {
     // we pass "options" instead of "this.options" because "this" it was not yet initialized
     super(options.logger);
-    this.pubSub = new PubSubEngine(this.options.logger, 5);
+
+    // automatically predefined #workersLine channel to receive all message from workers
+    this.pubSub = new PubSubEngine(this.options.logger, 5, { '#workersLine': ['#broker', '#worker'] });
+
     if (this.options.mode !== Mode.Single) {
       if (this.options.scaleOptions.scaler === Scaler.Default) {
         this.connector = new BrokerConnector(
@@ -34,7 +37,17 @@ export class WSServer extends EventEmitter {
       }
     }
 
-    this.pubSub.register('broker', (message: Message) => {
+    this.pubSub.register('#worker', (message: Message) => {
+      if (this.middleware[Middleware.onMessageFromWorker]) {
+        // automatically replay messages
+        const batch: any[] = message['#workersLine'];
+        for (let i: number = 0, len: number = batch.length; i < len; i++) {
+          this.middleware[Middleware.onMessageFromWorker](batch[i]);
+        }
+      }
+    });
+
+    this.pubSub.register('#broker', (message: Message) => {
       if (this.options.mode !== Mode.Single) {
         this.connector.publish(message);
       }
@@ -56,6 +69,10 @@ export class WSServer extends EventEmitter {
       this.middleware[Middleware.onChannelClose] &&
         this.middleware[Middleware.onChannelClose](channelName);
     });
+  }
+
+  public publishToWorkers(message: Message): void {
+    this.publish('#workersLine', message, '#worker');
   }
 
   public addMiddleware(middlewareType: Middleware, listener: Listener): void {

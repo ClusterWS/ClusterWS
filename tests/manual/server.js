@@ -37,9 +37,13 @@ async function Worker() {
   //   next(true);
   // });
 
-  // wss.addMiddleware(Middleware.onSubscribe, () => {
-  //   console.log('Some cool thing 2');
-  // })
+  wss.addMiddleware(Middleware.onMessageFromWorker, (message) => {
+    console.log('Got message from anther worker', process.pid, message);
+  })
+
+  setInterval(() => {
+    this.wss.publishToWorkers({ pid: process.pid, message: 'Testing my message' });
+  }, 10000);
 
 
   wss.on('connection', (socket) => {
