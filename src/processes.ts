@@ -11,7 +11,7 @@ export function runProcesses(options: Options): any {
   // validate in which mode are we running
   if (options.mode === Mode.Single) {
     options.logger.info(` Running on: ${options.port}, PID ${process.pid} ${options.tlsOptions ? '(secure)' : ''}`);
-    // we dont need key for single process as it is not going to connect to any broker
+    // we don't need key for single process as it is not going to connect to any broker
     return new Worker(options, '');
   }
 

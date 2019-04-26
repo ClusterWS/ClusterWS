@@ -2,9 +2,6 @@ import { Worker } from '../modules/worker';
 import { ClientOpts } from 'redis';
 import { SecureContextOptions } from 'tls';
 
-// TODO: get rid of some options which wont be included in 4.0.0
-// TODO: Manually write d.ts file (as generated on is trash)
-
 // for SocketMessage use string | Buffer
 export type Message = any;
 export type Listener = (...args: any[]) => void;
