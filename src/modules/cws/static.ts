@@ -23,6 +23,6 @@ export const native: any = ((): void => {
 
     if (process.platform === 'win32' && lessThanSixFour)
       throw new Error('µWebSockets requires Node.js 8.0.0 or greater on Windows.');
-    throw new Error('Could not run µWebSockets bindings');
+    throw e;
   }
 })();

@@ -8,7 +8,7 @@ const noop = () => {}, OPCODE_TEXT = 1, OPCODE_PING = 9, OPCODE_BINARY = 2, APP_
     } catch (e) {
         const r = process.version.substring(1).split(".").map(e => parseInt(e, 10)), s = r[0] < 6 || 6 === r[0] && r[1] < 4;
         if ("win32" === process.platform && s) throw new Error("µWebSockets requires Node.js 8.0.0 or greater on Windows.");
-        throw new Error("Could not run µWebSockets bindings");
+        throw e;
     }
 })();
 
