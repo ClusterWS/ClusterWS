@@ -111,12 +111,14 @@ class Socket {
         this.socket.terminate();
     }
     subscribe(e) {
-        if (!this.channels[e]) {
-            if (this.worker.wss.middleware[exports.Middleware.onSubscribe]) return this.worker.wss.middleware[exports.Middleware.onSubscribe](this, e, s => {
-                s && (this.channels[e] = !0, this.worker.wss.subscribe(this.id, e));
-            });
-            this.channels[e] = !0, this.worker.wss.subscribe(this.id, e);
+        const s = {};
+        for (let t = 0, o = e.length; t < o; t++) {
+            const o = e[t];
+            s[o] = !0, this.channels[o] ? s[o] = !1 : this.worker.wss.middleware[exports.Middleware.onSubscribe] ? this.worker.wss.middleware[exports.Middleware.onSubscribe](this, o, e => {
+                e ? (this.channels[o] = !0, this.worker.wss.subscribe(this.id, o)) : s[o] = !1;
+            }) : (this.channels[o] = !0, this.worker.wss.subscribe(this.id, o));
         }
+        this.send("subscribe", s, "system");
     }
     unsubscribe(e) {
         this.channels[e] && (this.worker.wss.middleware[exports.Middleware.onUnsubscribe] && this.worker.wss.middleware[exports.Middleware.onUnsubscribe](this, e), 
@@ -140,6 +142,7 @@ function encode(e, s, t) {
         emit: [ "e", e, s ],
         publish: [ "p", e, s ],
         system: {
+            subscribe: [ "s", "s", s ],
             configuration: [ "s", "c", s ]
         }
     };

@@ -12,7 +12,7 @@ new ClusterWS({
     logLevel: LogLevel.DEBUG
   },
   scaleOptions: {
-    scaler: Scaler.Redis,
+    scaler: Scaler.Default,
     workers: 2,
     redis: {
       host: 'localhost',
@@ -36,7 +36,14 @@ async function Worker() {
   // wss.addMiddleware(Middleware.verifyConnection, (info, next) => {
   //   next(true);
   // });
+  wss.addMiddleware(Middleware.onSubscribe, (socket, channel, allow) => {
+    if (channel === 'another') {
+      return allow(false);
+    }
 
+    allow(true);
+  })
+  
   wss.addMiddleware(Middleware.onMessageFromWorker, (message) => {
     console.log('Got message from anther worker', process.pid, message);
   })

@@ -1,6 +1,6 @@
 const { WebSocket } = require('@clusterws/cws');
 
-const websocketUrl = `ws://localhost:3002`;
+const websocketUrl = `ws://localhost:3001`;
 
 let incoming = 0;
 let closed = 0;
@@ -12,7 +12,7 @@ let socket = new WebSocket(websocketUrl);
 socket.on('open', () => {
   opened++;
   // console.log("Connected");
-  socket.send(JSON.stringify(['s', 's', 'hello']));
+  socket.send(JSON.stringify(['s', 's', ['hello', 'another']]));
 
   // setInterval(() => {
   //   console.log("Send");

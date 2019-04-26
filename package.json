@@ -1,5 +1,5 @@
 {
-  "name": "clusterws",
+  "name": "@clusterws/server",
   "version": "4.0.0-alpha.4",
   "description": "ClusterWS - lightweight, fast and powerful framework for building scalable WebSocket applications in Node.js.",
   "main": "index.js",

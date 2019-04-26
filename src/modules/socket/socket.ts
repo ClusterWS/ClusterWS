@@ -23,14 +23,13 @@ export class Socket {
 
     // "any" type is used to overcome private params
     (this.worker.wss as any).pubSub.register(this.id, (message: Message) => {
-      // we dont have to pass event as publish messages is large object with structure { channel: [data] }
+      // we don't have to pass event as publish messages is large object with structure { channel: [data] }
       this.send(null, message, 'publish');
     });
 
     this.socket.on('message', (message: string | Buffer): void => {
       // if user listens on 'message' event then we will not parse any messages
       // and just emit default websocket on message event
-      // TODO: enable next for messaging system so user can process with parsing if needed
       if (this.emitter.exist('message')) {
         return this.emitter.emit('message', message);
       }
@@ -80,24 +79,38 @@ export class Socket {
     this.socket.terminate();
   }
 
-  // TODO: Currently we do not inform front end if we are subscribed or unsubscribed
   // below functionality is not fully ready for user exposure
 
   // Subscribe socket to specific channel
-  public subscribe(channel: string): void {
-    if (this.channels[channel]) { return; }
-    if (this.worker.wss.middleware[Middleware.onSubscribe]) {
-      // This will allow user to decide if they want to subscribe user to specific channel
-      return this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (allow: any) => {
-        // TODO: Handle error correctly or roll back to use next with bool inside
-        if (allow) {
-          this.channels[channel] = true;
-          this.worker.wss.subscribe(this.id, channel);
-        }
-      });
+  public subscribe(channels: string[]): void {
+    const subResponse: any = {};
+    // console.log("GOt here", this.channels);
+    for (let i: number = 0, len: number = channels.length; i < len; i++) {
+      const channel: string = channels[i];
+      subResponse[channel] = true;
+
+      if (this.channels[channel]) {
+        subResponse[channel] = false;
+        continue;
+      }
+
+      if (this.worker.wss.middleware[Middleware.onSubscribe]) {
+        // TODO: This wont work with async (need to fix it) :(
+        // This will allow user to decide if they want to subscribe user to specific channel
+        this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (allow: any) => {
+          if (allow) {
+            this.channels[channel] = true;
+            this.worker.wss.subscribe(this.id, channel);
+          } else { subResponse[channel] = false; }
+        });
+        continue;
+      }
+
+      this.channels[channel] = true;
+      this.worker.wss.subscribe(this.id, channel);
     }
-    this.channels[channel] = true;
-    this.worker.wss.subscribe(this.id, channel);
+
+    this.send('subscribe', subResponse, 'system');
   }
 
   // unsubscribe socket from specific channel
@@ -156,6 +169,7 @@ function encode(event: string, data: Message, eventType: string): string | Buffe
     emit: ['e', event, data],
     publish: ['p', event, data],
     system: {
+      subscribe: ['s', 's', data],
       configuration: ['s', 'c', data]
     }
   };
@@ -185,6 +199,7 @@ function decode(socket: Socket, data: Message): void {
   if (msgType === 's') {
     // second 's' means subscribe
     if (param === 's') {
+      // we always expect to get array of channels
       return socket.subscribe(message);
     }
 

@@ -212,7 +212,7 @@ describe('WebSockets Messaging', () => {
 
 describe('Pub Sub Communication', () => {
   it('Should subscribe socket to the channel on subscribe event received and unsubscribe if socket is closed', (done) => {
-    const subscribeEvent = ['s', 's', 'hello world'];
+    const subscribeEvent = ['s', 's', ['hello world']];
     const serverOptions = {
       worker: function () {
         this.wss.on('connection', (socket) => {
@@ -244,7 +244,7 @@ describe('Pub Sub Communication', () => {
   });
 
   it('Server should unsubscribe socket from the channel if unsubscribe event received', (done) => {
-    const subscribeEvent = ['s', 's', 'hello world'];
+    const subscribeEvent = ['s', 's', ['hello world']];
     const unsubscribeEvent = ['s', 'u', 'hello world'];
 
     const serverOptions = {
@@ -276,9 +276,11 @@ describe('Pub Sub Communication', () => {
 
   it('Should publish message to everyone who listens to the message', (done) => {
     let server;
-    const subscribeEvent = ['s', 's', 'hello'];
+    const subscribeEvent = ['s', 's', ['hello']];
     const publishMessage = ['p', 'hello', 'world'];
     const expectedBackReceivedMessage = ["p", null, { "hello": ["world"] }];
+
+    const acceptSubscribeMessage = ['s', 's', { hello: true }];
 
     const serverOptions = {
       worker: function () {
@@ -295,7 +297,9 @@ describe('Pub Sub Communication', () => {
         }, 20);
       },
       message: function (message) {
-        done('Client 1 should not receive message');
+        if (message !== JSON.stringify(acceptSubscribeMessage)) {
+          done('Client 1 should not receive message');
+        }
       }
     }
 
@@ -304,9 +308,11 @@ describe('Pub Sub Communication', () => {
         this.send(JSON.stringify(subscribeEvent));
       },
       message: function (message) {
-        expect(message).to.be.eql(JSON.stringify(expectedBackReceivedMessage));
-        server.close();
-        done();
+        if (message !== JSON.stringify(acceptSubscribeMessage)) {
+          expect(message).to.be.eql(JSON.stringify(expectedBackReceivedMessage));
+          server.close();
+          done();
+        }
       }
     }
 
@@ -469,11 +475,12 @@ describe("ClusterWS Middleware", () => {
   });
 
   it('Should not subscribe to the channel if "onSubscribe" middleware declined subscription', (done) => {
-    const subscribeEvent = ['s', 's', 'hello world'];
+    const subscribeEvent = ['s', 's', ['hello world']];
     const serverOptions = {
       worker: function () {
         this.wss.addMiddleware(Middleware.onSubscribe, (socket, channel, next) => {
-          expect(channel).to.be.eql(subscribeEvent[2]);
+          expect(channel).to.be.eql(subscribeEvent[2][0]);
+
           next(false);
           setTimeout(() => {
             // check if channel exists
@@ -499,11 +506,11 @@ describe("ClusterWS Middleware", () => {
   });
 
   it('Should subscribe to the channel if "onSubscribe" middleware accepts subscription', (done) => {
-    const subscribeEvent = ['s', 's', 'hello world'];
+    const subscribeEvent = ['s', 's', ['hello world']];
     const serverOptions = {
       worker: function () {
         this.wss.addMiddleware(Middleware.onSubscribe, (socket, channel, next) => {
-          expect(channel).to.be.eql(subscribeEvent[2]);
+          expect(channel).to.be.eql(subscribeEvent[2][0]);
           next(true);
           setTimeout(() => {
             // check if channel exists
@@ -529,13 +536,13 @@ describe("ClusterWS Middleware", () => {
   });
 
   it('Should call unsubscribe middleware if "onUnsubscribe" provided', (done) => {
-    const subscribeEvent = ['s', 's', 'hello world'];
+    const subscribeEvent = ['s', 's', ['hello world']];
     const unsubscribeEvent = ['s', 'u', 'hello world'];
 
     const serverOptions = {
       worker: function () {
         this.wss.addMiddleware(Middleware.onUnsubscribe, (socket, channel) => {
-          expect(channel).to.be.eql(subscribeEvent[2]);
+          expect(channel).to.be.eql(subscribeEvent[2][0]);
           this.server.close();
           done();
         });
@@ -558,11 +565,11 @@ describe("ClusterWS Middleware", () => {
   });
 
   it('Middleware "onChannelOpen"  should be called if exists', (done) => {
-    const subscribeEvent = ['s', 's', 'hello world'];
+    const subscribeEvent = ['s', 's', ['hello world']];
     const serverOptions = {
       worker: function () {
         this.wss.addMiddleware(Middleware.onChannelOpen, (channel) => {
-          expect(channel).to.be.eql(subscribeEvent[2]);
+          expect(channel).to.be.eql(subscribeEvent[2][0]);
           this.server.close();
           done();
         });
@@ -580,13 +587,13 @@ describe("ClusterWS Middleware", () => {
   });
 
   it('Middleware "onChannelClose" should be called if exists', (done) => {
-    const subscribeEvent = ['s', 's', 'hello world'];
+    const subscribeEvent = ['s', 's', ['hello world']];
     const unsubscribeEvent = ['s', 'u', 'hello world'];
 
     const serverOptions = {
       worker: function () {
         this.wss.addMiddleware(Middleware.onChannelClose, (channel) => {
-          expect(channel).to.be.eql(subscribeEvent[2]);
+          expect(channel).to.be.eql(subscribeEvent[2][0]);
           this.server.close();
           done();
         });
