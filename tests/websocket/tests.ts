@@ -121,14 +121,14 @@ describe('WebSockets default events', () => {
     createWebsocketClient({});
   });
 
-  it('Should receive "disconnect" event on connection close with correct code and reason', (done) => {
+  it('Should receive "close" event on connection close with correct code and reason', (done) => {
     const closeCode = 4001;
     const closeReason = 'Closed for some reason';
 
     const serverOptions = {
       worker: function () {
         this.wss.on('connection', (socket) => {
-          socket.on("disconnect", (code, reason) => {
+          socket.on("close", (code, reason) => {
             expect(code).to.be.eql(closeCode);
             expect(reason).to.be.eql(closeReason);
             this.server.close();
@@ -219,9 +219,9 @@ describe('Pub Sub Communication', () => {
           setTimeout(() => {
             expect((socket as any).channels).to.contain.keys('hello world');
             expect((socket as any).worker.wss.pubSub.channels['hello world']).have.members(['#broker', (socket as any).id]);
-            socket.disconnect();
+            socket.close();
           }, 10);
-          socket.on('disconnect', () => {
+          socket.on('close', () => {
             setTimeout(() => {
               expect((socket as any).channels).to.not.contain.keys('hello world');
               expect((socket as any).worker.wss.pubSub.channels['hello world']).to.be.undefined;

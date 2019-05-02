@@ -43,7 +43,7 @@ export class Socket {
 
     this.socket.on('close', (code?: number, reason?: string): void => {
       (this.worker.wss as any).pubSub.unregister(this.id, Object.keys(this.channels));
-      this.emitter.emit('disconnect', code, reason);
+      this.emitter.emit('close', code, reason);
       this.emitter.removeEvents();
       this.channels = {};
     });
@@ -56,6 +56,10 @@ export class Socket {
       this.worker.options.logger.error(err);
       this.socket.terminate();
     });
+  }
+
+  public get readyState(): number {
+    return this.socket.readyState;
   }
 
   // assign listener to specific event
@@ -74,7 +78,7 @@ export class Socket {
   }
 
   // correct way to close connection
-  public disconnect(code?: number, reason?: string): void {
+  public close(code?: number, reason?: string): void {
     this.socket.close(code, reason);
   }
 
@@ -84,7 +88,6 @@ export class Socket {
   }
 
   // below functionality is not fully ready for user exposure
-
   // Subscribe socket to specific channel
   public subscribe(channels: string[]): void {
     const subResponse: any = {};

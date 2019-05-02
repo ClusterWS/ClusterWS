@@ -12,6 +12,7 @@ export class ClusterWS {
 
 export class Socket {
     constructor(worker: Worker, socket: WebSocket);
+    readyState: number
     on(event: string, listener: Listener): void;
     send(event: string, message: Message, eventType?: string): void;
     sendRaw(message: string | Buffer): void;
