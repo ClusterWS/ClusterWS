@@ -27,6 +27,10 @@ export class Socket {
       this.send(null, message, 'publish');
     });
 
+    this.socket.on('pong', () => {
+      this.emitter.emit('pong');
+    });
+
     this.socket.on('message', (message: string | Buffer): void => {
       // if user listens on 'message' event then we will not parse any messages
       // and just emit default websocket on message event

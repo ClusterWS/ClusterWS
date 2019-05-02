@@ -6,7 +6,7 @@ new ClusterWS({
   worker: Worker,
   websocketOptions: {
     wsPath: "/",
-    autoPing: false
+    autoPing: true
   },
   loggerOptions: {
     logLevel: LogLevel.DEBUG
@@ -58,6 +58,10 @@ async function Worker() {
       // socket.sendRaw(msg);
       console.log('Received hello', process.pid);
       wss.publish('hello', 'my super message which should be published to another channel');
+    })
+
+    socket.on('pong', () => {
+      // console.log("Received pong");
     })
   });
 }

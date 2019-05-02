@@ -84,6 +84,8 @@ class Socket {
         }
         this.worker.wss.pubSub.register(this.id, e => {
             this.send(null, e, "publish");
+        }), this.socket.on("pong", () => {
+            this.emitter.emit("pong");
         }), this.socket.on("message", e => {
             if (this.emitter.exist("message")) return this.emitter.emit("message", e);
             this.processMessage(e);
@@ -356,7 +358,7 @@ class Worker {
         t.on("connection", e => {
             this.options.logger.debug("New WebSocket client is connected", `(pid: ${process.pid})`), 
             this.wss.emit("connection", new Socket(this, e));
-        }), this.options.websocketOptions.autoPing && t.startAutoPing(this.options.websocketOptions.pingInterval, !0), 
+        }), this.options.websocketOptions.autoPing && t.startAutoPing(this.options.websocketOptions.pingInterval), 
         this.server.on("error", e => {
             this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === exports.Mode.Scale && process.exit();
         }), this.server.listen(this.options.port, this.options.host, () => {
@@ -564,7 +566,7 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             mode: e.mode || exports.Mode.Scale,
             host: e.host,
-            logger: e.loggerOptions && e.loggerOptions.logger ? e.loggerOptions.logger : new Logger(e.loggerOptions && void 0 !== e.loggerOptions.logLevel ? e.loggerOptions.logLevel : exports.LogLevel.INFO),
+            logger: e.loggerOptions && e.loggerOptions.logger ? e.loggerOptions.logger : new Logger(e.loggerOptions && e.loggerOptions.logLevel ? e.loggerOptions.logLevel : exports.LogLevel.INFO),
             worker: e.worker,
             tlsOptions: e.tlsOptions,
             websocketOptions: {

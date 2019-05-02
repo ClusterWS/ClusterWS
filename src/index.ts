@@ -39,8 +39,8 @@ export class ClusterWS {
       host: configurations.host,
       logger: configurations.loggerOptions && configurations.loggerOptions.logger ?
         configurations.loggerOptions.logger : new Logger(
-          !configurations.loggerOptions || configurations.loggerOptions.logLevel === undefined ?
-            LogLevel.INFO : configurations.loggerOptions.logLevel),
+          configurations.loggerOptions && configurations.loggerOptions.logLevel ?
+            configurations.loggerOptions.logLevel : LogLevel.INFO),
       worker: configurations.worker,
       tlsOptions: configurations.tlsOptions,
       websocketOptions: {
