@@ -17,8 +17,10 @@ export class Socket {
     sendRaw(message: string | Buffer): void;
     disconnect(code?: number, reason?: string): void;
     terminate(): void;
-    subscribe(channel: string): void;
-    unsubscribe(channel: string): void;
+    processMessage(message: Message): void;
+    // TODO: this events are not ready to be available for everyone 
+    // subscribe(channel: string): void;
+    // unsubscribe(channel: string): void;
 }
 
 export class WSServer extends EventEmitter {
@@ -39,8 +41,6 @@ export class Worker {
     server: HTTP.Server | HTTPS.Server;
     constructor(options: Options, securityKey: string);
 }
-
-export function runProcesses(options: Options): any;
 
 export class EventEmitter {
     constructor(logger: Logger);
