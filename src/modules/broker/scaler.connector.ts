@@ -1,4 +1,6 @@
 import { WebSocket } from '@clusterws/cws';
+import { WebSocketEngine } from '../engine';
+
 import { generateUid, selectRandomBetween } from '../../utils/helpers';
 import { Options, Message, Listener, HorizontalScaleOptions } from '../../utils/types';
 
@@ -38,7 +40,7 @@ export class ScalerConnector {
     }
 
     private createConnection(url: string): void {
-        const socket: WebSocket & SocketExtension = new (WebSocket as any)(url);
+        const socket: WebSocket & SocketExtension = WebSocketEngine.createWebsocketClient(this.options.engine, url);
 
         socket.on('open', () => {
             socket.id = generateUid(8);

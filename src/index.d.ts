@@ -19,7 +19,7 @@ export class Socket {
     disconnect(code?: number, reason?: string): void;
     terminate(): void;
     processMessage(message: Message): void;
-    // TODO: this events are not ready to be available for everyone 
+    // TODO: this events are not ready for everyone, probably add as next feature
     // subscribe(channel: string): void;
     // unsubscribe(channel: string): void;
 }

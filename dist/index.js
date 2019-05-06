@@ -90,12 +90,15 @@ class Socket {
             if (this.emitter.exist("message")) return this.emitter.emit("message", e);
             this.processMessage(e);
         }), this.socket.on("close", (e, s) => {
-            this.worker.wss.pubSub.unregister(this.id, Object.keys(this.channels)), this.emitter.emit("disconnect", e, s), 
+            this.worker.wss.pubSub.unregister(this.id, Object.keys(this.channels)), this.emitter.emit("close", e, s), 
             this.emitter.removeEvents(), this.channels = {};
         }), this.socket.on("error", e => {
             if (this.emitter.exist("error")) return this.emitter.emit("error", e);
             this.worker.options.logger.error(e), this.socket.terminate();
         });
+    }
+    get readyState() {
+        return this.socket.readyState;
     }
     on(e, s) {
         this.emitter.on(e, s);
@@ -106,7 +109,7 @@ class Socket {
     sendRaw(e) {
         this.socket.send(e);
     }
-    disconnect(e, s) {
+    close(e, s) {
         this.socket.close(e, s);
     }
     terminate() {
@@ -263,6 +266,21 @@ class RedisConnector {
     }
 }
 
+class WebSocketEngine {
+    static createWebsocketClient(e, s) {
+        return "ws" === e ? new (require("ws"))(s) : new cws.WebSocket(s);
+    }
+    static createWebsocketServer(e, s, t) {
+        if ("ws" === e) {
+            const e = new (require("ws").Server)(s, t);
+            return e.startAutoPing = ((e, s) => {
+                console.log(e, s);
+            }), e;
+        }
+        return new cws.WebSocketServer(s, t);
+    }
+}
+
 class BrokerConnector {
     constructor(e, s, t, o) {
         this.options = e, this.publishFunction = s, this.getChannels = t, this.next = 0, 
@@ -286,7 +304,7 @@ class BrokerConnector {
         }
     }
     createConnection(e) {
-        const s = new cws.WebSocket(e);
+        const s = WebSocketEngine.createWebsocketClient(this.options.engine, e);
         s.on("open", () => {
             s.id = generateUid(8), this.connections.push(s), this.subscribe(this.getChannels()), 
             this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
@@ -350,7 +368,7 @@ class WSServer extends EventEmitter {
 class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        const t = new cws.WebSocketServer({
+        const t = WebSocketEngine.createWebsocketServer(this.options.engine, {
             path: this.options.websocketOptions.wsPath,
             server: this.server,
             verifyClient: (e, s) => this.wss.middleware[exports.Middleware.verifyConnection] ? this.wss.middleware[exports.Middleware.verifyConnection](e, s) : s(!0)
@@ -358,7 +376,7 @@ class Worker {
         t.on("connection", e => {
             this.options.logger.debug("New WebSocket client is connected", `(pid: ${process.pid})`), 
             this.wss.emit("connection", new Socket(this, e));
-        }), this.options.websocketOptions.autoPing && t.startAutoPing(this.options.websocketOptions.pingInterval), 
+        }), this.options.websocketOptions.autoPing && t.startAutoPing(this.options.websocketOptions.pingInterval, !0), 
         this.server.on("error", e => {
             this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === exports.Mode.Scale && process.exit();
         }), this.server.listen(this.options.port, this.options.host, () => {
@@ -410,15 +428,13 @@ class ScalerConnector {
 
 class BrokerServer {
     constructor(e, s, t, o) {
-        this.options = e, this.sockets = [], this.streamToScaler = !1, this.server = new cws.WebSocketServer({
+        this.options = e, this.sockets = [], this.streamToScaler = !1, this.server = WebSocketEngine.createWebsocketServer(this.options.engine, {
             port: s,
             verifyClient: (e, s) => s(e.req.url === `/?key=${t}`)
-        }, () => {
-            process.send({
-                event: "READY",
-                pid: process.pid
-            });
-        }), this.options.scaleOptions.default.horizontalScaleOptions && (this.streamToScaler = !0, 
+        }, () => process.send({
+            event: "READY",
+            pid: process.pid
+        })), this.options.scaleOptions.default.horizontalScaleOptions && (this.streamToScaler = !0, 
         this.scaler = new ScalerConnector(this.options, e => {
             this.broadcast(null, JSON.parse(e));
         }, o)), this.server.on("error", e => {
@@ -468,7 +484,7 @@ class ScalerServer {
     constructor(e) {
         this.options = e, this.sockets = [];
         const s = this.options.scaleOptions.default.horizontalScaleOptions, t = s.masterOptions.tlsOptions ? HTTPS.createServer(s.masterOptions.tlsOptions) : HTTP.createServer();
-        this.wsServer = new cws.WebSocketServer({
+        this.wsServer = WebSocketEngine.createWebsocketServer(this.options.engine, {
             server: t,
             verifyClient: (e, t) => {
                 t(e.req.url === `/?key=${s.key || ""}`);
@@ -566,6 +582,7 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             mode: e.mode || exports.Mode.Scale,
             host: e.host,
+            engine: e.engine || "@clusterws/ws",
             logger: e.loggerOptions && e.loggerOptions.logger ? e.loggerOptions.logger : new Logger(e.loggerOptions && e.loggerOptions.logLevel ? e.loggerOptions.logLevel : exports.LogLevel.INFO),
             worker: e.worker,
             tlsOptions: e.tlsOptions,

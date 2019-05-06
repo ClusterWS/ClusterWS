@@ -1,5 +1,7 @@
 // This file allows us easily add redis support in future which i have been planing for a while
 import { WebSocket } from '@clusterws/cws';
+import { WebSocketEngine } from '../engine';
+
 import { Options, Message, Listener } from '../../utils/types';
 import { generateUid, selectRandomBetween } from '../../utils/helpers';
 
@@ -53,7 +55,7 @@ export class BrokerConnector {
   }
 
   private createConnection(url: string): void {
-    const socket: WebSocket & SocketExtension = new (WebSocket as any)(url);
+    const socket: WebSocket & SocketExtension = WebSocketEngine.createWebsocketClient(this.options.engine, url);
 
     socket.on('open', () => {
       socket.id = generateUid(8);

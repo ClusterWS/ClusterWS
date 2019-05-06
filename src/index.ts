@@ -37,6 +37,7 @@ export class ClusterWS {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
       mode: configurations.mode || Mode.Scale,
       host: configurations.host,
+      engine: configurations.engine || '@clusterws/cws',
       logger: configurations.loggerOptions && configurations.loggerOptions.logger ?
         configurations.loggerOptions.logger : new Logger(
           configurations.loggerOptions && configurations.loggerOptions.logLevel ?

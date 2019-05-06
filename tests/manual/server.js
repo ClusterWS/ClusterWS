@@ -4,6 +4,7 @@ new ClusterWS({
   mode: Mode.Scale,
   port: 3001,
   worker: Worker,
+  engine: 'ws',
   websocketOptions: {
     wsPath: "/",
     autoPing: true
@@ -48,9 +49,9 @@ async function Worker() {
     console.log('Got message from anther worker', process.pid, message);
   })
 
-  setInterval(() => {
-    this.wss.publishToWorkers({ pid: process.pid, message: 'Testing my message' });
-  }, 10000);
+  // setInterval(() => {
+  //   this.wss.publishToWorkers({ pid: process.pid, message: 'Testing my message' });
+  // }, 10000);
 
 
   wss.on('connection', (socket) => {
@@ -61,7 +62,7 @@ async function Worker() {
     })
 
     socket.on('pong', () => {
-      // console.log("Received pong");
+      console.log("Received pong");
     })
   });
 }
