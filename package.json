@@ -41,7 +41,8 @@
   ],
   "dependencies": {
     "@clusterws/cws": "^0.13.0",
-    "@types/redis": "^2.8.12"
+    "@types/redis": "^2.8.12",
+    "@types/ws": "^6.0.1"
   },
   "nyc": {
     "temp-directory": "./node_modules/.cache/nyc_output",

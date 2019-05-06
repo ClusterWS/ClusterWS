@@ -273,9 +273,7 @@ class WebSocketEngine {
     static createWebsocketServer(e, s, t) {
         if ("ws" === e) {
             const e = new (require("ws").Server)(s, t);
-            return e.startAutoPing = ((e, s) => {
-                console.log(e, s);
-            }), e;
+            return e.startAutoPing = ((e, s) => {}), e;
         }
         return new cws.WebSocketServer(s, t);
     }
@@ -403,7 +401,7 @@ class ScalerConnector {
         this.next++;
     }
     createConnection(e) {
-        const s = new cws.WebSocket(e);
+        const s = WebSocketEngine.createWebsocketClient(this.options.engine, e);
         s.on("open", () => {
             s.id = generateUid(8), s.send("i" + this.serverId), this.connections.push(s), this.options.logger.debug(`Scaler client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
         }), s.on("message", e => {
@@ -582,7 +580,7 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             mode: e.mode || exports.Mode.Scale,
             host: e.host,
-            engine: e.engine || "@clusterws/ws",
+            engine: e.engine || "@clusterws/cws",
             logger: e.loggerOptions && e.loggerOptions.logger ? e.loggerOptions.logger : new Logger(e.loggerOptions && e.loggerOptions.logLevel ? e.loggerOptions.logLevel : exports.LogLevel.INFO),
             worker: e.worker,
             tlsOptions: e.tlsOptions,

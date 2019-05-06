@@ -41,7 +41,8 @@
     "https",
     "crypto",
     "cluster",
-    "@clusterws/cws"
+    "@clusterws/cws",
+    "ws"
   ],
   "tsConfigs": {
     "compilerOptions": {

@@ -2,8 +2,8 @@ import { generateUid } from '../../utils/helpers';
 import { ScalerConnector } from './scaler.connector';
 import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
-import { WebSocketEngine } from '../engine';
-import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/cws';
+import { WebSocketEngine, WebSocketServerType } from '../engine';
+import { WebSocket, ConnectionInfo } from '@clusterws/cws';
 
 // TODO: handle fail send
 type SocketExtend = {
@@ -12,7 +12,7 @@ type SocketExtend = {
 };
 
 export class BrokerServer {
-  private server: WebSocketServer;
+  private server: WebSocketServerType;
   private sockets: Array<WebSocket & SocketExtend> = [];
   private streamToScaler: boolean = false;
   private scaler: ScalerConnector;

@@ -5,8 +5,8 @@ import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
 import { Options, Mode, Middleware, Listener } from '../utils/types';
 
-import { WebSocketEngine } from './engine';
-import { WebSocket, WebSocketServer, ConnectionInfo } from '@clusterws/cws';
+import { WebSocketEngine, WebSocketServerType } from './engine';
+import { WebSocket, ConnectionInfo } from '@clusterws/cws';
 
 export class Worker {
   public wss: WSServer;
@@ -16,7 +16,7 @@ export class Worker {
     this.wss = new WSServer(this.options, securityKey);
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 
-    const uServer: WebSocketServer = WebSocketEngine.createWebsocketServer(this.options.engine, {
+    const uServer: WebSocketServerType = WebSocketEngine.createWebsocketServer(this.options.engine, {
       path: this.options.websocketOptions.wsPath,
       server: this.server,
       verifyClient: (info: ConnectionInfo, next: Listener): void => {
