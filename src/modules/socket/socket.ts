@@ -1,7 +1,7 @@
 import { Worker } from '../worker';
-import { WebSocket } from '@clusterws/cws';
 import { generateUid } from '../../utils/helpers';
 import { EventEmitter } from '../../utils/emitter';
+import { WebSocketType } from '../engine';
 import { Message, Listener, Middleware } from '../../utils/types';
 
 export class Socket {
@@ -9,7 +9,7 @@ export class Socket {
   private emitter: EventEmitter;
   private channels: { [key: string]: boolean } = {};
 
-  constructor(private worker: Worker, private socket: WebSocket) {
+  constructor(private worker: Worker, private socket: WebSocketType) {
     this.emitter = new EventEmitter(this.worker.options.logger);
 
     if (this.worker.options.websocketOptions.sendConfigurationMessage) {

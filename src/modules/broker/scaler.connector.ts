@@ -1,5 +1,4 @@
-import { WebSocket } from '@clusterws/cws';
-import { WebSocketEngine } from '../engine';
+import { WebSocketEngine, WebSocketType } from '../engine';
 
 import { generateUid, selectRandomBetween } from '../../utils/helpers';
 import { Options, Message, Listener, HorizontalScaleOptions } from '../../utils/types';
@@ -11,7 +10,7 @@ type SocketExtension = {
 
 export class ScalerConnector {
     private next: number = 0;
-    private connections: Array<WebSocket & SocketExtension> = [];
+    private connections: Array<WebSocketType & SocketExtension> = [];
 
     constructor(private options: Options, private publishFunction: Listener, private serverId: string) {
         const horizontalScaleOptions: HorizontalScaleOptions = this.options.scaleOptions.default.horizontalScaleOptions;
@@ -40,7 +39,7 @@ export class ScalerConnector {
     }
 
     private createConnection(url: string): void {
-        const socket: WebSocket & SocketExtension = WebSocketEngine.createWebsocketClient(this.options.engine, url);
+        const socket: WebSocketType & SocketExtension = WebSocketEngine.createWebsocketClient(this.options.engine, url);
 
         socket.on('open', () => {
             socket.id = generateUid(8);

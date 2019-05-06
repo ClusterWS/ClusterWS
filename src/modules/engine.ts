@@ -1,12 +1,15 @@
+import * as WSWebsocket from 'ws';
 import { Server } from 'ws';
+
 import { Listener } from '../utils/types';
 import { WebSocket, WebSocketServer } from '@clusterws/cws';
 
-type ExtendedServer = Server & {
+type ExtendedWSServer = Server & {
   startAutoPing?: Listener
 };
 
-export type WebSocketServerType = WebSocketServer | ExtendedServer;
+export type WebSocketType = WebSocket | WSWebsocket;
+export type WebSocketServerType = WebSocketServer | ExtendedWSServer;
 
 export class WebSocketEngine {
   public static createWebsocketClient(engine: string, options: any): any {
@@ -20,7 +23,7 @@ export class WebSocketEngine {
 
   public static createWebsocketServer(engine: string, options: any, callback?: any): WebSocketServerType {
     if (engine === 'ws') {
-      const wsServer: ExtendedServer = new (require('ws').Server)(options, callback);
+      const wsServer: ExtendedWSServer = new (require('ws').Server)(options, callback);
       wsServer.startAutoPing = (interval: number, appLevelPing: boolean): void => {
         // write logic for auto ping
         // console.log(interval, appLevelPing);

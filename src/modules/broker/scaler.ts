@@ -4,8 +4,8 @@ import * as HTTPS from 'https';
 import { generateUid } from '../../utils/helpers';
 import { Options, Listener, HorizontalScaleOptions } from '../../utils/types';
 
-import { WebSocketEngine, WebSocketServerType } from '../engine';
-import { WebSocket, ConnectionInfo } from '@clusterws/cws';
+import { WebSocketEngine, WebSocketServerType, WebSocketType } from '../engine';
+import { ConnectionInfo } from '@clusterws/cws';
 
 type SocketExtend = {
     id: string,
@@ -14,7 +14,7 @@ type SocketExtend = {
 
 export class ScalerServer {
     private wsServer: WebSocketServerType;
-    private sockets: Array<WebSocket & SocketExtend> = [];
+    private sockets: Array<WebSocketType & SocketExtend> = [];
 
     constructor(private options: Options) {
         const horizontalScaleOptions: HorizontalScaleOptions = this.options.scaleOptions.default.horizontalScaleOptions;
@@ -38,7 +38,7 @@ export class ScalerServer {
             process.exit();
         });
 
-        this.wsServer.on('connection', (socket: WebSocket & SocketExtend): void => {
+        this.wsServer.on('connection', (socket: WebSocketType & SocketExtend): void => {
             socket.id = generateUid(8);
             this.sockets.push(socket);
 
@@ -47,7 +47,7 @@ export class ScalerServer {
                     socket.serverId = message as string;
                 } else if (socket.serverId) {
                     for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
-                        const client: WebSocket & SocketExtend = this.sockets[i];
+                        const client: WebSocketType & SocketExtend = this.sockets[i];
                         if (client.serverId && socket.serverId !== client.serverId) {
                             client.send(message);
                         }

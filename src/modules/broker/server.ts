@@ -2,8 +2,8 @@ import { generateUid } from '../../utils/helpers';
 import { ScalerConnector } from './scaler.connector';
 import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
-import { WebSocketEngine, WebSocketServerType } from '../engine';
-import { WebSocket, ConnectionInfo } from '@clusterws/cws';
+import { ConnectionInfo } from '@clusterws/cws';
+import { WebSocketEngine, WebSocketServerType, WebSocketType } from '../engine';
 
 // TODO: handle fail send
 type SocketExtend = {
@@ -13,7 +13,7 @@ type SocketExtend = {
 
 export class BrokerServer {
   private server: WebSocketServerType;
-  private sockets: Array<WebSocket & SocketExtend> = [];
+  private sockets: Array<WebSocketType & SocketExtend> = [];
   private streamToScaler: boolean = false;
   private scaler: ScalerConnector;
 
@@ -37,7 +37,7 @@ export class BrokerServer {
       process.exit();
     });
 
-    this.server.on('connection', (socket: WebSocket & SocketExtend): void => {
+    this.server.on('connection', (socket: WebSocketType & SocketExtend): void => {
       socket.id = generateUid(8);
       socket.channels = {};
       this.sockets.push(socket);
@@ -94,7 +94,7 @@ export class BrokerServer {
     const channelsLen: number = channels.length;
 
     for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
-      const socket: WebSocket & SocketExtend = this.sockets[i];
+      const socket: WebSocketType & SocketExtend = this.sockets[i];
 
       if (socket.id !== id) {
         let hasData: boolean = false;

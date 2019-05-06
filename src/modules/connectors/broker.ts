@@ -1,6 +1,5 @@
 // This file allows us easily add redis support in future which i have been planing for a while
-import { WebSocket } from '@clusterws/cws';
-import { WebSocketEngine } from '../engine';
+import { WebSocketEngine, WebSocketType } from '../engine';
 
 import { Options, Message, Listener } from '../../utils/types';
 import { generateUid, selectRandomBetween } from '../../utils/helpers';
@@ -13,7 +12,7 @@ type SocketExtension = {
 // TODO: implement simple queue algorithm
 export class BrokerConnector {
   private next: number = 0;
-  private connections: Array<WebSocket & SocketExtension> = [];
+  private connections: Array<WebSocketType & SocketExtension> = [];
 
   constructor(private options: Options, private publishFunction: Listener, private getChannels: any, key: string) {
     this.next = selectRandomBetween(0, this.options.scaleOptions.default.brokers - 1);
@@ -55,7 +54,7 @@ export class BrokerConnector {
   }
 
   private createConnection(url: string): void {
-    const socket: WebSocket & SocketExtension = WebSocketEngine.createWebsocketClient(this.options.engine, url);
+    const socket: WebSocketType & SocketExtension = WebSocketEngine.createWebsocketClient(this.options.engine, url);
 
     socket.on('open', () => {
       socket.id = generateUid(8);

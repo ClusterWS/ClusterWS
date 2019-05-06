@@ -5,8 +5,8 @@ import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
 import { Options, Mode, Middleware, Listener } from '../utils/types';
 
-import { WebSocketEngine, WebSocketServerType } from './engine';
-import { WebSocket, ConnectionInfo } from '@clusterws/cws';
+import { WebSocketEngine, WebSocketServerType, WebSocketType } from './engine';
+import { ConnectionInfo } from '@clusterws/cws';
 
 export class Worker {
   public wss: WSServer;
@@ -26,7 +26,7 @@ export class Worker {
       }
     });
 
-    uServer.on('connection', (socket: WebSocket) => {
+    uServer.on('connection', (socket: WebSocketType) => {
       this.options.logger.debug(`New WebSocket client is connected`, `(pid: ${process.pid})`);
       this.wss.emit('connection', new Socket(this, socket));
     });
