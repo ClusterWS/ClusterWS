@@ -74,7 +74,7 @@ export class WebSocketEngine {
 
       wsServer.startAutoPing = (interval: number, appLevelPing: boolean): void => {
         setInterval(function ping(): void {
-          wsServer.clients.forEach(function each(ws: any): void {
+          (wsServer.clients as any).forEach(function each(ws: any): void {
             if (ws.isAlive === false) {
               return ws.terminate();
             }
