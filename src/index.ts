@@ -22,7 +22,6 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
  * - Implement retry logic in connectors
  * - Better async await support
  * - Add static file with all static strings
- * - Add way to switch websocket engine
  *
  */
 

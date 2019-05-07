@@ -1,63 +1,15 @@
 /* tslint:disable */
 import * as HTTP from 'http';
 import * as HTTPS from 'https';
+import * as WSWebsocket from 'ws';
 
 import { WebSocket } from '@clusterws/cws';
 import { ClientOpts } from 'redis';
 import { SecureContextOptions } from 'tls';
 
-// TODO: Fix types based on new engine module
-
-export class ClusterWS {
-    constructor(configurations: Configurations);
-}
-
-export class Socket {
-    constructor(worker: Worker, socket: WebSocket);
-    readyState: number
-    on(event: string, listener: Listener): void;
-    send(event: string, message: Message, eventType?: string): void;
-    sendRaw(message: string | Buffer): void;
-    disconnect(code?: number, reason?: string): void;
-    terminate(): void;
-    processMessage(message: Message): void;
-    // TODO: this events are not ready for everyone, probably add as next feature
-    // subscribe(channel: string): void;
-    // unsubscribe(channel: string): void;
-}
-
-export class WSServer extends EventEmitter {
-    middleware: {
-        [s: number]: Listener;
-    };
-    constructor(options: Options, securityKey: string);
-    publishToWorkers(message: Message): void;
-    addMiddleware(middlewareType: Middleware, listener: Listener): void;
-    publish(channelName: string, message: Message, id?: string): void;
-    subscribe(id: string, channelName: string): void;
-    unsubscribe(id: string, channelName: string): void;
-}
-
-export class Worker {
-    options: Options;
-    wss: WSServer;
-    server: HTTP.Server | HTTPS.Server;
-    constructor(options: Options, securityKey: string);
-}
-
-export class EventEmitter {
-    constructor(logger: Logger);
-    on(event: 'connection', listener: (socket: Socket) => void): void;
-    on(event: string, listener: Listener): void;
-    emit(event: string, message: Message): void;
-    emit(event: string, ...args: any[]): void;
-    exist(event: string): boolean;
-    off(event: string): void;
-    removeEvents(): void;
-}
-
 export type Message = any;
 export type Listener = (...args: any[]) => void;
+export type WebSocketType = WebSocket | WSWebsocket;
 export type WorkerFunction = (this: Worker) => void;
 
 export enum Mode {
@@ -96,11 +48,62 @@ export type HorizontalScaleOptions = {
     };
 };
 
+export class ClusterWS {
+    constructor(configurations: Configurations);
+}
+
+
+export class Socket {
+    constructor(worker: Worker, socket: WebSocketType);
+    readonly readyState: number;
+    on(event: string, listener: Listener): void;
+    send(event: string, message: Message, eventType?: string): void;
+    sendRaw(message: string | Buffer): void;
+    close(code?: number, reason?: string): void;
+    terminate(): void;
+    processMessage(message: Message): void;
+    // TODO: this events are not ready for everyone, probably add as next feature
+    // subscribe(channels: string[]): void;
+    // unsubscribe(channel: string): void;
+}
+
+export class WSServer extends EventEmitter {
+    middleware: {
+        [s: number]: Listener;
+    };
+    constructor(options: Options, securityKey: string);
+    publishToWorkers(message: Message): void;
+    addMiddleware(middlewareType: Middleware, listener: Listener): void;
+    publish(channelName: string, message: Message, id?: string): void;
+    subscribe(id: string, channelName: string): void;
+    unsubscribe(id: string, channelName: string): void;
+}
+
+export class Worker {
+    options: Options;
+    wss: WSServer;
+    server: HTTP.Server | HTTPS.Server;
+    constructor(options: Options, securityKey: string);
+}
+
+export class EventEmitter {
+    constructor(logger: Logger);
+    on(event: 'connection', listener: (socket: Socket) => void): void;
+    on(event: string, listener: Listener): void;
+    emit(event: string, message: Message): void;
+    emit(event: string, ...args: any[]): void;
+    exist(event: string): boolean;
+    off(event: string): void;
+    removeEvents(): void;
+}
+
+
 export type Configurations = {
     worker: WorkerFunction;
     mode?: Mode;
     port?: number;
     host?: string;
+    engine?: string;
     tlsOptions?: SecureContextOptions;
     loggerOptions?: {
         logger?: Logger;
@@ -110,6 +113,7 @@ export type Configurations = {
         wsPath?: string;
         autoPing?: boolean;
         pingInterval?: number;
+        sendConfigurationMessage?: boolean;
     };
     scaleOptions?: {
         redis?: ClientOpts;
@@ -123,11 +127,11 @@ export type Configurations = {
         };
     };
 };
-
 export type Options = {
     mode: Mode;
     port: number;
     host: string | null;
+    engine: string;
     logger: Logger;
     worker: WorkerFunction;
     tlsOptions: SecureContextOptions | null;
@@ -135,6 +139,7 @@ export type Options = {
         wsPath: string;
         autoPing: boolean;
         pingInterval: number;
+        sendConfigurationMessage: boolean;
     };
     scaleOptions: {
         redis: ClientOpts | null;
