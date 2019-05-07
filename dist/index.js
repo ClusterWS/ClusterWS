@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
     value: !0
 });
 
-var cluster = require("cluster"), crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https"), cws = require("@clusterws/cws");
+var cluster = require("cluster"), crypto = require("crypto"), HTTP = require("http"), HTTPS = require("https");
 
 !function(e) {
     e[e.Scale = 0] = "Scale", e[e.Single = 1] = "Single";
@@ -268,14 +268,14 @@ class RedisConnector {
 
 class WebSocketEngine {
     static createWebsocketClient(e, s) {
-        return "ws" === e ? new (require("ws"))(s) : new cws.WebSocket(s);
+        return "ws" === e ? new (require("ws"))(s) : new (require("@clusterws/cws").WebSocket)(s);
     }
     static createWebsocketServer(e, s, t) {
         if ("ws" === e) {
             const e = new (require("ws").Server)(s, t);
             return e.startAutoPing = ((e, s) => {}), e;
         }
-        return new cws.WebSocketServer(s, t);
+        return new (require("@clusterws/cws").WebSocketServer)(s, t);
     }
 }
 

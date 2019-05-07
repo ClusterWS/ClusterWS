@@ -4,8 +4,7 @@ import * as HTTPS from 'https';
 import { generateUid } from '../../utils/helpers';
 import { Options, Listener, HorizontalScaleOptions } from '../../utils/types';
 
-import { WebSocketEngine, WebSocketServerType, WebSocketType } from '../engine';
-import { ConnectionInfo } from '@clusterws/cws';
+import { WebSocketEngine, WebSocketServerType, WebSocketType, ConnectionInfoType } from '../engine';
 
 type SocketExtend = {
     id: string,
@@ -24,7 +23,7 @@ export class ScalerServer {
 
         this.wsServer = WebSocketEngine.createWebsocketServer(this.options.engine, {
             server,
-            verifyClient: (info: ConnectionInfo, next: Listener): void => {
+            verifyClient: (info: ConnectionInfoType, next: Listener): void => {
                 next(info.req.url === `/?key=${horizontalScaleOptions.key || ''}`);
             }
         });

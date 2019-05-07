@@ -3,7 +3,7 @@ import { Options, Message, Listener } from '../../utils/types';
 
 // TODO: improve redis connector
 // TODO: enable redis import only if everything is ready
-// TODO: implement reconnect system (this logic already exists on redis)
+// TODO: implement reconnect system (this logic already exists in redis module)
 
 export class RedisConnector {
   private publisher: any;

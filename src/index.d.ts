@@ -6,6 +6,8 @@ import { WebSocket } from '@clusterws/cws';
 import { ClientOpts } from 'redis';
 import { SecureContextOptions } from 'tls';
 
+// TODO: Fix types based on new engine module
+
 export class ClusterWS {
     constructor(configurations: Configurations);
 }

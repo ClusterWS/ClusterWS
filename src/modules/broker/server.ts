@@ -2,8 +2,7 @@ import { generateUid } from '../../utils/helpers';
 import { ScalerConnector } from './scaler.connector';
 import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
 
-import { ConnectionInfo } from '@clusterws/cws';
-import { WebSocketEngine, WebSocketServerType, WebSocketType } from '../engine';
+import { WebSocketEngine, WebSocketServerType, WebSocketType, ConnectionInfoType } from '../engine';
 
 // TODO: handle fail send
 type SocketExtend = {
@@ -20,7 +19,7 @@ export class BrokerServer {
   constructor(private options: Options, port: number, key: string, serverId: string) {
     this.server = WebSocketEngine.createWebsocketServer(this.options.engine, {
       port,
-      verifyClient: (info: ConnectionInfo, next: Listener): void => {
+      verifyClient: (info: ConnectionInfoType, next: Listener): void => {
         return next(info.req.url === `/?key=${key}`);
       }
     }, (): void => process.send({ event: 'READY', pid: process.pid }));

@@ -5,8 +5,7 @@ import { Socket } from './socket/socket';
 import { WSServer } from './socket/wsserver';
 import { Options, Mode, Middleware, Listener } from '../utils/types';
 
-import { WebSocketEngine, WebSocketServerType, WebSocketType } from './engine';
-import { ConnectionInfo } from '@clusterws/cws';
+import { WebSocketEngine, WebSocketServerType, WebSocketType, ConnectionInfoType } from './engine';
 
 export class Worker {
   public wss: WSServer;
@@ -19,7 +18,7 @@ export class Worker {
     const uServer: WebSocketServerType = WebSocketEngine.createWebsocketServer(this.options.engine, {
       path: this.options.websocketOptions.wsPath,
       server: this.server,
-      verifyClient: (info: ConnectionInfo, next: Listener): void => {
+      verifyClient: (info: ConnectionInfoType, next: Listener): void => {
         return this.wss.middleware[Middleware.verifyConnection] ?
           this.wss.middleware[Middleware.verifyConnection](info, next) :
           next(true);
