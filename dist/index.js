@@ -266,14 +266,32 @@ class RedisConnector {
     }
 }
 
+const PING = new Uint8Array([ "9".charCodeAt(0) ]).buffer;
+
 class WebSocketEngine {
     static createWebsocketClient(e, s) {
         return "ws" === e ? new (require("ws"))(s) : new (require("@clusterws/cws").WebSocket)(s);
     }
     static createWebsocketServer(e, s, t) {
         if ("ws" === e) {
-            const e = new (require("ws").Server)(s, t);
-            return e.startAutoPing = ((e, s) => {}), e;
+            const e = () => {}, o = new (require("ws").Server)(s, t);
+            return o._on = o.on.bind(o), o._connectionListener = e, o.on = ((e, s) => ("connection" === e && (o._connectionListener = s), 
+            o._on(e, s))), o._on("connection", (s, t) => {
+                s._on = s.on.bind(s), s._pongListener = e, s._messageListener = e, s.on = ((e, t) => "pong" === e ? s._pongListener = t : "message" === e ? s._messageListener = t : s._on(e, t)), 
+                s._on("message", e => {
+                    if ("string" != typeof e && 1 === e.length && 65 === e[0]) return s.isAlive = !0, 
+                    s._pongListener();
+                    s._messageListener(e);
+                }), s._on("pong", () => {
+                    s.isAlive = !0, s._pongListener();
+                });
+            }), o.startAutoPing = ((s, t) => {
+                setInterval(function() {
+                    o.clients.forEach(function(s) {
+                        return !1 === s.isAlive ? s.terminate() : (s.isAlive = !1, t ? s.send(PING) : s.ping(e));
+                    });
+                }, s);
+            }), o;
         }
         return new (require("@clusterws/cws").WebSocketServer)(s, t);
     }
