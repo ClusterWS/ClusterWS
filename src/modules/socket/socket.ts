@@ -145,15 +145,15 @@ export class Socket {
       if (typeof message !== 'string') {
         message = Buffer.from(message);
       }
+
       // make sure that incoming message is at least looking like correct structure
       if (message[0] !== 91 && message[0] !== '[') {
-        // if it is not starting with "[" we can 100% that it is wrong structure
+        const err: Error = new Error('processMessage received incorrect message');
         if (this.emitter.exist('error')) {
-          return this.emitter.emit('error', new Error('Received message is not correct structure'));
+          return this.emitter.emit('error', err);
         }
-
-        this.worker.options.logger.error('Received message is not correct structure');
-        return this.terminate();
+        // if it is not starting with "[" we can 100% that it is wrong structure
+        throw err;
       }
 
       // we can try and decode message
@@ -163,6 +163,7 @@ export class Socket {
     } catch (err) {
       // we have caught some error trying to parse message try and send message to standard websocket output
       // for user to process or to error output
+      // This will parse the rest of the errors
       if (this.emitter.exist('error')) {
         return this.emitter.emit('error', err);
       }

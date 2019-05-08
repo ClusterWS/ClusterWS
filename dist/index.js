@@ -151,8 +151,11 @@ class Socket {
     processMessage(e) {
         try {
             if (e instanceof Array) return decode(this, e);
-            if ("string" != typeof e && (e = Buffer.from(e)), 91 !== e[0] && "[" !== e[0]) return this.emitter.exist("error") ? this.emitter.emit("error", new Error("Received message is not correct structure")) : (this.worker.options.logger.error("Received message is not correct structure"), 
-            this.terminate());
+            if ("string" != typeof e && (e = Buffer.from(e)), 91 !== e[0] && "[" !== e[0]) {
+                const e = new Error("processMessage received incorrect message");
+                if (this.emitter.exist("error")) return this.emitter.emit("error", e);
+                throw e;
+            }
             decode(this, JSON.parse(e.toString()));
         } catch (e) {
             if (this.emitter.exist("error")) return this.emitter.emit("error", e);
