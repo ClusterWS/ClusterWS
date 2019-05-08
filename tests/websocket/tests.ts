@@ -156,7 +156,7 @@ describe('WebSockets default events', () => {
         this.wss.on('connection', (socket) => {
           socket.on('error', (error) => {
             expect(error).to.be.instanceOf(Error);
-            expect(error.message).to.be.eql("Received message is not correct structure");
+            expect(error.message).to.be.eql("processMessage received incorrect message");
             this.server.close();
             done();
           });
