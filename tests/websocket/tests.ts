@@ -356,7 +356,7 @@ describe('Raw Websocket methods', () => {
     createWebsocketClient(clientOptions);
   });
 
-  it('If used "sendRaw" it should send message without protocol encoding', (done) => {
+  it('If used "send" without event parameter it should send message without protocol encoding', (done) => {
     const sentMessage = "my custom message";
 
     const serverOptions = {
@@ -364,7 +364,7 @@ describe('Raw Websocket methods', () => {
         this.wss.on('connection', (socket) => {
           socket.on('message', (message) => {
             expect(message).to.be.eql(sentMessage);
-            socket.sendRaw(message);
+            socket.send(message);
             this.server.close();
           });
         });

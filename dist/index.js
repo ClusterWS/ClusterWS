@@ -72,6 +72,28 @@ class EventEmitter {
     }
 }
 
+function encode(e, s, t) {
+    const o = {
+        emit: [ "e", e, s ],
+        publish: [ "p", e, s ],
+        system: {
+            subscribe: [ "s", "s", s ],
+            configuration: [ "s", "c", s ]
+        }
+    };
+    return "system" === t ? JSON.stringify(o[t][e]) : JSON.stringify(o[t]);
+}
+
+function decode(e, s) {
+    const [t, o, i] = s;
+    if ("e" === t) return e.emitter.emit(o, i);
+    if ("p" === t) return e.channels[o] && e.worker.wss.publish(o, i, e.id);
+    if ("s" === t) {
+        if ("s" === o) return e.subscribe(i);
+        if ("u" === o) return e.unsubscribe(i);
+    }
+}
+
 class Socket {
     constructor(e, s) {
         if (this.worker = e, this.socket = s, this.id = generateUid(8), this.channels = {}, 
@@ -104,10 +126,7 @@ class Socket {
         this.emitter.on(e, s);
     }
     send(e, s, t = "emit") {
-        this.socket.send(encode(e, s, t));
-    }
-    sendRaw(e) {
-        this.socket.send(e);
+        return void 0 === s ? this.socket.send(e) : this.socket.send(encode(e, s, t));
     }
     close(e, s) {
         this.socket.close(e, s);
@@ -139,28 +158,6 @@ class Socket {
             if (this.emitter.exist("error")) return this.emitter.emit("error", e);
             this.worker.options.logger.error(e), this.terminate();
         }
-    }
-}
-
-function encode(e, s, t) {
-    const o = {
-        emit: [ "e", e, s ],
-        publish: [ "p", e, s ],
-        system: {
-            subscribe: [ "s", "s", s ],
-            configuration: [ "s", "c", s ]
-        }
-    };
-    return "system" === t ? JSON.stringify(o[t][e]) : JSON.stringify(o[t]);
-}
-
-function decode(e, s) {
-    const [t, o, i] = s;
-    if ("e" === t) return e.emitter.emit(o, i);
-    if ("p" === t) return e.channels[o] && e.worker.wss.publish(o, i, e.id);
-    if ("s" === t) {
-        if ("s" === o) return e.subscribe(i);
-        if ("u" === o) return e.unsubscribe(i);
     }
 }
 

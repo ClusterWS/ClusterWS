@@ -57,8 +57,8 @@ export class Socket {
     constructor(worker: Worker, socket: WebSocketType);
     readonly readyState: number;
     on(event: string, listener: Listener): void;
-    send(event: string, message: Message, eventType?: string): void;
-    sendRaw(message: string | Buffer): void;
+    send(message: string | Buffer): void;
+    send(event: string, message: Message): void;
     close(code?: number, reason?: string): void;
     terminate(): void;
     processMessage(message: Message): void;

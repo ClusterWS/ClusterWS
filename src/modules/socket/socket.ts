@@ -2,6 +2,7 @@ import { Worker } from '../worker';
 import { generateUid } from '../../utils/helpers';
 import { EventEmitter } from '../../utils/emitter';
 import { WebSocketType } from '../engine';
+import { encode, decode } from './parser';
 import { Message, Listener, Middleware } from '../../utils/types';
 
 export class Socket {
@@ -69,12 +70,12 @@ export class Socket {
 
   // Send data with encoding to ClusterWS protocol
   public send(event: string, message: Message, eventType: string = 'emit'): void {
-    this.socket.send(encode(event, message, eventType));
-  }
+    // we swap to default websocket send if no event and message provided correctly
+    if (message === undefined) {
+      return this.socket.send(event);
+    }
 
-  // Send data without encoding to ClusterWS protocol
-  public sendRaw(message: string | Buffer): void {
-    this.socket.send(message);
+    return this.socket.send(encode(event, message, eventType));
   }
 
   // correct way to close connection
@@ -122,6 +123,7 @@ export class Socket {
 
   // unsubscribe socket from specific channel
   public unsubscribe(channel: string): void {
+    // TODO: add array unsubscribe support
     if (!this.channels[channel]) { return; }
     if (this.worker.wss.middleware[Middleware.onUnsubscribe]) {
       // This will allow user to see if some one unsubscribes from channel
@@ -166,53 +168,6 @@ export class Socket {
       }
       this.worker.options.logger.error(err);
       this.terminate();
-    }
-  }
-}
-
-// encode message to ClusterWS protocol
-function encode(event: string, data: Message, eventType: string): string | Buffer {
-  const message: { [key: string]: any } = {
-    emit: ['e', event, data],
-    publish: ['p', event, data],
-    system: {
-      subscribe: ['s', 's', data],
-      configuration: ['s', 'c', data]
-    }
-  };
-
-  if (eventType === 'system') {
-    return JSON.stringify(message[eventType][event]);
-  }
-  return JSON.stringify(message[eventType]);
-}
-
-// decode message from ClusterWS protocol
-function decode(socket: Socket, data: Message): void {
-  // parse data with user provided decode function
-  const [msgType, param, message]: [string, string, Message] = data;
-
-  // 'e' means emit
-  if (msgType === 'e') {
-    return (socket as any).emitter.emit(param, message);
-  }
-
-  // 'p' means publish
-  if (msgType === 'p') {
-    return (socket as any).channels[param] && (socket as any).worker.wss.publish(param, message, (socket as any).id);
-  }
-
-  // if we start with 's' it means system
-  if (msgType === 's') {
-    // second 's' means subscribe
-    if (param === 's') {
-      // we always expect to get array of channels
-      return socket.subscribe(message);
-    }
-
-    // 'u' means unsubscribe
-    if (param === 'u') {
-      return socket.unsubscribe(message);
     }
   }
 }
