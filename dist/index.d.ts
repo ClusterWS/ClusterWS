@@ -103,17 +103,17 @@ export type Configurations = {
     mode?: Mode;
     port?: number;
     host?: string;
-    engine?: string;
     tlsOptions?: SecureContextOptions;
-    loggerOptions?: {
-        logger?: Logger;
-        logLevel?: LogLevel;
-    };
     websocketOptions?: {
+        engine?: string;
         wsPath?: string;
         autoPing?: boolean;
         pingInterval?: number;
         sendConfigurationMessage?: boolean;
+    };
+    loggerOptions?: {
+        logger?: Logger;
+        logLevel?: LogLevel;
     };
     scaleOptions?: {
         redis?: ClientOpts;
@@ -131,11 +131,11 @@ export type Options = {
     mode: Mode;
     port: number;
     host: string | null;
-    engine: string;
     logger: Logger;
     worker: WorkerFunction;
     tlsOptions: SecureContextOptions | null;
     websocketOptions: {
+        engine: string;
         wsPath: string;
         autoPing: boolean;
         pingInterval: number;

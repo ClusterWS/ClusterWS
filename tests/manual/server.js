@@ -4,7 +4,6 @@ new ClusterWS({
   mode: Mode.Scale,
   port: 3001,
   worker: Worker,
-  // engine: 'ws',
   websocketOptions: {
     wsPath: "/",
     autoPing: true
@@ -34,16 +33,14 @@ async function Worker() {
   let wss = this.wss;
   // console.log(Buffer.from(JSON.stringify(['e', 'hello', 'world'])).toJSON())
 
-  wss.addMiddleware(Middleware.verifyConnection, (info, next) => {
-    // console.log('Got in here');
-    next(false);
-  });
+  // wss.addMiddleware(Middleware.verifyConnection, (info, next) => {
+  //   // console.log('Got in here');
+  //   next(false);
+  // });
   // wss.addMiddleware(Middleware.onSubscribe, (socket, channel, allow) => {
-  //   if (channel === 'another') {
-  //     return allow(false);
-  //   }
-
-  //   allow(true);
+  //   // if (channel === 'another') {
+  //   return allow(false);
+  //   // }
   // })
 
   wss.addMiddleware(Middleware.onMessageFromWorker, (message) => {
@@ -51,7 +48,7 @@ async function Worker() {
   })
 
   // setInterval(() => {
-  //   this.wss.publishToWorkers({ pid: process.pid, message: 'Testing my message' });
+  //   this.wss.publish('hello world', { pid: process.pid, message: 'Testing my message' });
   // }, 10000);
 
 

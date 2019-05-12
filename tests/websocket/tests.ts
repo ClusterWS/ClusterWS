@@ -15,8 +15,8 @@ function createClusterWSServer(additionalOptions) {
   new ClusterWS({
     mode: Mode.Single,
     port: 4000,
-    // engine: 'ws',
     websocketOptions: {
+      // engine: 'ws',
       sendConfigurationMessage: false
     },
     loggerOptions: {

@@ -54,7 +54,7 @@ export class BrokerConnector {
   }
 
   private createConnection(url: string): void {
-    const socket: WebSocketType & SocketExtension = WebSocketEngine.createWebsocketClient(this.options.engine, url);
+    const socket: WebSocketType & SocketExtension = WebSocketEngine.createWebsocketClient(this.options.websocketOptions.engine, url);
 
     socket.on('open', () => {
       socket.id = generateUid(8);

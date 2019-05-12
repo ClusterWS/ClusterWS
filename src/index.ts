@@ -36,7 +36,6 @@ export class ClusterWS {
       port: configurations.port || (configurations.tlsOptions ? 443 : 80),
       mode: configurations.mode || Mode.Scale,
       host: configurations.host,
-      engine: configurations.engine || '@clusterws/cws',
       logger: configurations.loggerOptions && configurations.loggerOptions.logger ?
         configurations.loggerOptions.logger : new Logger(
           configurations.loggerOptions && configurations.loggerOptions.logLevel ?
@@ -44,12 +43,14 @@ export class ClusterWS {
       worker: configurations.worker,
       tlsOptions: configurations.tlsOptions,
       websocketOptions: {
+        engine: configurations.websocketOptions ?
+          configurations.websocketOptions.engine || '@clusterws/cws' : '@clusterws/cws',
         wsPath: configurations.websocketOptions ?
           configurations.websocketOptions.wsPath : null,
         autoPing: configurations.websocketOptions ?
           configurations.websocketOptions.autoPing !== false : true,
-        pingInterval: configurations.websocketOptions && configurations.websocketOptions.pingInterval ?
-          configurations.websocketOptions.pingInterval : 20000,
+        pingInterval: configurations.websocketOptions ?
+          configurations.websocketOptions.pingInterval || 20000 : 20000,
         sendConfigurationMessage: configurations.websocketOptions &&
           configurations.websocketOptions.sendConfigurationMessage === false ?
           configurations.websocketOptions.sendConfigurationMessage : true

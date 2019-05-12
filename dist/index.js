@@ -320,7 +320,7 @@ class BrokerConnector {
         }
     }
     createConnection(e) {
-        const s = WebSocketEngine.createWebsocketClient(this.options.engine, e);
+        const s = WebSocketEngine.createWebsocketClient(this.options.websocketOptions.engine, e);
         s.on("open", () => {
             s.id = generateUid(8), this.connections.push(s), this.subscribe(this.getChannels()), 
             this.options.logger.debug(`Broker client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
@@ -384,7 +384,7 @@ class WSServer extends EventEmitter {
 class Worker {
     constructor(e, s) {
         this.options = e, this.wss = new WSServer(this.options, s), this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
-        const t = WebSocketEngine.createWebsocketServer(this.options.engine, {
+        const t = WebSocketEngine.createWebsocketServer(this.options.websocketOptions.engine, {
             path: this.options.websocketOptions.wsPath,
             server: this.server,
             verifyClient: (e, s) => this.wss.middleware[exports.Middleware.verifyConnection] ? this.wss.middleware[exports.Middleware.verifyConnection](e, s) : s(!0)
@@ -419,7 +419,7 @@ class ScalerConnector {
         this.next++;
     }
     createConnection(e) {
-        const s = WebSocketEngine.createWebsocketClient(this.options.engine, e);
+        const s = WebSocketEngine.createWebsocketClient(this.options.websocketOptions.engine, e);
         s.on("open", () => {
             s.id = generateUid(8), s.send("i" + this.serverId), this.connections.push(s), this.options.logger.debug(`Scaler client ${s.id} is connected to ${e}`, `(pid: ${process.pid})`);
         }), s.on("message", e => {
@@ -444,7 +444,7 @@ class ScalerConnector {
 
 class BrokerServer {
     constructor(e, s, t, o) {
-        this.options = e, this.sockets = [], this.streamToScaler = !1, this.server = WebSocketEngine.createWebsocketServer(this.options.engine, {
+        this.options = e, this.sockets = [], this.streamToScaler = !1, this.server = WebSocketEngine.createWebsocketServer(this.options.websocketOptions.engine, {
             port: s,
             verifyClient: (e, s) => s(e.req.url === `/?key=${t}`)
         }, () => process.send({
@@ -500,7 +500,7 @@ class ScalerServer {
     constructor(e) {
         this.options = e, this.sockets = [];
         const s = this.options.scaleOptions.default.horizontalScaleOptions, t = s.masterOptions.tlsOptions ? HTTPS.createServer(s.masterOptions.tlsOptions) : HTTP.createServer();
-        this.wsServer = WebSocketEngine.createWebsocketServer(this.options.engine, {
+        this.wsServer = WebSocketEngine.createWebsocketServer(this.options.websocketOptions.engine, {
             server: t,
             verifyClient: (e, t) => {
                 t(e.req.url === `/?key=${s.key || ""}`);
@@ -598,14 +598,14 @@ class ClusterWS {
             port: e.port || (e.tlsOptions ? 443 : 80),
             mode: e.mode || exports.Mode.Scale,
             host: e.host,
-            engine: e.engine || "@clusterws/cws",
             logger: e.loggerOptions && e.loggerOptions.logger ? e.loggerOptions.logger : new Logger(e.loggerOptions && e.loggerOptions.logLevel ? e.loggerOptions.logLevel : exports.LogLevel.INFO),
             worker: e.worker,
             tlsOptions: e.tlsOptions,
             websocketOptions: {
+                engine: e.websocketOptions && e.websocketOptions.engine || "@clusterws/cws",
                 wsPath: e.websocketOptions ? e.websocketOptions.wsPath : null,
                 autoPing: !e.websocketOptions || !1 !== e.websocketOptions.autoPing,
-                pingInterval: e.websocketOptions && e.websocketOptions.pingInterval ? e.websocketOptions.pingInterval : 2e4,
+                pingInterval: e.websocketOptions && e.websocketOptions.pingInterval || 2e4,
                 sendConfigurationMessage: !e.websocketOptions || !1 !== e.websocketOptions.sendConfigurationMessage || e.websocketOptions.sendConfigurationMessage
             },
             scaleOptions: {

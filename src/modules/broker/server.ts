@@ -17,7 +17,7 @@ export class BrokerServer {
   private scaler: ScalerConnector;
 
   constructor(private options: Options, port: number, key: string, serverId: string) {
-    this.server = WebSocketEngine.createWebsocketServer(this.options.engine, {
+    this.server = WebSocketEngine.createWebsocketServer(this.options.websocketOptions.engine, {
       port,
       verifyClient: (info: ConnectionInfoType, next: Listener): void => {
         return next(info.req.url === `/?key=${key}`);

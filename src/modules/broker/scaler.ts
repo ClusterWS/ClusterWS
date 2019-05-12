@@ -21,7 +21,7 @@ export class ScalerServer {
             HTTPS.createServer(horizontalScaleOptions.masterOptions.tlsOptions) :
             HTTP.createServer();
 
-        this.wsServer = WebSocketEngine.createWebsocketServer(this.options.engine, {
+        this.wsServer = WebSocketEngine.createWebsocketServer(this.options.websocketOptions.engine, {
             server,
             verifyClient: (info: ConnectionInfoType, next: Listener): void => {
                 next(info.req.url === `/?key=${horizontalScaleOptions.key || ''}`);

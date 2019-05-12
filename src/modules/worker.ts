@@ -15,7 +15,7 @@ export class Worker {
     this.wss = new WSServer(this.options, securityKey);
     this.server = this.options.tlsOptions ? HTTPS.createServer(this.options.tlsOptions) : HTTP.createServer();
 
-    const uServer: WebSocketServerType = WebSocketEngine.createWebsocketServer(this.options.engine, {
+    const uServer: WebSocketServerType = WebSocketEngine.createWebsocketServer(this.options.websocketOptions.engine, {
       path: this.options.websocketOptions.wsPath,
       server: this.server,
       verifyClient: (info: ConnectionInfoType, next: Listener): void => {
