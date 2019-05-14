@@ -84,7 +84,7 @@ describe('Validation && Calling correct default actions', () => {
 
   it('Should send configuration message if option is enable', (done) => {
     let server;
-    const configurationMessage = ["s", "c", { "autoPing": true, "ping": 20000 }];
+    const configurationMessage = ["s", "c", { "autoPing": true, "pingInterval": 20000 }];
     const serverOptions = {
       worker: function () {
         server = this.server;

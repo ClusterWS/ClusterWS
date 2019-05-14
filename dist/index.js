@@ -100,7 +100,7 @@ class Socket {
         this.emitter = new EventEmitter(this.worker.options.logger), this.worker.options.websocketOptions.sendConfigurationMessage) {
             const e = {
                 autoPing: this.worker.options.websocketOptions.autoPing,
-                ping: this.worker.options.websocketOptions.pingInterval
+                pingInterval: this.worker.options.websocketOptions.pingInterval
             };
             this.send("configuration", e, "system");
         }

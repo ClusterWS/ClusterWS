@@ -47,9 +47,9 @@ async function Worker() {
     console.log('Got message from anther worker', process.pid, message);
   })
 
-  // setInterval(() => {
-  //   this.wss.publish('hello world', { pid: process.pid, message: 'Testing my message' });
-  // }, 10000);
+  setInterval(() => {
+    this.wss.publish('hello world', { pid: process.pid, message: 'Testing my message' });
+  }, 10000);
 
 
   wss.on('connection', (socket) => {

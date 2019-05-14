@@ -17,7 +17,7 @@ export class Socket {
       // Initialize client socket configs
       const initMessage: Message = {
         autoPing: this.worker.options.websocketOptions.autoPing,
-        ping: this.worker.options.websocketOptions.pingInterval
+        pingInterval: this.worker.options.websocketOptions.pingInterval
       };
       this.send('configuration', initMessage, 'system');
     }
