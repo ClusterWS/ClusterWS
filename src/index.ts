@@ -15,7 +15,7 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
  *
  * TODO: Future Plans
  *
- * - Improve positions of debug logs
+ * - Improve positions of debug logs (most of them are useless at the moment)
  * - Split logic more nicely to make it easier to understand code
  * - Add more test
  * - Add more options validation and test that all options passed correctly

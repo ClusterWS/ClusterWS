@@ -87,7 +87,7 @@ function encode(e, s, t) {
 function decode(e, s) {
     const [t, o, i] = s;
     if ("e" === t) return e.emitter.emit(o, i);
-    if ("p" === t) return e.channels[o] && e.worker.wss.publish(o, i, e.id);
+    if ("p" === t) return e.channels[o] && e.worker.wss.publish(o, i, null);
     if ("s" === t) {
         if ("s" === o) return e.subscribe(i);
         if ("u" === o) return e.unsubscribe(i);

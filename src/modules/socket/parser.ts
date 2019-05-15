@@ -30,7 +30,8 @@ export function decode(socket: Socket, data: Message): void {
 
   // 'p' means publish
   if (msgType === 'p') {
-    return (socket as any).channels[param] && (socket as any).worker.wss.publish(param, message, (socket as any).id);
+    // 'null' id allows to publish to itself
+    return (socket as any).channels[param] && (socket as any).worker.wss.publish(param, message, null);
   }
 
   // if we start with 's' it means system

@@ -298,9 +298,10 @@ describe('Pub Sub Communication', () => {
         }, 20);
       },
       message: function (message) {
-        if (message !== JSON.stringify(acceptSubscribeMessage)) {
-          done('Client 1 should not receive message');
-        }
+        // This is allowed
+        // if (message !== JSON.stringify(acceptSubscribeMessage)) {
+        // done('Client 1 should not receive message');
+        // }
       }
     }
 

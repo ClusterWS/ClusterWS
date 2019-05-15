@@ -5,11 +5,12 @@ new ClusterWS({
   port: 3001,
   worker: Worker,
   websocketOptions: {
+    // engine: "ws",
     wsPath: "/",
-    autoPing: true
+    autoPing: false
   },
   loggerOptions: {
-    logLevel: LogLevel.DEBUG
+    // logLevel: LogLevel.DEBUG
   },
   scaleOptions: {
     scaler: Scaler.Default,
@@ -20,11 +21,11 @@ new ClusterWS({
     },
     default: {
       brokers: 1,
-      horizontalScaleOptions: {
-        masterOptions: {
-          port: 3005
-        }
-      }
+      // horizontalScaleOptions: {
+      //   masterOptions: {
+      //     port: 3005
+      //   }
+      // }
     }
   }
 });
@@ -47,20 +48,24 @@ async function Worker() {
     console.log('Got message from anther worker', process.pid, message);
   })
 
-  setInterval(() => {
-    this.wss.publish('hello world', { pid: process.pid, message: 'Testing my message' });
-  }, 10000);
+  // setInterval(() => {
+  //   this.wss.publish('hello world', { pid: process.pid, message: 'Testing my message' });
+  // }, 10000);
 
 
   wss.on('connection', (socket) => {
+    // socket.on('message', (msg) => {
+    //   socket.send(msg);
+    // });
+
     socket.on('hello', (msg) => {
-      // socket.sendRaw(msg);
-      console.log('Received hello', process.pid);
-      wss.publish('hello', 'my super message which should be published to another channel');
+      socket.send(msg);
+      // console.log('Received hello', process.pid);
+      // wss.publish('hello', 'my super message which should be published to another channel');
     })
 
     socket.on('pong', () => {
-      console.log("Received pong");
+      // console.log("Received pong");
     })
   });
 }
