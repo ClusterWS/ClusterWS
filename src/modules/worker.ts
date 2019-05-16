@@ -25,9 +25,9 @@ export class Worker {
       }
     });
 
-    uServer.on('connection', (socket: WebSocketType) => {
+    uServer.on('connection', (socket: WebSocketType, upgReq: HTTP.IncomingMessage) => {
       this.options.logger.debug(`New WebSocket client is connected`, `(pid: ${process.pid})`);
-      this.wss.emit('connection', new Socket(this, socket));
+      this.wss.emit('connection', new Socket(this, socket), upgReq);
     });
 
     if (this.options.websocketOptions.autoPing) {

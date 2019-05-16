@@ -88,7 +88,7 @@ export class Worker {
 
 export class EventEmitter {
     constructor(logger: Logger);
-    on(event: 'connection', listener: (socket: Socket) => void): void;
+    on(event: 'connection', listener: (socket: Socket, upgReq: HTTP.IncomingMessage) => void): void;
     on(event: string, listener: Listener): void;
     emit(event: string, message: Message): void;
     emit(event: string, ...args: any[]): void;

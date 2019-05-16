@@ -34,9 +34,11 @@ async function Worker() {
   let wss = this.wss;
   // console.log(Buffer.from(JSON.stringify(['e', 'hello', 'world'])).toJSON())
 
-  // wss.addMiddleware(Middleware.verifyConnection, (info, next) => {
+  // wss.addMiddleware(Middleware.verifyConnection, ({ req }, next) => {
   //   // console.log('Got in here');
-  //   next(false);
+  //   // next(false);
+
+  //   // next(true);
   // });
   // wss.addMiddleware(Middleware.onSubscribe, (socket, channel, allow) => {
   //   // if (channel === 'another') {
@@ -53,7 +55,7 @@ async function Worker() {
   // }, 10000);
 
 
-  wss.on('connection', (socket) => {
+  wss.on('connection', (socket, req) => {
     // socket.on('message', (msg) => {
     //   socket.send(msg);
     // });

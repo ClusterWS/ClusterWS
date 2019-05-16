@@ -389,9 +389,9 @@ class Worker {
             server: this.server,
             verifyClient: (e, s) => this.wss.middleware[exports.Middleware.verifyConnection] ? this.wss.middleware[exports.Middleware.verifyConnection](e, s) : s(!0)
         });
-        t.on("connection", e => {
+        t.on("connection", (e, s) => {
             this.options.logger.debug("New WebSocket client is connected", `(pid: ${process.pid})`), 
-            this.wss.emit("connection", new Socket(this, e));
+            this.wss.emit("connection", new Socket(this, e), s);
         }), this.options.websocketOptions.autoPing && t.startAutoPing(this.options.websocketOptions.pingInterval, !0), 
         this.server.on("error", e => {
             this.options.logger.error(`Worker ${e.stack || e}`), this.options.mode === exports.Mode.Scale && process.exit();
