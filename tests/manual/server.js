@@ -34,6 +34,10 @@ async function Worker() {
   let wss = this.wss;
   // console.log(Buffer.from(JSON.stringify(['e', 'hello', 'world'])).toJSON())
 
+  wss.addMiddleware(Middleware.onPublishIn, (channel, message, next) => {
+    console.log(channel, message);
+    next(channel, message + " world");
+  });
   // wss.addMiddleware(Middleware.verifyConnection, ({ req }, next) => {
   //   // console.log('Got in here');
   //   // next(false);
@@ -46,12 +50,13 @@ async function Worker() {
   //   // }
   // })
 
-  wss.addMiddleware(Middleware.onMessageFromWorker, (message) => {
-    console.log('Got message from anther worker', process.pid, message);
-  })
+  // wss.addMiddleware(Middleware.onMessageFromWorker, (message) => {
+  //   console.log('Got message from anther worker', process.pid, message);
+  // })
+
 
   // setInterval(() => {
-  //   this.wss.publish('hello world', { pid: process.pid, message: 'Testing my message' });
+  //   this.wss.publishToWorkers('hello me');
   // }, 10000);
 
 

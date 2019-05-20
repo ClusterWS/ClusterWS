@@ -28,7 +28,8 @@ export enum Middleware {
     verifyConnection = 2,
     onChannelOpen = 3,
     onChannelClose = 4,
-    onMessageFromWorker = 5
+    onMessageFromWorker = 5,
+    onPublishIn = 6
 }
 
 export enum LogLevel {

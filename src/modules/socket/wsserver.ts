@@ -9,13 +9,14 @@ export class WSServer extends EventEmitter {
 
   private pubSub: PubSubEngine;
   private connector: BrokerConnector | RedisConnector;
+  private reservedClients: string[] = ['#broker', '#worker'];
 
   constructor(private options: Options, securityKey: string) {
     // we pass "options" instead of "this.options" because "this" it was not yet initialized
     super(options.logger);
 
     // automatically predefined #workersLine channel to receive all message from workers
-    this.pubSub = new PubSubEngine(this.options.logger, 5, { '#workersLine': ['#broker', '#worker'] });
+    this.pubSub = new PubSubEngine(this.options.logger, 5, { '#workersLine': this.reservedClients });
 
     if (this.options.mode !== Mode.Single) {
       if (this.options.scaleOptions.scaler === Scaler.Default) {
@@ -81,6 +82,14 @@ export class WSServer extends EventEmitter {
 
   // publish message to specific channel (id is used to do not send message to actual publisher)
   public publish(channelName: string, message: Message, id?: string): void {
+    if (this.middleware[Middleware.onPublishIn] && !(this.reservedClients as any).includes(id)) {
+      // Allow to modify and redirect message to another channel, if response if false ignore this publish
+      return this.middleware[Middleware.onPublishIn](channelName, message, (newChannelName: string, modMessage: Message) => {
+        if (newChannelName) {
+          this.pubSub.publish(newChannelName, modMessage, id);
+        }
+      });
+    }
     this.pubSub.publish(channelName, message, id);
   }
 

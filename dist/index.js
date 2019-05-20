@@ -13,7 +13,8 @@ var cluster = require("cluster"), crypto = require("crypto"), HTTP = require("ht
 }(exports.Scaler || (exports.Scaler = {})), function(e) {
     e[e.onSubscribe = 0] = "onSubscribe", e[e.onUnsubscribe = 1] = "onUnsubscribe", 
     e[e.verifyConnection = 2] = "verifyConnection", e[e.onChannelOpen = 3] = "onChannelOpen", 
-    e[e.onChannelClose = 4] = "onChannelClose", e[e.onMessageFromWorker = 5] = "onMessageFromWorker";
+    e[e.onChannelClose = 4] = "onChannelClose", e[e.onMessageFromWorker = 5] = "onMessageFromWorker", 
+    e[e.onPublishIn = 6] = "onPublishIn";
 }(exports.Middleware || (exports.Middleware = {})), function(e) {
     e[e.ALL = 0] = "ALL", e[e.DEBUG = 1] = "DEBUG", e[e.INFO = 2] = "INFO", e[e.WARN = 3] = "WARN", 
     e[e.ERROR = 4] = "ERROR";
@@ -347,8 +348,9 @@ class BrokerConnector {
 
 class WSServer extends EventEmitter {
     constructor(e, s) {
-        super(e.logger), this.options = e, this.middleware = {}, this.pubSub = new PubSubEngine(this.options.logger, 5, {
-            "#workersLine": [ "#broker", "#worker" ]
+        super(e.logger), this.options = e, this.middleware = {}, this.reservedClients = [ "#broker", "#worker" ], 
+        this.pubSub = new PubSubEngine(this.options.logger, 5, {
+            "#workersLine": this.reservedClients
         }), this.options.mode !== exports.Mode.Single && (this.options.scaleOptions.scaler === exports.Scaler.Default && (this.connector = new BrokerConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s)), 
         this.options.scaleOptions.scaler === exports.Scaler.Redis && (this.connector = new RedisConnector(this.options, this.publish.bind(this), this.pubSub.getChannels.bind(this.pubSub), s))), 
         this.pubSub.register("#worker", e => {
@@ -371,6 +373,9 @@ class WSServer extends EventEmitter {
         this.middleware[e] = s;
     }
     publish(e, s, t) {
+        if (this.middleware[exports.Middleware.onPublishIn]) return this.middleware[exports.Middleware.onPublishIn](e, s, (e, s) => {
+            e && this.pubSub.publish(e, s, t);
+        });
         this.pubSub.publish(e, s, t);
     }
     subscribe(e, s) {

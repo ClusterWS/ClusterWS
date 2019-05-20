@@ -1,27 +1,32 @@
 const { WebSocket } = require('@clusterws/cws');
 
 const websocketUrl = `ws://localhost:3001`;
-let msg = JSON.stringify(['e', 'hello', 'world']);
+let msg = JSON.stringify(['s', 's', ['world']]);
+let pb = JSON.stringify(['p', 'world', 'hi']);
 
 let incoming = 0;
 
 let socket = new WebSocket(websocketUrl);
 
 socket.on('open', () => {
-  console.log("Connected");
+  // console.log("Connected");
   socket.send(msg);
 })
 
 socket.on('message', (message) => {
-  incoming++;
+  // incoming++;
   // console.log(message);
-  socket.send(msg)
+  console.log(message)
+  setTimeout(() => {
+    socket.send(pb);
+
+  }, 5000)
 });
 
-setInterval(() => {
-  console.log(incoming);
-  incoming = 0;
-}, 10000);
+// setInterval(() => {
+//   console.log(incoming);
+//   incoming = 0;
+// }, 10000);
 
 // }, Math.floor(Math.random() * 1000) + 100);
 // }

@@ -23,7 +23,9 @@ export enum Middleware {
   verifyConnection,
   onChannelOpen,
   onChannelClose,
-  onMessageFromWorker
+  onMessageFromWorker,
+  onPublishIn,
+  // onPublishOut
 }
 
 export enum LogLevel {
