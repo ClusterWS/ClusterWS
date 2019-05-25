@@ -54,7 +54,7 @@ export class WSServer extends EventEmitter {
       }
     });
 
-    // TODO: add more control for user over subscribing to new channel and channelClose (in future)
+    // TODO: add more control for user over channelAdd and channelClose (in future)
     this.pubSub.addListener('channelAdd', (channelName: string) => {
       if (this.options.mode !== Mode.Single) {
         this.connector.subscribe(channelName);

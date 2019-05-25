@@ -103,7 +103,6 @@ export class Socket {
       }
 
       if (this.worker.wss.middleware[Middleware.onSubscribe]) {
-        // TODO: This wont work correctly with async (need to fix it) :(
         // This will allow user to decide if they want to subscribe user to specific channel
         this.worker.wss.middleware[Middleware.onSubscribe](this, channel, (allow: any) => {
           if (allow) {

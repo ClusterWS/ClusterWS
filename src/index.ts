@@ -10,7 +10,7 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
  *
  * - Handle type for "this" keyword in worker function
  * - Run benchmarks
- * - Add all middleware
+ * - Add middleware for publishOut
  * - Add watch channel handler
  *
  * TODO: Future Plans
