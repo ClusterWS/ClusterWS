@@ -53,7 +53,6 @@ export class ClusterWS {
     constructor(configurations: Configurations);
 }
 
-
 export class Socket {
     constructor(worker: Worker, socket: WebSocketType);
     readonly readyState: number;
