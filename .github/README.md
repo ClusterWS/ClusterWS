@@ -16,7 +16,9 @@
 <h3 align="center"><strong>Please note that v3.3.0 most likely will not run on Node 11 or 12 as it uses old version of uWebSockets. 
 Unfortunately there is no easy way to update v3.3.0, and it would be much simpler to finish up version 4. So if you are using ClusterWS 3.3.0 please stick with Node 10, 9, 8 (or submit PR) while Version 4 is under development. Thank you.</strong></h3>
 
-<h3>For version **4.0.0 alpha** version check [ClusterWS Website](https://clusterws.github.io/) (still under work)</h3>
+<p align="center">
+    For version <strong>4.0.0 alpha</strong> version check <a href="https://clusterws.github.io/">ClusterWS Website</a> (still under work)
+</p>
 
 <p align="center">
     <i><strong>Lightweight</strong>, <strong>fast</strong> and <strong>powerful</strong> framework for building <strong>scalable</strong> WebSocket applications in Node.js. ClusterWS uses <a href="https://github.com/ClusterWS/cWS">cWS</a> a fork of uWebSockets.</i>
