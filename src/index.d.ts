@@ -30,6 +30,7 @@ export enum Middleware {
     onChannelClose = 4,
     onMessageFromWorker = 5,
     onPublishIn = 6
+    // TODO: add onPublishOut
 }
 
 export enum LogLevel {

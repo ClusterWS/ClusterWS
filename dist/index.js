@@ -373,7 +373,7 @@ class WSServer extends EventEmitter {
         this.middleware[e] = s;
     }
     publish(e, s, t) {
-        if (this.middleware[exports.Middleware.onPublishIn]) return this.middleware[exports.Middleware.onPublishIn](e, s, (e, s) => {
+        if (this.middleware[exports.Middleware.onPublishIn] && !this.reservedClients.includes(t)) return this.middleware[exports.Middleware.onPublishIn](e, s, (e, s) => {
             e && this.pubSub.publish(e, s, t);
         });
         this.pubSub.publish(e, s, t);

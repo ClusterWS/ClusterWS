@@ -30,6 +30,7 @@ export enum Middleware {
     onChannelClose = 4,
     onMessageFromWorker = 5,
     onPublishIn = 6
+    // TODO: add onPublishOut
 }
 
 export enum LogLevel {
@@ -52,7 +53,6 @@ export type HorizontalScaleOptions = {
 export class ClusterWS {
     constructor(configurations: Configurations);
 }
-
 
 export class Socket {
     constructor(worker: Worker, socket: WebSocketType);
