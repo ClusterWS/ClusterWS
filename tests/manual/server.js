@@ -7,7 +7,7 @@ new ClusterWS({
   websocketOptions: {
     // engine: "ws",
     wsPath: "/",
-    autoPing: false
+    autoPing: true
   },
   loggerOptions: {
     // logLevel: LogLevel.DEBUG

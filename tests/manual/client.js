@@ -1,28 +1,49 @@
 const { WebSocket } = require('@clusterws/cws');
 
-const websocketUrl = `ws://localhost:3001`;
-let msg = JSON.stringify(['s', 's', ['world']]);
-let pb = JSON.stringify(['p', 'world', 'hi']);
+// const websocketUrl = `ws://localhost:3001`;
+// let msg = JSON.stringify(['s', 's', ['world']]);
+// let pb = JSON.stringify(['p', 'world', 'hi']);
 
-let incoming = 0;
+// let incoming = 0;
 
-let socket = new WebSocket(websocketUrl);
+// let socket = new WebSocket(websocketUrl);
 
-socket.on('open', () => {
-  // console.log("Connected");
-  socket.send(msg);
+// socket.on('open', () => {
+//   // console.log("Connected");
+//   socket.send(msg);
+// })
+
+// socket.on('message', (message) => {
+//   // incoming++;
+//   // console.log(message);
+//   console.log(message)
+//   setTimeout(() => {
+//     socket.send(pb);
+
+//   }, 5000)
+// });
+
+global.window = {
+  WebSocket: WebSocket
+}
+// window.WebSocket = WebSocket;
+const ClusterWS = require("./check");
+
+let socket = new ClusterWS({
+  url: `ws://localhost:3001`
 })
 
-socket.on('message', (message) => {
-  // incoming++;
-  // console.log(message);
-  console.log(message)
-  setTimeout(() => {
-    socket.send(pb);
-
-  }, 5000)
+socket.on('open', () => {
+  console.log("Socket connected");
 });
 
+socket.on('message', (message) => {
+  console.log(message);
+})
+
+socket.on('ping', () => {
+  console.log('Got ping');
+})
 // setInterval(() => {
 //   console.log(incoming);
 //   incoming = 0;

@@ -21,8 +21,8 @@ import { Options, Configurations, Mode, LogLevel, Scaler } from './utils/types';
  * - Add more options validation and test that all options passed correctly
  * - Implement retry logic in connectors
  * - Better async await support
- * - Add static file with all static strings
- *
+ * - Add static file with all static strings (currently is mess)
+ * - Add ack
  */
 
 // Reexport important things

@@ -9,7 +9,7 @@ type SocketExtension = {
 };
 
 // TODO: implement await for connections before allowing to next step
-// TODO: implement simple queue algorithm
+// TODO: implement simple queue algorithm and ack
 export class BrokerConnector {
   private next: number = 0;
   private connections: Array<WebSocketType & SocketExtension> = [];
@@ -24,7 +24,6 @@ export class BrokerConnector {
   }
 
   public publish(message: Message): void {
-    // TODO: implement retry logic (in future)
     if (this.next > this.connections.length - 1) {
       this.next = 0;
     }

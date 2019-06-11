@@ -1,6 +1,6 @@
 import { generateUid } from '../../utils/helpers';
 import { ScalerConnector } from './scaler.connector';
-import { Options, Listener, Message, HorizontalScaleOptions } from '../../utils/types';
+import { Options, Listener, Message } from '../../utils/types';
 
 import { WebSocketEngine, WebSocketServerType, WebSocketType, ConnectionInfoType } from '../engine';
 
