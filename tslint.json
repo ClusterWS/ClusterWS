@@ -17,6 +17,10 @@
       "object-destructuring",
       "array-destructuring"
     ],
+    "interface-name": [
+      true,
+      "never-prefix"
+    ],
     "object-literal-shorthand": true,
     "interface-over-type-literal": false,
     "no-unused-expression": false,
@@ -29,6 +33,7 @@
         "destructuring": "all"
       }
     ],
+    "forin": false,
     "no-var-keyword": true,
     "quotemark": [
       true,
