@@ -27,7 +27,7 @@ global.window = {
   WebSocket: WebSocket
 }
 // window.WebSocket = WebSocket;
-const ClusterWS = require("./check");
+const ClusterWS = require("./ClusterWSClient.js");
 
 let socket = new ClusterWS({
   url: `ws://localhost:3001`
@@ -39,6 +39,10 @@ socket.on('open', () => {
 
 socket.on('message', (message) => {
   console.log(message);
+})
+
+socket.on('error', (error) => {
+  console.log(error);
 })
 
 socket.on('ping', () => {
