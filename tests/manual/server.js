@@ -5,7 +5,7 @@ new ClusterWS({
   port: 3001,
   worker: Worker,
   websocketOptions: {
-    // engine: "ws",
+    engine: "ws",
     wsPath: "/",
     autoPing: true
   },
@@ -34,16 +34,20 @@ async function Worker() {
   let wss = this.wss;
   // console.log(Buffer.from(JSON.stringify(['e', 'hello', 'world'])).toJSON())
 
-  wss.addMiddleware(Middleware.onPublishIn, (channel, message, next) => {
-    console.log(channel, message);
-    next(channel, message + " world");
-  });
-  // wss.addMiddleware(Middleware.verifyConnection, ({ req }, next) => {
-  //   // console.log('Got in here');
-  //   // next(false);
-
-  //   // next(true);
+  // wss.addMiddleware(Middleware.onPublishIn, (channel, message, next) => {
+  //   // console.log(channel, message);
+  //   next(channel, message + " world");
   // });
+  wss.addMiddleware(Middleware.verifyConnection, ({ req }, next) => {
+    req.user = "Hello world";
+    setTimeout(() => {
+      return next(true);
+    }, 4000);
+    // console.log('Got in here');
+    // next(false);
+
+    // next(true);
+  });
   // wss.addMiddleware(Middleware.onSubscribe, (socket, channel, allow) => {
   //   // if (channel === 'another') {
   //   return allow(false);
@@ -61,9 +65,15 @@ async function Worker() {
 
 
   wss.on('connection', (socket, req) => {
+    console.log("Connection Openned");
+    console.log(req.user);
     // socket.on('message', (msg) => {
     //   socket.send(msg);
     // });
+
+    socket.on('close', () => {
+      console.log('Connection closed');
+    });
 
     socket.on('hello', (msg) => {
       socket.send(msg);
@@ -76,3 +86,5 @@ async function Worker() {
     })
   });
 }
+
+

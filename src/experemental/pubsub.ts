@@ -8,35 +8,23 @@ interface PubSubEngineOptions {
   onChannelDestroyed?: (channel: string) => void;
 }
 
+function noop(): void { /** noop function */ }
 function isObjectEmpty(object: any): boolean {
   for (const key in object) {
     if (object.hasOwnProperty(key)) {
       return false;
     }
   }
+
   return true;
 }
 
-// seems like default indexOf is a bit slower
-// function indexOf(arr: string[], el: string): number {
-//   for (let i: number = 0, len: number = arr.length; i < len; i++) {
-//     if (arr[i] === el) {
-//       return i;
-//     }
-//   }
-
-//   return -1;
-// }
-
-function noop(): void { /** noop function */ }
-
-class PubSubEngine {
-  // TODO: improve name
-  public static globalUser: string = '*';
+export class PubSubEngine {
+  public static GLOBAL_USER: string = '*';
 
   private options: PubSubEngineOptions;
+  private usersLink: { [key: string]: { listener: Listener, channels: { [key: string]: number } } } = {};
   private channelsUsers: { [key: string]: { [key: string]: number } } = {};
-  private usersListeners: { [key: string]: Listener } = {};
   private channelsBatches: { [key: string]: any[] } = {};
   private boundFlush: () => void;
 
@@ -53,58 +41,80 @@ class PubSubEngine {
   }
 
   public register(userId: string, listener: Listener): void {
-    this.usersListeners[userId] = listener;
+    this.usersLink[userId] = {
+      listener,
+      channels: {}
+    };
   }
 
   public unregister(userId: string): void {
-    delete this.usersListeners[userId];
-    // remove user from pubsub engine
-    // TODO: find nice and fast way to remove
-    // user from all subscribed channels
+    const user: { listener: Listener, channels: { [key: string]: number } } | undefined = this.usersLink[userId];
+    if (user) {
+      for (const channel in user.channels) {
+        const channelUsers: { [key: string]: number } = this.channelsUsers[channel];
+        delete channelUsers[userId];
+
+        if (isObjectEmpty(channelUsers)) {
+          // this is last subscriber we can delete channel entirely
+          delete this.channelsUsers[channel];
+          this.options.onChannelDestroyed(channel);
+        }
+      }
+
+      delete this.usersLink[userId];
+    }
   }
 
   public unsubscribe(userId: string, channels: string[]): void {
     // unsubscribe user from channels
-    for (let i: number = 0, len: number = channels.length; i < len; i++) {
-      const channel: string = channels[i];
-      const channelUsersObject: { [key: string]: number } | undefined = this.channelsUsers[channel];
+    const user: { listener: Listener, channels: { [key: string]: number } } | undefined = this.usersLink[userId];
+    if (user) {
+      for (let i: number = 0, len: number = channels.length; i < len; i++) {
+        const channel: string = channels[i];
+        const channelUsersObject: { [key: string]: number } | undefined = this.channelsUsers[channel];
 
-      if (channelUsersObject) {
-        delete channelUsersObject[userId];
+        if (channelUsersObject) {
+          delete channelUsersObject[userId];
+          delete user.channels[channel];
 
-        if (isObjectEmpty(channelUsersObject)) {
-          // this is last subscriber we can delete channel entirely
-          delete this.channelsUsers[channel];
-          this.options.onChannelDestroyed(channel);
+          if (isObjectEmpty(channelUsersObject)) {
+            // this is last subscriber we can delete channel entirely
+            delete this.channelsUsers[channel];
+            this.options.onChannelDestroyed(channel);
+          }
         }
       }
     }
   }
 
   public subscribe(userId: string, channels: string[]): void {
-    for (let i: number = 0, len: number = channels.length; i < len; i++) {
-      const channel: string = channels[i];
-      const channelUsersObject: { [key: string]: number } | undefined = this.channelsUsers[channel];
+    const user: { listener: Listener, channels: { [key: string]: number } } | undefined = this.usersLink[userId];
+    if (user) {
+      for (let i: number = 0, len: number = channels.length; i < len; i++) {
+        const channel: string = channels[i];
+        const channelUsersObject: { [key: string]: number } | undefined = this.channelsUsers[channel];
 
-      if (channelUsersObject) {
-        channelUsersObject[userId] = 1;
-        continue;
+        user.channels[channel] = 1;
+
+        if (channelUsersObject) {
+          channelUsersObject[userId] = 1;
+          continue;
+        }
+
+        this.channelsUsers[channel] = {};
+        this.channelsUsers[channel][userId] = 1;
+        this.options.onChannelCreated(channel);
       }
-
-      this.channelsUsers[channel] = {};
-      this.channelsUsers[channel][userId] = 1;
-      this.options.onChannelCreated(channel);
     }
   }
 
   public publish(channel: string, message: any, userId: string = null): void {
-    // allow to publish to channels which do not exists for '*' user
+    // allows to publish to channels which do not exists with '*' user
     const batchForChannel: any[] = this.channelsBatches[channel];
 
     if (batchForChannel) {
       batchForChannel.push([userId, message]);
     } else {
-      // TODO: there is some room for optimization
       // if no messages have been published to this
       // channel within last flush create new entry
       this.channelsBatches[channel] = [[userId, message]];
@@ -112,16 +122,14 @@ class PubSubEngine {
   }
 
   public getStats(): any {
-    // TODO: re implement get stats
+    // TODO: add more useful stats
     return {
-      channelsUsers: this.channelsUsers,
-      usersListeners: this.usersListeners,
-      channelsBatches: this.channelsBatches
+      numberOfUsers: Object.keys(this.usersLink).length,
+      numberOfChannels: Object.keys(this.channelsUsers).length
     };
   }
 
   private flush(): void {
-    // TODO: optimize flush
     // flush last batch to everyone
     const messagesToPublish: any = {};
 
@@ -142,22 +150,22 @@ class PubSubEngine {
 
       // generate messages for default user '*'
       // which listens to all messages except it is own
-      const startUserMessages: any[] = this.extractUserMessages(PubSubEngine.globalUser, messages);
+      const startUserMessages: any[] = this.extractUserMessages(PubSubEngine.GLOBAL_USER, messages);
       if (startUserMessages.length) {
-        if (!messagesToPublish[PubSubEngine.globalUser]) {
-          messagesToPublish[PubSubEngine.globalUser] = {};
+        if (!messagesToPublish[PubSubEngine.GLOBAL_USER]) {
+          messagesToPublish[PubSubEngine.GLOBAL_USER] = {};
         }
 
-        messagesToPublish[PubSubEngine.globalUser][channel] = startUserMessages;
+        messagesToPublish[PubSubEngine.GLOBAL_USER][channel] = startUserMessages;
       }
     }
 
     this.channelsBatches = {};
 
     for (const userId in messagesToPublish) {
-      const listener: Listener = this.usersListeners[userId];
-      if (listener) {
-        listener(messagesToPublish[userId]);
+      const user: { listener: Listener, channels: { [key: string]: number } } | undefined = this.usersLink[userId];
+      if (user) {
+        user.listener(messagesToPublish[userId]);
       }
     }
 
@@ -166,7 +174,7 @@ class PubSubEngine {
   }
 
   private extractUserMessages(userId: string, messages: any[]): any[] {
-    const messagesForUserInChannel: any = [];
+    const messagesForUserInChannel: any[] = [];
     for (let i: number = 0, len: number = messages.length; i < len; i++) {
       const message: any[] = messages[i];
 
@@ -230,49 +238,90 @@ class PubSubEngine {
 
 
 // Memory and perf testing
+
+console.log('Start testing "Registration and Subscribing"');
+
 const pubSubEngine: PubSubEngine = new PubSubEngine();
 
-console.log("Started");
-console.time("Perf");
-// let recieved = 0;
-let shift = 0;
+console.time('Registration and Subscribing');
+const shifting: number = 100;
+const numberOfUsers: number = 30000;
 
-for (let i = 0; i < 50000; i++) {
-  pubSubEngine.register(`my_user_number_${i}`, (msgs: any): void => {
-    // recieved++;
+let shift: number = 0;
+
+for (let i: number = 0; i < numberOfUsers; i++) {
+  pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
+    // TODO: write throughput tests
   });
 
-  let channels = [];
-  for (let j = 0 + shift; j < 100 + shift; j++) {
+  const channels: any[] = [];
+  for (let j: number = 0 + shift; j < 250 + shift; j++) {
     channels.push(`one_of_the_subscribed_channels_${j}`);
   }
   pubSubEngine.subscribe(`my_user_number_${i}`, channels);
-  shift = shift + 20;
+  shift = shift + shifting;
 }
 
-console.timeEnd("Perf");
-console.log("Ended");
+console.log(pubSubEngine.getStats());
+console.timeEnd('Registration and Subscribing');
 
-// let sent = 0;
-let publishShift = 0;
-// Publish perf load
-setInterval(() => {
-  let complexMessage = {
-    hello: ["string", 1234, {}],
-    m: "asdfasf"
-  };
+console.time('Unsubscribe');
+let shiftUnsubscribe: number = 0;
 
-  const someLongString = "long message string which will be copied for each user and may cayse memory leak"
-
-  for (let i = 0 + publishShift; i < 1000 + publishShift; i++) {
-    pubSubEngine.publish(`one_of_the_subscribed_channels_${i}`, someLongString, `my_user_number_${i}`);
+for (let i: number = 0; i < numberOfUsers; i++) {
+  const channels: any[] = [];
+  for (let j: number = 0 + shiftUnsubscribe; j < 250 + shiftUnsubscribe; j++) {
+    channels.push(`one_of_the_subscribed_channels_${j}`);
   }
-  // sent++;
-  publishShift = publishShift + 1000;
-  if (publishShift > 1000000) {
-    publishShift = 0;
-  }
-}, 5);
+  pubSubEngine.unsubscribe(`my_user_number_${i}`, channels);
+  shiftUnsubscribe = shiftUnsubscribe + shifting;
+}
+
+console.log(pubSubEngine.getStats());
+console.timeEnd('Unsubscribe');
+
+// console.log('Start testing "Unregister"');
+// console.time('Unregister');
+
+// for (let i: number = 0; i < numberOfUsers; i++) {
+//   pubSubEngine.unregister(`my_user_number_${i}`);
+// }
+
+// console.log(pubSubEngine.getStats());
+// console.timeEnd('Unregister');
+
+//////
+//////
+//////
+//////
+/////
+//////
+// let publishShift = 0;
+// // Publish perf load
+// setInterval(() => {
+//   let complexMessage = {
+//     hello: ["string", 1234, {}],
+//     m: "asdfasf"
+//   };
+
+//   const someLongString = "long message string which will be copied for each user and may cayse memory leak"
+
+//   for (let i = 0 + publishShift; i < 1000 + publishShift; i++) {
+//     pubSubEngine.publish(`one_of_the_subscribed_channels_${i}`, complexMessage, `my_user_number_${i}`);
+//   }
+//   publishShift = publishShift + 1000;
+//   if (publishShift > 1000000) {
+//     publishShift = 0;
+//   }
+// }, 5);
+
+// setInterval(() => {
+//   // print some stats
+//   console.log(pubSubEngine.getStats());
+// }, 10000);
+
+// setTimeout(() => {
+// }, 60 * 1000);
 
 
 // setInterval(() => {
