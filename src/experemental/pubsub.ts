@@ -139,6 +139,12 @@ export class PubSubEngine {
     };
   }
 
+  public getChannelsReferenceByUserId(userId: string): { [key: string]: number } | undefined {
+    const user: any = this.usersLink[userId];
+    // returns reference
+    return user ? this.usersLink[userId].channels : undefined;
+  }
+
   private flush(): void {
     // flush last batch to everyone
     const messagesToPublish: any = {};
@@ -276,6 +282,7 @@ for (let i: number = 0; i < numberOfUsers; i++) {
 console.log(pubSubEngine.getStats());
 console.timeEnd('Registration and Subscribing');
 
+// console.log(pubSubEngine.getChannelsByUserId(`my_user_number_0`));
 
 // console.log('Start testing "Unsubscribe"');
 // console.time('Unsubscribe');
