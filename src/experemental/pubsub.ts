@@ -123,9 +123,19 @@ export class PubSubEngine {
 
   public getStats(): any {
     // TODO: add more useful stats
+    let maxUsersPerChannel: number = 0;
+
+    for (const channel in this.channelsUsers) {
+      const subscribed: number = Object.keys(this.channelsUsers[channel]).length;
+      if (subscribed > maxUsersPerChannel) {
+        maxUsersPerChannel = subscribed;
+      }
+    }
+
     return {
       numberOfUsers: Object.keys(this.usersLink).length,
-      numberOfChannels: Object.keys(this.channelsUsers).length
+      numberOfChannels: Object.keys(this.channelsUsers).length,
+      maxUsersPerChannel
     };
   }
 
@@ -236,49 +246,53 @@ export class PubSubEngine {
 //   }, 2000);
 // }, 5000);
 
-
 // Memory and perf testing
+// TODO: improve and move to it is own file
 
 console.log('Start testing "Registration and Subscribing"');
 
 const pubSubEngine: PubSubEngine = new PubSubEngine();
 
+const shifting: number = 0;
+const numberOfUsers: number = 20000;
+const numberOfChannelsPerUser: number = 1000;
+
 console.time('Registration and Subscribing');
-const shifting: number = 100;
-const numberOfUsers: number = 30000;
 
-let shift: number = 0;
-
+let shiftSubscribe: number = 0;
 for (let i: number = 0; i < numberOfUsers; i++) {
   pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
     // TODO: write throughput tests
   });
 
   const channels: any[] = [];
-  for (let j: number = 0 + shift; j < 250 + shift; j++) {
+  for (let j: number = 0 + shiftSubscribe; j < numberOfChannelsPerUser + shiftSubscribe; j++) {
     channels.push(`one_of_the_subscribed_channels_${j}`);
   }
   pubSubEngine.subscribe(`my_user_number_${i}`, channels);
-  shift = shift + shifting;
+  shiftSubscribe = shiftSubscribe + shifting;
 }
 
 console.log(pubSubEngine.getStats());
 console.timeEnd('Registration and Subscribing');
 
-console.time('Unsubscribe');
-let shiftUnsubscribe: number = 0;
 
-for (let i: number = 0; i < numberOfUsers; i++) {
-  const channels: any[] = [];
-  for (let j: number = 0 + shiftUnsubscribe; j < 250 + shiftUnsubscribe; j++) {
-    channels.push(`one_of_the_subscribed_channels_${j}`);
-  }
-  pubSubEngine.unsubscribe(`my_user_number_${i}`, channels);
-  shiftUnsubscribe = shiftUnsubscribe + shifting;
-}
+// console.log('Start testing "Unsubscribe"');
+// console.time('Unsubscribe');
+// let shiftUnsubscribe: number = 0;
 
-console.log(pubSubEngine.getStats());
-console.timeEnd('Unsubscribe');
+// for (let i: number = 0; i < numberOfUsers; i++) {
+//   const channels: any[] = [];
+//   for (let j: number = 0 + shiftUnsubscribe; j < numberOfChannelsPerUser + shiftUnsubscribe; j++) {
+//     channels.push(`one_of_the_subscribed_channels_${j}`);
+//   }
+//   pubSubEngine.unsubscribe(`my_user_number_${i}`, channels);
+//   shiftUnsubscribe = shiftUnsubscribe + shifting;
+// }
+
+// console.log(pubSubEngine.getStats());
+// console.timeEnd('Unsubscribe');
+
 
 // console.log('Start testing "Unregister"');
 // console.time('Unregister');
@@ -294,26 +308,35 @@ console.timeEnd('Unsubscribe');
 //////
 //////
 //////
-/////
 //////
-// let publishShift = 0;
-// // Publish perf load
-// setInterval(() => {
-//   let complexMessage = {
-//     hello: ["string", 1234, {}],
-//     m: "asdfasf"
-//   };
+//////
+// TODO: move this test in separate logic
+let publishShift = 0;
+let messagesPublished = 0;
+// Publish perf load
+setInterval(() => {
+  let complexMessage = {
+    hello: ["string", 1234, {}],
+    m: "asdfasf"
+  };
 
-//   const someLongString = "long message string which will be copied for each user and may cayse memory leak"
+  const someLongString = "long message string which will be copied for each user and may cause memory leak"
 
-//   for (let i = 0 + publishShift; i < 1000 + publishShift; i++) {
-//     pubSubEngine.publish(`one_of_the_subscribed_channels_${i}`, complexMessage, `my_user_number_${i}`);
-//   }
-//   publishShift = publishShift + 1000;
-//   if (publishShift > 1000000) {
-//     publishShift = 0;
-//   }
-// }, 5);
+  for (let i = 0 + publishShift; i < 200 + publishShift; i++) {
+    pubSubEngine.publish(`one_of_the_subscribed_channels_${i}`, complexMessage, `my_user_number_${i}`);
+    messagesPublished++;
+  }
+  publishShift = publishShift + 100;
+  // Publish to all 1m channels
+  if (publishShift > 10000) {
+    publishShift = 0;
+  }
+}, 100);
+
+setInterval(() => {
+  console.log(`Messages published withing last 10s ${messagesPublished}`);
+  messagesPublished = 0;
+}, 10000);
 
 // setInterval(() => {
 //   // print some stats
