@@ -23,8 +23,8 @@ export class PubSubEngine {
   public static GLOBAL_USER: string = '*';
 
   private options: PubSubEngineOptions;
-  private usersLink: { [key: string]: { listener: Listener, channels: { [key: string]: number } } } = {};
-  private channelsUsers: { [key: string]: { [key: string]: number } } = {};
+  private usersLink: { [key: string]: { listener: Listener, channels: { [key: string]: string } } } = {};
+  private channelsUsers: { [key: string]: { [key: string]: string } } = {};
   private channelsBatches: { [key: string]: any[] } = {};
   private boundFlush: () => void;
 
@@ -48,10 +48,10 @@ export class PubSubEngine {
   }
 
   public unregister(userId: string): void {
-    const user: { listener: Listener, channels: { [key: string]: number } } | undefined = this.usersLink[userId];
+    const user: { listener: Listener, channels: { [key: string]: string } } | undefined = this.usersLink[userId];
     if (user) {
       for (const channel in user.channels) {
-        const channelUsers: { [key: string]: number } = this.channelsUsers[channel];
+        const channelUsers: { [key: string]: string } = this.channelsUsers[channel];
         delete channelUsers[userId];
 
         if (isObjectEmpty(channelUsers)) {
@@ -67,11 +67,11 @@ export class PubSubEngine {
 
   public unsubscribe(userId: string, channels: string[]): void {
     // unsubscribe user from channels
-    const user: { listener: Listener, channels: { [key: string]: number } } | undefined = this.usersLink[userId];
+    const user: { listener: Listener, channels: { [key: string]: string } } | undefined = this.usersLink[userId];
     if (user) {
       for (let i: number = 0, len: number = channels.length; i < len; i++) {
         const channel: string = channels[i];
-        const channelUsersObject: { [key: string]: number } | undefined = this.channelsUsers[channel];
+        const channelUsersObject: { [key: string]: string } | undefined = this.channelsUsers[channel];
 
         if (channelUsersObject) {
           delete channelUsersObject[userId];
@@ -88,21 +88,21 @@ export class PubSubEngine {
   }
 
   public subscribe(userId: string, channels: string[]): void {
-    const user: { listener: Listener, channels: { [key: string]: number } } | undefined = this.usersLink[userId];
+    const user: { listener: Listener, channels: { [key: string]: string } } | undefined = this.usersLink[userId];
     if (user) {
       for (let i: number = 0, len: number = channels.length; i < len; i++) {
         const channel: string = channels[i];
-        const channelUsersObject: { [key: string]: number } | undefined = this.channelsUsers[channel];
+        const channelUsersObject: { [key: string]: string } | undefined = this.channelsUsers[channel];
 
-        user.channels[channel] = 1;
+        user.channels[channel] = '1';
 
         if (channelUsersObject) {
-          channelUsersObject[userId] = 1;
+          channelUsersObject[userId] = '1';
           continue;
         }
 
         this.channelsUsers[channel] = {};
-        this.channelsUsers[channel][userId] = 1;
+        this.channelsUsers[channel][userId] = '1';
         this.options.onChannelCreated(channel);
       }
     }
@@ -139,7 +139,7 @@ export class PubSubEngine {
     };
   }
 
-  public getChannelsReferenceByUserId(userId: string): { [key: string]: number } | undefined {
+  public getChannelsReferenceByUserId(userId: string): { [key: string]: string } | undefined {
     const user: any = this.usersLink[userId];
     // returns reference
     return user ? this.usersLink[userId].channels : undefined;
@@ -179,7 +179,7 @@ export class PubSubEngine {
     this.channelsBatches = {};
 
     for (const userId in messagesToPublish) {
-      const user: { listener: Listener, channels: { [key: string]: number } } | undefined = this.usersLink[userId];
+      const user: { listener: Listener, channels: { [key: string]: string } } | undefined = this.usersLink[userId];
       if (user) {
         user.listener(messagesToPublish[userId]);
       }
@@ -260,7 +260,7 @@ console.log('Start testing "Registration and Subscribing"');
 const pubSubEngine: PubSubEngine = new PubSubEngine();
 
 const shifting: number = 0;
-const numberOfUsers: number = 20000;
+const numberOfUsers: number = 14000;
 const numberOfChannelsPerUser: number = 1000;
 
 console.time('Registration and Subscribing');
