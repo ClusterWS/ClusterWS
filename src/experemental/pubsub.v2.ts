@@ -3,6 +3,15 @@
 
 type Listener = (messages: { [key: string]: any[] }) => void;
 
+interface PubSubEngineOptions {
+  sync: boolean;
+  flushInterval: number;
+  onChannelCreated: (channel: string) => void;
+  onChannelDestroyed: (channel: string) => void;
+}
+
+function noop(): void { /** noop function */ }
+
 function findIndexOf(arr: string[], value: string): number {
   for (let i: number = 0, len: number = arr.length; i < len; i++) {
     if (arr[i] === value) {
@@ -13,11 +22,12 @@ function findIndexOf(arr: string[], value: string): number {
   return -1;
 }
 
-function isObjectEmpty(object: any): boolean {
+function isObjectEmpty(object: { [key: string]: any }): boolean {
   if (object.hasOwnProperty('len')) {
     if (object.len <= 0) {
       return true;
     }
+
     return false;
   }
 
@@ -31,8 +41,48 @@ function isObjectEmpty(object: any): boolean {
 }
 
 export class PubSubEngine {
+  private options: PubSubEngineOptions;
   private usersLink: { [key: string]: { listener: Listener, channels: string[] } } = {};
   private channelsUsers: { [key: string]: { len: number, [key: string]: string | number } } = {};
+
+  // message handler
+  private channelsBatches: { [key: string]: Array<[string | null, any]> } = {};
+
+  // Flush options
+  private boundFlush: () => void;
+  private flushTimeout: NodeJS.Timeout;
+
+  constructor(options: Partial<PubSubEngineOptions> = {}) {
+    this.options = {
+      sync: false,
+      flushInterval: 10,
+      onChannelCreated: noop,
+      onChannelDestroyed: noop,
+      ...options
+    };
+
+    this.boundFlush = this.flush.bind(this);
+  }
+
+  public publish(channel: string, message: any, user: string = null): void {
+    const channelBatch: Array<[string | null, any]> | undefined = this.channelsBatches[channel];
+
+    if (channelBatch) {
+      channelBatch.push([user, message]);
+    } else {
+      this.channelsBatches[channel] = [[user, message]];
+    }
+
+    if (this.options.sync) {
+      // if sync is true we want to flush immediately
+      return this.flush();
+    }
+
+    if (!this.flushTimeout) {
+      // schedule next flush within specified interval
+      this.flushTimeout = setTimeout(this.boundFlush, this.options.flushInterval);
+    }
+  }
 
   public register(userId: string, listener: Listener): void {
     this.usersLink[userId] = { listener, channels: [] };
@@ -50,6 +100,7 @@ export class PubSubEngine {
           channelUsersObject = this.channelsUsers[channel] = {
             len: 0,
           };
+          this.options.onChannelCreated(channel);
         }
 
         if (!channelUsersObject[userId]) {
@@ -84,6 +135,7 @@ export class PubSubEngine {
 
           if (isObjectEmpty(channelUsersObject)) {
             delete this.channelsUsers[channel];
+            this.options.onChannelDestroyed(channel);
           }
         }
       }
@@ -106,47 +158,53 @@ export class PubSubEngine {
       numberOfChannels: Object.keys(this.channelsUsers).length,
     };
   }
+
+  private flush(): void {
+    // TODO: implement simple flush
+    // reset flush for next time
+    this.channelsBatches = {};
+    this.flushTimeout = null;
+  }
 }
 
 // Tests
-
-console.log('Start testing "Registration and Subscribing"');
-
 const pubSubEngine: PubSubEngine = new PubSubEngine();
 
-const shifting: number = 50;
-const numberOfUsers: number = 30000;
-const numberOfChannelsPerUser: number = 1000;
+// console.log('Start testing "Registration and Subscribing"');
 
-console.time('Registration and Subscribing');
+// const shifting: number = 20;
+// const numberOfUsers: number = 100000;
+// const numberOfChannelsPerUser: number = 300;
 
-let shiftSubscribe: number = 0;
-for (let i: number = 0; i < numberOfUsers; i++) {
-  pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
-    // TODO: write throughput tests
-  });
+// console.time('Registration and Subscribing');
 
-  const channels: any[] = [];
-  for (let j: number = 0 + shiftSubscribe; j < numberOfChannelsPerUser + shiftSubscribe; j++) {
-    channels.push(`one_of_the_subscribed_channels_${j}`);
-  }
-  pubSubEngine.subscribe(`my_user_number_${i}`, channels);
-  shiftSubscribe = shiftSubscribe + shifting;
-}
+// let shiftSubscribe: number = 0;
+// for (let i: number = 0; i < numberOfUsers; i++) {
+//   pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
+//     // TODO: write throughput tests
+//   });
 
-console.log(pubSubEngine.getStats());
-console.timeEnd('Registration and Subscribing');
+//   const channels: any[] = [];
+//   for (let j: number = 0 + shiftSubscribe; j < numberOfChannelsPerUser + shiftSubscribe; j++) {
+//     channels.push(`one_of_the_subscribed_channels_${j}`);
+//   }
+//   pubSubEngine.subscribe(`my_user_number_${i}`, channels);
+//   shiftSubscribe = shiftSubscribe + shifting;
+// }
+
+// console.log(pubSubEngine.getStats());
+// console.timeEnd('Registration and Subscribing');
 
 
-console.log('Start testing "Unregister"');
-console.time('Unregister');
+// console.log('Start testing "Unregister"');
+// console.time('Unregister');
 
-for (let i: number = 0; i < numberOfUsers; i++) {
-  pubSubEngine.unregister(`my_user_number_${i}`);
-}
+// for (let i: number = 0; i < numberOfUsers; i++) {
+//   pubSubEngine.unregister(`my_user_number_${i}`);
+// }
 
-console.log(pubSubEngine.getStats());
-console.timeEnd('Unregister');
+// console.log(pubSubEngine.getStats());
+// console.timeEnd('Unregister');
 
 // console.log('Start testing "Unsubscribe"');
 // console.time('Unsubscribe');
