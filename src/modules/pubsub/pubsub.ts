@@ -218,37 +218,37 @@ export class PubSubEngine {
 }
 
 // Tests TODO: need to move all test to separate files
-const pubSubEngine: PubSubEngine = new PubSubEngine({ sync: false });
+// const pubSubEngine: PubSubEngine = new PubSubEngine({ sync: false });
 
-console.log('Start testing "Registration and Subscribing"');
+// console.log('Start testing "Registration and Subscribing"');
 
-// For comfortable work with millions of channels we need to increase
-// --max-old-space-size (for large applications good size is 8gb per instance)
-const shifting: number = 20;
-const numberOfUsers: number = 50000;
-const numberOfChannelsPerUser: number = 200;
+// // For comfortable work with millions of channels we need to increase
+// // --max-old-space-size (for large applications good size is 8gb per instance)
+// const shifting: number = 20;
+// const numberOfUsers: number = 50000;
+// const numberOfChannelsPerUser: number = 200;
 
-// TODO: improve configurations for publish
-const publishEvery: number = 15; // if 0 disable publish
-const numberOfMessagesPerChannel: number = 1;
+// // TODO: improve configurations for publish
+// const publishEvery: number = 15; // if 0 disable publish
+// const numberOfMessagesPerChannel: number = 1;
 
-console.time('Registration and Subscribing');
+// console.time('Registration and Subscribing');
 
-let shiftSubscribe: number = 0;
-for (let i: number = 0; i < numberOfUsers; i++) {
-  pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
-    // TODO: write throughput tests
-  });
+// let shiftSubscribe: number = 0;
+// for (let i: number = 0; i < numberOfUsers; i++) {
+//   pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
+//     // TODO: write throughput tests
+//   });
 
-  for (let j: number = 0 + shiftSubscribe; j < numberOfChannelsPerUser + shiftSubscribe; j++) {
-    pubSubEngine.subscribe(`my_user_number_${i}`, [`one_of_the_subscribed_channels_${j}`]);
-  }
+//   for (let j: number = 0 + shiftSubscribe; j < numberOfChannelsPerUser + shiftSubscribe; j++) {
+//     pubSubEngine.subscribe(`my_user_number_${i}`, [`one_of_the_subscribed_channels_${j}`]);
+//   }
 
-  shiftSubscribe = shiftSubscribe + shifting;
-}
+//   shiftSubscribe = shiftSubscribe + shifting;
+// }
 
-console.log(pubSubEngine.getStats());
-console.timeEnd('Registration and Subscribing');
+// console.log(pubSubEngine.getStats());
+// console.timeEnd('Registration and Subscribing');
 
 // console.log('Start testing "Unregister"');
 // console.time('Unregister');
@@ -277,23 +277,23 @@ console.timeEnd('Registration and Subscribing');
 
 // console.log(pubSubEngine.getStats());
 // console.timeEnd('Unsubscribe');
-if (publishEvery) {
-  // TODO: need to improve publish logic
-  let numberOfChannels = pubSubEngine.getStats().numberOfChannels;
-  setInterval(() => {
-    console.time('Publishing data');
+// if (publishEvery) {
+//   // TODO: need to improve publish logic
+//   let numberOfChannels = pubSubEngine.getStats().numberOfChannels;
+//   setInterval(() => {
+//     console.time('Publishing data');
 
-    for (let j: number = 0; j < numberOfChannels; j++) {
-      for (let i = 0; i < numberOfMessagesPerChannel; i++) {
-        pubSubEngine.publish(`one_of_the_subscribed_channels_${j}`, { str: "my message" + i });
-      }
-    }
+//     for (let j: number = 0; j < numberOfChannels; j++) {
+//       for (let i = 0; i < numberOfMessagesPerChannel; i++) {
+//         pubSubEngine.publish(`one_of_the_subscribed_channels_${j}`, { str: "my message" + i });
+//       }
+//     }
 
-    console.timeEnd('Publishing data');
-  }, publishEvery);
-}
+//     console.timeEnd('Publishing data');
+//   }, publishEvery);
+// }
 
-setInterval(() => {
-  console.log(pubSubEngine.getStats());
-  // handle stuff here
-}, 20000);
+// setInterval(() => {
+//   console.log(pubSubEngine.getStats());
+//   // handle stuff here
+// }, 20000);

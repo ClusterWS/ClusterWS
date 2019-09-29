@@ -6,7 +6,7 @@
   "types": "index.d.ts",
   "author": "Dmitrii Goriunov",
   "scripts": {
-    "test": "nyc mocha \"./tests/**/*.ts\" --exit",
+    "test": "nyc mocha \"./src/**/*.test.ts\" --exit",
     "build": "ts-builder -c ./tsbuild.json",
     "release": "npm run build && cd dist && npm publish --tag alpha --access public"
   },

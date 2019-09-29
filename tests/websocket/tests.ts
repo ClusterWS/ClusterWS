@@ -3,10 +3,10 @@ import { expect } from 'chai';
 import { WebSocket } from '@clusterws/cws';
 
 
-import { Socket } from '../../src/modules/socket/socket';
-import { Worker } from '../../src/modules/worker';
+import { Socket } from '../../src/deprecated/modules/socket/socket';
+import { Worker } from '../../src/deprecated/modules/worker';
 
-import { ClusterWS, Mode, Middleware } from '../../src/index';
+import { ClusterWS, Mode, Middleware } from '../../src/deprecated/index';
 
 // TODO: split this tests in different files
 
