@@ -1,6 +1,6 @@
 // Version 2.0 Pub Sub
-// improve memory management, minor sacrifice in performance
 
+// TODO: add execution time for each function
 type Listener = (messages: { [key: string]: any[] }) => void;
 
 interface PubSubEngineOptions {
@@ -41,6 +41,8 @@ function isObjectEmpty(object: { [key: string]: any }): boolean {
 }
 
 export class PubSubEngine {
+  public static GLOBAL_USER: string = '*';
+
   private options: PubSubEngineOptions;
   private usersLink: { [key: string]: { listener: Listener, channels: string[] } } = {};
   private channelsUsers: { [key: string]: { len: number, [key: string]: string | number } } = {};
@@ -160,41 +162,93 @@ export class PubSubEngine {
   }
 
   private flush(): void {
-    // TODO: implement simple flush
-    // reset flush for next time
+    const messagesToPublish: any = {};
+
+    for (const channel in this.channelsBatches) {
+      const messages: any[] = this.channelsBatches[channel] || [];
+
+      for (const userId in this.channelsUsers[channel] || {}) {
+        const userMessages: any[] = this.extractUserMessages(userId, messages);
+        if (userMessages.length) {
+          if (!messagesToPublish[userId]) {
+            messagesToPublish[userId] = {};
+          }
+
+          messagesToPublish[userId][channel] = userMessages;
+        }
+      }
+
+      // generate messages for default user '*'
+      // which listens to all messages except it is own
+      const startUserMessages: any[] = this.extractUserMessages(PubSubEngine.GLOBAL_USER, messages);
+      if (startUserMessages.length) {
+        if (!messagesToPublish[PubSubEngine.GLOBAL_USER]) {
+          messagesToPublish[PubSubEngine.GLOBAL_USER] = {};
+        }
+
+        messagesToPublish[PubSubEngine.GLOBAL_USER][channel] = startUserMessages;
+      }
+    }
+
+    // reset flush for next iteration
     this.channelsBatches = {};
     this.flushTimeout = null;
+
+    for (const userId in messagesToPublish) {
+      const user: { listener: Listener, channels: string[] } | undefined = this.usersLink[userId];
+      if (user) {
+        user.listener(messagesToPublish[userId]);
+      }
+    }
+  }
+
+  private extractUserMessages(userId: string, messages: any[]): any[] {
+    const messagesForUserInChannel: any[] = [];
+    for (let i: number = 0, len: number = messages.length; i < len; i++) {
+      const message: any[] = messages[i];
+
+      // exclude messages which belong to this user
+      if (message[0] !== userId) {
+        messagesForUserInChannel.push(message[1]);
+      }
+    }
+
+    return messagesForUserInChannel;
   }
 }
 
-// Tests
-const pubSubEngine: PubSubEngine = new PubSubEngine();
+// Tests TODO: need to move all test to separate files
+const pubSubEngine: PubSubEngine = new PubSubEngine({ sync: false });
 
-// console.log('Start testing "Registration and Subscribing"');
+console.log('Start testing "Registration and Subscribing"');
 
-// const shifting: number = 20;
-// const numberOfUsers: number = 100000;
-// const numberOfChannelsPerUser: number = 300;
+// For comfortable work with millions of channels we need to increase
+// --max-old-space-size (for large applications good size is 8gb per instance)
+const shifting: number = 20;
+const numberOfUsers: number = 50000;
+const numberOfChannelsPerUser: number = 200;
 
-// console.time('Registration and Subscribing');
+// TODO: improve configurations for publish
+const publishEvery: number = 15; // if 0 disable publish
+const numberOfMessagesPerChannel: number = 1;
 
-// let shiftSubscribe: number = 0;
-// for (let i: number = 0; i < numberOfUsers; i++) {
-//   pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
-//     // TODO: write throughput tests
-//   });
+console.time('Registration and Subscribing');
 
-//   const channels: any[] = [];
-//   for (let j: number = 0 + shiftSubscribe; j < numberOfChannelsPerUser + shiftSubscribe; j++) {
-//     channels.push(`one_of_the_subscribed_channels_${j}`);
-//   }
-//   pubSubEngine.subscribe(`my_user_number_${i}`, channels);
-//   shiftSubscribe = shiftSubscribe + shifting;
-// }
+let shiftSubscribe: number = 0;
+for (let i: number = 0; i < numberOfUsers; i++) {
+  pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
+    // TODO: write throughput tests
+  });
 
-// console.log(pubSubEngine.getStats());
-// console.timeEnd('Registration and Subscribing');
+  for (let j: number = 0 + shiftSubscribe; j < numberOfChannelsPerUser + shiftSubscribe; j++) {
+    pubSubEngine.subscribe(`my_user_number_${i}`, [`one_of_the_subscribed_channels_${j}`]);
+  }
 
+  shiftSubscribe = shiftSubscribe + shifting;
+}
+
+console.log(pubSubEngine.getStats());
+console.timeEnd('Registration and Subscribing');
 
 // console.log('Start testing "Unregister"');
 // console.time('Unregister');
@@ -223,7 +277,23 @@ const pubSubEngine: PubSubEngine = new PubSubEngine();
 
 // console.log(pubSubEngine.getStats());
 // console.timeEnd('Unsubscribe');
+if (publishEvery) {
+  // TODO: need to improve publish logic
+  let numberOfChannels = pubSubEngine.getStats().numberOfChannels;
+  setInterval(() => {
+    console.time('Publishing data');
+
+    for (let j: number = 0; j < numberOfChannels; j++) {
+      for (let i = 0; i < numberOfMessagesPerChannel; i++) {
+        pubSubEngine.publish(`one_of_the_subscribed_channels_${j}`, { str: "my message" + i });
+      }
+    }
+
+    console.timeEnd('Publishing data');
+  }, publishEvery);
+}
 
 setInterval(() => {
+  console.log(pubSubEngine.getStats());
   // handle stuff here
-}, 100000);
+}, 20000);

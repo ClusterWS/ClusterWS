@@ -30,7 +30,7 @@ global.window = {
 const ClusterWS = require("./ClusterWSClient.js");
 
 let socket = new ClusterWS({
-  url: `ws://localhost:3001`
+  url: `ws://127.0.0.1:3000/ws/`
 })
 
 socket.on('open', () => {
