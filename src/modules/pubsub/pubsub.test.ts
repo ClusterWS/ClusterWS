@@ -43,3 +43,59 @@ describe('Register, Subscribe, Unsubscribe, Unregister', () => {
     expect((this.pubSub as any).channelsUsers).to.not.contain.keys(subscribeChannel);
   });
 });
+
+describe('Publish', () => {
+  before(() => {
+    this.pubSub = new PubSubEngine();
+  });
+
+  it('Should publish messages to user', (done: any) => {
+    const registerUser: string = 'my_user_id';
+    const messageToPublish: string = 'My super message';
+    const channel: string = 'new_channel';
+
+    this.pubSub.register(registerUser, (msg: any) => {
+      expect(msg).to.contain.keys(channel);
+      expect(msg[channel][0]).to.be.eq(messageToPublish);
+      done();
+    });
+
+    this.pubSub.subscribe(registerUser, [channel]);
+    this.pubSub.publish(channel, messageToPublish);
+  });
+
+  it('Should publish messages to multiple users', (done: any) => {
+    const registerUser: string = 'my_user_id';
+    const registerUser2: string = 'my_user_id_2';
+
+    const messageToPublish: string = 'My super message';
+    const channel: string = 'new_channel';
+
+    let exec: number = 0;
+
+    this.pubSub.register(registerUser, (msg: any) => {
+      expect(msg).to.contain.keys(channel);
+      expect(msg[channel][0]).to.be.eq(messageToPublish);
+      exec++;
+
+      if (exec > 1) {
+        done();
+      }
+    });
+
+    this.pubSub.register(registerUser2, (msg: any) => {
+      expect(msg).to.contain.keys(channel);
+      expect(msg[channel][0]).to.be.eq(messageToPublish);
+      exec++;
+
+      if (exec > 1) {
+        done();
+      }
+    });
+
+    this.pubSub.subscribe(registerUser, [channel]);
+    this.pubSub.subscribe(registerUser2, [channel]);
+
+    this.pubSub.publish(channel, messageToPublish);
+  });
+});

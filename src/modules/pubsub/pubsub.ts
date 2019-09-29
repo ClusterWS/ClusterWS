@@ -1,6 +1,3 @@
-// Version 2.0 Pub Sub
-
-// TODO: add execution time for each function
 type Listener = (messages: { [key: string]: any[] }) => void;
 
 interface PubSubEngineOptions {
