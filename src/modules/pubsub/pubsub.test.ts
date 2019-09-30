@@ -45,11 +45,11 @@ describe('Register, Subscribe, Unsubscribe, Unregister', () => {
 });
 
 describe('Publish', () => {
-  before(() => {
+  beforeEach(() => {
     this.pubSub = new PubSubEngine();
   });
 
-  it('Should publish messages to user', (done: any) => {
+  it('Should publish message to user', (done: any) => {
     const registerUser: string = 'my_user_id';
     const messageToPublish: string = 'My super message';
     const channel: string = 'new_channel';
@@ -64,7 +64,7 @@ describe('Publish', () => {
     this.pubSub.publish(channel, messageToPublish);
   });
 
-  it('Should publish messages to multiple users', (done: any) => {
+  it('Should publish message to multiple users', (done: any) => {
     const registerUser: string = 'my_user_id';
     const registerUser2: string = 'my_user_id_2';
 
@@ -97,5 +97,34 @@ describe('Publish', () => {
     this.pubSub.subscribe(registerUser2, [channel]);
 
     this.pubSub.publish(channel, messageToPublish);
+  });
+
+  it('GLOBAL user should get all messages', (done: any) => {
+    const messageToPublish: string = 'My super message';
+    const channel: string = 'some_random_channel';
+
+    this.pubSub.register(PubSubEngine.GLOBAL_USER, (msg: any) => {
+      expect(msg).to.contain.keys(channel);
+      expect(msg[channel][0]).to.be.eq(messageToPublish);
+      done();
+    });
+
+    this.pubSub.publish(channel, messageToPublish);
+  });
+
+  it('Unsubscribed user Should not get published', (done: any) => {
+    const registerUser: string = 'my_user_id';
+    const messageToPublish: string = 'My super message';
+    const channel: string = 'new_channel';
+
+    this.pubSub.register(registerUser, (msg: any) => {
+      done(`Should not receive message but got ${JSON.stringify(msg)}`);
+    });
+
+    this.pubSub.subscribe(registerUser, [channel]);
+    this.pubSub.unsubscribe(registerUser, [channel]);
+    this.pubSub.publish(channel, messageToPublish);
+
+    setTimeout(() => done(), 100);
   });
 });
