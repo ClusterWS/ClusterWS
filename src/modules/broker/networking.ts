@@ -1,9 +1,9 @@
 import { Socket } from 'net';
 
-// SImple networking for tcp and unix sockets
-// based on node.js net
-// 11.hello world
-// '.' represents end of header
+// Simple networking for tcp and unix sockets
+// based on node.js net library
+// '.' represents end of header with length
+// message example: '1.hello world'
 
 type Listener = (messages: string) => void;
 
