@@ -1,40 +1,64 @@
 import { unlink } from 'fs';
+import { randomBytes } from 'crypto';
 import { createServer, Server, Socket } from 'net';
+
+import { Networking } from './networking';
+
+type ExtendedSocket = Socket & { id: string, channels: string[], networking: Networking };
+
+function generateUid(length: number): string {
+  return randomBytes(length).toString('hex');
+}
 
 export class BrokerServer {
   private server: Server;
+  private sockets: ExtendedSocket[] = [];
 
   constructor(private path: string) {
     // remove existing unix socket
     unlink(this.path, (err: any) => { /** Ignore for now */ });
 
     if (process.platform === 'win32') {
-      // TODO: test on windows
       // make sure system can run on windows
       this.path = this.path.replace(/^\//, '');
       this.path = this.path.replace(/\//g, '-');
       this.path = `\\\\.\\pipe\\${this.path}`;
     }
 
-    this.server = createServer((socket: Socket) => {
-      socket.on('data', (data: any) => {
-        // handle logic
-        console.log(data);
+    this.server = createServer((socket: ExtendedSocket) => {
+      socket.setNoDelay(true); // consider if we need it
+      this.registerSocket(socket);
+
+      socket.networking.onMessage((message: string) => {
+
+        socket.networking.send(message);
       });
 
       socket.on('error', () => {
-        // remove socket from usage
+        // write logic
       });
 
       socket.on('end', () => {
-        // socket has disconnected
+        // write logic
       });
     });
 
     this.server.listen(this.path, () => {
       // TODO: handle creation error
-      console.log('Server is listening on', this.path);
     });
+  }
+
+  private registerSocket(socket: ExtendedSocket): void {
+    socket.id = generateUid(8);
+    socket.channels = [];
+    socket.networking = new Networking(socket);
+
+    this.sockets.push(socket);
+  }
+
+  private unregisterSocket(id: string): void {
+    // remove socket
+    // this.sockets.
   }
 }
 

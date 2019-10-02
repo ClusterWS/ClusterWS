@@ -112,7 +112,7 @@ describe('Publish', () => {
     this.pubSub.publish(channel, messageToPublish);
   });
 
-  it('Unsubscribed user Should not get published', (done: any) => {
+  it('Unsubscribed user Should not get published message', (done: any) => {
     const registerUser: string = 'my_user_id';
     const messageToPublish: string = 'My super message';
     const channel: string = 'new_channel';
