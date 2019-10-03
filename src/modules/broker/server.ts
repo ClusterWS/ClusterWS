@@ -1,52 +1,77 @@
 import { unlinkSync } from 'fs';
+import { Networking } from './networking';
 import { randomBytes } from 'crypto';
 import { createServer, Server, Socket } from 'net';
 
-import { Networking } from './networking';
+// TODO: find out why it can not keep more then 2 instances with proper delay ???
+// find out what is problem with time ???
+// check with extended memory
+// try uws
 
-type ExtendedSocket = Socket & { id: string, channels: { [key: string]: string }, networking: Networking };
+type ExtendedSocket = Socket & { id: string, networking: Networking };
 
 function generateUid(length: number): string {
-  return randomBytes(length).toString('hex');
+  return randomBytes(length / 2).toString('hex');
+}
+
+function findIndexOf(arr: string[], value: string): number {
+  for (let i: number = 0, len: number = arr.length; i < len; i++) {
+    if (arr[i] === value) {
+      return i;
+    }
+  }
+
+  return -1;
 }
 
 export class BrokerServer {
   private server: Server;
   private sockets: ExtendedSocket[] = [];
+  private channels: { [key: string]: string[] } = {};
+  private iters: number = 0;
 
-  constructor(private path: string) {
-    // TODO: support tcp
-    try { unlinkSync(this.path); } catch (err) {
-      if (err.code !== 'ENOENT') {
-        throw err;
+  constructor(config: { path?: string, host?: string, port?: number }, readyListener: (err?: Error) => void) {
+
+    setInterval(() => {
+      console.log('Iters for 5s', this.iters);
+      this.iters = 0;
+    }, 5000);
+
+    if (!config.port && config.path) {
+      try { unlinkSync(config.path); } catch (err) {
+        if (err.code !== 'ENOENT') {
+          return readyListener(err) as undefined;
+        }
       }
-    }
 
-    if (process.platform === 'win32') {
-      // TODO: make sure system can run on windows properly
-      this.path = this.path.replace(/^\//, '');
-      this.path = this.path.replace(/\//g, '-');
-      this.path = `\\\\.\\pipe\\${this.path}`;
+      if (process.platform === 'win32') {
+        // TODO: make sure system can run on windows properly
+        config.path = config.path.replace(/^\//, '');
+        config.path = config.path.replace(/\//g, '-');
+        config.path = `\\\\.\\pipe\\${config.path}`;
+      }
     }
 
     this.server = createServer((socket: ExtendedSocket) => {
       this.registerSocket(socket);
 
       socket.networking.onMessage((message: string) => {
+        this.iters++;
         if (message[0] === 's') {
           // subscribe
-          return this.subscribe(socket, message.replace('s', '').split(','));
+          return this.subscribe(socket.id, message.replace('s', '').split(','));
         }
 
         if (message[0] === 'u') {
           // unsubscribe
-          return this.unsubscribe(socket, message.replace('u', '').split(','));
+          return this.unsubscribe(socket.id, message.replace('u', '').split(','));
         }
 
         try {
           this.broadcast(socket.id, JSON.parse(message));
         } catch (err) {
-          // TODO: handle error
+          // TODO: write decode error message
+          console.log(err);
         }
       });
 
@@ -61,14 +86,12 @@ export class BrokerServer {
       });
     });
 
-    this.server.listen(this.path, () => {
-      // TODO: handle creation error
-    });
+    this.server.on('error', readyListener);
+    this.server.listen(config, readyListener);
   }
 
   private registerSocket(socket: ExtendedSocket): void {
-    socket.id = generateUid(8);
-    socket.channels = {};
+    socket.id = generateUid(4);
     socket.networking = new Networking(socket);
 
     socket.setNoDelay(true);
@@ -85,15 +108,34 @@ export class BrokerServer {
     }
   }
 
-  private subscribe(socket: ExtendedSocket, channels: string[]): void {
+  private subscribe(id: string, channels: string[]): void {
     for (let i: number = 0, len: number = channels.length; i < len; i++) {
-      socket.channels[channels[i]] = '1';
+      const subscribedUsers: string[] | undefined = this.channels[channels[i]];
+      if (!subscribedUsers) {
+        this.channels[channels[i]] = [id];
+        continue;
+      }
+
+      if (findIndexOf(subscribedUsers, id) === -1) {
+        subscribedUsers.push(id);
+      }
     }
   }
 
-  private unsubscribe(socket: ExtendedSocket, channels: string[]): void {
+  private unsubscribe(id: string, channels: string[]): void {
     for (let i: number = 0, len: number = channels.length; i < len; i++) {
-      delete socket.channels[channels[i]];
+      const subscribedUsers: string[] | undefined = this.channels[channels[i]];
+      if (!subscribedUsers) {
+        continue;
+      }
+
+      const userIndex: number = findIndexOf(subscribedUsers, id);
+      if (userIndex !== -1) {
+        subscribedUsers.splice(userIndex, 1);
+        if (!subscribedUsers.length) {
+          delete this.channels[channels[i]];
+        }
+      }
     }
   }
 
@@ -105,7 +147,12 @@ export class BrokerServer {
         const preparedMessage: object = {};
 
         for (const key in data) {
-          if (socket.channels[key]) {
+          const subscribedUsers: string[] | undefined = this.channels[key];
+          if (!subscribedUsers) {
+            continue;
+          }
+
+          if (findIndexOf(subscribedUsers, socket.id) !== -1) {
             empty = false;
             preparedMessage[key] = data[key];
           }
@@ -119,4 +166,14 @@ export class BrokerServer {
   }
 }
 
-new BrokerServer('./socket.unix');
+// import { fork, isMaster } from 'cluster';
+// if (isMaster) {
+//   for (let i = 0; i < 5; i++) {
+//     fork();
+//   }
+// } else {
+new BrokerServer({ path: './socket.unix' }, (err?: Error): void => {
+  console.log(err);
+  console.log('Server is running');
+});
+// }
