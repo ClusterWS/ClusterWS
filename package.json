@@ -2,18 +2,21 @@
   "name": "@clusterws/server",
   "version": "4.0.0-alpha.7",
   "description": "ClusterWS - lightweight, fast and powerful framework for building scalable WebSocket applications in Node.js.",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "author": "Dmitrii Goriunov",
   "scripts": {
-    "test": "nyc mocha \"./src/**/*.test.ts\" --exit",
-    "build": "ts-builder -c ./tsbuild.json",
-    "release": "npm run build && cd dist && npm publish --tag alpha --access public"
+    "test": "nyc mocha './src/**/*.test.ts' --exit",
+    "build": "rimraf ./dist && npm run lint && tsc",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/ClusterWS/ClusterWS"
+  },
+  "dependencies": {
+    "@clusterws/cws": "^0.15.2"
   },
   "devDependencies": {
     "@types/chai": "^4.1.4",
@@ -22,27 +25,12 @@
     "chai": "^4.1.2",
     "mocha": "^5.2.0",
     "nyc": "^13.3.0",
-    "redis": "^2.8.0",
-    "ts-builder": "^0.10.0",
-    "ts-node": "^7.0.1",
-    "uws": "^10.148.1",
-    "ws": "^6.2.1"
-  },
-  "keywords": [
-    "clusterws",
-    "websocket",
-    "scale",
-    "cws",
-    "node js websocket",
-    "scale node js websocket",
-    "real-time",
-    "cluster",
-    "javascript"
-  ],
-  "dependencies": {
-    "@clusterws/cws": "^0.15.2",
-    "@types/redis": "^2.8.12",
-    "@types/ws": "^6.0.1"
+    "rimraf": "^3.0.0",
+    "ts-node": "^8.4.1",
+    "tslint": "^5.20.0",
+    "tslint-eslint-rules": "^5.4.0",
+    "typescript": "^3.6.3",
+    "ws": "^7.1.2"
   },
   "nyc": {
     "temp-directory": "./node_modules/.cache/nyc_output",

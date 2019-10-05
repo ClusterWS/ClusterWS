@@ -1,4 +1,5 @@
 // Test template
+/* tslint:disable */
 import { connect } from 'net';
 import { Networking } from './networking';
 

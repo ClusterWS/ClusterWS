@@ -2,7 +2,11 @@
 // and add ability to switch between 2 different engines
 //
 // TODO: handle custom ping handler in client
-// TODO: add proper types
+
+import { WebSocket, WebSocketServer, ServerConfigs } from '@clusterws/cws';
+
+export type WebSocket = WebSocket;
+export type WebSocketServer = WebSocketServer;
 
 const PING: any = new Uint8Array(['9'.charCodeAt(0)]).buffer;
 function noop(): void { /** ignore */ }
@@ -14,7 +18,7 @@ export class WebsocketEngine {
     this.engineImport = require(this.engine);
   }
 
-  public createClient(url: string): any {
+  public createClient(url: string): WebSocket {
     if (this.engine === 'ws') {
       const socket: any = new this.engineImport(url);
       return socket;
@@ -22,7 +26,7 @@ export class WebsocketEngine {
     return new this.engineImport.WebSocket(url);
   }
 
-  public createServer(options: any, cb?: any): any {
+  public createServer(options: ServerConfigs, cb?: () => void): WebSocketServer {
     if (this.engine === 'ws') {
       const wsServer: any = new this.engineImport.Server(options, cb);
       wsServer.__on = wsServer.on.bind(wsServer);

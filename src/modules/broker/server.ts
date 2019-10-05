@@ -1,14 +1,7 @@
-import { unlinkSync } from 'fs';
-import { Networking } from './networking';
 import { randomBytes } from 'crypto';
-import { createServer, Server, Socket } from 'net';
+import { WebsocketEngine, WebSocketServer, WebSocket } from '../engine';
 
-// TODO: find out why it can not keep more then 2 instances with proper delay ???
-// find out what is problem with time ???
-// check with extended memory
-// try uws
-
-type ExtendedSocket = Socket & { id: string, networking: Networking };
+type ExtendedSocket = WebSocket & { id: string };
 
 function generateUid(length: number): string {
   return randomBytes(length / 2).toString('hex');
@@ -25,76 +18,92 @@ function findIndexOf(arr: string[], value: string): number {
 }
 
 export class BrokerServer {
-  private server: Server;
+  private server: WebSocketServer;
   private sockets: ExtendedSocket[] = [];
   private channels: { [key: string]: string[] } = {};
-  private iters: number = 0;
 
-  constructor(config: { path?: string, host?: string, port?: number }, readyListener: (err?: Error) => void) {
+  private additionalMetrics: { sent: number, received: number } = {
+    sent: 0,
+    received: 0
+  };
 
-    setInterval(() => {
-      console.log('Iters for 5s', this.iters);
-      this.iters = 0;
-    }, 5000);
+  constructor(private config: { port: number, engine: string, onReady: () => void, onError: (server: boolean, err: Error) => void, onMetrics?: (data: any) => void }) {
+    this.scheduleMetrics();
 
-    if (!config.port && config.path) {
-      try { unlinkSync(config.path); } catch (err) {
-        if (err.code !== 'ENOENT') {
-          return readyListener(err) as undefined;
-        }
-      }
+    this.server = new WebsocketEngine(this.config.engine).createServer({ port: this.config.port }, config.onReady);
 
-      if (process.platform === 'win32') {
-        // TODO: make sure system can run on windows properly
-        config.path = config.path.replace(/^\//, '');
-        config.path = config.path.replace(/\//g, '-');
-        config.path = `\\\\.\\pipe\\${config.path}`;
-      }
-    }
-
-    this.server = createServer((socket: ExtendedSocket) => {
+    this.server.on('error', (err: Error) => config.onError(true, err));
+    this.server.on('connection', (socket: ExtendedSocket) => {
       this.registerSocket(socket);
 
-      socket.networking.onMessage((message: string) => {
-        this.iters++;
+      socket.on('message', (message: string) => {
+        if (this.config.onMetrics) {
+          this.additionalMetrics.received++;
+        }
+
+        // subscribe
         if (message[0] === 's') {
-          // subscribe
           return this.subscribe(socket.id, message.replace('s', '').split(','));
         }
 
+        // unsubscribe
         if (message[0] === 'u') {
-          // unsubscribe
           return this.unsubscribe(socket.id, message.replace('u', '').split(','));
         }
 
+        // rest of the messages
         try {
           this.broadcast(socket.id, JSON.parse(message));
         } catch (err) {
-          // TODO: write decode error message
-          console.log(err);
+          config.onError(false, err);
         }
       });
 
       socket.on('error', (err: Error) => {
-        // TODO: log error properly
-        console.log(err);
         this.unregisterSocket(socket.id);
+        config.onError(false, err);
       });
 
-      socket.on('end', () => {
+      socket.on('close', (code?: number, reason?: string) => {
         this.unregisterSocket(socket.id);
       });
     });
 
-    this.server.on('error', readyListener);
-    this.server.listen(config, readyListener);
+    this.server.startAutoPing(20000);
+  }
+
+  private scheduleMetrics(): void {
+    if (this.config.onMetrics) {
+
+      // TODO: calculate cpu usage properly
+      // let old: any;
+      // if (old) {
+      //   console.log(process.cpuUsage(old));
+      //   old = process.cpuUsage();
+      // } else {
+      //   old = process.cpuUsage();
+      // }
+
+      const metrics: any = {
+        pid: process.pid,
+        timestamp: parseInt(`${new Date().getTime() / 1000}`, 10),
+        connectedSockets: this.sockets.length,
+        numberOfChannels: Object.keys(this.channels).length, // TODO: improve this one
+        receivedPerSecond: this.additionalMetrics.received / 10,
+        sentPerSecond: this.additionalMetrics.sent / 10
+      };
+
+      this.additionalMetrics.received = 0;
+      this.additionalMetrics.sent = 0;
+
+      this.config.onMetrics(metrics);
+
+      setTimeout(() => this.scheduleMetrics(), 10000);
+    }
   }
 
   private registerSocket(socket: ExtendedSocket): void {
     socket.id = generateUid(4);
-    socket.networking = new Networking(socket);
-
-    socket.setNoDelay(true);
     this.sockets.push(socket);
   }
 
@@ -103,6 +112,8 @@ export class BrokerServer {
       const socket: ExtendedSocket = this.sockets[i];
       if (socket.id === id) {
         this.sockets.splice(i, 1);
+        // TODO: add unsubscribe
+        // TODO: may assign channels to each user
         break;
       }
     }
@@ -159,21 +170,31 @@ export class BrokerServer {
         }
 
         if (!empty) {
-          socket.networking.send(JSON.stringify(preparedMessage));
+          if (this.config.onMetrics) {
+            this.additionalMetrics.sent++;
+          }
+          socket.send(JSON.stringify(preparedMessage));
         }
       }
     }
   }
 }
 
-// import { fork, isMaster } from 'cluster';
-// if (isMaster) {
-//   for (let i = 0; i < 5; i++) {
-//     fork();
-//   }
-// } else {
-new BrokerServer({ path: './socket.unix' }, (err?: Error): void => {
-  console.log(err);
-  console.log('Server is running');
+new BrokerServer({
+  port: 3000,
+  engine: 'ws',
+  onMetrics: (data: any): void => {
+    // metrics are submitted every 10s
+    console.log(data);
+  },
+  onError: (isServer: boolean, err: Error): void => {
+    if (isServer) {
+      // do one thing
+    }
+
+    console.log('Received an error');
+  },
+  onReady: (): void => {
+    console.log('Server is running');
+  }
 });
-// }
