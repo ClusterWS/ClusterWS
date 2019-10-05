@@ -7,8 +7,9 @@
   "author": "Dmitrii Goriunov",
   "scripts": {
     "test": "nyc mocha './src/**/*.test.ts' --exit",
-    "build": "rimraf ./dist && npm run lint && tsc",
-    "lint": "tslint -c tslint.json 'src/**/*.ts'"
+    "build": "rimraf ./dist && npm run lint && tsc && npm run copy",
+    "lint": "tslint -c tslint.json 'src/**/*.ts'",
+    "copy": "cpx ./src/index.d.ts ./dist"
   },
   "license": "MIT",
   "repository": {
@@ -23,6 +24,7 @@
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.9.4",
     "chai": "^4.1.2",
+    "cpx": "^1.5.0",
     "mocha": "^5.2.0",
     "nyc": "^13.3.0",
     "rimraf": "^3.0.0",
@@ -44,7 +46,6 @@
       "ts-node/register"
     ],
     "reporter": [
-      "text",
       "json",
       "html"
     ]
