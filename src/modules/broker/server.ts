@@ -1,26 +1,15 @@
 import { randomBytes } from 'crypto';
 import { WebsocketEngine, WebSocketServer, WebSocket } from '../engine';
 
-type ExtendedSocket = WebSocket & { id: string };
+type ExtendedSocket = WebSocket & { id: string, channels: { [key: string]: string } };
 
 function generateUid(length: number): string {
   return randomBytes(length / 2).toString('hex');
 }
 
-function findIndexOf(arr: string[], value: string): number {
-  for (let i: number = 0, len: number = arr.length; i < len; i++) {
-    if (arr[i] === value) {
-      return i;
-    }
-  }
-
-  return -1;
-}
-
 export class BrokerServer {
   private server: WebSocketServer;
   private sockets: ExtendedSocket[] = [];
-  private channels: { [key: string]: string[] } = {};
 
   private additionalMetrics: { sent: number, received: number } = {
     sent: 0,
@@ -43,12 +32,12 @@ export class BrokerServer {
 
         // subscribe
         if (message[0] === 's') {
-          return this.subscribe(socket.id, message.replace('s', '').split(','));
+          return this.subscribe(socket, message.replace('s', '').split(','));
         }
 
         // unsubscribe
         if (message[0] === 'u') {
-          return this.unsubscribe(socket.id, message.replace('u', '').split(','));
+          return this.unsubscribe(socket, message.replace('u', '').split(','));
         }
 
         // rest of the messages
@@ -72,36 +61,6 @@ export class BrokerServer {
     this.server.startAutoPing(20000);
   }
 
-  private scheduleMetrics(): void {
-    if (this.config.onMetrics) {
-
-      // TODO: calculate cpu usage properly
-      // let old: any;
-      // if (old) {
-      //   console.log(process.cpuUsage(old));
-      //   old = process.cpuUsage();
-      // } else {
-      //   old = process.cpuUsage();
-      // }
-
-      const metrics: any = {
-        pid: process.pid,
-        timestamp: parseInt(`${new Date().getTime() / 1000}`, 10),
-        connectedSockets: this.sockets.length,
-        numberOfChannels: Object.keys(this.channels).length, // TODO: improve this one
-        receivedPerSecond: this.additionalMetrics.received / 10,
-        sentPerSecond: this.additionalMetrics.sent / 10
-      };
-
-      this.additionalMetrics.received = 0;
-      this.additionalMetrics.sent = 0;
-
-      this.config.onMetrics(metrics);
-
-      setTimeout(() => this.scheduleMetrics(), 10000);
-    }
-  }
-
   private registerSocket(socket: ExtendedSocket): void {
     socket.id = generateUid(4);
     this.sockets.push(socket);
@@ -112,41 +71,22 @@ export class BrokerServer {
       const socket: ExtendedSocket = this.sockets[i];
       if (socket.id === id) {
         this.sockets.splice(i, 1);
-        // TODO: add unsubscribe
-        // TODO: may assign channels to each user
         break;
       }
     }
   }
 
-  private subscribe(id: string, channels: string[]): void {
+  private subscribe(socket: ExtendedSocket, channels: string[]): void {
     for (let i: number = 0, len: number = channels.length; i < len; i++) {
-      const subscribedUsers: string[] | undefined = this.channels[channels[i]];
-      if (!subscribedUsers) {
-        this.channels[channels[i]] = [id];
-        continue;
-      }
-
-      if (findIndexOf(subscribedUsers, id) === -1) {
-        subscribedUsers.push(id);
+      if (!socket.channels[channels[i]]) {
+        socket.channels[channels[i]] = '1';
       }
     }
   }
 
-  private unsubscribe(id: string, channels: string[]): void {
+  private unsubscribe(socket: ExtendedSocket, channels: string[]): void {
     for (let i: number = 0, len: number = channels.length; i < len; i++) {
-      const subscribedUsers: string[] | undefined = this.channels[channels[i]];
-      if (!subscribedUsers) {
-        continue;
-      }
-
-      const userIndex: number = findIndexOf(subscribedUsers, id);
-      if (userIndex !== -1) {
-        subscribedUsers.splice(userIndex, 1);
-        if (!subscribedUsers.length) {
-          delete this.channels[channels[i]];
-        }
-      }
+      delete socket.channels[channels[i]];
     }
   }
 
@@ -158,15 +98,12 @@ export class BrokerServer {
         const preparedMessage: object = {};
 
         for (const key in data) {
-          const subscribedUsers: string[] | undefined = this.channels[key];
-          if (!subscribedUsers) {
+          if (!socket.channels[key]) {
             continue;
           }
 
-          if (findIndexOf(subscribedUsers, socket.id) !== -1) {
-            empty = false;
-            preparedMessage[key] = data[key];
-          }
+          empty = false;
+          preparedMessage[key] = data[key];
         }
 
         if (!empty) {
@@ -176,6 +113,27 @@ export class BrokerServer {
           socket.send(JSON.stringify(preparedMessage));
         }
       }
+    }
+  }
+
+  private scheduleMetrics(): void {
+    if (this.config.onMetrics) {
+      // TODO: improve metrics collection
+      const metrics: any = {
+        pid: process.pid,
+        timestamp: parseInt(`${new Date().getTime() / 1000}`, 10),
+        connectedSockets: this.sockets.length,
+        // numberOfChannels: Object.keys(this.channels).length,
+        receivedPerSecond: this.additionalMetrics.received / 10,
+        sentPerSecond: this.additionalMetrics.sent / 10
+      };
+
+      this.additionalMetrics.received = 0;
+      this.additionalMetrics.sent = 0;
+
+      this.config.onMetrics(metrics);
+
+      setTimeout(() => this.scheduleMetrics(), 10000);
     }
   }
 }

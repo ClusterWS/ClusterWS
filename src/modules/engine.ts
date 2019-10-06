@@ -1,7 +1,5 @@
 // Simple wrapper around 'ws' and '@clusterws/cws' to make functionality similar
 // and add ability to switch between 2 different engines
-//
-// TODO: handle custom ping handler in client
 
 import { WebSocket, WebSocketServer, ServerConfigs } from '@clusterws/cws';
 
@@ -9,6 +7,8 @@ export type WebSocket = WebSocket;
 export type WebSocketServer = WebSocketServer;
 
 const PING: any = new Uint8Array(['9'.charCodeAt(0)]).buffer;
+const PONG: any = new Uint8Array(['A'.charCodeAt(0)]).buffer;
+
 function noop(): void { /** ignore */ }
 
 export class WebsocketEngine {
@@ -21,6 +21,30 @@ export class WebsocketEngine {
   public createClient(url: string): WebSocket {
     if (this.engine === 'ws') {
       const socket: any = new this.engineImport(url);
+      socket.__on = socket.on.bind(socket);
+      socket.__onPing = noop;
+      socket.__onMessage = noop;
+
+      socket.on = function socketOn(event: string, listener: any): void {
+        if (event === 'ping') {
+          return socket.__onPing = listener;
+        }
+
+        if (event === 'message') {
+          return socket.__onMessage = listener;
+        }
+
+        socket.__on(event, listener);
+      };
+
+      socket.__on('message', function onMessage(msg: any): void {
+        if (msg.length === 1 && msg[0] === 57) {
+          socket.send(PONG);
+          return socket.__onPing();
+        }
+        socket.__onMessage(msg);
+      });
+
       return socket;
     }
     return new this.engineImport.WebSocket(url);
