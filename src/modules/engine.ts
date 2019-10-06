@@ -45,6 +45,10 @@ export class WebsocketEngine {
         socket.__onMessage(msg);
       });
 
+      socket.__on('ping', function onPing(): void {
+        socket.__onPing();
+      });
+
       return socket;
     }
     return new this.engineImport.WebSocket(url);
