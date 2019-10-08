@@ -11,15 +11,20 @@ const PONG: any = new Uint8Array(['A'.charCodeAt(0)]).buffer;
 
 function noop(): void { /** ignore */ }
 
+export enum WSEngine {
+  WS = 'ws',
+  CWS = '@clusterws/cws'
+}
+
 export class WebsocketEngine {
   private engineImport: any;
 
-  constructor(private engine: string) {
+  constructor(private engine: WSEngine) {
     this.engineImport = require(this.engine);
   }
 
   public createClient(url: string): WebSocket {
-    if (this.engine === 'ws') {
+    if (this.engine === WSEngine.WS) {
       const socket: any = new this.engineImport(url);
       socket.__on = socket.on.bind(socket);
       socket.__onPing = noop;
@@ -55,7 +60,7 @@ export class WebsocketEngine {
   }
 
   public createServer(options: ServerConfigs, cb?: () => void): WebSocketServer {
-    if (this.engine === 'ws') {
+    if (this.engine === WSEngine.WS) {
       const wsServer: any = new this.engineImport.Server(options, cb);
       wsServer.__on = wsServer.on.bind(wsServer);
       wsServer.__onConnection = noop;

@@ -1,7 +1,15 @@
 import { randomBytes } from 'crypto';
-import { WebsocketEngine, WebSocketServer, WebSocket } from '../engine';
+import { WebsocketEngine, WebSocketServer, WebSocket, WSEngine } from '../engine';
 
 type ExtendedSocket = WebSocket & { id: string, channels: { [key: string]: string } };
+
+interface BrokerServerOptions {
+  port: number;
+  engine: WSEngine;
+  onReady: () => void;
+  onError: (server: boolean, err: Error) => void;
+  onMetrics?: (data: any) => void;
+}
 
 function generateUid(length: number): string {
   return randomBytes(length / 2).toString('hex');
@@ -16,7 +24,7 @@ export class BrokerServer {
     received: 0
   };
 
-  constructor(private config: { port: number, engine: string, onReady: () => void, onError: (server: boolean, err: Error) => void, onMetrics?: (data: any) => void }) {
+  constructor(private config: BrokerServerOptions) {
     this.scheduleMetrics();
 
     this.server = new WebsocketEngine(this.config.engine).createServer({ port: this.config.port }, config.onReady);
@@ -63,6 +71,7 @@ export class BrokerServer {
 
   private registerSocket(socket: ExtendedSocket): void {
     socket.id = generateUid(4);
+    socket.channels = {};
     this.sockets.push(socket);
   }
 
@@ -137,22 +146,3 @@ export class BrokerServer {
     }
   }
 }
-
-new BrokerServer({
-  port: 3000,
-  engine: 'ws',
-  onMetrics: (data: any): void => {
-    // metrics are submitted every 10s
-    console.log(data);
-  },
-  onError: (isServer: boolean, err: Error): void => {
-    if (isServer) {
-      // do one thing
-    }
-
-    console.log('Received an error');
-  },
-  onReady: (): void => {
-    console.log('Server is running');
-  }
-});
