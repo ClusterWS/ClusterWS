@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { PubSubEngine } from './pubsub';
 
-describe('Register, Subscribe, Unsubscribe, Unregister', () => {
+describe('PubSub Creation', () => {
   before(() => {
     this.pubSub = new PubSubEngine();
   });
@@ -44,7 +44,7 @@ describe('Register, Subscribe, Unsubscribe, Unregister', () => {
   });
 });
 
-describe('Publish', () => {
+describe('PubSub Publish', () => {
   beforeEach(() => {
     this.pubSub = new PubSubEngine();
   });

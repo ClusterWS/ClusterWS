@@ -5,6 +5,7 @@ import { BrokerClient } from './client';
 if (process.argv[2] === '--client') {
   let iter: number = 0;
   let received: number = 0;
+  let largestTimeDelay: number = 0;
 
   const client: BrokerClient = new BrokerClient({
     url: 'ws://localhost:3000',
@@ -12,13 +13,14 @@ if (process.argv[2] === '--client') {
     onRegister: (): void => {
       console.log('Connect');
       // subscribe to 100000
+      client.send('stimestamp');
+
       for (let i: number = 0; i < 1000000; i++) {
         client.send('snew_channel' + i);
       }
 
       setInterval(() => {
-        let message: any = {
-        };
+        let message: any = {};
         for (let i: number = iter; i < 1000 + iter; i++) {
           message['new_channel' + i] = ['hello', 'super', 'world', 'i am ', 'here'];
         }
@@ -36,6 +38,11 @@ if (process.argv[2] === '--client') {
       console.log('Connection lost');
     },
     onMessage: (message: string): void => {
+      let parsed: any = JSON.parse(message);
+      let diff: number = new Date().getTime() - parsed.timestamp;
+      if (diff > largestTimeDelay) {
+        largestTimeDelay = diff;
+      }
       received++;
       // console.log('Received message', message);
     }
@@ -43,9 +50,13 @@ if (process.argv[2] === '--client') {
 
   setInterval(() => {
     console.log('Messages received', received);
+    console.log('Max time delay', largestTimeDelay + 'ms');
     received = 0;
+    largestTimeDelay = 0;
   }, 10000);
+
 } else {
+
   new BrokerServer({
     port: 3000,
     engine: WSEngine.WS,

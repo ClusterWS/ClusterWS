@@ -128,11 +128,17 @@ export class BrokerServer {
   private scheduleMetrics(): void {
     if (this.config.onMetrics) {
       // TODO: improve metrics collection
+      // FIXME: number of channels is wrong
+      let numberOfChannels: number = 0;
+      for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
+        numberOfChannels += Object.keys(this.sockets[i].channels).length;
+      }
+
       const metrics: any = {
         pid: process.pid,
         timestamp: parseInt(`${new Date().getTime() / 1000}`, 10),
+        numberOfChannels,
         connectedSockets: this.sockets.length,
-        // numberOfChannels: Object.keys(this.channels).length,
         receivedPerSecond: this.additionalMetrics.received / 10,
         sentPerSecond: this.additionalMetrics.sent / 10
       };
