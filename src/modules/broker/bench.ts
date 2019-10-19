@@ -1,3 +1,4 @@
+/* tslint:disable */
 import { WSEngine } from '../engine';
 import { BrokerServer } from './server';
 import { BrokerClient } from './client';

@@ -11,7 +11,7 @@ describe('Broker', () => {
       onReady: (): void => {
         done();
       },
-      onError: (_, error: Error): void => {
+      onError: (_: any, error: Error): void => {
         console.log('Error', error);
       }
     });
@@ -58,6 +58,5 @@ describe('Broker', () => {
         triggered++;
       }
     });
-
-  });
+  }).timeout(5000);
 });

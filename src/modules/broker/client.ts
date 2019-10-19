@@ -39,7 +39,7 @@ export class BrokerClient {
     });
 
     this.socket.on('ping', () => {
-      // confirm that server still running
+      // TODO: keep track if server still alive
     });
   }
 
@@ -53,8 +53,7 @@ export class BrokerClient {
       setTimeout(() => {
         this.inReconnect = false;
         this.connect();
-        // TODO: improve reconnect wait
-      }, 500);
+      }, Math.floor(Math.random() * 2000) + 200);
     }
   }
 }
