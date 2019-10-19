@@ -1,4 +1,9 @@
 /* tslint:disable */
+// This benchmark file will be extended with more modules
+// and eventually become general benchmark for whole 
+// clusterws system to be able to find limitation and 
+// confirm correct scaling mechanism
+
 import { WSEngine } from '../engine';
 import { BrokerServer } from './server';
 import { BrokerClient } from './client';
