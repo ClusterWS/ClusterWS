@@ -1,5 +1,4 @@
-// Template
-// does not work yet!
+// ClusterWS Template
 const { ClusterWS, WSEngine } = require('@clusterws/server');
 
 new ClusterWS({
@@ -35,7 +34,11 @@ async function worker(server) {
       const parsedMessage = JSON.parse(message);
 
       if (parsedMessage.publish) {
-        server.wss.publish(parsedMessage.channel, parsedMessage.message, ws.id);
+        // publish to everyone except of the sender
+        ws.publish(parsedMessage.channel, parsedMessage.message);
+
+        // publish to everyone including sender
+        server.ws.publish(parsedMessage.channel, parsedMessage.message)
       }
     });
 
