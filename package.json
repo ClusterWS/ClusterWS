@@ -35,9 +35,13 @@
     "ws": "^7.1.2"
   },
   "nyc": {
+    "all": true,
     "temp-directory": "./node_modules/.cache/nyc_output",
     "include": [
       "src/**/*.ts"
+    ],
+    "exclude": [
+      "src/index.d.ts"
     ],
     "extension": [
       ".ts"
