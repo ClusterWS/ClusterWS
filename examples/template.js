@@ -27,18 +27,33 @@ new ClusterWS({
 
 async function worker(server) {
   // TODO: add some middleware
+  // Client must implement pub sub wrapper to read
+  // pub sub messages which looks like
+  // ['p', {channelName: [msg1,msg2,mgg3], channelName2: [msg1,msg2]...}]
 
   server.ws.on('connection', (ws) => {
     ws.on('message', (message) => {
-      // example of publishing message to some channel
+      // simple pub sub protocol example
       const parsedMessage = JSON.parse(message);
 
       if (parsedMessage.publish) {
-        // publish to everyone except of the sender
-        ws.publish(parsedMessage.channel, parsedMessage.message);
+        if (parsedMessage.includingSender) {
+          // publish to everyone in that channel including sender
+          server.ws.publish(parsedMessage.channel, parsedMessage.message)
+        } else {
+          // publish to everyone except sender
+          ws.publish(parsedMessage.channel, parsedMessage.message);
+        }
+      }
 
-        // publish to everyone including sender
-        server.ws.publish(parsedMessage.channel, parsedMessage.message)
+      if (parsedMessage.subscribe) {
+        // subscribe to specific channel
+        ws.subscribe(parsedMessage.channel);
+      }
+
+      if (parsedMessage.unsubscribe) {
+        // unsubscribe from specific channel
+        ws.unsubscribe(parsedMessage.channel);
       }
     });
 
@@ -52,7 +67,7 @@ async function worker(server) {
 
     ws.on('pong', () => {
       // on pong received
-    })
+    });
   });
 
   server.on('error', (err) => {
@@ -62,7 +77,7 @@ async function worker(server) {
   // add express or any other app
   server.on('request', app);
 
-  // close server an wss (webSocketServer)
+  // close http and ws server
   // server.close();
   server.start();
 }

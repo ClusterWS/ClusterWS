@@ -2,7 +2,6 @@ type Listener = (messages: { [key: string]: any[] }) => void;
 
 interface PubSubEngineOptions {
   sync: boolean;
-  flushInterval: number;
   onChannelCreated: (channel: string) => void;
   onChannelDestroyed: (channel: string) => void;
 }
@@ -49,12 +48,11 @@ export class PubSubEngine {
 
   // Flush options
   private boundFlush: () => void;
-  private flushTimeout: NodeJS.Timeout;
+  private flushScheduled: boolean;
 
   constructor(options: Partial<PubSubEngineOptions> = {}) {
     this.options = {
       sync: false,
-      flushInterval: 10,
       onChannelCreated: noop,
       onChannelDestroyed: noop,
       ...options
@@ -77,9 +75,10 @@ export class PubSubEngine {
       return this.flush();
     }
 
-    if (!this.flushTimeout) {
+    if (!this.flushScheduled) {
       // schedule next flush within specified interval
-      this.flushTimeout = setTimeout(this.boundFlush, this.options.flushInterval);
+      this.flushScheduled = true;
+      process.nextTick(this.boundFlush);
     }
   }
 
@@ -159,6 +158,7 @@ export class PubSubEngine {
   }
 
   private flush(): void {
+    // TODO: improve logic
     const messagesToPublish: any = {};
 
     for (const channel in this.channelsBatches) {
@@ -189,8 +189,7 @@ export class PubSubEngine {
 
     // reset flush for next iteration
     this.channelsBatches = {};
-    this.flushTimeout = null;
-
+    this.flushScheduled = false;
     for (const userId in messagesToPublish) {
       const user: { listener: Listener, channels: string[] } | undefined = this.usersLink[userId];
       if (user) {
@@ -213,84 +212,3 @@ export class PubSubEngine {
     return messagesForUserInChannel;
   }
 }
-
-// Tests TODO: need to move all test to separate files
-// const pubSubEngine: PubSubEngine = new PubSubEngine({ sync: false });
-
-// console.log('Start testing "Registration and Subscribing"');
-
-// // For comfortable work with millions of channels we need to increase
-// // --max-old-space-size (for large applications good size is 8gb per instance)
-// const shifting: number = 20;
-// const numberOfUsers: number = 50000;
-// const numberOfChannelsPerUser: number = 200;
-
-// // TODO: improve configurations for publish
-// const publishEvery: number = 15; // if 0 disable publish
-// const numberOfMessagesPerChannel: number = 1;
-
-// console.time('Registration and Subscribing');
-
-// let shiftSubscribe: number = 0;
-// for (let i: number = 0; i < numberOfUsers; i++) {
-//   pubSubEngine.register(`my_user_number_${i}`, (mgs: any): void => {
-//     // TODO: write throughput tests
-//   });
-
-//   for (let j: number = 0 + shiftSubscribe; j < numberOfChannelsPerUser + shiftSubscribe; j++) {
-//     pubSubEngine.subscribe(`my_user_number_${i}`, [`one_of_the_subscribed_channels_${j}`]);
-//   }
-
-//   shiftSubscribe = shiftSubscribe + shifting;
-// }
-
-// console.log(pubSubEngine.getStats());
-// console.timeEnd('Registration and Subscribing');
-
-// console.log('Start testing "Unregister"');
-// console.time('Unregister');
-
-// for (let i: number = 0; i < numberOfUsers; i++) {
-//   pubSubEngine.unregister(`my_user_number_${i}`);
-// }
-
-// console.log(pubSubEngine.getStats());
-// console.timeEnd('Unregister');
-
-// console.log('Start testing "Unsubscribe"');
-// console.time('Unsubscribe');
-// let shiftUnsubscribe: number = 0;
-
-// // This is worst case scenario perf test when indexOf is always at the end
-// for (let i: number = 0; i < numberOfUsers; i++) {
-//   const channels: any[] = [];
-//   for (let j: number = 0 + shiftUnsubscribe; j < numberOfChannelsPerUser + shiftUnsubscribe; j++) {
-//     channels.push(`one_of_the_subscribed_channels_${numberOfChannelsPerUser + shiftUnsubscribe + shiftUnsubscribe - j - 1}`);
-//   }
-
-//   pubSubEngine.unsubscribe(`my_user_number_${i}`, channels);
-//   shiftUnsubscribe = shiftUnsubscribe + shifting;
-// }
-
-// console.log(pubSubEngine.getStats());
-// console.timeEnd('Unsubscribe');
-// if (publishEvery) {
-//   // TODO: need to improve publish logic
-//   let numberOfChannels = pubSubEngine.getStats().numberOfChannels;
-//   setInterval(() => {
-//     console.time('Publishing data');
-
-//     for (let j: number = 0; j < numberOfChannels; j++) {
-//       for (let i = 0; i < numberOfMessagesPerChannel; i++) {
-//         pubSubEngine.publish(`one_of_the_subscribed_channels_${j}`, { str: "my message" + i });
-//       }
-//     }
-
-//     console.timeEnd('Publishing data');
-//   }, publishEvery);
-// }
-
-// setInterval(() => {
-//   console.log(pubSubEngine.getStats());
-//   // handle stuff here
-// }, 20000);
