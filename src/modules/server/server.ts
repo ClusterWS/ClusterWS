@@ -1,5 +1,5 @@
 import { WSServer } from './wsServer';
-import { WebsocketEngine } from '../engine';
+import { WebsocketEngine, WSEngine } from '../engine';
 import { SecureContextOptions } from 'tls';
 
 import { Server as HttpServer, createServer as httpCreateServer } from 'http';
@@ -18,16 +18,23 @@ export class Server {
   protected server: HttpServer | HttpsServer;
 
   constructor(private options: ServerOptions) {
+    this.ws = new WSServer();
     this.server = this.options.tlsOptions ?
       httpsCreateServer(this.options.tlsOptions) :
       httpCreateServer();
 
     // TODO: add the rest of the options
-    this.options.engine.createServer({
+    const wSocketServer: any = this.options.engine.createServer({
       server: this.server
     });
 
-    // wrap ws server
+    // wSocketServer.on('connection', (ws) => {
+    //   // ws.id = 'super_cool';
+    //   // this.ws.register(ws.id, (message: any) => {
+    //   //   console.log(message);
+    //   // });
+    // });
+
     this.options.worker(this);
   }
 
@@ -43,3 +50,17 @@ export class Server {
     this.server.listen(this.options.port, this.options.host, cb);
   }
 }
+
+// Simple server wrapper example
+new Server({
+  port: 3000,
+  worker: (server) => {
+    server.start();
+    console.log('Server is running in here');
+
+    // setTimeout(() => {
+    //   server.close();
+    // }, 10000);
+  },
+  engine: new WebsocketEngine(WSEngine.CWS)
+});
