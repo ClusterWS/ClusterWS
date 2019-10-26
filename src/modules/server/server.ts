@@ -1,6 +1,6 @@
 import { WSServer } from './wsServer';
-import { WebsocketEngine, WSEngine } from '../engine';
 import { SecureContextOptions } from 'tls';
+import { WebsocketEngine, WSEngine } from '../engine';
 
 import { Server as HttpServer, createServer as httpCreateServer } from 'http';
 import { Server as HttpsServer, createServer as httpsCreateServer } from 'https';

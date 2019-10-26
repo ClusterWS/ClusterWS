@@ -2,7 +2,7 @@ import { Socket } from 'net';
 import { Writable } from 'stream';
 
 // ClusterWS simple broker networking protocol
-//  1 byte                                     1/2/4 bytes                   x
+//  1 byte                                     1/2/4 bytes                   x bytes
 //  [uInt8]                                    [uInt8/uInt16/uInt32]         [message]
 //  ping/pong/message length type              message length                actual message
 //  0x09/0x0a/0x08/0x22/0x38                   x                             x
@@ -15,7 +15,7 @@ const UINT32SIZE: number = 0x38;
 
 const EMPTY_MESSAGE: Buffer = Buffer.from('');
 
-function NOOP(): void { /** ignore */ }
+function noop(): void { /** ignore */ }
 
 enum ReadState {
   EVENT,
@@ -32,7 +32,7 @@ export class Networking extends Writable {
   private messageSize: number = 0;
   private messageLengthBytes: number = 0;
 
-  private onErrorListener: any = NOOP;
+  private onErrorListener: (err: Error) => void = noop;
 
   constructor(private socket: Socket) {
     super();
@@ -95,7 +95,7 @@ export class Networking extends Writable {
     this.socket.setTimeout(0);
   }
 
-  public on(event: string, listener: (...args: any) => void): any {
+  public on(event: string, listener: (...args: any) => void): this {
     if (event === 'error') {
       this.onErrorListener = listener;
       return;
@@ -104,40 +104,40 @@ export class Networking extends Writable {
   }
 
   public send(data: string | Buffer, cb?: () => void): void {
+    const messageSize: number = typeof data === 'string' ? Buffer.byteLength(data) : data.byteLength;
+    let offset: number = 2;
+
+    if (messageSize > 255) {
+      offset = 3;
+    } else if (messageSize > 65535) {
+      offset = 5;
+    }
+
+    const writeBuffer: Buffer = Buffer.allocUnsafe(offset + (typeof data === 'string' ? messageSize : 0));
+
+    switch (offset) {
+      case 2:
+        writeBuffer.writeUInt8(UINT8SIZE, 0);
+        writeBuffer.writeUInt8(messageSize, 1);
+        break;
+      case 3:
+        writeBuffer.writeUInt8(UINT16SIZE, 0);
+        writeBuffer.writeUInt16BE(messageSize, 1);
+        break;
+      case 5:
+        writeBuffer.writeUInt8(UINT32SIZE, 0);
+        writeBuffer.writeUInt32BE(messageSize, 1);
+        break;
+    }
+
     if (typeof data === 'string') {
-      let offsetAlloc: number = 2;
-      const messageLength: number = Buffer.byteLength(data);
-      if (messageLength > 255) {
-        // use uInt16
-        offsetAlloc = 3;
-      } else if (messageLength > 65535) {
-        // use uInt32
-        offsetAlloc = 5;
-      }
-
-      const buffer: Buffer = Buffer.allocUnsafe(offsetAlloc + messageLength);
-
-      switch (offsetAlloc) {
-        case 2:
-          buffer.writeUInt8(UINT8SIZE, 0);
-          buffer.writeUInt8(messageLength, 1);
-          buffer.write(data, 2);
-          break;
-        case 3:
-          buffer.writeUInt8(UINT16SIZE, 0);
-          buffer.writeUInt16BE(messageLength, 1);
-          buffer.write(data, 3);
-          break;
-        case 5:
-          buffer.writeUInt8(UINT32SIZE, 0);
-          buffer.writeUInt32BE(messageLength, 1);
-          buffer.write(data, 5);
-          break;
-      }
-      this.socket.write(buffer, cb);
+      writeBuffer.write(data, offset);
+      this.socket.write(writeBuffer, cb);
     } else {
-      // TODO: implement buffer size
-      throw new Error('Implement buffer write');
+      this.socket.cork();
+      this.socket.write(writeBuffer);
+      this.socket.write(data, cb);
+      this.socket.uncork();
     }
   }
 
@@ -218,7 +218,7 @@ export class Networking extends Writable {
           }
 
           this.emit('message', this.readBuf(this.messageSize));
-          // message  has been completed reset everything
+
           this.messageSize = 0;
           this.messageLengthBytes = 0;
           this.readState = ReadState.EVENT;
