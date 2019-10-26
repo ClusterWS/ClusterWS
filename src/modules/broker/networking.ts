@@ -168,6 +168,8 @@ export class Networking extends Writable {
 
           switch (this.readBuf(1).readUInt8(0)) {
             case PING:
+              // We must respond with pong
+              this.pong();
               this.emit('ping');
               continue;
             case PONG:
@@ -224,6 +226,10 @@ export class Networking extends Writable {
           this.readState = ReadState.EVENT;
       }
     } while (this.loop);
+  }
+
+  public terminate(): void {
+    this.socket.destroy();
   }
 
   private readBuf(length: number): Buffer {

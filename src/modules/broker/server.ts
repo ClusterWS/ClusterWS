@@ -1,88 +1,83 @@
+import { unlinkSync } from 'fs';
+import { Networking } from './networking';
 import { randomBytes } from 'crypto';
-import { WebsocketEngine, WebSocketServer, WebSocket, WSEngine } from '../engine';
+import { Socket, Server, createServer } from 'net';
 
-type ExtendedSocket = WebSocket & { id: string, channels: { [key: string]: string } };
+const SUBSCRIBE: number = 's'.charCodeAt(0);
+const UNSUBSCRIBE: number = 'u'.charCodeAt(0);
 
-interface BrokerServerOptions {
-  port: number;
-  engine: WSEngine;
-  onReady: () => void;
-  onError: (server: boolean, err: Error) => void;
-  onMetrics?: (data: any) => void;
-}
+type ExtendedSocket = Networking & { id?: string, channels?: { [key: string]: string }, isAlive?: boolean };
 
 function generateUid(length: number): string {
   return randomBytes(length / 2).toString('hex');
 }
 
+interface BrokerServerOptions {
+  port?: number;
+  path?: string;
+  onReady?: () => void;
+  // onError: (server: boolean, err: Error) => void;
+  // onMetrics?: (data: any) => void;
+}
+
 export class BrokerServer {
-  private server: WebSocketServer;
-  private sockets: ExtendedSocket[] = [];
+  private server: Server;
+  private connectedClients: ExtendedSocket[] = [];
 
-  private additionalMetrics: { sent: number, received: number } = {
-    sent: 0,
-    received: 0
-  };
+  constructor(private options: BrokerServerOptions) {
+    if (this.options.path) {
+      try { unlinkSync(this.options.path); } catch (err) {
+        if (err.code !== 'ENOENT') {
+          throw err;
+        }
+      }
 
-  constructor(private config: BrokerServerOptions) {
-    this.scheduleMetrics();
+      if (process.platform === 'win32') {
+        this.options.path = this.options.path.replace(/^\//, '');
+        this.options.path = this.options.path.replace(/\//g, '-');
+        this.options.path = `\\\\.\\pipe\\${this.options.path}`;
+      }
+    }
 
-    this.server = new WebsocketEngine(this.config.engine).createServer({ port: this.config.port }, config.onReady);
+    this.startServer();
+    this.scheduleHeartbeat();
+  }
 
-    this.server.on('error', (err: Error) => config.onError(true, err));
-    this.server.on('connection', (socket: ExtendedSocket) => {
-      this.registerSocket(socket);
+  private startServer(): void {
+    this.server = createServer((rawSocket: Socket) => {
+      const socket: ExtendedSocket = this.registerSocket(rawSocket);
 
-      socket.on('message', (message: string) => {
-        if (this.config.onMetrics) {
-          this.additionalMetrics.received++;
+      socket.on('message', (message: Buffer) => {
+        if (message[0] === SUBSCRIBE) {
+          return this.subscribe(socket, message.slice(1).toString().split(','));
         }
 
-        // subscribe
-        if (message[0] === 's') {
-          return this.subscribe(socket, message.replace('s', '').split(','));
+        if (message[0] === UNSUBSCRIBE) {
+          return this.unsubscribe(socket, message.slice(1).toString().split(','));
         }
 
-        // unsubscribe
-        if (message[0] === 'u') {
-          return this.unsubscribe(socket, message.replace('u', '').split(','));
-        }
-
-        // rest of the messages
         try {
-          this.broadcast(socket.id, JSON.parse(message));
+          this.broadcast(socket.id, JSON.parse(message as any));
         } catch (err) {
-          config.onError(false, err);
+          // TODO: write logic in here to drop connection
         }
       });
 
       socket.on('error', (err: Error) => {
+        // TODO: add error emit
         this.unregisterSocket(socket.id);
-        config.onError(false, err);
       });
 
-      socket.on('close', (code?: number, reason?: string) => {
+      socket.on('close', () => {
         this.unregisterSocket(socket.id);
+      });
+
+      socket.on('pong', () => {
+        socket.isAlive = true;
       });
     });
 
-    this.server.startAutoPing(20000);
-  }
-
-  private registerSocket(socket: ExtendedSocket): void {
-    socket.id = generateUid(4);
-    socket.channels = {};
-    this.sockets.push(socket);
-  }
-
-  private unregisterSocket(id: string): void {
-    for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
-      const socket: ExtendedSocket = this.sockets[i];
-      if (socket.id === id) {
-        this.sockets.splice(i, 1);
-        break;
-      }
-    }
+    this.server.listen(this.options.path || this.options.port, this.options.onReady);
   }
 
   private subscribe(socket: ExtendedSocket, channels: string[]): void {
@@ -99,9 +94,45 @@ export class BrokerServer {
     }
   }
 
+  private registerSocket(rawSocket: Socket): ExtendedSocket {
+    const socket: ExtendedSocket = new Networking(rawSocket);
+    socket.id = generateUid(4);
+    socket.isAlive = true;
+    socket.channels = {};
+    this.connectedClients.push(socket);
+    return socket;
+  }
+
+  private unregisterSocket(id: string): void {
+    for (let i: number = 0, len: number = this.connectedClients.length; i < len; i++) {
+      const socket: ExtendedSocket = this.connectedClients[i];
+      if (socket.id === id) {
+        this.connectedClients.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  private scheduleHeartbeat(): void {
+    for (let i: number = 0, len: number = this.connectedClients.length; i < len; i++) {
+      const socket: ExtendedSocket = this.connectedClients[i];
+      if (!socket.isAlive) {
+        socket.terminate();
+        this.unregisterSocket(socket.id);
+        continue;
+      }
+
+      socket.isAlive = false;
+      socket.ping();
+    }
+
+    // ping every 10s
+    setTimeout(() => this.scheduleHeartbeat(), 10000);
+  }
+
   private broadcast(id: string, data: object): void {
-    for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
-      const socket: ExtendedSocket = this.sockets[i];
+    for (let i: number = 0, len: number = this.connectedClients.length; i < len; i++) {
+      const socket: ExtendedSocket = this.connectedClients[i];
       if (socket.id !== id) {
         let empty: boolean = true;
         const preparedMessage: object = {};
@@ -116,39 +147,9 @@ export class BrokerServer {
         }
 
         if (!empty) {
-          if (this.config.onMetrics) {
-            this.additionalMetrics.sent++;
-          }
           socket.send(JSON.stringify(preparedMessage));
         }
       }
-    }
-  }
-
-  private scheduleMetrics(): void {
-    if (this.config.onMetrics) {
-      // TODO: improve metrics collection
-      // FIXME: number of channels is wrong
-      let numberOfChannels: number = 0;
-      for (let i: number = 0, len: number = this.sockets.length; i < len; i++) {
-        numberOfChannels += Object.keys(this.sockets[i].channels).length;
-      }
-
-      const metrics: any = {
-        pid: process.pid,
-        timestamp: parseInt(`${new Date().getTime() / 1000}`, 10),
-        numberOfChannels,
-        connectedSockets: this.sockets.length,
-        receivedPerSecond: this.additionalMetrics.received / 10,
-        sentPerSecond: this.additionalMetrics.sent / 10
-      };
-
-      this.additionalMetrics.received = 0;
-      this.additionalMetrics.sent = 0;
-
-      this.config.onMetrics(metrics);
-
-      setTimeout(() => this.scheduleMetrics(), 10000);
     }
   }
 }
