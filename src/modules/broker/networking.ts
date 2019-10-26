@@ -1,7 +1,10 @@
 import { Socket } from 'net';
 import { Writable } from 'stream';
 
-// ClusterWS simple broker networking protocol
+// Self Containing
+// simple protocol to transfer data
+// between client and server with minimal overhead
+//
 //  1 byte                                     1/2/4 bytes                   x bytes
 //  [uInt8]                                    [uInt8/uInt16/uInt32]         [message]
 //  ping/pong/message length type              message length                actual message
@@ -13,9 +16,7 @@ const UINT8SIZE: number = 0x08;
 const UINT16SIZE: number = 0x22;
 const UINT32SIZE: number = 0x38;
 
-const EMPTY_MESSAGE: Buffer = Buffer.from('');
-
-function noop(): void { /** ignore */ }
+const EMPTY_BUFFER: Buffer = Buffer.from('');
 
 enum ReadState {
   EVENT,
@@ -23,7 +24,47 @@ enum ReadState {
   MESSAGE
 }
 
-export class Networking extends Writable {
+function noop(): void { /** ignore */ }
+
+function onDrain(): void {
+  // resume socket stream after draining all data
+  this.socket.resume();
+}
+
+function onData(chunk: Buffer): void {
+  // try to write data to reader
+  // if we are unable to do that then we
+  // need to stop socket stream
+  if (!this.dataProcessor.write(chunk)) {
+    this.socket.pause();
+  }
+}
+
+function onError(err: Error): void {
+  // received error from socket or dataProcessor
+  // destroy connection and emit error
+  // calling destroy will trigger 'close' event
+  this.eventListenerMap.error(err);
+  this.socket.destroy();
+}
+
+function onClose(): void {
+  // read all unread data sync from underline buffer
+  // and close writable stream then emit close event
+  this.socket.read();
+  this.dataProcessor.end();
+
+  if (this.dataProcessor._writableState.finished || this.dataProcessor._writableState.errorEmitted) {
+    return this.eventListenerMap.close();
+  }
+  // if we get here most likely we still have some data to process
+  // error or finish will bet triggered after processing
+  // last chunk of data
+  this.dataProcessor.on('error', () => this.eventListenerMap.close());
+  this.dataProcessor.on('finish', () => this.eventListenerMap.close());
+}
+
+export class Networking {
   private loop: boolean = true;
   private buffers: Buffer[] = [];
   private bufferedBytes: number = 0;
@@ -32,75 +73,36 @@ export class Networking extends Writable {
   private messageSize: number = 0;
   private messageLengthBytes: number = 0;
 
-  private onErrorListener: (err: Error) => void = noop;
+  private dataProcessor: Writable;
+  private eventListenerMap: { [key: string]: (...args: any) => void } = {
+    open: noop,
+    close: noop,
+    message: noop,
+    error: noop
+  };
 
   constructor(private socket: Socket) {
-    super();
-
-    super.on('drain', () => {
-      // stream has been emptied time
-      // can continue reading from socket
-      this.socket.resume();
+    this.dataProcessor = new Writable({
+      write: this.write.bind(this)
     });
 
-    super.on('error', (err: Error) => {
-      // error writing data to the Writable stream
-      // calling destroy will trigger 'close' event
-      this.onErrorListener(err);
-      this.socket.destroy();
-    });
+    this.dataProcessor.on('drain', onDrain.bind(this));
+    this.dataProcessor.on('error', onError.bind(this));
 
-    this.socket.on('ready', () => {
-      // inform user that connection is established
-      this.emit('open');
-    });
+    this.socket.on('data', onData.bind(this));
+    this.socket.on('error', onError.bind(this));
+    this.socket.on('close', onClose.bind(this));
 
-    this.socket.on('data', (chunk: Buffer) => {
-      // process data chunks
-      const success: boolean = this.write(chunk);
-      if (!success) {
-        this.socket.pause();
-      }
-    });
-
-    this.socket.on('error', (err: Error) => {
-      // received error from socket
-      // destroy connection and emit error
-      // calling destroy will trigger 'close' event
-      this.onErrorListener(err);
-      this.socket.destroy();
-    });
-
-    this.socket.on('end', () => {
-      // close connection
-      this.socket.end();
-    });
-
-    this.socket.on('close', () => {
-      // read all unread data and end connection
-      // and writable stream then emit close event
-      this.socket.read();
-      this.end();
-
-      if ((this as any)._writableState.finished || (this as any)._writableState.errorEmitted) {
-        this.emit('close');
-      } else {
-        super.on('error', () => this.emit('close'));
-        super.on('finish', () => this.emit('close'));
-      }
-
-    });
+    this.socket.on('ready', () => this.eventListenerMap.open());
 
     this.socket.setNoDelay();
-    this.socket.setTimeout(0);
   }
 
-  public on(event: string, listener: (...args: any) => void): this {
-    if (event === 'error') {
-      this.onErrorListener = listener;
-      return;
-    }
-    super.on(event, listener);
+  public on(event: 'error', listener: (err: Error) => void): void;
+  public on(event: 'message', listener: (message: Buffer) => void): void;
+  public on(event: 'open' | 'close' | 'ping' | 'pong', listener: () => void): void;
+  public on(event: string, listener: (...args: any) => void): void {
+    this.eventListenerMap[event] = listener;
   }
 
   public send(data: string | Buffer, cb?: () => void): void {
@@ -153,7 +155,15 @@ export class Networking extends Writable {
     this.socket.write(buffer, cb);
   }
 
-  public _write(chunk: Buffer, encoding: string, cb: () => void): void {
+  public close(): void {
+    this.socket.end();
+  }
+
+  public terminate(): void {
+    this.socket.destroy();
+  }
+
+  private write(chunk: Buffer, encoding: string, cb: () => void): void {
     this.bufferedBytes += chunk.length;
     this.buffers.push(chunk);
     this.loop = true;
@@ -170,10 +180,10 @@ export class Networking extends Writable {
             case PING:
               // We must respond with pong
               this.pong();
-              this.emit('ping');
+              this.eventListenerMap.ping();
               continue;
             case PONG:
-              this.emit('pong');
+              this.eventListenerMap.pong();
               continue;
             case UINT8SIZE:
               this.messageLengthBytes = 1;
@@ -208,7 +218,7 @@ export class Networking extends Writable {
           if (!this.messageSize) {
             // received empty message
             this.readState = ReadState.EVENT;
-            this.emit('message', EMPTY_MESSAGE);
+            this.eventListenerMap.message(EMPTY_BUFFER);
             continue;
           }
 
@@ -218,18 +228,13 @@ export class Networking extends Writable {
             this.loop = false;
             return cb();
           }
-
-          this.emit('message', this.readBuf(this.messageSize));
+          this.eventListenerMap.message(this.readBuf(this.messageSize));
 
           this.messageSize = 0;
           this.messageLengthBytes = 0;
           this.readState = ReadState.EVENT;
       }
     } while (this.loop);
-  }
-
-  public terminate(): void {
-    this.socket.destroy();
   }
 
   private readBuf(length: number): Buffer {
