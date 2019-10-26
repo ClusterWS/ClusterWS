@@ -178,7 +178,7 @@ export class Networking {
 
           switch (this.readBuf(1).readUInt8(0)) {
             case PING:
-              // We must respond with pong
+              // Must send pong after receiving ping
               this.pong();
               this.eventListenerMap.ping();
               continue;

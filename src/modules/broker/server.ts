@@ -126,7 +126,7 @@ export class BrokerServer {
       socket.ping();
     }
 
-    // ping every 10s
+    // heartbeat every 10s
     setTimeout(() => this.scheduleHeartbeat(), 10000);
   }
 
