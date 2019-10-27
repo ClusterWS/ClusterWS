@@ -1,40 +1,55 @@
-import { WebsocketEngine, WebSocket, WSEngine } from '../engine';
-
-function noop(): void { /** noop function */ }
+import { connect } from 'net';
+import { Networking } from './networking';
 
 interface BrokerClientOptions {
-  url: string;
-  engine: WSEngine;
-  onMessage?: (message: string) => void;
-  onRegister?: () => void;
-  // TODO: find out how to handle unregister
-  onUnregister?: (err?: Error) => void;
+  port?: number;
+  host?: string;
+  path?: string;
+  onOpen?: () => void;
+  onError?: (err: Error) => void;
+  onMessage?: (message: Buffer) => void;
+  onClose?: () => void;
 }
 
 export class BrokerClient {
-  private socket: WebSocket;
+  private socket: Networking;
   private inReconnect: boolean;
 
-  constructor(private config: BrokerClientOptions) {
-    this.connect();
+  constructor(private options: BrokerClientOptions) {
+    this.startClient();
   }
 
   public send(message: string): void {
     this.socket.send(message);
   }
 
-  private connect(): void {
-    this.socket = new WebsocketEngine(this.config.engine)
-      .createClient(this.config.url);
+  private startClient(): void {
+    this.socket = new Networking(connect({
+      path: this.options.path,
+      host: this.options.host,
+      port: this.options.port,
+    }));
 
-    this.socket.on('open', this.config.onRegister || noop);
-    this.socket.on('message', this.config.onMessage || noop);
+    this.socket.on('open', () => {
+      if (this.options.onOpen) {
+        this.options.onOpen();
+      }
+    });
+
+    this.socket.on('message', (message: Buffer) => {
+      if (this.options.onMessage) {
+        this.options.onMessage(message);
+      }
+    });
 
     this.socket.on('error', (err: Error) => {
+      if (this.options.onError) {
+        this.options.onError(err);
+      }
       this.reconnect();
     });
 
-    this.socket.on('close', (code?: number, reason?: string) => {
+    this.socket.on('close', () => {
       this.reconnect();
     });
 
@@ -46,13 +61,13 @@ export class BrokerClient {
   private reconnect(): void {
     if (!this.inReconnect) {
       this.inReconnect = true;
-      if (this.config.onUnregister) {
-        this.config.onUnregister();
+      if (this.options.onClose) {
+        this.options.onClose();
       }
 
       setTimeout(() => {
         this.inReconnect = false;
-        this.connect();
+        this.startClient();
       }, Math.floor(Math.random() * 2000) + 200);
     }
   }
