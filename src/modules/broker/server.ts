@@ -16,8 +16,8 @@ interface BrokerServerOptions {
   port?: number;
   path?: string;
   onReady?: () => void;
-  // onError: (server: boolean, err: Error) => void;
-  // onMetrics?: (data: any) => void;
+  onClientError?: (err: Error) => void;
+  onServerError?: (err: Error) => void;
 }
 
 export class BrokerServer {
@@ -28,6 +28,11 @@ export class BrokerServer {
     if (this.options.path) {
       try { unlinkSync(this.options.path); } catch (err) {
         if (err.code !== 'ENOENT') {
+          if (this.options.onServerError) {
+            this.options.onServerError(err);
+            return;
+          }
+
           throw err;
         }
       }
@@ -41,6 +46,10 @@ export class BrokerServer {
 
     this.startServer();
     this.scheduleHeartbeat();
+  }
+
+  public close(): void {
+    this.server.close();
   }
 
   private startServer(): void {
@@ -59,12 +68,17 @@ export class BrokerServer {
         try {
           this.broadcast(socket.id, JSON.parse(message as any));
         } catch (err) {
-          // TODO: write logic in here to drop connection
+          if (this.options.onClientError) {
+            this.options.onClientError(err);
+          }
+          socket.terminate();
         }
       });
 
       socket.on('error', (err: Error) => {
-        // TODO: add error emit
+        if (this.options.onClientError) {
+          this.options.onClientError(err);
+        }
         this.unregisterSocket(socket.id);
       });
 
@@ -75,6 +89,15 @@ export class BrokerServer {
       socket.on('pong', () => {
         socket.isAlive = true;
       });
+    });
+
+    this.server.on('error', (err: Error) => {
+      if (this.options.onServerError) {
+        this.options.onServerError(err);
+        return;
+      }
+
+      throw err;
     });
 
     this.server.listen(this.options.path || this.options.port, this.options.onReady);
@@ -126,8 +149,8 @@ export class BrokerServer {
       socket.ping();
     }
 
-    // heartbeat every 10s
-    setTimeout(() => this.scheduleHeartbeat(), 10000);
+    // send heartbeat every 10s
+    setTimeout(this.scheduleHeartbeat.bind(this), 10000);
   }
 
   private broadcast(id: string, data: object): void {
