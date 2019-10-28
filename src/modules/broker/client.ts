@@ -54,7 +54,7 @@ export class BrokerClient {
     });
 
     this.socket.on('ping', () => {
-      // TODO: keep track if server still alive
+      // TODO: keep track if server is still alive
     });
   }
 
