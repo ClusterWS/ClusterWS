@@ -29,20 +29,20 @@ new ClusterWS({
   tlsOptions: { /** default node.js tls options */ }
 });
 
-async function worker(server) {
-  const wsServer = server.ws;
+async function worker() {
+  const wss = this.wss;
+  const server = this.server;
 
-  wsServer.on('connection', (ws) => {
-    // ws.register()
-    ws.register(ws, (message) => {
+  wss.on('connection', (ws) => {
+    wss.pubSub.register(ws, (message) => {
       // by default ClusterWs does not register websocket to pubSub engine
-      // wsServer.pubSub.register will register websocket 
+      // ws.onPublish will register websocket
       // and receive messages per tick such as { channel: [msg1, msg2, mgs3], channel2: [msg1, ...] ...}
-      // user is responsible for encoding and sending it to the clients
+      // user is responsible for encoding and sending it to the receiver
 
       // on client side this message will look like "['p', {'channel': [...], 'channel2': [...], ...}]"
       return ws.send(JSON.stringify(['p', message]));
-    });
+    })
 
     ws.on('message', (message) => {
       // you have full control over how to handel which events
@@ -69,10 +69,11 @@ async function worker(server) {
         // here can be done validation
         // also can check if this user subscribed to
         // this channel to be able publish
-        return ws.publish(channel, message);
+        return ws.publish(channel, message, ws);
+
 
         // also can publish including sender it self with
-        // return wsServer.publish(channel, message)
+        // return wsServer.publish(channel, message);
       }
 
       // receive subscribe event
@@ -100,10 +101,18 @@ async function worker(server) {
 
     ws.on('error', (err) => {
       // handle on error
+
+      // if socket is registered to pub sub
+      // you need to manually unregister
+      wss.pubSub.unregister(ws);
     });
 
     ws.on('close', (code, reason) => {
       // handle on close
+
+      // if socket is registered to pub sub
+      // you need to manually unregister
+      wss.pubSub.unregister(ws);
     });
 
     ws.on('pong', () => {
@@ -111,16 +120,21 @@ async function worker(server) {
     });
   });
 
-  server.on('error', (err) => {
-    console.log('Error while creating server', err);
-    server.close();
-  });
+  // server.on('error', (err) => {
+  //   console.log('Error while creating server', err);
+  //   server.close();
+  // });
 
   // you can easily add almost any http 
-  // frameworks (express, koa, etc..) with on `request` handler
+  //  library (express, koa, etc..) with on `request` handler
   server.on('request', app);
 
   // must be triggered to start server
-  server.start();
+  this.start(() => {
+    console.log('Server is running');
+  });
+
+  // to stop server use
+  // this.stop(cb)
 }
 

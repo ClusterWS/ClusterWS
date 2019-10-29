@@ -37,7 +37,7 @@ function isObjectEmpty(object: { [key: string]: any }): boolean {
 }
 
 export class PubSubEngine {
-  public static GLOBAL_USER: string = '*';
+  public static GLOBAL_USER: string = '__*__';
 
   private options: PubSubEngineOptions;
   private usersLink: { [key: string]: { listener: Listener, channels: string[] } } = {};
