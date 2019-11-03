@@ -1,7 +1,7 @@
 {
   "name": "@clusterws/server",
   "version": "4.0.0-alpha.8",
-  "description": "ClusterWS - lightweight, fast and powerful framework for building scalable Node.js WebSocket applications.",
+  "description": "Lightweight, fast and powerful framework for building scalable Node.js WebSocket based applications.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "author": "Dmitrii Goriunov",

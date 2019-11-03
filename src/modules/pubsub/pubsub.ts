@@ -41,7 +41,7 @@ export class PubSubEngine {
 
   private options: PubSubEngineOptions;
   private usersLink: { [key: string]: { listener: Listener, channels: string[] } } = {};
-  private channelsUsers: { [key: string]: { len: number, [key: string]: string | number } } = {};
+  private channelsUsers: { [key: string]: { len: number, [key: string]: boolean | number } } = {};
 
   // message handler
   private channelsBatches: { [key: string]: Array<[string | null, any]> } = {};
@@ -92,7 +92,7 @@ export class PubSubEngine {
     if (userInfo) {
       for (let i: number = 0, len: number = channels.length; i < len; i++) {
         const channel: string = channels[i];
-        let channelUsersObject: { len: number, [key: string]: string | number } | undefined = this.channelsUsers[channel];
+        let channelUsersObject: { len: number, [key: string]: boolean | number } | undefined = this.channelsUsers[channel];
 
         if (!channelUsersObject) {
           channelUsersObject = this.channelsUsers[channel] = {
@@ -104,7 +104,7 @@ export class PubSubEngine {
         if (!channelUsersObject[userId]) {
           userInfo.channels.push(channel);
           channelUsersObject.len++;
-          channelUsersObject[userId] = '1';
+          channelUsersObject[userId] = true;
         }
       }
     }
@@ -123,7 +123,7 @@ export class PubSubEngine {
     if (userInfo) {
       for (let i: number = 0, len: number = channels.length; i < len; i++) {
         const channel: string = channels[i];
-        const channelUsersObject: { len: number, [key: string]: string | number } | undefined = this.channelsUsers[channel];
+        const channelUsersObject: { len: number, [key: string]: boolean | number } | undefined = this.channelsUsers[channel];
 
         if (channelUsersObject && channelUsersObject[userId]) {
           channelUsersObject.len--;

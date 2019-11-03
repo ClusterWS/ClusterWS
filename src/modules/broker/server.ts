@@ -6,7 +6,7 @@ import { Socket, Server, createServer } from 'net';
 const SUBSCRIBE: number = 's'.charCodeAt(0);
 const UNSUBSCRIBE: number = 'u'.charCodeAt(0);
 
-type ExtendedSocket = Networking & { id?: string, channels?: { [key: string]: string }, isAlive?: boolean };
+type ExtendedSocket = Networking & { id?: string, channels?: { [key: string]: boolean }, isAlive?: boolean };
 
 function generateUid(length: number): string {
   return randomBytes(length / 2).toString('hex');
@@ -106,7 +106,7 @@ export class BrokerServer {
   private subscribe(socket: ExtendedSocket, channels: string[]): void {
     for (let i: number = 0, len: number = channels.length; i < len; i++) {
       if (!socket.channels[channels[i]]) {
-        socket.channels[channels[i]] = '1';
+        socket.channels[channels[i]] = true;
       }
     }
   }

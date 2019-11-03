@@ -1,5 +1,6 @@
 import { connect } from 'net';
 import { Networking } from './networking';
+import { randomBytes } from 'crypto';
 
 interface BrokerClientOptions {
   port?: number;
@@ -11,11 +12,18 @@ interface BrokerClientOptions {
   onClose?: () => void;
 }
 
+function generateUid(length: number): string {
+  return randomBytes(length / 2).toString('hex');
+}
+
 export class BrokerClient {
+  public id: string;
+
   private socket: Networking;
   private inReconnect: boolean;
 
   constructor(private options: BrokerClientOptions) {
+    this.id = generateUid(4);
     this.startClient();
   }
 

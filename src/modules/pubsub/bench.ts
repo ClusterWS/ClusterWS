@@ -1,7 +1,7 @@
 /* tslint:disable */
 import { PubSubEngine } from './pubsub';
 
-// TODO: run with tests with setTimeout instead of nextTick
+// TODO: remove this file and use one general benchmark file
 
 const pubSub = new PubSubEngine();
 
