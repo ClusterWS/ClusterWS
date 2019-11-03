@@ -8,6 +8,8 @@ const UNSUBSCRIBE: number = 'u'.charCodeAt(0);
 
 type ExtendedSocket = Networking & { id?: string, channels?: { [key: string]: boolean }, isAlive?: boolean };
 
+function noop(): void { /** ignore */ }
+
 function generateUid(length: number): string {
   return randomBytes(length / 2).toString('hex');
 }
@@ -15,25 +17,23 @@ function generateUid(length: number): string {
 interface BrokerServerOptions {
   port?: number;
   path?: string;
-  onReady?: () => void;
-  onClientError?: (err: Error) => void;
-  onServerError?: (err: Error) => void;
 }
 
 export class BrokerServer {
   private server: Server;
   private connectedClients: ExtendedSocket[] = [];
 
+  private onReadyListener: () => void = noop;
+  private onClientErrorListener: (err: Error) => void = noop;
+  private onServerErrorListener: (err: Error) => void = noop;
+
   constructor(private options: BrokerServerOptions) {
+    this.onServerErrorListener = (err: Error): void => { throw err; };
+
     if (this.options.path) {
       try { unlinkSync(this.options.path); } catch (err) {
         if (err.code !== 'ENOENT') {
-          if (this.options.onServerError) {
-            this.options.onServerError(err);
-            return;
-          }
-
-          throw err;
+          this.onServerErrorListener(err);
         }
       }
 
@@ -48,8 +48,20 @@ export class BrokerServer {
     this.scheduleHeartbeat();
   }
 
-  public close(): void {
-    this.server.close();
+  public onReady(listener: () => void): void {
+    this.onReadyListener = listener;
+  }
+
+  public onClientError(listener: (err: Error) => void): void {
+    this.onClientErrorListener = listener;
+  }
+
+  public onServerError(listener: (err: Error) => void): void {
+    this.onServerErrorListener = listener;
+  }
+
+  public close(cb?: () => void): void {
+    this.server.close(cb);
   }
 
   private startServer(): void {
@@ -68,17 +80,13 @@ export class BrokerServer {
         try {
           this.broadcast(socket.id, JSON.parse(message as any));
         } catch (err) {
-          if (this.options.onClientError) {
-            this.options.onClientError(err);
-          }
+          this.onClientErrorListener(err);
           socket.terminate();
         }
       });
 
       socket.on('error', (err: Error) => {
-        if (this.options.onClientError) {
-          this.options.onClientError(err);
-        }
+        this.onClientErrorListener(err);
         this.unregisterSocket(socket.id);
       });
 
@@ -92,15 +100,10 @@ export class BrokerServer {
     });
 
     this.server.on('error', (err: Error) => {
-      if (this.options.onServerError) {
-        this.options.onServerError(err);
-        return;
-      }
-
-      throw err;
+      this.onServerErrorListener(err);
     });
 
-    this.server.listen(this.options.path || this.options.port, this.options.onReady);
+    this.server.listen(this.options.path || this.options.port, () => this.onReadyListener());
   }
 
   private subscribe(socket: ExtendedSocket, channels: string[]): void {
