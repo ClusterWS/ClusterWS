@@ -15,11 +15,12 @@ describe('Broker', () => {
   it('After client connected server should add client to all sockets', (done: any) => {
     this.client = new BrokerClient({
       port: 3000,
-      host: 'localhost',
-      onOpen: (): void => {
-        expect(this.wsServer.connectedClients.length).to.be.eql(1);
-        done();
-      }
+      host: 'localhost'
+    });
+
+    this.client.onOpen(() => {
+      expect(this.wsServer.connectedClients.length).to.be.eql(1);
+      done();
     });
   });
 
@@ -38,20 +39,21 @@ describe('Broker', () => {
     let triggered: number = 0;
     this.client = new BrokerClient({
       port: 3000,
-      host: 'localhost',
-      onOpen: (): void => {
-        triggered++;
+      host: 'localhost'
+    });
 
-        if (triggered === 3) {
-          expect(this.wsServer.connectedClients.length).to.be.eql(1);
-          return done();
-        }
-        this.client.socket.close();
-      },
-      onClose: (): void => {
-        // run things
-        triggered++;
+    this.client.onOpen(() => {
+      triggered++;
+
+      if (triggered === 3) {
+        expect(this.wsServer.connectedClients.length).to.be.eql(1);
+        return done();
       }
+      this.client.socket.close();
+    });
+
+    this.client.onClose(() => {
+      triggered++;
     });
   }).timeout(5000);
 });
