@@ -2,8 +2,6 @@ type Listener = (messages: { [key: string]: any[] }) => void;
 
 interface PubSubEngineOptions {
   sync: boolean;
-  onChannelCreated: (channel: string) => void;
-  onChannelDestroyed: (channel: string) => void;
 }
 
 function noop(): void { /** noop function */ }
@@ -46,19 +44,27 @@ export class PubSubEngine {
   // message handler
   private channelsBatches: { [key: string]: Array<[string | null, any]> } = {};
 
-  // Flush options
-  private boundFlush: () => void;
   private flushScheduled: boolean;
+  private boundFlush: () => void;
+
+  private onChannelCreatedListener: (channel: string) => void = noop;
+  private onChannelDestroyedListener: (channel: string) => void = noop;
 
   constructor(options: Partial<PubSubEngineOptions> = {}) {
     this.options = {
       sync: false,
-      onChannelCreated: noop,
-      onChannelDestroyed: noop,
       ...options
     };
 
     this.boundFlush = this.flush.bind(this);
+  }
+
+  public onChannelCreated(listener: (channel: string) => void): void {
+    this.onChannelCreatedListener = listener;
+  }
+
+  public onChannelDestroyed(listener: (channel: string) => void): void {
+    this.onChannelDestroyedListener = listener;
   }
 
   public publish(channel: string, message: any, user: string = null): void {
@@ -98,7 +104,7 @@ export class PubSubEngine {
           channelUsersObject = this.channelsUsers[channel] = {
             len: 0,
           };
-          this.options.onChannelCreated(channel);
+          this.onChannelCreatedListener(channel);
         }
 
         if (!channelUsersObject[userId]) {
@@ -133,7 +139,7 @@ export class PubSubEngine {
 
           if (isObjectEmpty(channelUsersObject)) {
             delete this.channelsUsers[channel];
-            this.options.onChannelDestroyed(channel);
+            this.onChannelDestroyedListener(channel);
           }
         }
       }
