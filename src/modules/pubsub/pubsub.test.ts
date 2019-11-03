@@ -128,3 +128,31 @@ describe('PubSub Publish', () => {
     setTimeout(() => done(), 100);
   });
 });
+
+describe('PubSub onChannelCreated and onChannelDestroyed', () => {
+  before(() => {
+    this.pubSub = new PubSubEngine();
+  });
+
+  it('Should trigger onChannelCreated listener if channel does not exits', (done: any) => {
+    const registerUser: string = 'my_user_id';
+    const channel: string = 'new_channel';
+
+    this.pubSub.onChannelCreated(() => {
+      done();
+    });
+
+    this.pubSub.register(registerUser, (msg: any) => { /** ignore */ });
+    this.pubSub.subscribe(registerUser, [channel]);
+  });
+
+  it('Should trigger onChannelDestroyed when no one listens to the channel', (done: any) => {
+    const registerUser: string = 'my_user_id';
+
+    this.pubSub.onChannelDestroyed(() => {
+      done();
+    });
+
+    this.pubSub.unregister(registerUser);
+  });
+});
