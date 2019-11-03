@@ -6,11 +6,9 @@ interface BrokerClientOptions {
   port?: number;
   host?: string;
   path?: string;
-  onOpen?: () => void;
-  onError?: (err: Error) => void;
-  onMessage?: (message: Buffer) => void;
-  onClose?: () => void;
 }
+
+function noop(): void { /** ignore */ }
 
 function generateUid(length: number): string {
   return randomBytes(length / 2).toString('hex');
@@ -22,9 +20,30 @@ export class BrokerClient {
   private socket: Networking;
   private inReconnect: boolean;
 
+  private onOpenListener: () => void = noop;
+  private onMessageListener: (message: Buffer) => void = noop;
+  private onErrorListener: (err: Error) => void = noop;
+  private onCloseListener: () => void = noop;
+
   constructor(private options: BrokerClientOptions) {
     this.id = generateUid(4);
     this.startClient();
+  }
+
+  public onOpen(listener: () => void): void {
+    this.onOpenListener = listener;
+  }
+
+  public onMessage(listener: (message: Buffer) => void): void {
+    this.onMessageListener = listener;
+  }
+
+  public onError(listener: (err: Error) => void): void {
+    this.onErrorListener = listener;
+  }
+
+  public onClose(listener: () => void): void {
+    this.onCloseListener = listener;
   }
 
   public send(message: string): void {
@@ -39,21 +58,15 @@ export class BrokerClient {
     }));
 
     this.socket.on('open', () => {
-      if (this.options.onOpen) {
-        this.options.onOpen();
-      }
+      this.onOpenListener();
     });
 
     this.socket.on('message', (message: Buffer) => {
-      if (this.options.onMessage) {
-        this.options.onMessage(message);
-      }
+      this.onMessageListener(message);
     });
 
     this.socket.on('error', (err: Error) => {
-      if (this.options.onError) {
-        this.options.onError(err);
-      }
+      this.onErrorListener(err);
       this.reconnect();
     });
 
@@ -69,9 +82,7 @@ export class BrokerClient {
   private reconnect(): void {
     if (!this.inReconnect) {
       this.inReconnect = true;
-      if (this.options.onClose) {
-        this.options.onClose();
-      }
+      this.onCloseListener();
 
       setTimeout(() => {
         this.inReconnect = false;
