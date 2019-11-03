@@ -5,10 +5,11 @@ import { BrokerClient } from './client';
 describe('Broker', () => {
   before((done: any) => {
     this.wsServer = new BrokerServer({
-      port: 3000,
-      onReady: (): void => {
-        done();
-      }
+      port: 3000
+    });
+
+    this.wsServer.onReady(() => {
+      done();
     });
   });
 
