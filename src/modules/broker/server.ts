@@ -14,57 +14,16 @@ function generateUid(length: number): string {
   return randomBytes(length / 2).toString('hex');
 }
 
-interface BrokerServerOptions {
-  port?: number;
-  path?: string;
-}
-
 export class BrokerServer {
   private server: Server;
   private connectedClients: ExtendedSocket[] = [];
 
-  private onReadyListener: () => void = noop;
   private onClientErrorListener: (err: Error) => void = noop;
   private onServerErrorListener: (err: Error) => void = noop;
 
-  constructor(private options: BrokerServerOptions) {
+  constructor() {
     this.onServerErrorListener = (err: Error): void => { throw err; };
 
-    if (this.options.path) {
-      try { unlinkSync(this.options.path); } catch (err) {
-        if (err.code !== 'ENOENT') {
-          this.onServerErrorListener(err);
-        }
-      }
-
-      if (process.platform === 'win32') {
-        this.options.path = this.options.path.replace(/^\//, '');
-        this.options.path = this.options.path.replace(/\//g, '-');
-        this.options.path = `\\\\.\\pipe\\${this.options.path}`;
-      }
-    }
-
-    this.startServer();
-    this.scheduleHeartbeat();
-  }
-
-  public onReady(listener: () => void): void {
-    this.onReadyListener = listener;
-  }
-
-  public onClientError(listener: (err: Error) => void): void {
-    this.onClientErrorListener = listener;
-  }
-
-  public onServerError(listener: (err: Error) => void): void {
-    this.onServerErrorListener = listener;
-  }
-
-  public close(cb?: () => void): void {
-    this.server.close(cb);
-  }
-
-  private startServer(): void {
     this.server = createServer((rawSocket: Socket) => {
       const socket: ExtendedSocket = this.registerSocket(rawSocket);
 
@@ -103,7 +62,40 @@ export class BrokerServer {
       this.onServerErrorListener(err);
     });
 
-    this.server.listen(this.options.path || this.options.port, () => this.onReadyListener());
+    this.scheduleHeartbeat();
+  }
+
+  public onClientError(listener: (err: Error) => void): void {
+    this.onClientErrorListener = listener;
+  }
+
+  public onServerError(listener: (err: Error) => void): void {
+    this.onServerErrorListener = listener;
+  }
+
+  public close(cb?: () => void): void {
+    this.server.close(cb);
+  }
+
+  public listen(port: number, listener?: () => void): void;
+  public listen(path: string, listener?: () => void): void;
+  public listen(portOrPath: string | number, listener?: () => void): void {
+    if (typeof portOrPath === 'string') {
+      try { unlinkSync(portOrPath); } catch (err) {
+        if (err.code !== 'ENOENT') {
+          this.onServerErrorListener(err);
+        }
+      }
+
+      if (process.platform === 'win32') {
+        // TODO: verify if works on windows
+        portOrPath = portOrPath.replace(/^\//, '');
+        portOrPath = portOrPath.replace(/\//g, '-');
+        portOrPath = `\\\\.\\pipe\\${portOrPath}`;
+      }
+    }
+
+    this.server.listen(portOrPath, listener);
   }
 
   private subscribe(socket: ExtendedSocket, channels: string[]): void {
