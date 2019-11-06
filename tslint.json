@@ -4,6 +4,7 @@
     "tslint-eslint-rules"
   ],
   "rules": {
+    "unified-signatures": false,
     "no-string-literal": false,
     "typedef": [
       true,
