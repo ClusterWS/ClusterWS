@@ -146,6 +146,10 @@ export class PubSubEngine {
     }
   }
 
+  public getChannels(): string[] {
+    return Object.keys(this.channelsUsers);
+  }
+
   public getStats(): any {
     // TODO: add more useful stats
     // let maxUsersPerChannel: number = 0;
