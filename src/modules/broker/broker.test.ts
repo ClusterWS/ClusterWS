@@ -11,11 +11,7 @@ describe('Broker', () => {
   });
 
   it('After client connected server should add client to all sockets', (done: any) => {
-    this.client = new BrokerClient({
-      port: 3000,
-      host: 'localhost'
-    });
-
+    this.client = new BrokerClient('localhost:3000');
     this.client.onOpen(() => {
       expect(this.wsServer.connectedClients.length).to.be.eql(1);
       done();
@@ -35,11 +31,7 @@ describe('Broker', () => {
 
   it('Should reconnect to the server if connection lost and trigger unregister', (done: any) => {
     let triggered: number = 0;
-    this.client = new BrokerClient({
-      port: 3000,
-      host: 'localhost'
-    });
-
+    this.client = new BrokerClient('localhost:3000');
     this.client.onOpen(() => {
       triggered++;
 

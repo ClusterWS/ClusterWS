@@ -3,7 +3,8 @@ import { Writable } from 'stream';
 
 // Self Containing
 // simple protocol to transfer data
-// between client and server with minimal overhead
+// between node js net client and server
+// with minimal overhead
 //
 //  1 byte                                     1/2/4 bytes                   x bytes
 //  [uInt8]                                    [uInt8/uInt16/uInt32]         [message]
@@ -12,6 +13,7 @@ import { Writable } from 'stream';
 
 const PING: number = 0x09;
 const PONG: number = 0x0a;
+
 const UINT8SIZE: number = 0x08;
 const UINT16SIZE: number = 0x22;
 const UINT32SIZE: number = 0x38;
