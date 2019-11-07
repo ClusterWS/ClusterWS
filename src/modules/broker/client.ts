@@ -2,12 +2,6 @@ import { connect } from 'net';
 import { Networking } from './networking';
 import { randomBytes } from 'crypto';
 
-interface BrokerClientOptions {
-  port?: number;
-  host?: string;
-  path?: string;
-}
-
 function noop(): void { /** ignore */ }
 
 function generateUid(length: number): string {
@@ -15,19 +9,41 @@ function generateUid(length: number): string {
 }
 
 export class BrokerClient {
-  public id: string;
+  public id: string = generateUid(4);
 
   private socket: Networking;
   private inReconnect: boolean;
 
   private onOpenListener: () => void = noop;
-  private onMessageListener: (message: Buffer) => void = noop;
-  private onErrorListener: (err: Error) => void = noop;
   private onCloseListener: () => void = noop;
+  private onErrorListener: (err: Error) => void = noop;
+  private onMessageListener: (message: Buffer) => void = noop;
 
-  constructor(private options: BrokerClientOptions) {
-    this.id = generateUid(4);
-    this.startClient();
+  private port: number;
+  private host: string;
+  private path: string;
+
+  constructor(path: string);
+  constructor(hostAndPort: string);
+  constructor(private hostAndPortOrPath: string) {
+    const urlArray: string[] = this.hostAndPortOrPath.split(':');
+
+    if (urlArray.length === 1 || isNaN(parseInt(urlArray[urlArray.length - 1], 10))) {
+      this.path = urlArray.join(':');
+
+      if (process.platform === 'win32') {
+        // TODO: move this to utils
+        // TODO: verify if works on windows
+        this.path = this.path.replace(/^\//, '');
+        this.path = this.path.replace(/\//g, '-');
+        this.path = `\\\\.\\pipe\\${this.path}`;
+      }
+    } else {
+      this.port = parseInt(urlArray.pop(), 10);
+      this.host = urlArray.join(':');
+    }
+
+    this.connect();
   }
 
   public onOpen(listener: () => void): void {
@@ -50,11 +66,11 @@ export class BrokerClient {
     this.socket.send(message);
   }
 
-  private startClient(): void {
+  private connect(): void {
     this.socket = new Networking(connect({
-      path: this.options.path,
-      host: this.options.host,
-      port: this.options.port,
+      path: this.path,
+      host: this.host,
+      port: this.port,
     }));
 
     this.socket.on('open', () => {
@@ -75,7 +91,7 @@ export class BrokerClient {
     });
 
     this.socket.on('ping', () => {
-      // TODO: keep track if server is still alive
+      // TODO: keep track if server still alive
     });
   }
 
@@ -86,7 +102,7 @@ export class BrokerClient {
 
       setTimeout(() => {
         this.inReconnect = false;
-        this.startClient();
+        this.connect();
       }, Math.floor(Math.random() * 2000) + 200);
     }
   }
