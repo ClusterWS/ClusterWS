@@ -1,43 +1,11 @@
+import { noop, indexOf, objectIsEmpty } from '../utils';
+
 type Listener = (messages: { [key: string]: any[] }) => void;
-
-interface PubSubEngineOptions {
-  sync: boolean;
-}
-
-function noop(): void { /** noop function */ }
-
-function findIndexOf(arr: string[], value: string): number {
-  for (let i: number = 0, len: number = arr.length; i < len; i++) {
-    if (arr[i] === value) {
-      return i;
-    }
-  }
-
-  return -1;
-}
-
-function isObjectEmpty(object: { [key: string]: any }): boolean {
-  if (object.hasOwnProperty('len')) {
-    if (object.len <= 0) {
-      return true;
-    }
-
-    return false;
-  }
-
-  for (const key in object) {
-    if (object.hasOwnProperty(key)) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 export class PubSubEngine {
   public static GLOBAL_USER: string = '__*__';
 
-  private options: PubSubEngineOptions;
+  private options: { sync: boolean };
   private usersLink: { [key: string]: { listener: Listener, channels: string[] } } = {};
   private channelsUsers: { [key: string]: { len: number, [key: string]: boolean | number } } = {};
 
@@ -50,7 +18,7 @@ export class PubSubEngine {
   private onChannelCreatedListener: (channel: string) => void = noop;
   private onChannelDestroyedListener: (channel: string) => void = noop;
 
-  constructor(options: Partial<PubSubEngineOptions> = {}) {
+  constructor(options: { sync?: boolean } = {}) {
     this.options = {
       sync: false,
       ...options
@@ -135,9 +103,9 @@ export class PubSubEngine {
           channelUsersObject.len--;
           delete channelUsersObject[userId];
 
-          userInfo.channels.splice(findIndexOf(userInfo.channels, channel), 1);
+          userInfo.channels.splice(indexOf(channel, userInfo.channels), 1);
 
-          if (isObjectEmpty(channelUsersObject)) {
+          if (channelUsersObject.len <= 0 || objectIsEmpty(channelUsersObject)) {
             delete this.channelsUsers[channel];
             this.onChannelDestroyedListener(channel);
           }

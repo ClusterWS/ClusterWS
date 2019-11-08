@@ -1,7 +1,7 @@
 {
   "name": "@clusterws/server",
   "version": "4.0.0-alpha.8",
-  "description": "Lightweight, fast and powerful framework for building scalable Node.js WebSocket based applications.",
+  "description": "Lightweight, fast and powerful framework for building scalable Node.js real-time applications.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "author": "Dmitrii Goriunov",
@@ -20,19 +20,19 @@
     "@clusterws/cws": "^0.15.2"
   },
   "devDependencies": {
-    "@types/chai": "^4.1.4",
-    "@types/mocha": "^5.2.5",
+    "@types/chai": "^4.2.1",
+    "@types/mocha": "^5.2.7",
     "@types/node": "^10.9.4",
-    "chai": "^4.1.2",
+    "chai": "^4.2.0",
     "cpx": "^1.5.0",
-    "mocha": "^5.2.0",
-    "nyc": "^13.3.0",
+    "mocha": "^6.2.2",
+    "nyc": "^14.1.1",
     "rimraf": "^3.0.0",
     "ts-node": "^8.4.1",
-    "tslint": "^5.20.0",
+    "tslint": "^5.20.1",
     "tslint-eslint-rules": "^5.4.0",
-    "typescript": "^3.6.3",
-    "ws": "^7.1.2"
+    "typescript": "^3.7.2",
+    "ws": "^7.2.0"
   },
   "nyc": {
     "all": true,

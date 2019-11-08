@@ -1,3 +1,4 @@
+import { noop } from '../utils';
 import { Socket } from 'net';
 import { Writable } from 'stream';
 
@@ -25,8 +26,6 @@ enum ReadState {
   MESSAGE_SIZE,
   MESSAGE
 }
-
-function noop(): void { /** ignore */ }
 
 function onDrain(): void {
   // resume socket stream after draining all data

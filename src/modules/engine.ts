@@ -1,15 +1,13 @@
-// Simple wrapper around 'ws' and '@clusterws/cws' to make functionality similar
-// and add ability to switch between 2 different engines
+// Simple wrapper around 'ws' and '@clusterws/cws' to make their functionality similar
 
-import { WebSocket, WebSocketServer, ServerConfigs } from '@clusterws/cws';
+import { noop } from './utils';
+import { ServerConfigs, WebSocket as DefaultWebSocket, WebSocketServer as DefaultWebSocketServer } from '@clusterws/cws';
 
-export type WebSocket = WebSocket;
-export type WebSocketServer = WebSocketServer;
+export type WebSocket = DefaultWebSocket;
+export type WebSocketServer = DefaultWebSocketServer;
 
 const PING: any = new Uint8Array(['9'.charCodeAt(0)]).buffer;
 const PONG: any = new Uint8Array(['A'.charCodeAt(0)]).buffer;
-
-function noop(): void { /** ignore */ }
 
 export enum WSEngine {
   WS = 'ws',

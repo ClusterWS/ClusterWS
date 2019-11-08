@@ -1,12 +1,12 @@
-npm
 .idea
 .vscode
 
 node_modules
 package-lock.json
 
+src
+bench
 coverage
  
-src
 tslint.json
 tsconfig.json

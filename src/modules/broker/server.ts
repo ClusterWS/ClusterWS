@@ -1,18 +1,12 @@
 import { unlinkSync } from 'fs';
-import { Networking } from './networking';
-import { randomBytes } from 'crypto';
+import { Networking } from '../networking/networking';
+import { uuid, noop, unixPath } from '../utils';
 import { Socket, Server, createServer } from 'net';
 
 const SUBSCRIBE: number = 's'.charCodeAt(0);
 const UNSUBSCRIBE: number = 'u'.charCodeAt(0);
 
 type ExtendedSocket = Networking & { id?: string, channels?: { [key: string]: boolean }, isAlive?: boolean };
-
-function noop(): void { /** ignore */ }
-
-function generateUid(length: number): string {
-  return randomBytes(length / 2).toString('hex');
-}
 
 export class BrokerServer {
   private server: Server;
@@ -77,9 +71,9 @@ export class BrokerServer {
     this.server.close(cb);
   }
 
-  public listen(port: number, listener?: () => void): void;
-  public listen(path: string, listener?: () => void): void;
-  public listen(portOrPath: string | number, listener?: () => void): void {
+  public listen(port: number, cb?: () => void): void;
+  public listen(path: string, cb?: () => void): void;
+  public listen(portOrPath: string | number, cb?: () => void): void {
     if (typeof portOrPath === 'string') {
       try { unlinkSync(portOrPath); } catch (err) {
         if (err.code !== 'ENOENT') {
@@ -87,15 +81,10 @@ export class BrokerServer {
         }
       }
 
-      if (process.platform === 'win32') {
-        // TODO: verify if works on windows
-        portOrPath = portOrPath.replace(/^\//, '');
-        portOrPath = portOrPath.replace(/\//g, '-');
-        portOrPath = `\\\\.\\pipe\\${portOrPath}`;
-      }
+      portOrPath = unixPath(portOrPath);
     }
 
-    this.server.listen(portOrPath, listener);
+    this.server.listen(portOrPath, cb);
   }
 
   private subscribe(socket: ExtendedSocket, channels: string[]): void {
@@ -114,7 +103,7 @@ export class BrokerServer {
 
   private registerSocket(rawSocket: Socket): ExtendedSocket {
     const socket: ExtendedSocket = new Networking(rawSocket);
-    socket.id = generateUid(4);
+    socket.id = uuid(4);
     socket.isAlive = true;
     socket.channels = {};
     this.connectedClients.push(socket);

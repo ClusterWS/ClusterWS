@@ -1,15 +1,9 @@
 import { connect } from 'net';
-import { Networking } from './networking';
-import { randomBytes } from 'crypto';
-
-function noop(): void { /** ignore */ }
-
-function generateUid(length: number): string {
-  return randomBytes(length / 2).toString('hex');
-}
+import { Networking } from '../networking/networking';
+import { uuid, noop, unixPath } from '../utils';
 
 export class BrokerClient {
-  public id: string = generateUid(4);
+  public id: string = uuid(4);
 
   private socket: Networking;
   private inReconnect: boolean;
@@ -29,15 +23,7 @@ export class BrokerClient {
     const urlArray: string[] = this.hostAndPortOrPath.split(':');
 
     if (urlArray.length === 1 || isNaN(parseInt(urlArray[urlArray.length - 1], 10))) {
-      this.path = urlArray.join(':');
-
-      if (process.platform === 'win32') {
-        // TODO: move this to utils
-        // TODO: verify if works on windows
-        this.path = this.path.replace(/^\//, '');
-        this.path = this.path.replace(/\//g, '-');
-        this.path = `\\\\.\\pipe\\${this.path}`;
-      }
+      this.path = unixPath(urlArray.join(':'));
     } else {
       this.port = parseInt(urlArray.pop(), 10);
       this.host = urlArray.join(':');
