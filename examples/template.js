@@ -21,13 +21,13 @@ new ClusterWS({
     engine: WSEngine.CWS, // before using WSEngine.WS install 'ws' module
     autoPing: true,
     pingInterval: 20000,
-    appLevelPing: true // mostly used for browser will send ping in app level
+    appLevelPing: true // mostly used for browser will send ping in app level requires manual set up
   },
   tlsOptions: { /** default node.js tls options */ }
 });
 
 async function worker() {
-  const wss = this.wss;
+  const wss = this.server.ws;
   const server = this.server;
 
   wss.on('connection', (ws) => {
@@ -117,20 +117,20 @@ async function worker() {
     });
   });
 
-  // server.on('error', (err) => {
-  //   console.log('Error while creating server', err);
-  //   server.close();
-  // });
-
   // you can easily add almost any http 
   //  library (express, koa, etc..) with on `request` handler
   server.on('request', app);
-  server.run(() => {
+
+  server.on('error', (err) => {
+    console.log('Server got an error');
+  });
+
+  server.start(() => {
     console.log('Server is running');
   });
 
-  // server.close(() => {
-  //   console.log('Server has been closed');
+  // server.stop(() => {
+  //   console.log('Server has been stopped');
   // });
 }
 
