@@ -17,7 +17,7 @@
     "url": "https://github.com/ClusterWS/ClusterWS"
   },
   "dependencies": {
-    "@clusterws/cws": "^0.15.2"
+    "@clusterws/cws": "^0.16.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.1",

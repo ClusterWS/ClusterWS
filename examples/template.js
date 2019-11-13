@@ -1,8 +1,8 @@
 // ClusterWS Full Functionality Template
-const { ClusterWS, WSEngine } = require('@clusterws/server');
+const { ClusterWS, WSEngine } = require('../dist');
 
 new ClusterWS({
-  port: 3000,
+  port: 3001,
   host: '127.0.0.1',
   worker: worker,
   scaleOptions: {
@@ -10,7 +10,7 @@ new ClusterWS({
     brokers: {
       instances: 2, // set to 0 if dont wont brokers
       // allow to pass array of 'path' or 'host:port'
-      brokersLinks: []
+      brokersLinks: ['localhost:3000', 'localhost:3000']
     },
     workers: {
       instances: 6
@@ -31,8 +31,8 @@ async function worker() {
   const server = this.server;
 
   wss.on('connection', (ws) => {
-    wss.pubSub.register(ws, (message) => {
-      // by default ClusterWs does not register websocket to pubSub engine
+    wss.pubsub.register(ws, (message) => {
+      // by default ClusterWs does not register websocket to pubsub engine
       // ws.onPublish will register websocket
       // and receive messages per tick such as { channel: [msg1, msg2, mgs3], channel2: [msg1, ...] ...}
       // user is responsible for encoding and sending it to the receiver
@@ -45,11 +45,11 @@ async function worker() {
       // you have full control over how to handel which events
       // this is one of the ways to encode data
       //
-      // simple example protocol to handle pubSub communication and the rest of events
+      // simple example protocol to handle pubsub communication and the rest of events
       // only for messages received from client
       // (you will need to do some thing similar on client side)
       //
-      // PubSub messages will look like 
+      // pubsub messages will look like 
       // ['p', 'channel', 'message']  publish message to channel
       // ['s', 'channel']  subscribe to channel
       // ['u', 'channel']  unsubscribe from channel
@@ -70,7 +70,7 @@ async function worker() {
 
 
         // also can publish including sender it self with
-        // return wss.publish(channel, message);
+        // return wss.pubsub.publish(channel, message);
       }
 
       // receive subscribe event
@@ -101,7 +101,7 @@ async function worker() {
 
       // if socket is registered to pub sub
       // you need to manually unregister
-      wss.pubSub.unregister(ws);
+      wss.pubsub.unregister(ws);
     });
 
     ws.on('close', (code, reason) => {
@@ -109,7 +109,7 @@ async function worker() {
 
       // if socket is registered to pub sub
       // you need to manually unregister
-      wss.pubSub.unregister(ws);
+      wss.pubsub.unregister(ws);
     });
 
     ws.on('pong', () => {
@@ -119,9 +119,11 @@ async function worker() {
 
   // you can easily add almost any http 
   //  library (express, koa, etc..) with on `request` handler
-  server.on('request', app);
+  // server.on('request', app);
 
   server.on('error', (err) => {
+    console.log(err);
+    // includes websocket server errors
     console.log('Server got an error');
   });
 

@@ -1,5 +1,4 @@
-// Simple wrapper around 'ws' and '@clusterws/cws' to make their functionality similar
-
+// Wrapper around 'ws' and '@clusterws/cws' to make their functionality similar
 import { noop } from './utils';
 import { ServerConfigs, WebSocket as DefaultWebSocket, WebSocketServer as DefaultWebSocketServer } from '@clusterws/cws';
 
@@ -62,11 +61,17 @@ export class WebsocketEngine {
       const wsServer: any = new this.engineImport.Server(options, cb);
       wsServer.__on = wsServer.on.bind(wsServer);
       wsServer.__onConnection = noop;
+      wsServer.__onError = noop;
 
       wsServer.on = function on(event: string, listener: any): void {
         if (event === 'connection') {
           return wsServer.__onConnection = listener;
         }
+
+        if (event === 'error') {
+          return wsServer.__onError = listener;
+        }
+
         wsServer.__on(event, listener);
       };
 
@@ -103,6 +108,16 @@ export class WebsocketEngine {
 
         wsServer.__onConnection(socket, req);
       });
+
+      wsServer.__on('error', function onError(error: Error): void {
+        wsServer.__onError(error);
+      });
+
+      if (options.server) {
+        options.server.on('error', (error: Error) => {
+          wsServer.__onError(error);
+        });
+      }
 
       wsServer.startAutoPing = function autoPing(interval: number, appLevel: boolean): void {
         wsServer.clients.forEach(function each(ws: any): void {
