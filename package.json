@@ -6,7 +6,7 @@
   "types": "./dist/index.d.ts",
   "author": "Dmitrii Goriunov",
   "scripts": {
-    "test": "nyc mocha './src/**/*.test.ts' --exit",
+    "test": "nyc mocha './tests/**/*.test.ts' --exit",
     "build": "rimraf ./dist && npm run lint && tsc && npm run copy",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "copy": "cpx ./src/index.d.ts ./dist"
@@ -38,7 +38,8 @@
     "all": true,
     "temp-directory": "./node_modules/.cache/nyc_output",
     "include": [
-      "src/**/*.ts"
+      "src/**/*.ts",
+      "tests/**/*.ts"
     ],
     "exclude": [
       "src/index.d.ts"

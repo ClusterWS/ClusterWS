@@ -10,7 +10,11 @@ new ClusterWS({
     brokers: {
       instances: 2, // set to 0 if dont wont brokers
       // allow to pass array of 'path' or 'host:port'
-      brokersLinks: ['localhost:3000', 'localhost:3000']
+      entries: [
+        // host by default 127.0.0.1
+        { port: 3000 },
+        { port: 3001 }
+      ]
     },
     workers: {
       instances: 6
@@ -29,6 +33,11 @@ new ClusterWS({
 async function worker() {
   const wss = this.server.ws;
   const server = this.server;
+
+  wss.verifyClient((info, next) => {
+    // pass false to decline verification
+    next(true);
+  });
 
   wss.on('connection', (ws) => {
     wss.pubsub.register(ws, (message) => {

@@ -13,20 +13,16 @@ export class BrokerClient {
   private onErrorListener: (err: Error) => void = noop;
   private onMessageListener: (message: Buffer) => void = noop;
 
-  private port: number;
-  private host: string;
-  private path: string;
+  constructor(config: { path: string });
+  constructor(config: { port: number });
+  constructor(config: { host: string, port: number });
+  constructor(private config: { host: string, port: number, path: string }) {
+    if (this.config.path) {
+      this.config.path = unixPath(this.config.path);
+    }
 
-  constructor(path: string);
-  constructor(hostAndPort: string);
-  constructor(private hostAndPortOrPath: string) {
-    const urlArray: string[] = this.hostAndPortOrPath.split(':');
-
-    if (urlArray.length === 1 || isNaN(parseInt(urlArray[urlArray.length - 1], 10))) {
-      this.path = unixPath(urlArray.join(':'));
-    } else {
-      this.port = parseInt(urlArray.pop(), 10);
-      this.host = urlArray.join(':');
+    if (this.config.port && !this.config.host) {
+      this.config.host = '127.0.0.1';
     }
 
     this.connect();
@@ -53,11 +49,7 @@ export class BrokerClient {
   }
 
   private connect(): void {
-    this.socket = new Networking(connect({
-      path: this.path,
-      host: this.host,
-      port: this.port,
-    }));
+    this.socket = new Networking(connect({ ...this.config }));
 
     this.socket.on('open', () => {
       this.onOpenListener();
@@ -89,7 +81,7 @@ export class BrokerClient {
       setTimeout(() => {
         this.inReconnect = false;
         this.connect();
-      }, Math.floor(Math.random() * 2000) + 200);
+      }, Math.floor(Math.random() * 1000) + 200);
     }
   }
 }

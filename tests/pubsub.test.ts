@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { PubSubEngine } from './pubsub';
+import { PubSubEngine } from '../src/modules/pubsub/pubsub';
 
 describe('PubSub Creation', () => {
   before(() => {

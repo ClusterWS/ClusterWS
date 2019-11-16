@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { BrokerServer } from './server';
-import { BrokerClient } from './client';
+import { BrokerServer } from '../src/modules/broker/server';
+import { BrokerClient } from '../src/modules/broker/client';
 
 describe('Broker', () => {
   before((done: any) => {
@@ -11,7 +11,7 @@ describe('Broker', () => {
   });
 
   it('After client connected server should add client to all sockets', (done: any) => {
-    this.client = new BrokerClient('localhost:3000');
+    this.client = new BrokerClient({ port: 3000 });
     this.client.onOpen(() => {
       expect(this.wsServer.connectedClients.length).to.be.eql(1);
       done();
@@ -31,7 +31,7 @@ describe('Broker', () => {
 
   it('Should reconnect to the server if connection lost and trigger unregister', (done: any) => {
     let triggered: number = 0;
-    this.client = new BrokerClient('localhost:3000');
+    this.client = new BrokerClient({ port: 3000 });
     this.client.onOpen(() => {
       triggered++;
 
