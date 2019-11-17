@@ -1,16 +1,29 @@
+import { noop } from '../utils';
 import { BrokerClient } from './client';
 
 export class BrokerPool {
   private brokers: BrokerClient[] = [];
   private nextSend: number = 0;
 
-  private onMessageListener: (message: Buffer) => void;
+  private isReady: boolean = false;
+  private connectionsEstablished: number = 0;
+
+  private onMessageListener: (message: Buffer) => void = noop;
+  private onPoolReadyListener: () => void = noop;
   private onOpenSendMessageConstructor: () => string;
 
-  constructor(private brokersLinks: string[]) {
-    for (let i: number = 0, len: number = this.brokersLinks.length; i < len; i++) {
-      this.registerBroker(new BrokerClient(this.brokersLinks[i]));
+  constructor(brokersEntries: Array<{ path: string }>);
+  constructor(brokersEntries: Array<{ port: number }>);
+  constructor(brokersEntries: Array<{ host: string, port: number }>);
+  constructor(private brokersEntries: Array<{ host: string, port: number, path: string }>) {
+    for (let i: number = 0, len: number = this.brokersEntries.length; i < len; i++) {
+      this.registerBroker(new BrokerClient(this.brokersEntries[i]));
     }
+  }
+
+  public onPoolReady(listener: () => void): void {
+    // on pool ready called onces after all clients connected
+    this.onPoolReadyListener = listener;
   }
 
   public send(message: string): void {
@@ -49,8 +62,19 @@ export class BrokerPool {
     });
 
     broker.onOpen(() => {
-      broker.send(this.onOpenSendMessageConstructor());
+      if (this.onOpenSendMessageConstructor) {
+        broker.send(this.onOpenSendMessageConstructor());
+      }
+
       this.brokers.push(broker);
+
+      if (!this.isReady) {
+        this.connectionsEstablished++;
+        if (this.connectionsEstablished === this.brokersEntries.length) {
+          this.isReady = true;
+          this.onPoolReadyListener();
+        }
+      }
     });
 
     broker.onClose(() => {
