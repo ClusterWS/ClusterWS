@@ -19,6 +19,11 @@ export class BrokerPool {
     for (let i: number = 0, len: number = this.brokersEntries.length; i < len; i++) {
       this.registerBroker(new BrokerClient(this.brokersEntries[i]));
     }
+
+    if (!this.brokersEntries.length) {
+      // if we don't have anything to connect to send ready event
+      setImmediate(() => this.onPoolReadyListener());
+    }
   }
 
   public onPoolReady(listener: () => void): void {
