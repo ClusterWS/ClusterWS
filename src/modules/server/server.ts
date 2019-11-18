@@ -1,25 +1,14 @@
+import { Options } from '../../index';
 import { WSServer } from './wss';
-import { WSEngine } from '../engine';
-import { SecureContextOptions } from 'tls';
 
 import { Server as HttpServer, createServer as httpCreateServer } from 'http';
 import { Server as HttpsServer, createServer as httpsCreateServer } from 'https';
 
-interface WorkerOptions {
-  port: number;
-  host?: string;
-  worker: () => void;
-  engine: WSEngine;
-  wsPath: string;
-  tlsOptions?: SecureContextOptions;
-  brokersLinks: string[];
-}
-
-export class Worker {
+export class Server {
   public ws: WSServer;
   private server: HttpServer | HttpsServer;
 
-  constructor(private options: WorkerOptions) {
+  constructor(private options: Options) {
     this.server = this.options.tlsOptions ?
       httpsCreateServer(this.options.tlsOptions) :
       httpCreateServer();
@@ -29,11 +18,15 @@ export class Worker {
       ...this.options
     });
 
-    this.options.worker.call({ server: this });
+    this.ws.on('ready', () => {
+      // as soon as system is ready pass work to user
+      this.options.worker.call({ server: this });
+    });
   }
 
   public on(event: 'error', listener: (error: Error) => void): void;
   public on(event: 'request', listener: (...args: any[]) => void): void;
+  public on(event: string, listener: (...args: any[]) => void): void;
   public on(event: string, listener: (...args: any[]) => void): void {
     if (event === 'error') {
       return this.ws.on(event, listener);

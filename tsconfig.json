@@ -5,7 +5,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "removeComments": true,
-    "declaration": false,
+    "declaration": true,
     "skipLibCheck": true
   },
   "exclude": [
