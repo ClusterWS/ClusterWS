@@ -2,18 +2,18 @@
 const { ClusterWS, WSEngine } = require('../dist');
 
 new ClusterWS({
-  port: 3001,
+  port: 3000,
   host: '127.0.0.1',
   worker: worker,
   scaleOptions: {
-    scaleOff: true, // will run single instance with no brokers
+    scaleOff: false, // will run single instance with no brokers
     brokers: {
       instances: 2, // set to 0 if dont wont brokers
       // allow to pass array of 'path' or 'host:port'
       entries: [
         // host by default 127.0.0.1
-        { port: 3000 },
-        { port: 3001 }
+        { port: 3001 },
+        { port: 3002 }
       ]
     },
     workers: {

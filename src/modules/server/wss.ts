@@ -16,7 +16,7 @@ interface PubSub {
   unregister(ws: WebSocket): void;
 }
 
-interface WebSocket extends DefaultWebSocket {
+export interface WebSocket extends DefaultWebSocket {
   publish: (channel: string, message: any) => void;
   subscribe: (channel: string) => void;
   unsubscribe: (channel: string) => void;
@@ -111,7 +111,7 @@ export class WSServer {
 
     this.brokerPool.onPoolReady(() => {
       // system is ready
-      setImmediate(() => this.onReadyListener());
+      this.onReadyListener();
     });
 
     this.brokerPool.sendOnEachOpen((): string => `s${this.pubSubEngine.getChannels().join(',')}`);
