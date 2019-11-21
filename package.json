@@ -1,6 +1,6 @@
 {
   "name": "@clusterws/server",
-  "version": "4.0.0-alpha.8",
+  "version": "4.0.0-alpha.4",
   "description": "Lightweight, fast and powerful framework for building scalable Node.js real-time applications.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
