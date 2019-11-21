@@ -73,9 +73,9 @@ export class BrokerServer {
 
   public listen(port: number, cb?: () => void): void;
   public listen(path: string, cb?: () => void): void;
+  public listen(portOrPath: string | number, cb?: () => void): void;
   public listen(portOrPath: string | number, cb?: () => void): void {
-    let path: string | undefined;
-    let port: number | undefined;
+    const options: { port?: number, path?: string, exclusive: boolean } = { exclusive: true };
 
     if (typeof portOrPath === 'string') {
       try { unlinkSync(portOrPath); } catch (err) {
@@ -83,13 +83,12 @@ export class BrokerServer {
           this.onServerErrorListener(err);
         }
       }
-
-      path = unixPath(portOrPath);
+      options.path = unixPath(portOrPath);
     } else {
-      port = portOrPath;
+      options.port = portOrPath;
     }
 
-    this.server.listen({ path, port, exclusive: true }, cb);
+    this.server.listen(options, cb);
   }
 
   private subscribe(socket: ExtendedSocket, channels: string[]): void {

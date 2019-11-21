@@ -34,6 +34,7 @@ export class WSServer {
   private webSocketServer: WebSocketServer;
 
   private onReadyListener: () => void = noop;
+  private onErrorListener: (err: Error) => void = noop;
   private verifyClientListener: (info: ConnectionInfo, next: VerifyClientNext) => void;
   private onConnectionListener: (webSocket: WebSocket) => void = noop;
 
@@ -78,7 +79,8 @@ export class WSServer {
     }
 
     if (event === 'error') {
-      this.webSocketServer.on(event, listener);
+      this.onErrorListener = listener;
+      this.webSocketServer.on(event, this.onErrorListener);
     }
   }
 
@@ -110,8 +112,11 @@ export class WSServer {
     this.brokerPool = new BrokerPool(this.options.scaleOptions.brokers.entries);
 
     this.brokerPool.onPoolReady(() => {
-      // system is ready
       this.onReadyListener();
+    });
+
+    this.brokerPool.onError((err: Error) => {
+      this.onErrorListener(err);
     });
 
     this.brokerPool.sendOnEachOpen((): string => `s${this.pubSubEngine.getChannels().join(',')}`);

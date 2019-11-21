@@ -8,6 +8,7 @@ export class BrokerPool {
   private isReady: boolean = false;
   private connectionsEstablished: number = 0;
 
+  private onErrorListener: (err: Error) => void = noop;
   private onMessageListener: (message: Buffer) => void = noop;
   private onPoolReadyListener: () => void = noop;
   private onOpenSendMessageConstructor: () => string;
@@ -29,6 +30,14 @@ export class BrokerPool {
   public onPoolReady(listener: () => void): void {
     // on pool ready called onces after all clients connected
     this.onPoolReadyListener = listener;
+  }
+
+  public onMessage(listener: (message: Buffer) => void): void {
+    this.onMessageListener = listener;
+  }
+
+  public onError(listener: (err: Error) => void): void {
+    this.onErrorListener = listener;
   }
 
   public send(message: string): void {
@@ -57,10 +66,6 @@ export class BrokerPool {
     this.onOpenSendMessageConstructor = messageConstructor;
   }
 
-  public onMessage(listener: (message: Buffer) => void): void {
-    this.onMessageListener = listener;
-  }
-
   private registerBroker(broker: BrokerClient): void {
     broker.onMessage((message: Buffer) => {
       this.onMessageListener(message);
@@ -86,7 +91,9 @@ export class BrokerPool {
       this.unregisterBroker(broker);
     });
 
-    broker.onError(() => {
+    broker.onError((err: Error) => {
+      err.name = 'BrokerClient';
+      this.onErrorListener(err);
       this.unregisterBroker(broker);
     });
   }

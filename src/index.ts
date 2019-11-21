@@ -50,16 +50,13 @@ export class ClusterWS {
 
   private master(): void {
     let readyBrokers: number = 0;
-    let readyWorkers: number = 0;
 
     for (let i: number = 0; i < this.options.scaleOptions.brokers.instances; i++) {
       this.startBroker(i, () => {
         readyBrokers++;
         if (readyBrokers === this.options.scaleOptions.brokers.instances) {
           for (let j: number = 0; j < this.options.scaleOptions.workers.instances; j++) {
-            this.startWorker(j, () => {
-              readyWorkers++;
-            });
+            this.startWorker(j);
           }
         }
       });
@@ -73,19 +70,19 @@ export class ClusterWS {
           const broker: BrokerServer = new BrokerServer();
 
           broker.onServerError((err: Error) => {
-            console.log(err);
+            // TODO: add restart on broker error
+            console.log(`[BROKER:ERROR:${process.pid}] ${err.stack || err.message}`);
           });
 
-          // TODO: fix entries problem
-          broker.listen(this.options.scaleOptions.brokers.entries[message.id].port, () => {
+          const entry: { port: number, path: string } = this.options.scaleOptions.brokers.entries[message.id];
+
+          broker.listen(entry.port || entry.path, () => {
             process.send({ action: 'READY' });
           });
         }
 
         if (message.type === 'WORKER') {
-          const server: Server = new Server(this.options);
-          // TODO: get client ready trigger
-          // TODO: get errors in here
+          new Server(this.options);
         }
       }
     });
@@ -105,14 +102,12 @@ export class ClusterWS {
     // handle error and exit
   }
 
-  private startWorker(id: number, ready: () => void = noop): void {
+  private startWorker(id: number): void {
     const workerFork: Worker = fork();
     workerFork.send({ id, action: 'START', type: 'WORKER' });
 
     workerFork.on('message', (message: any) => {
-      if (message.action === 'READY') {
-        ready();
-      }
+      // if (message.action === 'READY') { }
     });
 
     // handler error and exit

@@ -44,8 +44,8 @@ export class BrokerClient {
     this.onCloseListener = listener;
   }
 
-  public send(message: string): void {
-    this.socket.send(message);
+  public send(message: string, cb?: () => void): void {
+    this.socket.send(message, cb);
   }
 
   private connect(): void {
