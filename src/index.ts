@@ -1,7 +1,17 @@
 
+import * as pino from 'pino';
+
 import { Worker } from './worker/worker';
 import { fork, isMaster } from 'cluster';
 import { SecureContextOptions } from 'tls';
+
+export type Logger = {
+  info: (...args: any[]) => any;
+  warn: (...args: any[]) => any;
+  debug: (...args: any[]) => any;
+  error: (...args: any[]) => any;
+  [key: string]: any;
+};
 
 export type ScaleOptions = {
   brokers: {
@@ -24,6 +34,7 @@ export type WebsocketOptions = {
 export type Options = {
   port: number;
   host?: string;
+  logger?: Logger,
   worker: (this: Worker) => void;
   scaleOptions: ScaleOptions;
   websocketOptions: WebsocketOptions;
@@ -32,11 +43,29 @@ export type Options = {
 
 export class ClusterWS {
   private options: Options;
-  constructor(options: Options) {
-    // TODO: add logger
+  constructor(options: Partial<Options> & { port: number, logger?: Logger | { logLevel: string; } }) {
+    let logger: Logger = pino();
+
+    if (
+      options.logger as Logger &&
+      (options.logger as Logger).info &&
+      (options.logger as Logger).warn &&
+      (options.logger as Logger).error &&
+      (options.logger as Logger).debug) {
+      logger = options.logger as Logger;
+    } else if (options.logger && options.logger.logLevel) {
+      logger.level = options.logger.logLevel;
+    }
+
+    // const logger = options.logger && options.logger.level ? :
+    // const level options.lo
+
+    // const loggerOptions = options.loggerOptions || {  };
+
     // TODO: prepare default options
     // add options validation
     this.options = {
+      logger,
       port: options.port,
       host: options.host,
       worker: options.worker,
@@ -53,6 +82,8 @@ export class ClusterWS {
       },
       tlsOptions: options.tlsOptions
     };
+
+    this.options.logger.debug(`Starting ClusterWS server with in scale ${this.options.scaleOptions.off ? 'off' : 'on'} mode`);
 
     if (this.options.scaleOptions.off) {
       new Worker(this.options);

@@ -4,6 +4,9 @@ const { ClusterWS } = require('../dist');
 new ClusterWS({
   port: 3000,
   worker: workerFn,
+  logger: {
+    logLevel: 'debug'
+  },
   scaleOptions: {
     off: true,
     workers: {
@@ -25,9 +28,16 @@ new ClusterWS({
 })
 
 async function workerFn() {
-  const wss = this.worker.wss;
   const worker = this.worker;
-  const workerId = this.worker.id;
+
+  // websocket server 
+  const wss = worker.wss;
+
+  // http / https server
+  const server = worker.server;
+
+  // logger provided from options or default pino logger
+  const logger = worker.logger;
 
   // send specific message to specific worker id
   // worker.sendToWorker("specific workerId", "My Message");
@@ -82,10 +92,10 @@ async function workerFn() {
 
   worker.on('error', (err) => {
     // this includes websocket server and http(s) server errors
-    console.log(`[${process.pid}] Worker received error: ${err}`);
+    logger.error(`[${process.pid}] Worker received error: ${err}`);
   });
 
   worker.start(() => {
-    console.log(`[${process.pid}] Worker is running`);
+    logger.info(`[${process.pid}] Worker is running`);
   });
 }

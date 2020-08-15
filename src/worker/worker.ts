@@ -1,12 +1,13 @@
-import { Options } from '../index';
 import { WSServer } from './wss';
 import { noop, uuid } from '../utils';
+import { Options, Logger } from '../index';
 import { Server as HttpServer, createServer as httpCreateServer } from 'http';
 import { Server as HttpsServer, createServer as httpsCreateServer } from 'https';
 
 export class Worker {
   public readonly id: string;
   public readonly wss: WSServer;
+  public readonly logger: Logger;
   public readonly server: HttpServer | HttpsServer;
 
   private onErrorListener: (err: Error) => void;
@@ -15,6 +16,7 @@ export class Worker {
     this.onErrorListener = noop;
 
     this.id = uuid(12);
+    this.logger = this.options.logger;
     this.server = this.options.tlsOptions ?
       httpsCreateServer(this.options.tlsOptions) :
       httpCreateServer();
