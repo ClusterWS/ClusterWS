@@ -1,17 +1,16 @@
-import { noop } from '../utils';
-import { Socket } from 'net';
-import { Writable } from 'stream';
-
 // Self Containing
 // simple protocol to transfer data
 // between node js net client and server
-// with minimal overhead
 //
 //  1 byte                                     1/2/4 bytes                   x bytes
 //  [uInt8]                                    [uInt8/uInt16/uInt32]         [message]
 //  ping/pong/message length type              message length                actual message
 //  0x09/0x0a/0x08/0x22/0x38                   x                             x
 
+import { Socket } from 'net';
+import { Writable } from 'stream';
+
+const NOOP: () => void = (): void => {/** noop */ };
 const PING: number = 0x09;
 const PONG: number = 0x0a;
 
@@ -59,10 +58,10 @@ function onClose(): void {
     return this.eventListenerMap.close();
   }
   // if we get here most likely we still have some data to process
-  // error or finish will bet triggered after processing
+  // error or finish will be triggered after processing
   // last chunk of data
-  this.dataProcessor.on('error', () => this.eventListenerMap.close());
-  this.dataProcessor.on('finish', () => this.eventListenerMap.close());
+  this.dataProcessor.on('error', (): void => this.eventListenerMap.close());
+  this.dataProcessor.on('finish', (): void => this.eventListenerMap.close());
 }
 
 export class Networking {
@@ -75,11 +74,11 @@ export class Networking {
   private messageLengthBytes: number = 0;
 
   private dataProcessor: Writable;
-  private eventListenerMap: { [key: string]: (...args: any) => void } = {
-    open: noop,
-    close: noop,
-    message: noop,
-    error: noop
+  private eventListenerMap: { [key: string]: (...args: any[]) => void } = {
+    open: NOOP,
+    close: NOOP,
+    message: NOOP,
+    error: NOOP
   };
 
   constructor(private socket: Socket) {
@@ -94,7 +93,7 @@ export class Networking {
     this.socket.on('error', onError.bind(this));
     this.socket.on('close', onClose.bind(this));
 
-    this.socket.on('ready', () => this.eventListenerMap.open());
+    this.socket.on('ready', (): void => this.eventListenerMap.open());
 
     this.socket.setNoDelay();
   }
@@ -102,7 +101,7 @@ export class Networking {
   public on(event: 'error', listener: (err: Error) => void): void;
   public on(event: 'message', listener: (message: Buffer) => void): void;
   public on(event: 'open' | 'close' | 'ping' | 'pong', listener: () => void): void;
-  public on(event: string, listener: (...args: any) => void): void {
+  public on(event: string, listener: (...args: any[]) => void): void {
     this.eventListenerMap[event] = listener;
   }
 
@@ -177,7 +176,7 @@ export class Networking {
             return cb();
           }
 
-          switch (this.readBuf(1).readUInt8(0)) {
+          switch (this.readBuff(1).readUInt8(0)) {
             case PING:
               // Must send pong after receiving ping
               this.pong();
@@ -206,13 +205,13 @@ export class Networking {
 
           switch (this.messageLengthBytes) {
             case 1:
-              this.messageSize = this.readBuf(this.messageLengthBytes).readUInt8(0);
+              this.messageSize = this.readBuff(this.messageLengthBytes).readUInt8(0);
               break;
             case 2:
-              this.messageSize = this.readBuf(this.messageLengthBytes).readUInt16BE(0);
+              this.messageSize = this.readBuff(this.messageLengthBytes).readUInt16BE(0);
               break;
             case 4:
-              this.messageSize = this.readBuf(this.messageLengthBytes).readUInt32BE(0);
+              this.messageSize = this.readBuff(this.messageLengthBytes).readUInt32BE(0);
               break;
           }
 
@@ -229,7 +228,7 @@ export class Networking {
             this.loop = false;
             return cb();
           }
-          this.eventListenerMap.message(this.readBuf(this.messageSize));
+          this.eventListenerMap.message(this.readBuff(this.messageSize));
 
           this.messageSize = 0;
           this.messageLengthBytes = 0;
@@ -238,7 +237,7 @@ export class Networking {
     } while (this.loop);
   }
 
-  private readBuf(length: number): Buffer {
+  private readBuff(length: number): Buffer {
     this.bufferedBytes -= length;
 
     if (length === this.buffers[0].length) {

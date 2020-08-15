@@ -1,14 +1,17 @@
-// Wrapper around 'ws' and '@clusterws/cws' to make their functionality similar
-import { noop } from './utils';
+// Very simple wrapper around 'ws' and '@clusterws/cws' modules to make their api similar
+// temporary solution which will require some redesign in the future for maintenance
+
+import { noop } from '../utils';
 import { ServerConfigs, WebSocket as DefaultWebSocket, WebSocketServer as DefaultWebSocketServer } from '@clusterws/cws';
 
+// TODO: get this types out without importing them from cws module
 export type WebSocket = DefaultWebSocket;
 export type WebSocketServer = DefaultWebSocketServer;
 
-const PING: any = new Uint8Array(['9'.charCodeAt(0)]).buffer;
-const PONG: any = new Uint8Array(['A'.charCodeAt(0)]).buffer;
+const PING: ArrayBuffer = new Uint8Array(['9'.charCodeAt(0)]).buffer;
+const PONG: ArrayBuffer = new Uint8Array(['A'.charCodeAt(0)]).buffer;
 
-export enum WSEngine {
+enum WSEngine {
   WS = 'ws',
   CWS = '@clusterws/cws'
 }
@@ -16,7 +19,7 @@ export enum WSEngine {
 export class WebsocketEngine {
   private engineImport: any;
 
-  constructor(private engine: WSEngine) {
+  constructor(private engine: string) {
     this.engineImport = require(this.engine);
   }
 
@@ -61,15 +64,10 @@ export class WebsocketEngine {
       const wsServer: any = new this.engineImport.Server(options, cb);
       wsServer.__on = wsServer.on.bind(wsServer);
       wsServer.__onConnection = noop;
-      wsServer.__onError = noop;
 
       wsServer.on = function on(event: string, listener: any): void {
         if (event === 'connection') {
           return wsServer.__onConnection = listener;
-        }
-
-        if (event === 'error') {
-          return wsServer.__onError = listener;
         }
 
         wsServer.__on(event, listener);
@@ -109,16 +107,6 @@ export class WebsocketEngine {
         wsServer.__onConnection(socket, req);
       });
 
-      wsServer.__on('error', function onError(error: Error): void {
-        wsServer.__onError(error);
-      });
-
-      if (options.server) {
-        options.server.on('error', (error: Error) => {
-          wsServer.__onError(error);
-        });
-      }
-
       wsServer.startAutoPing = function autoPing(interval: number, appLevel: boolean): void {
         wsServer.clients.forEach(function each(ws: any): void {
           if (ws.isAlive === false) {
@@ -134,7 +122,7 @@ export class WebsocketEngine {
           ws.ping(noop);
         });
 
-        setTimeout(() => autoPing(interval, appLevel), interval);
+        setTimeout((): void => autoPing(interval, appLevel), interval);
       };
 
       return wsServer;

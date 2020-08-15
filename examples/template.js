@@ -1,147 +1,90 @@
-// ClusterWS Full Functionality Template
-const { ClusterWS, WSEngine } = require('../dist');
+
+const { ClusterWS } = require('../dist');
 
 new ClusterWS({
   port: 3000,
-  host: '127.0.0.1',
-  worker: worker,
+  worker: workerFn,
   scaleOptions: {
-    scaleOff: false, // will run single instance with no brokers
-    brokers: {
-      instances: 2, // set to 0 if dont wont brokers
-      // allow to pass array of 'path' or 'host:port'
-      entries: [
-        // host by default 127.0.0.1
-        { port: 3001 },
-        { port: 3002 }
-      ]
-    },
     workers: {
-      instances: 6
+      instances: 100
     },
+    brokers: {
+      instances: 3,
+      entries: [{ port: 3001 }, { port: 3002 }, { port: 3003 }]
+    }
   },
   websocketOptions: {
-    path: '/socket',
-    engine: WSEngine.CWS, // before using WSEngine.WS install 'ws' module
-    autoPing: true,
-    pingInterval: 20000,
-    appLevelPing: true // mostly used for browser will send ping in app level requires manual set up
+    path: '/',
+    engine: "@clusterws/cws", // make sure to install correct module
+    // autoPing: true,
+    // pingInterval: 20000,
+    // appLevelPing: true // mostly used for browser will send ping in app level requires manual set up
   },
-  tlsOptions: { /** default node.js tls options */ }
-});
+  // tlsOptions: { /** default node.js tls options */ }
+})
 
-async function worker() {
-  const wss = this.server.ws;
-  const server = this.server;
+async function workerFn() {
+  const wss = this.worker.wss;
+  const worker = this.worker;
+  const workerId = this.worker.id;
 
-  wss.verifyClient((info, next) => {
-    // pass false to decline verification
-    next(true);
+  // send specific message to specific worker id
+  // worker.sendToWorker("specific workerId", "My Message");
+
+  // broadcast to all workers 
+  // worker.broadcastToWorkers("My Message");
+
+
+  wss.verifyConnectionOnUpgrade((req, socket, upgradeHead, next) => {
+    // verify and allow user to pass
+    console.log('My info is here');
+    req.someTest = "Some of my stuff in here"
+
+    // next(401, 'Unauthorized');
+    // next();
+
+    // next(401, 'Not authorized');
+
+    // fail user
+    // next(false);
   });
 
-  wss.on('connection', (ws) => {
-    wss.pubsub.register(ws, (message) => {
-      // by default ClusterWs does not register websocket to pubsub engine
-      // ws.onPublish will register websocket
-      // and receive messages per tick such as { channel: [msg1, msg2, mgs3], channel2: [msg1, ...] ...}
-      // user is responsible for encoding and sending it to the receiver
-
-      // on client side this message will look like "['p', {'channel': [...], 'channel2': [...], ...}]"
-      return ws.send(JSON.stringify(['p', message]));
-    })
+  wss.on('connection', (ws, req) => {
+    console.log('New websocket connection', req.someTest);
 
     ws.on('message', (message) => {
-      // you have full control over how to handel which events
-      // this is one of the ways to encode data
-      //
-      // simple example protocol to handle pubsub communication and the rest of events
-      // only for messages received from client
-      // (you will need to do some thing similar on client side)
-      //
-      // pubsub messages will look like 
-      // ['p', 'channel', 'message']  publish message to channel
-      // ['s', 'channel']  subscribe to channel
-      // ['u', 'channel']  unsubscribe from channel
-      //
-      // can add simple server client events
-      // ['e', 'event', 'message'] emit event with specific message
+      console.log('Got message', message);
+      // handle on message
 
-      const parsedMessage = JSON.parse(message);
-
-      // received publish event
-      if (parsedMessage[0] === 'p') {
-        const channel = parsedMessage[1];
-        const message = parsedMessage[2];
-        // here can be done validation
-        // also can check if this user subscribed to
-        // this channel to be able publish
-        return ws.publish(channel, message, ws);
-
-
-        // also can publish including sender it self with
-        // return wss.pubsub.publish(channel, message);
-      }
-
-      // receive subscribe event
-      if (parsedMessage[0] === 's') {
-        const channel = parsedMessage[1];
-        return ws.subscribe(channel);
-      }
-
-      if (parsedMessage[0] === 'u') {
-        const channel = parsedMessage[1];
-        return ws.unsubscribe(channel);
-      }
-
-      if (parsedMessage[0] === 'e') {
-        const event = parsedMessage[1];
-        const message = parsedMessage[2];
-
-        // example hello world event
-        if (event === 'hello world') {
-          return ws.send(JSON.stringify(['e', 'back hello world', message]))
-        }
-        // handle rest of your events
-      }
+      // example of sending message
+      ws.send("Send some message")
     });
 
     ws.on('error', (err) => {
       // handle on error
-
-      // if socket is registered to pub sub
-      // you need to manually unregister
-      wss.pubsub.unregister(ws);
-    });
-
-    ws.on('close', (code, reason) => {
-      // handle on close
-
-      // if socket is registered to pub sub
-      // you need to manually unregister
-      wss.pubsub.unregister(ws);
     });
 
     ws.on('pong', () => {
       // handle on pong received
     });
+
+    ws.on('close', (code, reason) => {
+      // handle on ws connection close
+    });
+  })
+
+  // worker.on('messageFromWorker', (message) => {
+  //   // other worker sent message
+  //   // you can use this communicate between different clients on
+  //   // different workers
+  // })
+
+  worker.on('error', (err) => {
+    // this includes websocket server and http(s) server errors
+    console.log(`[${process.pid}] Worker received error: ${err}`);
   });
 
-  // you can easily add almost any http 
-  //  library (express, koa, etc..) with on `request` handler
-  // server.on('request', app);
-
-  server.on('error', (err) => {
-    console.log(err);
-    // includes websocket server errors
-    console.log('Server got an error');
+  worker.start(() => {
+    console.log(`[${process.pid}] Worker is running`);
   });
-
-  server.start(() => {
-    console.log('Server is running');
-  });
-
-  // server.stop(() => {
-  //   console.log('Server has been stopped');
-  // });
 }
-
