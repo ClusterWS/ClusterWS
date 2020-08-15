@@ -5,8 +5,9 @@ new ClusterWS({
   port: 3000,
   worker: workerFn,
   scaleOptions: {
+    off: true,
     workers: {
-      instances: 100
+      instances: 10
     },
     brokers: {
       instances: 3,

@@ -2,11 +2,10 @@
 // temporary solution which will require some redesign in the future for maintenance
 
 import { noop } from '../utils';
-import { ServerConfigs, WebSocket as DefaultWebSocket, WebSocketServer as DefaultWebSocketServer } from '@clusterws/cws';
+import { ServerConfigs, WebSocket, WebSocketServer } from '@clusterws/cws';
 
 // TODO: get this types out without importing them from cws module
-export type WebSocket = DefaultWebSocket;
-export type WebSocketServer = DefaultWebSocketServer;
+export { WebSocket, WebSocketServer };
 
 const PING: ArrayBuffer = new Uint8Array(['9'.charCodeAt(0)]).buffer;
 const PONG: ArrayBuffer = new Uint8Array(['A'.charCodeAt(0)]).buffer;

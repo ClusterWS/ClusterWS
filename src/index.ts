@@ -1,15 +1,17 @@
 
 import { Worker } from './worker/worker';
+import { fork, isMaster } from 'cluster';
 import { SecureContextOptions } from 'tls';
 
 export type ScaleOptions = {
   brokers: {
     instances: number;
-    entries: { path?: string, port: number }[];
+    entries: { port: number, path?: string }[];
   },
   workers: {
     instances: number;
-  }
+  },
+  off?: boolean,
 };
 
 export type WebsocketOptions = {
@@ -29,13 +31,46 @@ export type Options = {
 };
 
 export class ClusterWS {
-  constructor(private options: Options) {
-    // implement logic for the worker and broker start up
-    new Worker(options);
+  private options: Options;
+  constructor(options: Options) {
+    // TODO: add logger
+    // TODO: prepare default options
+    // add options validation
+    this.options = {
+      port: options.port,
+      host: options.host,
+      worker: options.worker,
+      scaleOptions: {
+        off: options.scaleOptions.off,
+        workers: options.scaleOptions.workers,
+        brokers: options.scaleOptions.brokers
+      },
+      websocketOptions: {
+        path: options.websocketOptions.path || '/',
+        engine: options.websocketOptions.engine,
+        autoPing: options.websocketOptions.autoPing,
+        pingInterval: options.websocketOptions.pingInterval || 20000
+      },
+      tlsOptions: options.tlsOptions
+    };
+
+    if (this.options.scaleOptions.off) {
+      new Worker(this.options);
+      return;
+    }
+
+    // for (let i: number = 0; i < this.options.scaleOptions.brokers.instances; i++) {
+    //   // TODO: boot number of broker instances
+    // }
+
+    // TODO: first prepare brokers then boot worker
   }
 
   private spawnWorker(): void {
-    // const server: Server = new Server(this.options);
-    //
+    // TODO: implement worker logic
+  }
+
+  private spawnBroker(): void {
+    // TODO: implement broker logic
   }
 }
