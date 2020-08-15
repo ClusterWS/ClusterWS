@@ -44,7 +44,7 @@ export type Options = {
 export class ClusterWS {
   private options: Options;
   constructor(options: Partial<Options> & { port: number, logger?: Logger | { logLevel: string; } }) {
-    let logger: Logger = pino();
+    let logger: Logger = pino({ formatters: { level: (label: string): { level: string } => ({ level: label }) } });
 
     if (
       options.logger as Logger &&
@@ -56,11 +56,6 @@ export class ClusterWS {
     } else if (options.logger && options.logger.logLevel) {
       logger.level = options.logger.logLevel;
     }
-
-    // const logger = options.logger && options.logger.level ? :
-    // const level options.lo
-
-    // const loggerOptions = options.loggerOptions || {  };
 
     // TODO: prepare default options
     // add options validation
@@ -82,8 +77,6 @@ export class ClusterWS {
       },
       tlsOptions: options.tlsOptions
     };
-
-    this.options.logger.debug(`Starting ClusterWS server with in scale ${this.options.scaleOptions.off ? 'off' : 'on'} mode`);
 
     if (this.options.scaleOptions.off) {
       new Worker(this.options);
