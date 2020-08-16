@@ -20,7 +20,7 @@ export class WSServer {
 
   constructor(private options: WSServerOptions) {
     this.onConnectionListener = noop;
-    this.verifyConnectionOnUpgradeListener = (a: IncomingMessage, b: Socket, c: IncomingHttpHeaders, next: (value?: any) => void): void => next();
+    this.verifyConnectionOnUpgradeListener = (req, socket, upgradeHead, next): void => next();
 
     this.webSocketServer = new WebsocketEngine(this.options.websocketOptions.engine)
       .createServer({ noServer: true });

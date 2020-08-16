@@ -26,83 +26,105 @@ enum ReadState {
   MESSAGE
 }
 
-function onDrain(): void {
-  // resume socket stream after draining all data
-  this.socket.resume();
-}
-
-function onData(chunk: Buffer): void {
-  // try to write data to reader
-  // if we are unable to do that then we
-  // need to stop socket stream
-  if (!this.dataProcessor.write(chunk)) {
-    this.socket.pause();
-  }
-}
-
-function onError(err: Error): void {
-  // received error from socket or dataProcessor
-  // destroy connection and emit error
-  // calling destroy will trigger 'close' event
-  this.eventListenerMap.error(err);
-  this.socket.destroy();
-}
-
-function onClose(): void {
-  // read all unread data sync from underline buffer
-  // and close writable stream then emit close event
-  this.socket.read();
-  this.dataProcessor.end();
-
-  if (this.dataProcessor._writableState.finished || this.dataProcessor._writableState.errorEmitted) {
-    return this.eventListenerMap.close();
-  }
-  // if we get here most likely we still have some data to process
-  // error or finish will be triggered after processing
-  // last chunk of data
-  this.dataProcessor.on('error', (): void => this.eventListenerMap.close());
-  this.dataProcessor.on('finish', (): void => this.eventListenerMap.close());
-}
-
 export class Networking {
-  private loop: boolean = true;
-  private buffers: Buffer[] = [];
-  private bufferedBytes: number = 0;
+  private buffers: Buffer[];
+  private shouldRead: boolean;
+  private bufferedBytes: number;
+  private readState: ReadState;
+  private dataReceiver: Writable;
+  private eventListeners: { [key: string]: (...args: any[]) => void };
 
-  private readState: ReadState = ReadState.EVENT;
-  private messageSize: number = 0;
-  private messageLengthBytes: number = 0;
-
-  private dataProcessor: Writable;
-  private eventListenerMap: { [key: string]: (...args: any[]) => void } = {
-    open: NOOP,
-    close: NOOP,
-    message: NOOP,
-    error: NOOP
-  };
+  private actualMessageLength: number;
+  private messageSizeBytesLength: number;
 
   constructor(private socket: Socket) {
-    this.dataProcessor = new Writable({
-      write: this.write.bind(this)
-    });
+    this.buffers = [];
+    this.shouldRead = true;
+    this.bufferedBytes = 0;
+    this.actualMessageLength = 0;
+    this.messageSizeBytesLength = 0;
+    this.readState = ReadState.EVENT;
+    this.eventListeners = {
+      open: NOOP,
+      close: NOOP,
+      message: NOOP,
+      error: NOOP,
+      ping: NOOP,
+      pong: NOOP
+    };
 
-    this.dataProcessor.on('drain', onDrain.bind(this));
-    this.dataProcessor.on('error', onError.bind(this));
+    const onData: (chunk: Buffer) => void = (chunk) => {
+      // try to write data to dataReceiver
+      // if we are unable to do so we need to pause socket stream
+      // and wait for dataReceiver to darin
+      if (!this.dataReceiver.write(chunk)) {
+        this.socket.pause();
+      }
+    };
 
-    this.socket.on('data', onData.bind(this));
-    this.socket.on('error', onError.bind(this));
-    this.socket.on('close', onClose.bind(this));
+    const onReady: () => void = () => {
+      this.eventListeners.open();
+    };
 
-    this.socket.on('ready', (): void => this.eventListenerMap.open());
+    const onClose: () => void = () => {
+      // read all unread data sync from underline buffer
+      // and close writable stream then emit close event
+      this.socket.read();
+      this.dataReceiver.end();
 
+      if ((this.dataReceiver as any)._writableState.finished || (this.dataReceiver as any)._writableState.errorEmitted) {
+        return this.eventListeners.close();
+      }
+      // if we get here most likely we still have some data to process
+      // error or finish will be triggered after processing
+      // last chunk of data
+      this.dataReceiver.on('error', (): void => this.eventListeners.close());
+      this.dataReceiver.on('finish', (): void => this.eventListeners.close());
+    };
+
+    const onDrain: () => void = () => {
+      // resume socket stream after draining all data in dataReceiver
+      this.socket.resume();
+    };
+
+    const onError: (err: Error) => void = (err) => {
+      // received error from net socket or dataReceiver will
+      // destroy connection and emit error
+      // calling socket.destroy() will trigger 'close' event
+      this.eventListeners.error(err);
+      this.socket.destroy();
+    };
+
+    this.socket.on('data', onData);
+    this.socket.on('error', onError);
+    this.socket.on('close', onClose);
+    this.socket.on('ready', onReady);
     this.socket.setNoDelay();
+
+    this.dataReceiver = new Writable({
+      write: this.readMessage.bind(this)
+    });
+    this.dataReceiver.on('drain', onDrain);
+    this.dataReceiver.on('error', onError);
   }
 
   public on(event: 'error', listener: (err: Error) => void): void;
   public on(event: 'message', listener: (message: Buffer) => void): void;
   public on(event: 'open' | 'close' | 'ping' | 'pong', listener: () => void): void;
   public on(event: string, listener: (...args: any[]) => void): void {
-    this.eventListenerMap[event] = listener;
+    this.eventListeners[event] = listener;
+  }
+
+  public ping(cb?: () => void): void {
+    const buffer: Buffer = Buffer.allocUnsafe(1);
+    buffer.writeUInt8(PING, 0);
+    this.writeToSocket(buffer, cb);
+  }
+
+  public pong(cb?: () => void): void {
+    const buffer: Buffer = Buffer.allocUnsafe(1);
+    buffer.writeUInt8(PONG, 0);
+    this.writeToSocket(buffer, cb);
   }
 
   public send(data: string | Buffer, cb?: () => void): void {
@@ -115,44 +137,30 @@ export class Networking {
       offset = 5;
     }
 
-    const writeBuffer: Buffer = Buffer.allocUnsafe(offset + (typeof data === 'string' ? messageSize : 0));
+    const buffer: Buffer = Buffer.allocUnsafe(offset + (typeof data === 'string' ? messageSize : 0));
 
     switch (offset) {
       case 2:
-        writeBuffer.writeUInt8(UINT8SIZE, 0);
-        writeBuffer.writeUInt8(messageSize, 1);
+        buffer.writeUInt8(UINT8SIZE, 0);
+        buffer.writeUInt8(messageSize, 1);
         break;
       case 3:
-        writeBuffer.writeUInt8(UINT16SIZE, 0);
-        writeBuffer.writeUInt16BE(messageSize, 1);
+        buffer.writeUInt8(UINT16SIZE, 0);
+        buffer.writeUInt16BE(messageSize, 1);
         break;
       case 5:
-        writeBuffer.writeUInt8(UINT32SIZE, 0);
-        writeBuffer.writeUInt32BE(messageSize, 1);
+        buffer.writeUInt8(UINT32SIZE, 0);
+        buffer.writeUInt32BE(messageSize, 1);
         break;
     }
 
     if (typeof data === 'string') {
-      writeBuffer.write(data, offset);
-      this.socket.write(writeBuffer, cb);
+      buffer.write(data, offset);
+      this.writeToSocket(buffer, cb);
     } else {
-      this.socket.cork();
-      this.socket.write(writeBuffer);
-      this.socket.write(data, cb);
-      this.socket.uncork();
+      this.writeToSocket(buffer);
+      this.writeToSocket(data, cb);
     }
-  }
-
-  public ping(cb?: () => void): void {
-    const buffer: Buffer = Buffer.allocUnsafe(1);
-    buffer.writeUInt8(PING, 0);
-    this.socket.write(buffer, cb);
-  }
-
-  public pong(cb?: () => void): void {
-    const buffer: Buffer = Buffer.allocUnsafe(1);
-    buffer.writeUInt8(PONG, 0);
-    this.socket.write(buffer, cb);
   }
 
   public close(): void {
@@ -163,81 +171,90 @@ export class Networking {
     this.socket.destroy();
   }
 
-  private write(chunk: Buffer, encoding: string, cb: () => void): void {
+  private writeToSocket(data: Buffer | string, cb?: () => void): void {
+    this.socket.cork();
+    this.socket.write(data, cb);
+    process.nextTick(() => {
+      this.socket.uncork();
+    });
+  }
+
+  private readMessage(chunk: Buffer, encoding: string, cb: () => void): void {
     this.bufferedBytes += chunk.length;
     this.buffers.push(chunk);
-    this.loop = true;
+    this.shouldRead = true;
 
     do {
+
       switch (this.readState) {
         case ReadState.EVENT:
           if (this.bufferedBytes < 1) {
-            this.loop = false;
+            this.shouldRead = false;
             return cb();
           }
 
-          switch (this.readBuff(1).readUInt8(0)) {
+          switch (this.extractBuffer(1).readUInt8(0)) {
             case PING:
-              // Must send pong after receiving ping
+              // send pong after receiving ping
               this.pong();
-              this.eventListenerMap.ping();
+              this.eventListeners.ping();
               continue;
             case PONG:
-              this.eventListenerMap.pong();
+              this.eventListeners.pong();
               continue;
             case UINT8SIZE:
-              this.messageLengthBytes = 1;
+              this.messageSizeBytesLength = 1;
               break;
             case UINT16SIZE:
-              this.messageLengthBytes = 2;
+              this.messageSizeBytesLength = 2;
               break;
             case UINT32SIZE:
-              this.messageLengthBytes = 4;
+              this.messageSizeBytesLength = 4;
               break;
           }
 
           this.readState = ReadState.MESSAGE_SIZE;
         case ReadState.MESSAGE_SIZE:
-          if (!this.messageSize && this.bufferedBytes < this.messageLengthBytes) {
-            this.loop = false;
+          if (!this.actualMessageLength && this.bufferedBytes < this.messageSizeBytesLength) {
+            this.shouldRead = false;
             return cb();
           }
 
-          switch (this.messageLengthBytes) {
+          switch (this.messageSizeBytesLength) {
             case 1:
-              this.messageSize = this.readBuff(this.messageLengthBytes).readUInt8(0);
+              this.actualMessageLength = this.extractBuffer(this.messageSizeBytesLength).readUInt8(0);
               break;
             case 2:
-              this.messageSize = this.readBuff(this.messageLengthBytes).readUInt16BE(0);
+              this.actualMessageLength = this.extractBuffer(this.messageSizeBytesLength).readUInt16BE(0);
               break;
             case 4:
-              this.messageSize = this.readBuff(this.messageLengthBytes).readUInt32BE(0);
+              this.actualMessageLength = this.extractBuffer(this.messageSizeBytesLength).readUInt32BE(0);
               break;
           }
 
-          if (!this.messageSize) {
+          if (!this.actualMessageLength) {
             // received empty message
             this.readState = ReadState.EVENT;
-            this.eventListenerMap.message(EMPTY_BUFFER);
+            this.eventListeners.message(EMPTY_BUFFER);
             continue;
           }
 
           this.readState = ReadState.MESSAGE;
         case ReadState.MESSAGE:
-          if (this.messageSize && this.bufferedBytes < this.messageSize) {
-            this.loop = false;
+          if (this.actualMessageLength && this.bufferedBytes < this.actualMessageLength) {
+            this.shouldRead = false;
             return cb();
           }
-          this.eventListenerMap.message(this.readBuff(this.messageSize));
+          this.eventListeners.message(this.extractBuffer(this.actualMessageLength));
 
-          this.messageSize = 0;
-          this.messageLengthBytes = 0;
+          this.actualMessageLength = 0;
+          this.messageSizeBytesLength = 0;
           this.readState = ReadState.EVENT;
       }
-    } while (this.loop);
+    } while (this.shouldRead);
   }
 
-  private readBuff(length: number): Buffer {
+  private extractBuffer(length: number): Buffer {
     this.bufferedBytes -= length;
 
     if (length === this.buffers[0].length) {
@@ -250,22 +267,22 @@ export class Networking {
       return buf.slice(0, length);
     }
 
-    const responseBuf: Buffer = Buffer.allocUnsafe(length);
+    const returnBuffer: Buffer = Buffer.allocUnsafe(length);
 
     do {
       const buf: Buffer = this.buffers[0];
-      const offset: number = responseBuf.length - length;
+      const offset: number = returnBuffer.length - length;
 
       if (length >= buf.length) {
-        responseBuf.set(this.buffers.shift(), offset);
+        returnBuffer.set(this.buffers.shift(), offset);
       } else {
-        responseBuf.set(new Uint8Array(buf.buffer, buf.byteOffset, length), offset);
+        returnBuffer.set(new Uint8Array(buf.buffer, buf.byteOffset, length), offset);
         this.buffers[0] = buf.slice(length);
       }
 
       length -= buf.length;
     } while (length > 0);
 
-    return responseBuf;
+    return returnBuffer;
   }
 }

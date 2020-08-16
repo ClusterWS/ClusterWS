@@ -14,7 +14,8 @@ new ClusterWS({
     },
     brokers: {
       instances: 3,
-      entries: [{ port: 3001 }, { port: 3002 }, { port: 3003 }]
+      entries: [{ port: 3001 }, { port: 3002 }, { port: 3003 }],
+      // externalEntries: [{ port: 3001, host: "xyz" }]
     }
   },
   websocketOptions: {
