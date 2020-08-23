@@ -28,7 +28,7 @@ export class ClusterWS {
       logger,
       port: options.port,
       host: options.host,
-      worker: options.worker,
+      spawn: options.spawn,
       scaleOptions: {
         off: options.scaleOptions.off,
         workers: options.scaleOptions.workers,

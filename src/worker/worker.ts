@@ -29,7 +29,7 @@ export class Worker {
       ...this.options
     });
 
-    this.options.worker.call({ worker: this });
+    this.options.spawn({ worker: this, wss: this.wss, server: this.server, logger: this.logger });
   }
 
   public on(event: 'error', listener: (error: Error) => void): void {

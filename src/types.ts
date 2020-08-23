@@ -10,7 +10,8 @@ interface Options {
   port: number;
   host?: string;
   logger?: Logger;
-  worker: (this: import('./worker/worker').Worker) => void;
+  // TODO: remove this any
+  spawn: (data: any) => void;
   scaleOptions: ScaleOptions;
   websocketOptions: WebsocketOptions;
   tlsOptions?: import('tls').SecureContextOptions;

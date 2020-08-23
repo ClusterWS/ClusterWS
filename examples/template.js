@@ -3,7 +3,7 @@ const { ClusterWS } = require('../dist');
 
 new ClusterWS({
   port: 3000,
-  worker: workerFn,
+  spawn: spawn,
   logger: {
     logLevel: 'debug'
   },
@@ -28,44 +28,35 @@ new ClusterWS({
   // tlsOptions: { /** default node.js tls options */ }
 })
 
-async function workerFn() {
-  const worker = this.worker;
-
-  // websocket server 
-  const wss = worker.wss;
-
-  // http / https server
-  const server = worker.server;
-
-  // logger provided from options or default pino logger
-  const logger = worker.logger;
+async function spawn({ worker, wss, server, logger }) {
+  // server -> http or https server
+  // worker -> main worker instance allow to communicate with other workers
+  // wss -> websocket server
+  // logger -> logger you passed in options or default pino logger
 
   // send specific message to specific worker id
-  // worker.sendToWorker("specific workerId", "My Message");
+  // worker.sendToWorkers("specific workerId", "My Message");
 
   // broadcast to all workers 
   // worker.broadcastToWorkers("My Message");
 
-
   wss.verifyConnectionOnUpgrade((req, socket, upgradeHead, next) => {
     // verify and allow user to pass
-    console.log('My info is here');
+    logger.info('My info is here');
     req.someTest = "Some of my stuff in here"
 
-    // next(401, 'Unauthorized');
-    // next();
+    // pass connection
+    next();
 
-    // next(401, 'Not authorized');
-
-    // fail user
+    // fail connection
     // next(false);
   });
 
   wss.on('connection', (ws, req) => {
-    console.log('New websocket connection', req.someTest);
+    logger.info('New websocket connection', req.someTest);
 
     ws.on('message', (message) => {
-      console.log('Got message', message);
+      logger.info('Got message', message);
       // handle on message
 
       // example of sending message
