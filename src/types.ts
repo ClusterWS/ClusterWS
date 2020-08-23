@@ -1,4 +1,3 @@
-
 interface Logger {
   info: (...args: any[]) => any;
   warn: (...args: any[]) => any;
