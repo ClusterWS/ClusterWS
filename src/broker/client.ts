@@ -6,7 +6,8 @@ export class Client {
   public id: string;
 
   private socket: Networking;
-  private inReconnect: boolean;
+  private isReconnecting: boolean;
+  private shouldReconnect: boolean;
   private inactivityTimeout: NodeJS.Timeout;
   private eventListeners: { [key: string]: (...args: any[]) => void };
 
@@ -14,10 +15,6 @@ export class Client {
   constructor(config: { host: string, port: number });
   constructor(private config: { host: string, port: number, path: string }) {
     this.id = uuid(12);
-    if (this.config.port && !this.config.host) {
-      this.config.host = '127.0.0.1';
-    }
-
     this.eventListeners = {
       open: noop,
       close: noop,
@@ -25,8 +22,9 @@ export class Client {
       error: noop
     };
 
-    this.connect();
-    this.stillActive();
+    if (this.config.port && !this.config.host) {
+      this.config.host = '127.0.0.1';
+    }
   }
 
   public on(event: 'error', listener: (err: Error) => void): void;
@@ -40,7 +38,8 @@ export class Client {
     this.socket.send(message, cb);
   }
 
-  private connect(): void {
+  public connect(): void {
+    this.shouldReconnect = true;
     this.socket = new Networking(connect({ ...this.config }));
 
     this.socket.on('open', () => {
@@ -54,28 +53,31 @@ export class Client {
 
     this.socket.on('error', (err: Error) => {
       this.eventListeners.error(err);
-      this.reconnect();
     });
 
     this.socket.on('close', () => {
-      this.reconnect();
+      this.eventListeners.close();
+      if (this.shouldReconnect && !this.isReconnecting) {
+        this.isReconnecting = true;
+
+        setTimeout(() => {
+          this.isReconnecting = false;
+          this.connect();
+        }, Math.floor(Math.random() * 1000) + 200);
+      }
     });
 
     this.socket.on('ping', () => {
       this.stillActive();
     });
+
+    this.stillActive();
   }
 
-  private reconnect(): void {
-    if (!this.inReconnect) {
-      this.inReconnect = true;
-      this.eventListeners.close();
-
-      setTimeout(() => {
-        this.inReconnect = false;
-        this.connect();
-      }, Math.floor(Math.random() * 1000) + 200);
-    }
+  public close(): void {
+    this.shouldReconnect = false;
+    this.socket.close();
+    clearTimeout(this.inactivityTimeout);
   }
 
   private stillActive(): void {
