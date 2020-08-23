@@ -1,4 +1,3 @@
-// Write networking test
 import { expect } from 'chai';
 import { Networking } from '../src/broker/networking';
 import { Socket, Server, createServer, connect } from 'net';

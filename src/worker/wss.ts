@@ -1,6 +1,5 @@
 import { noop } from '../utils';
 import { Socket } from 'net';
-import { Options } from '../index';
 import { Server as HttpsServer } from 'https';
 import { IncomingMessage, IncomingHttpHeaders, Server as HttpServer } from 'http';
 import { WebSocket, WebsocketEngine, WebSocketServer } from './engine';

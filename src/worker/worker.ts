@@ -1,6 +1,5 @@
 import { WSServer } from './wss';
 import { noop, uuid } from '../utils';
-import { Options, Logger } from '../index';
 import { Server as HttpServer, createServer as httpCreateServer } from 'http';
 import { Server as HttpsServer, createServer as httpsCreateServer } from 'https';
 
