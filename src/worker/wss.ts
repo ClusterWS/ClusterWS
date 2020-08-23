@@ -2,9 +2,8 @@ import { noop } from '../utils';
 import { Socket } from 'net';
 import { Server as HttpsServer } from 'https';
 import { IncomingMessage, IncomingHttpHeaders, Server as HttpServer } from 'http';
-import { WebSocket, WebsocketEngine, WebSocketServer } from './engine';
+import { WebSocket, WebsocketEngine, WebSocketServer } from './websocket-engine';
 
-// TODO: make code fully cws types independent
 type VerifyOnUpgradeListener = (req: IncomingMessage, socket: Socket, upgradeHead: IncomingHttpHeaders, next: (value?: any) => void) => void;
 type WSServerOptions = Options & {
   server: HttpServer | HttpsServer;
@@ -43,7 +42,7 @@ export class WSServer {
 
       if (this.options.websocketOptions.path === req.url.split('?')[0].split('#')[0]) {
         this.verifyConnectionOnUpgradeListener(req, socket, upgradeHead, (value?: any): void => {
-          if (value || value === false) {
+          if (value !== undefined) {
             socket.write(`HTTP/1.1 401 Unauthorized\r\n\r\n`);
             socket.destroy();
             return;

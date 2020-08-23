@@ -13,7 +13,7 @@ export class Client {
 
   constructor(config: { port: number });
   constructor(config: { host: string, port: number });
-  constructor(private config: { host: string, port: number, path: string }) {
+  constructor(private config: { host: string, port: number }) {
     this.id = uuid(12);
     this.eventListeners = {
       open: noop,

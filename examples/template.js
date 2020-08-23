@@ -85,11 +85,11 @@ async function workerFn() {
     });
   })
 
-  // worker.on('messageFromWorker', (message) => {
-  //   // other worker sent message
-  //   // you can use this communicate between different clients on
-  //   // different workers
-  // })
+  worker.on('messageFromWorker', (workerId, message) => {
+    // other worker sent message
+    // you can use this communicate between different clients on
+    // different workers
+  })
 
   worker.on('error', (err) => {
     // this includes websocket server and http(s) server errors
