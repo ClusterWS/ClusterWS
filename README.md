@@ -1,4 +1,4 @@
-<h1 align="center">ClusterWS</h1>
+<h1 align="center">(Deprecated) ClusterWS</h1>
 <h6 align="center">Build Scalable Node.js WebSockets Applications</h6>
 
 <p align="center">
@@ -12,12 +12,12 @@
     <a href="#"><img src="https://img.shields.io/badge/NODE.JS-8+-AE1E80.svg?style=for-the-badge" alt="GitHub license"/></a>
 </p>
 
-<h3 align="center"><strong>This branch is under work for v4.0.0 check master branch for stable v3.3.0</strong></h3>
+<!-- <h3 align="center"><strong>This branch is under work for v4.0.0 check master branch for stable v3.3.0</strong></h3>
 <h3 align="center"><strong>Please note that v3.3.0 most likely will not run on Node 11 or 12 as it uses old version of uWebSockets. 
-Unfortunately there is no easy way to update v3.3.0, and it would be much simpler to finish up version 4. So if you are using ClusterWS 3.3.0 please stick with Node 10, 9, 8 (or submit PR) while Version 4 is under development. Thank you.</strong></h3>
+Unfortunately there is no easy way to update v3.3.0, and it would be much simpler to finish up version 4. So if you are using ClusterWS 3.3.0 please stick with Node 10, 9, 8 (or submit PR) while Version 4 is under development. Thank you.</strong></h3> -->
 
 <p align="center">
-    For version <strong>4.0.0 alpha</strong> version check <a href="https://clusterws.github.io/">ClusterWS Website</a> (still under work)
+    For version <strong>4.0.0 alpha</strong> version check <a href="https://clusterws.github.io/">ClusterWS Website</a> (under work)
 </p>
 
 <p align="center">
